@@ -38,7 +38,7 @@ import lemon.jpizza.Double;
 public class Interpreter {
 
     interface Condition {
-        boolean go(float x);
+        boolean go(double x);
     }
 
     public RTResult visit(Node node, Context context) {
@@ -105,7 +105,7 @@ public class Interpreter {
                 "Start must be an integer!",
                 context
         ));
-        float start = ((Num) startNode).trueValue();
+        double start = ((Num) startNode).trueValue();
         Obj endNode = ((Obj) res.register(visit(loop.end_value_node, context)));
         if (res.shouldReturn()) return res;
         if (!(endNode instanceof Num)) return res.failure(new RTError(
@@ -113,10 +113,10 @@ public class Interpreter {
                 "Start must be an integer!",
                 context
         ));
-        float end = ((Num) endNode).trueValue();
+        double end = ((Num) endNode).trueValue();
         if (res.shouldReturn()) return res;
 
-        float step;
+        double step;
         if (loop.step_value_node != null) {
             Obj stepNode = ((Obj) res.register(visit(loop.step_value_node, context)));
             if (res.shouldReturn()) return res;
@@ -130,7 +130,7 @@ public class Interpreter {
             step = 1;
         }
 
-        float i = start;
+        double i = start;
         Condition condition;
         if (step >= 0)
             condition = x -> x < end;
@@ -189,9 +189,9 @@ public class Interpreter {
 
     public RTResult visit_NumberNode(Node node, Context context) {
         Object value = ((ValueNode) node).tok.value;
-        float v;
+        double v;
         if (value instanceof Integer) v = ((Integer) value).floatValue();
-        else v = (float) value;
+        else v = (double) value;
         return new RTResult().success(new Num(v).set_context(context)
                 .set_pos(node.pos_start, node.pos_end));
     }

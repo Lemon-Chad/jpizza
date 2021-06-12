@@ -27,10 +27,10 @@ public class Str extends Value {
         if (other.floating())
             return new Double(null, new RTError(
                     pos_start, pos_end,
-                    "Expected int",
+                    "Expected long",
                     context
             ));
-        return new Double(new Str(trueValue().repeat(Math.round(other.trueValue()))).set_context(context), null);
+        return new Double(new Str(trueValue().repeat(Math.toIntExact(Math.round(other.trueValue())))).set_context(context), null);
     }
     public Double add(Obj o) {
         Str other = (Str) o.astring();

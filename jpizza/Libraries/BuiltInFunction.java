@@ -53,7 +53,7 @@ public class BuiltInFunction extends Library {
     }
 
     public RTResult execute_random(Context _execCtx) {
-        return new RTResult().success(new Num((float) Math.random()));
+        return new RTResult().success(new Num(Math.random()));
     }
 
     public RTResult execute_clear(Context _execCtx) {
@@ -102,7 +102,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        return new RTResult().success(new Num((float) Math.floor(
+        return new RTResult().success(new Num(Math.floor(
                 ((Num) num).trueValue()
         )));
     }
@@ -114,7 +114,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        return new RTResult().success(new Num((float) Math.ceil(
+        return new RTResult().success(new Num(Math.ceil(
                 ((Num) num).trueValue()
         )));
     }
@@ -195,7 +195,7 @@ public class BuiltInFunction extends Library {
                 "Index is out of bounds!",
                 execCtx
         ));
-        lst.trueValue().add(Math.round(idx.trueValue()), item);
+        lst.trueValue().add(Math.toIntExact(Math.round(idx.trueValue())), item);
         return new RTResult().success(lst);
     }
 
@@ -299,7 +299,7 @@ public class BuiltInFunction extends Library {
         ));
         if (((Num) num).floating()) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be an int!",
+                "Argument must be an long!",
                 execCtx
         ));
         return new RTResult().success(new Null());
@@ -313,8 +313,8 @@ public class BuiltInFunction extends Library {
         if (res.error != null) return res;
         res.register(isInt(max, execCtx));
         if (res.error != null) return res;
-        int iMin = Math.round(((Num) min).trueValue());
-        int iMax = Math.round(((Num) max).trueValue());
+        int iMin = Math.toIntExact(Math.round(((Num) min).trueValue()));
+        int iMax = Math.toIntExact(Math.round(((Num) max).trueValue()));
         return new RTResult().success(new Num(random.nextInt(iMax - iMin + 1) + iMin));
     }
 

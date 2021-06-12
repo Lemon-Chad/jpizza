@@ -40,7 +40,7 @@ public class PList extends Value {
         if (other.floating())
             return new Double(null, new RTError(
                     pos_start, pos_end,
-                    "List index must be int, not float",
+                    "List index must be long, not double",
                     context
             ));
         if (other.trueValue() + 1 > trueValue().size()) return new Double(null, new RTError(
@@ -48,7 +48,7 @@ public class PList extends Value {
                 "List index out of range",
                 context
         ));
-        return new Double(trueValue().get(Math.round(other.trueValue())), null);
+        return new Double(trueValue().get(Math.toIntExact(Math.round(other.trueValue()))), null);
     }
     public Double div(Obj other) {
         return remove(other);
@@ -69,7 +69,7 @@ public class PList extends Value {
         if (other.floating())
             return new Double(null, new RTError(
                     pos_start, pos_end,
-                    "Multiplier must be int, not float",
+                    "Multiplier must be long, not double",
                     context
             ));
         List<Obj> finalValues = trueValue();
@@ -104,7 +104,7 @@ public class PList extends Value {
         if (other.floating())
             return new Double(null, new RTError(
                     pos_start, pos_end,
-                    "List index must be int, not float",
+                    "List index must be long, not double",
                     context
             ));
         if (other.trueValue() + 1 > trueValue().size()) return new Double(null, new RTError(
@@ -113,7 +113,7 @@ public class PList extends Value {
                 context
         ));
         ArrayList<Obj> x = new ArrayList<>(trueValue());
-        x.remove(x.get(Math.round(other.trueValue())));
+        x.remove(x.get(Math.toIntExact(Math.round(other.trueValue()))));
         return new Double(
                 new PList(x).set_context(context).set_pos(pos_start, pos_end),
                 null

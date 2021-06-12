@@ -15,13 +15,13 @@ import java.util.HashMap;
 import static lemon.jpizza.Tokens.*;
 
 public class Num extends Value {
-    public Num(float value) {super(value);}
-    public float trueValue() { return (float) value; }
+    public Num(double value) {super(value);}
+    public double trueValue() { return (double) value; }
 
     // Functions
 
     public boolean floating() {
-        return Math.round((float) value) != (float) value;
+        return Math.round((double) value) != (double) value;
     }
 
     // Methods
@@ -54,7 +54,7 @@ public class Num extends Value {
     }
     public Double fastpow(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Num((float) Math.pow(trueValue(), other.trueValue())).set_context(context), null);
+        return new Double(new Num(Math.pow(trueValue(), other.trueValue())).set_context(context), null);
     }
     public Double lt(Obj o) {
         Num other = (Num) o.number();

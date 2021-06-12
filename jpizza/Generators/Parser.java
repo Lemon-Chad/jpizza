@@ -234,7 +234,7 @@ public class Parser {
             return res;
             /*return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected keyword, int, bool, float, identifier, '+', '-', '*', '/', '^', '!', '?', 'for'," +
+                    "Expected keyword, long, bool, double, identifier, '+', '-', '*', '/', '^', '!', '?', 'for'," +
                             " 'while' or '('"
             ));*/
 
@@ -386,7 +386,7 @@ public class Parser {
         }
         return res.failure(Error.InvalidSyntax(
                 tok.pos_start.copy(), tok.pos_end != null ? tok.pos_end.copy() : tok.pos_start.copy(),
-                "Expected int, float, identifier, '+', '-', or '('"
+                "Expected long, double, identifier, '+', '-', or '('"
         ));
     }
 
