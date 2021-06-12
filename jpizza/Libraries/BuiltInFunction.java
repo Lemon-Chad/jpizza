@@ -276,7 +276,7 @@ public class BuiltInFunction extends Library {
         do {
             text = scanner.nextLine();
         } while (!pattern.matcher(text).matches());
-        return new RTResult().success(new Num(Float.parseFloat(text)));
+        return new RTResult().success(new Num(java.lang.Double.parseDouble(text)));
     }
 
     public RTResult execute_choose(Context execCtx) {

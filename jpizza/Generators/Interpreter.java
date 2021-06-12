@@ -190,7 +190,7 @@ public class Interpreter {
     public RTResult visit_NumberNode(Node node, Context context) {
         Object value = ((ValueNode) node).tok.value;
         double v;
-        if (value instanceof Integer) v = ((Integer) value).floatValue();
+        if (value instanceof Long) v = ((Long) value).doubleValue();
         else v = (double) value;
         return new RTResult().success(new Num(v).set_context(context)
                 .set_pos(node.pos_start, node.pos_end));

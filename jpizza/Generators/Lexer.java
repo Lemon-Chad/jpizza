@@ -192,8 +192,8 @@ public class Lexer {
         }
 
         if (dot_count == 0)
-            return new Token(TT_INT, Integer.valueOf(num.toString()), pos_start, pos);
-        return new Token(TT_FLOAT, Float.valueOf(num.toString()), pos_start, pos);
+            return new Token(TT_INT, Long.valueOf(num.toString()), pos_start, pos);
+        return new Token(TT_FLOAT, java.lang.Double.valueOf(num.toString()), pos_start, pos);
 
     }
 
