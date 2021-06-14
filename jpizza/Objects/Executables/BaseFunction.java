@@ -4,6 +4,7 @@ import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
 import lemon.jpizza.Double;
 import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Values.StringNode;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
@@ -81,5 +82,5 @@ public class BaseFunction extends Value {
     public Obj type() { return new Str("<base-function>").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<base-function>"; }
     public boolean isAsync() { return false; }
-    public RTResult execute(List<Obj> args) { return new RTResult().success(new Null()); }
+    public RTResult execute(List<Obj> args, Interpreter parent) { return new RTResult().success(new Null()); }
 }

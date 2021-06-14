@@ -2,6 +2,7 @@ package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
@@ -39,7 +40,7 @@ public class ClassPlate extends Value {
 
     // Methods
 
-    public RTResult execute(List<Obj> args) {
+    public RTResult execute(List<Obj> args, Interpreter parent) {
         RTResult res = new RTResult();
         Context classContext = new Context(name, context, pos_start);
         classContext.symbolTable = new SymbolTable(context.symbolTable);
@@ -48,7 +49,7 @@ public class ClassPlate extends Value {
         for (int i = 0; i < length; i++) classContext.symbolTable.declareattr(attributes[i], classContext);
         CMethod make = (CMethod) this.make.copy();
         make.set_context(classContext);
-        res.register(make.execute(args));
+        res.register(make.execute(args, parent));
         if (res.error != null) return res;
         CMethod[] methodCopies = copyMethods();
         length = methodCopies.length;

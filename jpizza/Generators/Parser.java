@@ -232,11 +232,6 @@ public class Parser {
 
         if (res.error != null)
             return res;
-            /*return res.failure(Error.InvalidSyntax(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected keyword, long, bool, double, identifier, '+', '-', '*', '/', '^', '!', '?', 'for'," +
-                            " 'while' or '('"
-            ));*/
 
         return res.success(node);
     }
@@ -255,11 +250,23 @@ public class Parser {
         } return pow();
     }
 
+    public ParseResult useExpr() {
+        ParseResult res = new ParseResult();
+        advance(); res.registerAdvancement();
+        if (!currentToken.type.equals(TT_IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                "Expected identifier"
+        ));
+        Token useToken = currentToken;
+        advance(); res.registerAdvancement();
+        return res.success(new UseNode(useToken));
+    }
+
     public ParseResult atom() {
         ParseResult res = new ParseResult();
         Token tok = currentToken;
 
-        if (tok.type.equals(TT_KEYWORD)) {
+        if (tok.type.equals(TT_KEYWORD))
             switch ((String) tok.value) {
                 case "recipe":
                     Node classDef = (Node) res.register(this.classDef());
@@ -321,11 +328,14 @@ public class Parser {
                 default:
                     break;
             }
-
-        }
         else if (Arrays.asList(TT_INT, TT_FLOAT).contains(tok.type)) {
             res.registerAdvancement(); advance();
             return res.success(new NumberNode(tok));
+        }
+        else if (tok.type.equals(TT_USE)) {
+            Node useExpr = (Node) res.register(this.useExpr());
+            if (res.error != null) return res;
+            return res.success(useExpr);
         }
         else if (tok.type.equals(TT_STRING)) {
             res.registerAdvancement(); advance();

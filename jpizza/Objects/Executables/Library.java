@@ -4,6 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
 import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
@@ -75,7 +76,7 @@ public class Library extends BaseFunction {
         if (adlib) Constants.LIBRARIES.put(libName, libContext);
     }
 
-    public RTResult execute(List<Obj> args) {
+    public RTResult execute(List<Obj> args, Interpreter parent) {
         RTResult res = new RTResult();
         Context execCtx = newContext();
 

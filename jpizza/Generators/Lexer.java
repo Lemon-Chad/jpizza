@@ -29,7 +29,7 @@ public class Lexer {
     }
 
     public String next(int i) {
-        return pos.idx + 1 < text.length() ? String.valueOf(text.charAt(pos.idx + 1)) : null;
+        return pos.idx + i < text.length() ? String.valueOf(text.charAt(pos.idx + i)) : null;
     }
     public String next() {
         return next(1);

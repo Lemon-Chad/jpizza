@@ -2,6 +2,7 @@ package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Generators.Interpreter;
+import lemon.jpizza.Memo;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
@@ -34,9 +35,9 @@ public class Function extends BaseFunction {
 
     // Functions
 
-    public RTResult execute(List<Obj> args) {
+    public RTResult execute(List<Obj> args, Interpreter parent) {
         RTResult res = new RTResult();
-        Interpreter interpreter = new Interpreter();
+        Interpreter interpreter = new Interpreter(parent.memo, parent.memoize);
         Context execCtx = newContext();
 
         res.register(checkPopArgs(argNames, args, execCtx));

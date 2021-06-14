@@ -4,6 +4,7 @@ import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Double;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Executables.BaseFunction;
 import lemon.jpizza.Objects.Executables.Function;
 import lemon.jpizza.Objects.Executables.Library;
@@ -88,7 +89,7 @@ public class BuiltInFunction extends Library {
         List<Obj> preList = (List<Obj>) list.value;
         int size = preList.size();
         for (int i = 0; i < size; i++) {
-            Obj after = (Obj) res.register(func.execute(Collections.singletonList(preList.get(i))));
+            Obj after = (Obj) res.register(func.execute(Collections.singletonList(preList.get(i)), new Interpreter()));
             if (res.error != null) return res;
             newList.add(after);
         }

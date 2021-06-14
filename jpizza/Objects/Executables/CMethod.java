@@ -2,6 +2,7 @@ package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Str;
@@ -28,8 +29,8 @@ public class CMethod extends Function {
     // Methods
 
     @Override
-    public RTResult execute(List<Obj> args) {
-        return super.execute(args);
+    public RTResult execute(List<Obj> args, Interpreter parent) {
+        return super.execute(args, parent);
     }
 
 

@@ -2,6 +2,7 @@ package lemon.jpizza.Objects;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Double;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Primitives.Bool;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Str;
@@ -78,7 +79,10 @@ public class Value extends Obj {
 
     // Function defaults
 
-    public RTResult execute(List<Obj> args) { return (RTResult) function().getattr("execute", args); }
+    //public RTResult execute(List<Obj> args) { return execute(args, new Interpreter()); }
+    public RTResult execute(List<Obj> args, Interpreter parent) {
+        return (RTResult) function().getattr("execute", args, parent);
+    }
 
     // Other
 

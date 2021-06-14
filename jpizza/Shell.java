@@ -97,7 +97,6 @@ public class Shell {
             } else if (args[0].equals("docs")) {
                 System.out.println("Documentation: https://bit.ly/3vM8G0a");
             }
-            in.nextLine();
             return;
         }
 

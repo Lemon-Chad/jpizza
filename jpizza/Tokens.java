@@ -53,11 +53,13 @@ public class Tokens {
     public static final String TT_DECR = "DECR";
     public static final String TT_DICT = "DICT";
     public static final String TT_DOT = "DOT";
+    public static final String TT_USE = "USE";
 
     public static final Map<String, String> TOKEY = new HashMap<>(){{
         put("[", TT_LSQUARE);
         put("::", TT_CLACCESS);
         put("%", TT_MOD);
+        put("#", TT_USE);
         put("]", TT_RSQUARE);
         put(",", TT_COMMA);
         put("+", TT_PLUS);

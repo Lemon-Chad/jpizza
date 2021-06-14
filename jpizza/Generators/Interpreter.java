@@ -1,9 +1,10 @@
 package lemon.jpizza.Generators;
 
+import lemon.jpizza.*;
 import lemon.jpizza.Cases.Case;
-import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Double;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Nodes.Definitions.*;
@@ -19,8 +20,6 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
-import lemon.jpizza.Shell;
-import lemon.jpizza.Token;
 
 import static lemon.jpizza.Tokens.*;
 
@@ -32,10 +31,18 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import lemon.jpizza.Double;
-
 @SuppressWarnings("unused")
 public class Interpreter {
+
+    public boolean memoize = false;
+    public Memo memo = new Memo();
+
+    public Interpreter(Memo memo, boolean memoize) {
+        this.memo = memo;
+        this.memoize = memoize;
+    }
+
+    public Interpreter() {}
 
     interface Condition {
         boolean go(double x);
@@ -203,9 +210,7 @@ public class Interpreter {
         String funcName = (String) defNode.var_name_tok.value;
         Token nameTok = defNode.var_name_tok;
         Node bodyNode = defNode.body_node;
-        List<String> argNames = new ArrayList<>();
-        int size = defNode.arg_name_toks.size();
-        for (int i = 0; i < size; i++) argNames.add((String) defNode.arg_name_toks.get(i).value);
+        List<String> argNames = gatherArgs(defNode.arg_name_toks);
         CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNames, defNode.bin, defNode.async,
                 defNode.autoreturn);
 
@@ -242,16 +247,20 @@ public class Interpreter {
         return res.success(classValue);
     }
 
+    public List<String> gatherArgs(List<Token> argNameToks) {
+        List<String> argNames = new ArrayList<>();
+        int size = argNameToks.size();
+        for (int i = 0; i < size; i++) argNames.add((String) argNameToks.get(i).value);
+        return argNames;
+    }
+
     public RTResult visit_FuncDefNode(Node node, Context context) {
         RTResult res = new RTResult();
         FuncDefNode defNode = (FuncDefNode) node;
 
         String funcName = defNode.var_name_tok != null ? (String) defNode.var_name_tok.value : null;
         Node bodyNode = defNode.body_node;
-        List<String> argNames = new ArrayList<>();
-        int size = defNode.arg_name_toks.size();
-        for (int i = 0; i < size; i++)
-            argNames.add((String) defNode.arg_name_toks.get(i).value);
+        List<String> argNames = gatherArgs(defNode.arg_name_toks);
         Value funcValue = new Function(funcName, bodyNode, argNames, defNode.async, defNode.autoreturn)
                 .set_context(context).set_pos(node.pos_start, node.pos_end);
 
@@ -299,14 +308,25 @@ public class Interpreter {
         Obj retValue;
         if (valueToCall instanceof BaseFunction) {
             bValueToCall = (BaseFunction) valueToCall;
-            if (bValueToCall.isAsync()) {
-                Thread thread = new Thread(() -> bValueToCall.execute(args));
-                return res.success(new Null().set_pos(node.pos_start, node.pos_end).set_context(context));
+            Cache cache;
+            if (bValueToCall instanceof Library)
+                cache = null;
+            else
+                cache = (Cache) memo.get(bValueToCall.name, args.toArray(new Obj[0]));
+            System.out.println(memo);
+
+            if (memoize && (cache != null)) retValue = (Obj) cache.result;
+            else {
+                if (bValueToCall.isAsync()) {
+                    Thread thread = new Thread(() -> bValueToCall.execute(args, this));
+                    return res.success(new Null().set_pos(node.pos_start, node.pos_end).set_context(context));
+                }
+                retValue = (Obj) res.register(bValueToCall.execute(args, this));
+                if (memoize) memo.add(new Cache(bValueToCall.name, args.toArray(new Obj[0]), retValue));
             }
-            retValue = (Obj) res.register(bValueToCall.execute(args));
         } else {
             cValueToCall = (ClassPlate) valueToCall;
-            retValue = (Obj) res.register(cValueToCall.execute(args));
+            retValue = (Obj) res.register(cValueToCall.execute(args, this));
         }
         if (res.shouldReturn()) return res;
         return res.success(retValue.copy().set_pos(node.pos_start, node.pos_end).set_context(context));
@@ -363,18 +383,21 @@ public class Interpreter {
                 context
         ));
         Object val = ((ClassInstance) var).access((String) cnode.attr_name_tok.value);
-        if (val instanceof String) {
+        if (val instanceof String)
+            return getThis(val, context, node.pos_start, node.pos_end);
+        return res.success(((Obj)val).set_context(((ClassInstance)var).value));
+    }
+
+    public RTResult getThis(Object val, Context context, Position pos_start, Position pos_end) {
             while (context.displayName.equals(val)) {
-                if (context.parent == null) return res.failure(new RTError(
-                        node.pos_start, node.pos_end,
+                if (context.parent == null) return new RTResult().failure(new RTError(
+                        pos_start, pos_end,
                         "Invalid 'this'",
                         context
                 ));
                 context = context.parent;
-            } return res.success(new ClassInstance(context).copy().set_pos(node.pos_start, node.pos_end)
+            } return new RTResult().success(new ClassInstance(context).copy().set_pos(pos_start, pos_end)
                     .set_context(context));
-        }
-        return res.success(((Obj)val).set_context(((ClassInstance)var).value));
     }
 
     public RTResult visit_VarAccessNode(Node node, Context context) {
@@ -389,17 +412,8 @@ public class Interpreter {
                 "'" + varName + "' is not defined",
                 context
         ));
-        if (value instanceof String) {
-            while (context.displayName.equals(value)) {
-                if (context.parent == null) return res.failure(new RTError(
-                        node.pos_start, node.pos_end,
-                        "Invalid 'this'",
-                        context
-                ));
-                context = context.parent;
-            } return res.success(new ClassInstance(context).copy().set_pos(node.pos_start, node.pos_end)
-                    .set_context(context));
-        }
+        if (value instanceof String)
+            return getThis(value, context, node.pos_start, node.pos_end);
         Obj val = ((Obj) value).copy().set_pos(node.pos_start, node.pos_end).set_context(context);
         return res.success(val);
     }
@@ -435,6 +449,16 @@ public class Interpreter {
 
     }
 
+    public RTResult getImprt(String path, String fn, Context context, Position pos_start, Position pos_end)
+            throws IOException {
+        Double i = Shell.imprt(fn, Files.readString(Paths.get(path)), context, pos_start);
+        ClassInstance imp = (ClassInstance) i.get(0);
+        Error error = (Error) i.get(1);
+        if (error != null) return new RTResult().failure(error);
+        imp.set_pos(pos_start, pos_end).set_context(context);
+        return new RTResult().success(imp);
+    }
+
     public RTResult visit_ImportNode(Node node, Context context) throws IOException {
         ImportNode in = (ImportNode) node;
         String fn = (String) in.file_name_tok.value;
@@ -443,30 +467,25 @@ public class Interpreter {
         String modFilePath = modPath + "\\" + file_name;
         var mkdirs = new File("C:\\DP\\modules").mkdirs();
         ClassInstance imp = null;
+        RTResult res = new RTResult();
         if (Constants.LIBRARIES.containsKey(fn)) imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))
                 .set_pos(node.pos_start, node.pos_end).set_context(context);
         else {
-            if (Files.exists(Paths.get(modPath))) {
-                Double i = Shell.imprt(fn, Files.readString(Paths.get(modFilePath)), context, node.pos_start);
-                imp = (ClassInstance) i.get(0);
-                Error error = (Error) i.get(1);
-                if (error != null) return new RTResult().failure(error);
-                imp.set_pos(node.pos_start, node.pos_end).set_context(context);
-            } else if (Files.exists(Paths.get(file_name))) {
-                Double i = Shell.imprt(fn, Files.readString(Paths.get(file_name)), context, node.pos_start);
-                imp = (ClassInstance) i.get(0);
-                Error error = (Error) i.get(1);
-                if (error != null) return new RTResult().failure(error);
-                imp.set_pos(node.pos_start, node.pos_end).set_context(context);
-            }
+            if (Files.exists(Paths.get(modPath)))
+                imp = (ClassInstance) res.register(getImprt(modFilePath, fn, context, node.pos_start,
+                        node.pos_end));
+            else if (Files.exists(Paths.get(file_name)))
+                imp = (ClassInstance) res.register(getImprt(modFilePath, file_name, context, node.pos_start,
+                        node.pos_end));
+            if (res.error != null) return res;
         }
-        if (imp == null) return new RTResult().failure(new RTError(
+        if (imp == null) return res.failure(new RTError(
                 node.pos_start, node.pos_end,
                 "Module does not exist!",
                 context
         ));
         context.symbolTable.set(fn, imp);
-        return new RTResult().success(new Null());
+        return res.success(new Null());
     }
 
     public RTResult visit_AttrAccessNode(Node node, Context context) {
@@ -539,6 +558,20 @@ public class Interpreter {
             return res.failure((Error) ret.get(1));
         number = (Obj) ret.get(0);
         return res.success(number.set_pos(node.pos_start, node.pos_end).set_context(context));
+    }
+
+    @SuppressWarnings("SwitchStatementWithTooFewBranches")
+    public RTResult visit_UseNode(Node node, Context context) {
+        Token useToken = ((UseNode) node).useToken;
+        switch ((String) useToken.value) {
+            case "memoize":
+                memoize = true;
+                break;
+            default:
+                break;
+
+        }
+        return new RTResult().success(new Null());
     }
 
 }

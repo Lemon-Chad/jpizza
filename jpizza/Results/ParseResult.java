@@ -1,6 +1,5 @@
 package lemon.jpizza.Results;
 
-import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Errors.Error;
 
 public class ParseResult {
