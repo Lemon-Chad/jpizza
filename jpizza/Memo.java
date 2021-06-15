@@ -17,7 +17,6 @@ public class Memo {
                 if (args.length != element.args.length) continue;
                 int length = args.length;
                 for (int j = 0; j < length; j++) {
-                    System.out.println(args[j].getClass().getName());
                     if (!((Bool) ((lemon.jpizza.Double) args[j].getattr("eq", element.args[j])).get(0))
                             .trueValue()) {
                         eq = false;

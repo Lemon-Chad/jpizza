@@ -2,7 +2,6 @@ package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Generators.Interpreter;
-import lemon.jpizza.Memo;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;

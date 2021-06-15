@@ -313,7 +313,6 @@ public class Interpreter {
                 cache = null;
             else
                 cache = (Cache) memo.get(bValueToCall.name, args.toArray(new Obj[0]));
-            System.out.println(memo);
 
             if (memoize && (cache != null)) retValue = (Obj) cache.result;
             else {
