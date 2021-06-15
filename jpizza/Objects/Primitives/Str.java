@@ -22,26 +22,26 @@ public class Str extends Value {
 
     // Methods
 
-    public Double mul(Obj o) {
+    public Double<Obj, RTError> mul(Obj o) {
         Num other = (Num) o.number();
         if (other.floating())
-            return new Double(null, new RTError(
+            return new Double<>(null, new RTError(
                     pos_start, pos_end,
                     "Expected long",
                     context
             ));
-        return new Double(new Str(trueValue().repeat(Math.toIntExact(Math.round(other.trueValue())))).set_context(context), null);
+        return new Double<>(new Str(trueValue().repeat(Math.toIntExact(Math.round(other.trueValue())))).set_context(context), null);
     }
-    public Double add(Obj o) {
+    public Double<Obj, RTError> add(Obj o) {
         Str other = (Str) o.astring();
-        return new Double(
+        return new Double<>(
                 new Str(String.format("%s%s", trueValue(), other.trueValue())).set_context(context), null
         );
     }
 
-    public Double eq(Obj o) {
-        if (!(o instanceof Str)) return new Double(new Bool(false), null);
-        return new Double(new Bool(this.trueValue().equals(((Str) o).trueValue())), null);
+    public Double<Obj, RTError> eq(Obj o) {
+        if (!(o instanceof Str)) return new Double<>(new Bool(false), null);
+        return new Double<>(new Bool(this.trueValue().equals(((Str) o).trueValue())), null);
     }
 
     // Conversions

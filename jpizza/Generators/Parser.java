@@ -587,11 +587,11 @@ public class Parser {
 
     public ParseResult ifExpr() {
         ParseResult res = new ParseResult();
-        Double allCases = (Double) res.register(this.ifExprCases("if"));
+        Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.ifExprCases("if"));
         if (res.error != null)
             return res;
-        @SuppressWarnings("unchecked") List<Case> cases = (List<Case>) allCases.get(0);
-        ElseCase elseCase = (ElseCase) allCases.get(1);
+        List<Case> cases = allCases.a;
+        ElseCase elseCase = allCases.b;
         return res.success(new QueryNode(cases, elseCase));
     }
 
@@ -616,12 +616,12 @@ public class Parser {
             return res;
         cases.add(new Case(condition, statements, true));
 
-        Double allCases = (Double) res.register(this.elifElse());
-        @SuppressWarnings("unchecked") List<Case> newCases = (List<Case>) allCases.get(0);
-        ElseCase elseCase = (ElseCase) allCases.get(1);
+        Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.elifElse());
+        List<Case> newCases = allCases.a;
+        ElseCase elseCase = allCases.b;
         cases.addAll(newCases);
 
-        return res.success(new Double(cases, elseCase));
+        return res.success(new Double<>(cases, elseCase));
     }
 
     public ParseResult elifElse() {
@@ -630,18 +630,17 @@ public class Parser {
         ElseCase elseCase;
 
         if (currentToken.matches(TT_KEYWORD, "elif")) {
-            Double allCases = (Double) res.register(this.elifExpr());
+            Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.elifExpr());
             if (res.error != null)
                 return res;
-            //noinspection unchecked
-            cases = (List<Case>) allCases.get(0);
-            elseCase = (ElseCase) allCases.get(1);
+            cases = allCases.a;
+            elseCase = allCases.b;
         } else {
             elseCase = (ElseCase) res.register(this.elseExpr());
             if (res.error != null)
                 return res;
         } return res.success(
-                new Double(cases, elseCase)
+                new Double<>(cases, elseCase)
         );
 
     }
@@ -922,7 +921,7 @@ public class Parser {
             res.registerAdvancement(); advance();
         }
 
-        @SuppressWarnings("unchecked") List<Token> argNameToks = (List<Token>) res.register(gatherArgs());
+        List<Token> argNameToks = (List<Token>) res.register(gatherArgs());
         if (res.error != null) return res;
 
         Node nodeToReturn;
@@ -957,7 +956,6 @@ public class Parser {
 
     }
 
-    @SuppressWarnings("unchecked")
     public ParseResult classDef() {
         ParseResult res = new ParseResult();
 

@@ -1,6 +1,7 @@
 package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
@@ -52,7 +53,7 @@ public class ClassInstance extends Obj {
             int length = argx.length;
             for (int i = 0; i < length; i++) args.add((Obj) argx[i]);
             RTResult awesomePossum = bin.execute(args, new Interpreter());
-            return new Double(awesomePossum.value, awesomePossum.error);
+            return new Double<>(awesomePossum.value, awesomePossum.error);
         }
         Method method;
         List<Object> args = Arrays.asList(argx.clone());

@@ -1,18 +1,11 @@
 package lemon.jpizza;
 
-public class Double {
-    Object a; Object b;
-    public Double(Object a, Object b) {
+public class Double<T, X> {
+    public T a;
+    public X b;
+    public Double(T a, X b) {
         this.a = a;
         this.b = b;
-    }
-
-    public Object get(int i) {
-        if (i == 0)
-            return a;
-        else if (i == 1)
-            return b;
-        return null;
     }
 
     public String toString() {

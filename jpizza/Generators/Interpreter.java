@@ -34,6 +34,8 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class Interpreter {
 
+    Clock clock = new Clock();
+
     public boolean memoize = false;
     public Memo memo = new Memo();
 
@@ -51,8 +53,11 @@ public class Interpreter {
     public RTResult visit(Node node, Context context) {
         String methodName = "visit_"+node.getClass().getSimpleName();
         try {
+            clock.tick();
             Method method = Interpreter.class.getMethod(methodName, Node.class, Context.class);
-            return (RTResult) method.invoke(this, node, context);
+            RTResult res = (RTResult) method.invoke(this, node, context);
+            System.out.println(clock.tick());
+            return res;
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             System.out.printf("No %s method defined!%n", methodName); return null;
@@ -80,7 +85,6 @@ public class Interpreter {
         return new RTResult().success(new Null().set_context(context).set_pos(node.pos_start, node.pos_end));
     }
 
-    @SuppressWarnings("unchecked")
     public RTResult visit_DictNode(Node node, Context context) {
         RTResult res = new RTResult();
         Dict dict = new Dict(new HashMap<>());
@@ -146,17 +150,21 @@ public class Interpreter {
 
         String vtk = (String) loop.var_name_tok.value;
         Obj value;
+
+        clock.tick();
         while (condition.go(i)) {
             context.symbolTable.set(vtk, new Num(i));
             i += step;
 
             value = (Obj) res.register(visit(loop.body_node, context));
+            //value = null;
             if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
 
             if (res.continueLoop) continue;
             if (res.breakLoop) break;
 
             elements.add(value);
+            //System.out.println(clock.tick());
         }
 
         context.symbolTable.remove(vtk);
@@ -450,9 +458,9 @@ public class Interpreter {
 
     public RTResult getImprt(String path, String fn, Context context, Position pos_start, Position pos_end)
             throws IOException {
-        Double i = Shell.imprt(fn, Files.readString(Paths.get(path)), context, pos_start);
-        ClassInstance imp = (ClassInstance) i.get(0);
-        Error error = (Error) i.get(1);
+        Double<ClassInstance, Error> i = Shell.imprt(fn, Files.readString(Paths.get(path)), context, pos_start);
+        ClassInstance imp = i.a;
+        Error error = i.b;
         if (error != null) return new RTResult().failure(error);
         imp.set_pos(pos_start, pos_end).set_context(context);
         return new RTResult().success(imp);
@@ -507,7 +515,7 @@ public class Interpreter {
     public RTResult visit_BinOpNode(Node node, Context context) {
         RTResult res = new RTResult();
         BinOpNode opNode = (BinOpNode) node;
-        Double ret;
+        Double<Obj, RTError> ret;
 
         Obj left = (Obj) res.register(visit(opNode.left_node, context));
         if (res.shouldReturn()) return res;
@@ -516,8 +524,8 @@ public class Interpreter {
 
 
         if (opNode.op_tok.type.equals(TT_GT) || opNode.op_tok.type.equals(TT_GTE)) {
-            ret = (Double) right.getattr(opNode.op_tok.type.equals(TT_GT) ? "lte" : "lt", left);
-        } else ret = (Double) left.getattr(switch (opNode.op_tok.type) {
+            ret = (Double<Obj, RTError>) right.getattr(opNode.op_tok.type.equals(TT_GT) ? "lte" : "lt", left);
+        } else ret = (Double<Obj, RTError>) left.getattr(switch (opNode.op_tok.type) {
             case TT_MINUS -> "sub";
             case TT_MUL -> "mul";
             case TT_DIV -> "div";
@@ -532,8 +540,8 @@ public class Interpreter {
             case TT_DOT -> "get";
             default -> "add";
         }, right);
-        if (ret.get(1) != null) return res.failure((Error) ret.get(1));
-        return res.success(((Obj) ret.get(0)).set_pos(node.pos_start, node.pos_end).set_context(context));
+        if (ret.b != null) return res.failure(ret.b);
+        return res.success((ret.a).set_pos(node.pos_start, node.pos_end).set_context(context));
     }
 
     public RTResult visit_UnaryOpNode(Node node, Context context) {
@@ -544,18 +552,18 @@ public class Interpreter {
         if (res.shouldReturn()) return res;
 
         String opTokType = unOp.op_tok.type;
-        Double ret;
+        Double<Obj, RTError> ret;
         if (opTokType.equals(TT_MINUS))
-            ret = (Double) number.getattr("mul", new Num(-1));
+            ret = (Double<Obj, RTError>) number.getattr("mul", new Num(-1));
         else if (Arrays.asList(TT_INCR, TT_DECR).contains(opTokType))
-            ret = (Double) number.getattr("add", new Num(opTokType.equals(TT_INCR) ? 1 : -1));
+            ret = (Double<Obj, RTError>) number.getattr("add", new Num(opTokType.equals(TT_INCR) ? 1 : -1));
         else if (opTokType.equals(TT_NOT))
-            ret = (Double) number.getattr("invert");
+            ret = (Double<Obj, RTError>) number.getattr("invert");
         else
-            ret = new Double(number, null);
-        if (ret.get(1) != null)
-            return res.failure((Error) ret.get(1));
-        number = (Obj) ret.get(0);
+            ret = new Double<>(number, null);
+        if (ret.b != null)
+            return res.failure(ret.b);
+        number = ret.a;
         return res.success(number.set_pos(node.pos_start, node.pos_end).set_context(context));
     }
 

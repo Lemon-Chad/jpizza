@@ -1,5 +1,6 @@
 package lemon.jpizza;
 
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Bool;
 
@@ -17,7 +18,7 @@ public class Memo {
                 if (args.length != element.args.length) continue;
                 int length = args.length;
                 for (int j = 0; j < length; j++) {
-                    if (!((Bool) ((lemon.jpizza.Double) args[j].getattr("eq", element.args[j])).get(0))
+                    if (!((Bool) ((lemon.jpizza.Double<Obj, RTError>) args[j].getattr("eq", element.args[j])).a)
                             .trueValue()) {
                         eq = false;
                         break;

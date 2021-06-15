@@ -80,7 +80,6 @@ public class BuiltInFunction extends Library {
         )));
     }
 
-    @SuppressWarnings("unchecked")
     public RTResult execute_foreach(Context execCtx) {
         RTResult res = new RTResult();
         PList list = (PList)((Obj) execCtx.symbolTable.get("list")).alist();
@@ -158,14 +157,14 @@ public class BuiltInFunction extends Library {
                     execCtx
             ));
         }
-        Double runtime = Shell.run(fn, script);
-        if (runtime.get(1) != null) return res.failure(new RTError(
+        Double<Obj, Error> runtime = Shell.run(fn, script);
+        if (runtime.b != null) return res.failure(new RTError(
                 pos_start, pos_end,
-                String.format("Failed to finish executing script \"%s\"%n%s", fn, ((Error) runtime.get(1)).asString()),
+                String.format("Failed to finish executing script \"%s\"%n%s", fn, runtime.b.asString()),
                 execCtx
         ));
-        System.out.println(runtime.get(0));
-        return res.success(runtime.get(0) != null ? runtime.get(0) : new Null());
+        System.out.println(runtime.a);
+        return res.success(runtime.a != null ? runtime.a : new Null());
     }
 
     public RTResult execute_size(Context execCtx) {
@@ -327,9 +326,9 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list!",
                 execCtx
         ));
-        Double result = ((PList) list).append(value);
-        if (result.get(1) != null) return new RTResult().failure((Error) result.get(1));
-        return new RTResult().success(result.get(0));
+        Double<Obj, RTError> result = ((PList) list).append(value);
+        if (result.b != null) return new RTResult().failure(result.b);
+        return new RTResult().success(result.a);
     }
 
     public RTResult execute_remove(Context execCtx) {
@@ -340,9 +339,9 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list!",
                 execCtx
         ));
-        Double result = ((PList) list).remove(value);
-        if (result.get(1) != null) return new RTResult().failure((Error) result.get(1));
-        return new RTResult().success(result.get(0));
+        Double<Obj, RTError> result = ((PList) list).remove(value);
+        if (result.b != null) return new RTResult().failure(result.b);
+        return new RTResult().success(result.a);
     }
 
     public RTResult execute_contains(Context execCtx) {
@@ -366,9 +365,9 @@ public class BuiltInFunction extends Library {
         ));
         RTResult e = isInt(value, execCtx);
         if (e.error != null) return e;
-        Double result = ((PList) list).pop(value);
-        if (result.get(1) != null) return new RTResult().failure((Error) result.get(1));
-        return new RTResult().success(result.get(0));
+        Double<Obj, RTError> result = ((PList) list).pop(value);
+        if (result.b != null) return new RTResult().failure(result.b);
+        return new RTResult().success(result.a);
     }
 
     public RTResult execute_extend(Context execCtx) {

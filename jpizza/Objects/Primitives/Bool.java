@@ -1,7 +1,7 @@
 package lemon.jpizza.Objects.Primitives;
 
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Nodes.Values.BooleanNode;
-import lemon.jpizza.Objects.Executables.BaseFunction;
 import lemon.jpizza.Objects.Executables.Function;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Value;
@@ -20,19 +20,19 @@ public class Bool extends Value {
 
     // Methods
 
-    public Double invert() { return new Double(new Bool(!(boolean)value), null);}
-    public Double also(Obj o) {
+    public Double<Obj, RTError> invert() { return new Double<>(new Bool(!(boolean)value), null);}
+    public Double<Obj, RTError> also(Obj o) {
         Value other = (Value) o.bool();
-        return new Double(new Bool((boolean) this.value || (boolean) other.value), null);
+        return new Double<>(new Bool((boolean) this.value || (boolean) other.value), null);
     }
-    public Double including(Obj o) {
+    public Double<Obj, RTError> including(Obj o) {
         Value other = (Value) o.bool();
-        return new Double(new Bool((boolean) this.value && (boolean) other.value), null);
+        return new Double<>(new Bool((boolean) this.value && (boolean) other.value), null);
     }
 
-    public Double eq(Obj o) {
-        if (!(o instanceof Bool)) return new Double(new Bool(false), null);
-        return new Double(new Bool(this.trueValue() == ((Bool) o).trueValue()), null);
+    public Double<Obj, RTError> eq(Obj o) {
+        if (!(o instanceof Bool)) return new Double<>(new Bool(false), null);
+        return new Double<>(new Bool(this.trueValue() == ((Bool) o).trueValue()), null);
     }
 
     // Conversions

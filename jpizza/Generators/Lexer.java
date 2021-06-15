@@ -1,6 +1,7 @@
 package lemon.jpizza.Generators;
 
 import lemon.jpizza.Double;
+import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Position;
 import lemon.jpizza.Token;
 
@@ -45,7 +46,7 @@ public class Lexer {
         advance();
     }
 
-    public Double make_tokens() {
+    public Double<List<Token>, Error> make_tokens() {
         List<Token> tokens = new ArrayList<>();
         while (currentChar != null) {
             if (!currentChar.matches(".") || Character.isWhitespace(currentChar.toCharArray()[0])) {
@@ -68,26 +69,26 @@ public class Lexer {
             } else if (String.valueOf(NUMBERS).contains(currentChar)) {
                 tokens.add(make_number());
             } else if ("!<>=".contains(currentChar)) {
-                Double d = make_equals_expr();
-                Object tok = d.get(0); Object error = d.get(1);
+                Double<Token, Error> d = make_equals_expr();
+                Token tok = d.a; Error error = d.b;
                 if (error != null) {
-                    return new Double(
-                            new ArrayList<Token>(),
+                    return new Double<>(
+                            new ArrayList<>(),
                             error
                     );
-                } tokens.add((Token) tok);
+                } tokens.add(tok);
             } else {
                 String c = currentChar;
                 Position p = pos.copy();
                 advance();
-                return new Double(
-                        new ArrayList<Token>(),
+                return new Double<>(
+                        new ArrayList<>(),
                         IllegalCharError(p, pos, String.format("'%s'", c))
                 );
             }
         }
         tokens.add(new Token(TT_EOF, pos));
-        return new Double(
+        return new Double<>(
                 tokens,
                 null
         );
@@ -123,7 +124,7 @@ public class Lexer {
         return new Token(TT_STRING, string.toString(), pos_start, pos);
     }
 
-    public Double make_equals_expr() {
+    public Double<Token, Error> make_equals_expr() {
         Position pos_start = pos.copy();
         String c = currentChar;
         advance();
@@ -131,7 +132,7 @@ public class Lexer {
         if (currentChar.equals("=")) {
             advance();
 
-            return new Double(
+            return new Double<>(
                     new Token(switch (c) {
                         case "!" -> TT_NE;
                         case ">" -> TT_GTE;
@@ -143,12 +144,12 @@ public class Lexer {
             );
         } else if (c.equals("=")) {
             advance();
-            return new Double(
+            return new Double<>(
                     null,
                     ExpectedCharError(pos_start, pos, String.format("'=' (after '%s')", c))
             );
         } else {
-            return new Double(
+            return new Double<>(
                     new Token(switch (c) {
                         case ">" -> TT_GT;
                         case "<" -> TT_LT;

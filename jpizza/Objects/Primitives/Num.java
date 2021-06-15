@@ -26,51 +26,51 @@ public class Num extends Value {
 
     // Methods
 
-    public Double add(Obj o) {
+    public Double<Obj, RTError> add(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Num(other.trueValue() + trueValue()).set_context(context), null);
+        return new Double<>(new Num(other.trueValue() + trueValue()).set_context(context), null);
     }
-    public Double mod(Obj o) {
+    public Double<Obj, RTError> mod(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Num(other.trueValue() % trueValue()).set_context(context), null);
+        return new Double<>(new Num(other.trueValue() % trueValue()).set_context(context), null);
     }
-    public Double sub(Obj o) {
+    public Double<Obj, RTError> sub(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Num(trueValue() - other.trueValue()).set_context(context), null);
+        return new Double<>(new Num(trueValue() - other.trueValue()).set_context(context), null);
     }
-    public Double mul(Obj o) {
+    public Double<Obj, RTError> mul(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Num(other.trueValue() * trueValue()).set_context(context), null);
+        return new Double<>(new Num(other.trueValue() * trueValue()).set_context(context), null);
     }
-    public Double div(Obj o) {
+    public Double<Obj, RTError> div(Obj o) {
         Num other = (Num) o.number();
         if (other.trueValue() == 0)
-            return new Double(null, new RTError(
+            return new Double<>(null, new RTError(
                     pos_start, pos_end,
                     "Division by 0",
                     context
             ));
-        return new Double(new Num(trueValue() / other.trueValue()).set_context(context), null);
+        return new Double<>(new Num(trueValue() / other.trueValue()).set_context(context), null);
     }
-    public Double fastpow(Obj o) {
+    public Double<Obj, RTError> fastpow(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Num(Math.pow(trueValue(), other.trueValue())).set_context(context), null);
+        return new Double<>(new Num(Math.pow(trueValue(), other.trueValue())).set_context(context), null);
     }
-    public Double lt(Obj o) {
+    public Double<Obj, RTError> lt(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Bool(trueValue() < other.trueValue()).set_context(context), null);
+        return new Double<>(new Bool(trueValue() < other.trueValue()).set_context(context), null);
     }
-    public Double lte(Obj o) {
+    public Double<Obj, RTError> lte(Obj o) {
         Num other = (Num) o.number();
-        return new Double(new Bool(trueValue() <= other.trueValue()).set_context(context), null);
+        return new Double<>(new Bool(trueValue() <= other.trueValue()).set_context(context), null);
     }
-    public Double invert() {
-        return new Double(new Num(-trueValue()).set_context(context), null);
+    public Double<Obj, RTError> invert() {
+        return new Double<>(new Num(-trueValue()).set_context(context), null);
     }
 
-    public Double eq(Obj o) {
-        if (!(o instanceof Num)) return new Double(new Bool(false), null);
-        return new Double(new Bool(this.trueValue() == ((Num) o).trueValue()), null);
+    public Double<Obj, RTError> eq(Obj o) {
+        if (!(o instanceof Num)) return new Double<>(new Bool(false), null);
+        return new Double<>(new Bool(this.trueValue() == ((Num) o).trueValue()), null);
     }
 
     // Conversions

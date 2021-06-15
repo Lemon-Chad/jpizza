@@ -2,6 +2,7 @@ package lemon.jpizza.Objects;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Double;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Primitives.Bool;
 import lemon.jpizza.Objects.Primitives.Null;
@@ -48,34 +49,34 @@ public class Value extends Obj {
     // Dictionary defaults
 
     public Obj delete(Obj other) { return (Obj)    dictionary().getattr("delete", other); }
-    public Double get(Obj other) { return (Double) dictionary().getattr("get", other); }
+    public Double<Obj, RTError> get(Obj other) { return (Double<Obj, RTError>) dictionary().getattr("get", other); }
 
     // Number defaults
 
-    public Double add(Obj other) { return (Double) number().getattr("add", other); }
-    public Double sub(Obj other) { return (Double) number().getattr("sub", other); }
-    public Double mul(Obj other) { return (Double) number().getattr("mul", other); }
-    public Double div(Obj other) { return (Double) number().getattr("div", other); }
-    public Double fastpow(Obj other) { return (Double) number().getattr("fastpow", other); }
-    public Double mod(Obj other) { return (Double) number().getattr("mod", other); }
-    public Double lte(Obj other) { return (Double) number().getattr("lte", other); }
-    public Double lt(Obj other) { return (Double) number().getattr("lt", other); }
+    public Double<Obj, RTError> add(Obj other) { return (Double<Obj, RTError>) number().getattr("add", other); }
+    public Double<Obj, RTError> sub(Obj other) { return (Double<Obj, RTError>) number().getattr("sub", other); }
+    public Double<Obj, RTError> mul(Obj other) { return (Double<Obj, RTError>) number().getattr("mul", other); }
+    public Double<Obj, RTError> div(Obj other) { return (Double<Obj, RTError>) number().getattr("div", other); }
+    public Double<Obj, RTError> fastpow(Obj other) { return (Double<Obj, RTError>) number().getattr("fastpow", other); }
+    public Double<Obj, RTError> mod(Obj other) { return (Double<Obj, RTError>) number().getattr("mod", other); }
+    public Double<Obj, RTError> lte(Obj other) { return (Double<Obj, RTError>) number().getattr("lte", other); }
+    public Double<Obj, RTError> lt(Obj other) { return (Double<Obj, RTError>) number().getattr("lt", other); }
 
     // String defaults
 
     // Boolean defaults
 
-    public Double also(Obj other) { return (Double) bool().getattr("also", other); }
-    public Double including(Obj other) { return (Double) bool().getattr("including", other); }
-    public Double invert() { return (Double) bool().getattr("invert"); }
+    public Double<Obj, RTError> also(Obj other) { return (Double<Obj, RTError>) bool().getattr("also", other); }
+    public Double<Obj, RTError> including(Obj other) { return (Double<Obj, RTError>) bool().getattr("including", other); }
+    public Double<Obj, RTError> invert() { return (Double<Obj, RTError>) bool().getattr("invert"); }
 
 
     // List defaults
 
-    public Double append(Obj other) { return (Double) alist().getattr("append", other); }
-    public Double extend(Obj other) { return (Double) alist().getattr("extend", other); }
-    public Double pop(Obj other) { return (Double) alist().getattr("pop", other); }
-    public Double remove(Obj other) { return (Double) alist().getattr("remove", other); }
+    public Double<Obj, RTError> append(Obj other) { return (Double<Obj, RTError>) alist().getattr("append", other); }
+    public Double<Obj, RTError> extend(Obj other) { return (Double<Obj, RTError>) alist().getattr("extend", other); }
+    public Double<Obj, RTError> pop(Obj other) { return (Double<Obj, RTError>) alist().getattr("pop", other); }
+    public Double<Obj, RTError> remove(Obj other) { return (Double<Obj, RTError>) alist().getattr("remove", other); }
 
     // Function defaults
 
@@ -86,8 +87,8 @@ public class Value extends Obj {
 
     // Other
 
-    public Double eq(Obj obj) { return new Double(new Bool(this.value.equals(obj.value)), null); }
-    public Double ne(Obj obj) { return new Double(((Bool) eq(obj).get(0)).invert(), null); }
+    public Double<Obj, RTError> eq(Obj obj) { return new Double<>(new Bool(this.value.equals(obj.value)), null); }
+    public Double<Obj, RTError> ne(Obj obj) { return new Double<>(((Bool) eq(obj).a).invert().a, null); }
 
     public String toString() { return value.toString(); }
     public Obj copy() { return new Value(value).set_pos(pos_start, pos_end).set_context(context); }

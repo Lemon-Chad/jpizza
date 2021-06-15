@@ -2,6 +2,7 @@ package lemon.jpizza;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Generators.Lexer;
 import lemon.jpizza.Generators.Parser;
@@ -23,9 +24,10 @@ import lemon.jpizza.Results.RTResult;
 
 public class Shell {
 
+    static Clock clock = new Clock();
+
     static SymbolTable globalSymbolTable = new SymbolTable();
 
-    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws IOException {
         Scanner in = new Scanner(System.in);
 
@@ -77,6 +79,11 @@ public class Shell {
 
         }}, globalSymbolTable);
 
+        /*clock.tick();
+        ArrayList<Integer> l = new ArrayList<>();
+        for (int i = 0; i < 1000000; i++) l.add(i + 1);
+        System.out.println(clock.tick());*/
+
         if (args.length == 1) {
             if (args[0].equals("help")) {
                 System.out.println("""
@@ -88,9 +95,9 @@ public class Shell {
             } else if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
                     String scrpt = Files.readString(Path.of(args[0]));
-                    Double res = run(args[0], scrpt);
-                    if (res.get(1) != null)
-                        System.out.println(((Error) res.get(1)).asString());
+                    Double<Obj, Error> res = run(args[0], scrpt);
+                    if (res.b != null)
+                        System.out.println(res.b.asString());
                 } else {
                     System.out.println("File does not exist.");
                 }
@@ -104,10 +111,10 @@ public class Shell {
             System.out.print("-> "); String input = in.nextLine();
             if (input.equals("quit"))
                 break;
-            Double a = run("<shell>", input);
-            if (a.get(1) != null) System.out.println(((Error) a.get(1)).asString());
+            Double<Obj, Error> a = run("<shell>", input);
+            if (a.b != null) System.out.println(a.b.asString());
             else {
-                List<Obj> results = (List<Obj>) ((PList) a.get(0)).value;
+                List<Obj> results = (List<Obj>) a.a.value;
                 if (results.size() > 0) {
                     StringBuilder out = new StringBuilder();
                     int size = results.size();
@@ -121,38 +128,40 @@ public class Shell {
         }
     }
 
-    public static Double run(String fn, String text) {
+    public static Double<Node, Error> getAst(String fn, String text) {
         Lexer lexer = new Lexer(fn, text);
-        Double x = lexer.make_tokens();
-        @SuppressWarnings("unchecked") List<Token> tokens = (List<Token>) x.get(0);
-        Object error = x.get(1);
+        //clock.tick();
+        Double<List<Token>, Error> x = lexer.make_tokens();
+        //System.out.println(clock.tick());
+        List<Token> tokens = x.a;
+        Error error = x.b;
         if (error != null)
-            return new Double(null, error);
+            return new Double<>(null, error);
         Parser parser = new Parser(tokens);
         ParseResult ast = parser.parse();
+        //System.out.println(clock.tick());
         if (ast.error != null)
-            return new Double(null, ast.error);
-        Context context = new Context(fn, null, null);
-        context.symbolTable = globalSymbolTable;
-        RTResult result = new Interpreter().visit((Node) ast.node, context);
-        return new Double(result.value, result.error);
+            return new Double<>(null, ast.error);
+        return new Double<>((Node)ast.node, null);
     }
 
-    public static Double imprt(String fn, String text, Context parent, Position entry_pos) {
-        Lexer lexer = new Lexer(fn, text);
-        Double x = lexer.make_tokens();
-        @SuppressWarnings("unchecked") List<Token> tokens = (List<Token>) x.get(0);
-        Object error = x.get(1);
-        if (error != null)
-            return new Double(null, error);
-        Parser parser = new Parser(tokens);
-        ParseResult ast = parser.parse();
-        if (ast.error != null)
-            return new Double(null, ast.error);
+    public static Double<Obj, Error> run(String fn, String text) {
+        Double<Node, Error> ast = getAst(fn, text);
+        if (ast.b != null) return new Double<>(null, ast.b);
+        Context context = new Context(fn, null, null);
+        context.symbolTable = globalSymbolTable;
+        RTResult result = new Interpreter().visit(ast.a, context);
+        //System.out.println(clock.tick());
+        return new Double<>((Obj) result.value, result.error);
+    }
+
+    public static Double<ClassInstance, Error> imprt(String fn, String text, Context parent, Position entry_pos) {
+        Double<Node, Error> ast = getAst(fn, text);
+        if (ast.b != null) return new Double<>(null, ast.b);
         Context context = new Context(fn, parent, entry_pos);
         context.symbolTable = globalSymbolTable;
-        RTResult result = new Interpreter().visit((Node) ast.node, context);
-        return new Double(new ClassInstance(context), result.error);
+        RTResult result = new Interpreter().visit(ast.a, context);
+        return new Double<>(new ClassInstance(context), result.error);
     }
 
 }

@@ -1,6 +1,7 @@
 package lemon.jpizza.Objects.Primitives;
 
 import lemon.jpizza.Double;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Nodes.Values.DictNode;
 import lemon.jpizza.Objects.Executables.Function;
 import lemon.jpizza.Objects.Obj;
@@ -10,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings("unchecked")
 public class Dict extends Value {
     public Dict(Map<Obj, Obj> value) {super(value);}
     public Map<Obj, Obj> trueValue() { return (Map<Obj, Obj>) value; }
@@ -22,7 +22,7 @@ public class Dict extends Value {
         Obj[] keySet = (Obj[]) trueValue().keySet().toArray();
         int length = keySet.length;
         for (int i = 0; i < length; i++)
-            if (((Bool)((Double) keySet[i].getattr("eq", other)).get(0)).trueValue()) return true;
+            if (((Bool)((Double<Obj, RTError>) keySet[i].getattr("eq", other)).a).trueValue()) return true;
         return false;
     }
     public Obj delete(Obj other) {
@@ -31,7 +31,7 @@ public class Dict extends Value {
         int length = entrySet.length;
         for (int i = 0; i < length; i++) {
             Obj k = entrySet[i];
-            if (((Bool)((Double) k.getattr("eq", other)).get(0)).trueValue()) {
+            if (((Bool)((Double<Obj, RTError>) k.getattr("eq", other)).a).trueValue()) {
                 key = k; break;
             }
         }
@@ -51,30 +51,30 @@ public class Dict extends Value {
 
     // Methods
 
-    public Double add(Obj o) {
+    public Double<Obj, RTError> add(Obj o) {
         Dict other = (Dict) o.dictionary();
         Map<Obj, Obj> combo = new HashMap<>(trueValue());
         other.trueValue().forEach(
                 (key, value) -> combo.merge(key, value, (v1, v2) -> v1)
         );
-        return new Double(new Dict(combo).set_context(context).set_pos(pos_start, pos_end), null);
+        return new Double<>(new Dict(combo).set_context(context).set_pos(pos_start, pos_end), null);
     }
-    public Double get(Obj o) {
+    public Double<Obj, RTError> get(Obj o) {
         ArrayList<Obj> lx = new ArrayList<>();
         trueValue().forEach(
                 (key, value) -> {
-                    if (((Bool)((Double) key.getattr("eq", o)).get(0)).trueValue()) lx.add(value);
+                    if (((Bool)((Double<Obj, RTError>) key.getattr("eq", o)).a).trueValue()) lx.add(value);
                 }
         );
-        return new Double(
+        return new Double<>(
                 lx.size() > 0 ? lx.get(0) : new Null(),
                 null
         );
     }
 
-    public Double eq(Obj o) {
-        if (!(o instanceof Dict)) return new Double(new Bool(false), null);
-        return new Double(new Bool(this.trueValue().equals(((Dict) o).trueValue())), null);
+    public Double<Obj, RTError> eq(Obj o) {
+        if (!(o instanceof Dict)) return new Double<>(new Bool(false), null);
+        return new Double<>(new Bool(this.trueValue().equals(((Dict) o).trueValue())), null);
     }
 
     // Conversions

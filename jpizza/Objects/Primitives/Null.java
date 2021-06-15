@@ -1,6 +1,8 @@
 package lemon.jpizza.Objects.Primitives;
 
 import lemon.jpizza.Double;
+import lemon.jpizza.Errors.Error;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Nodes.Values.NullNode;
 import lemon.jpizza.Objects.Executables.BaseFunction;
 import lemon.jpizza.Objects.Executables.Function;
@@ -32,9 +34,9 @@ public class Null extends Value {
             .set_context(context).set_pos(pos_start, pos_end); }
     public Value alist() { return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end); }
 
-    public Double eq(Obj o) {
-        if (!(o instanceof Null)) return new Double(new Bool(false), null);
-        return new Double(new Bool(true), null);
+    public Double<Obj, RTError> eq(Obj o) {
+        if (!(o instanceof Null)) return new Double<>(new Bool(false), null);
+        return new Double<>(new Bool(true), null);
     }
 
     // Defaults
