@@ -12,7 +12,7 @@ public class DemoLibrary extends Library {
     public DemoLibrary(String name) { super(name); }
 
     /*
-    To initialize a library, you have to add initialization code to the Shell.java file
+    To initialize a library, you have to add initialization code to the Shell.java file 
     The code for this library would be:
 
                                        Reference to the class
