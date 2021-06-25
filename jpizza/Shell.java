@@ -154,7 +154,7 @@ public class Shell {
         // System.out.println(result.value.getClass().getName());
         return new Double<>((Obj) result.value, result.error);
     }
-
+    //Another public static 🥱
     public static Double<ClassInstance, Error> imprt(String fn, String text, Context parent, Position entry_pos) {
         Double<Node, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Double<>(null, ast.b);
