@@ -53,11 +53,10 @@ public class Interpreter {
     public RTResult visit(Node node, Context context) {
         String methodName = "visit_"+node.getClass().getSimpleName();
         try {
-            clock.tick();
+            //clock.tick();
             Method method = Interpreter.class.getMethod(methodName, Node.class, Context.class);
-            RTResult res = (RTResult) method.invoke(this, node, context);
-            System.out.println(clock.tick());
-            return res;
+            //System.out.println(clock.tick());
+            return (RTResult) method.invoke(this, node, context);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
             System.out.printf("No %s method defined!%n", methodName); return null;
@@ -151,20 +150,20 @@ public class Interpreter {
         String vtk = (String) loop.var_name_tok.value;
         Obj value;
 
-        clock.tick();
+        // clock.tick();
         while (condition.go(i)) {
             context.symbolTable.set(vtk, new Num(i));
             i += step;
 
             value = (Obj) res.register(visit(loop.body_node, context));
-            //value = null;
+            // value = null;
             if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
 
             if (res.continueLoop) continue;
             if (res.breakLoop) break;
 
             elements.add(value);
-            //System.out.println(clock.tick());
+            // System.out.println(clock.tick());
         }
 
         context.symbolTable.remove(vtk);

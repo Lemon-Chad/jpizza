@@ -114,7 +114,7 @@ public class Shell {
             Double<Obj, Error> a = run("<shell>", input);
             if (a.b != null) System.out.println(a.b.asString());
             else {
-                List<Obj> results = (List<Obj>) a.a.value;
+                List<Obj> results = ((PList) a.a).trueValue();
                 if (results.size() > 0) {
                     StringBuilder out = new StringBuilder();
                     int size = results.size();
@@ -151,7 +151,8 @@ public class Shell {
         Context context = new Context(fn, null, null);
         context.symbolTable = globalSymbolTable;
         RTResult result = new Interpreter().visit(ast.a, context);
-        //System.out.println(clock.tick());
+        // System.out.println(clock.tick());
+        // System.out.println(result.value.getClass().getName());
         return new Double<>((Obj) result.value, result.error);
     }
 
