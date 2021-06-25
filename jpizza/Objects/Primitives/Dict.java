@@ -2,6 +2,7 @@ package lemon.jpizza.Objects.Primitives;
 
 import lemon.jpizza.Double;
 import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Nodes.Values.DictNode;
 import lemon.jpizza.Objects.Executables.Function;
 import lemon.jpizza.Objects.Obj;
@@ -82,7 +83,7 @@ public class Dict extends Value {
     public Value alist() { return new PList(new ArrayList<>(trueValue().keySet()))
             .set_context(context).set_pos(pos_start, pos_end); }
     public Value number() { return new Num(trueValue().size()).set_context(context).set_pos(pos_start, pos_end); }
-    public Value function() { return new Function(null, new DictNode((Map<Object, Object>) value,
+    public Value function() { return new Function(null, new DictNode(new HashMap<>(),
             pos_start, pos_end), null).set_context(context).set_pos(pos_start, pos_end); }
     public Value dictionary() { return new Dict(trueValue()).set_context(context).set_pos(pos_start, pos_end); }
     public Value bool() { return new Bool(trueValue().size() > 0)

@@ -7,24 +7,24 @@ import lemon.jpizza.Position;
 import java.util.Map;
 
 public class DictNode extends Node {
-    public Map<Object, Object> dict;
+    public Map<Node, Node> dict;
 
-    public DictNode(Map<Object, Object> dict, Position pos_start, Position pos_end) {
+    public DictNode(Map<Node, Node> dict, Position pos_start, Position pos_end) {
         this.dict = dict;
         this.pos_start = pos_start;
         this.pos_end = pos_end;
     }
 
-    public Object get(Object key) {
+    public Object get(Node key) {
         return dict.get(key);
     }
 
-    public DictNode delete(Object key) {
+    public DictNode delete(Node key) {
         dict.remove(key);
         return this;
     }
 
-    public DictNode set(Object key, Object value) {
+    public DictNode set(Node key, Node value) {
         dict.put(key, value);
         return this;
     }

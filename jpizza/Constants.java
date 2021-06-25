@@ -44,6 +44,7 @@ public class Constants {
             "ingredients",
             "recipe",
             "#",
+            "fn",
     };
     public static char BREAK = ';';
     public static char[] IGNORE = new char[]{' ', '\n', '\t'};

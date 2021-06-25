@@ -291,6 +291,8 @@ public class Parser {
                     return res.success(forExpr);
 
                 case "function":
+
+                case "fn":
                     Node funcDef = (Node) res.register(this.funcDef());
                     if (res.error != null)
                         return res;
@@ -862,7 +864,7 @@ public class Parser {
 
     public ParseResult dictExpr() {
         ParseResult res = new ParseResult();
-        Map<Object, Object> dict = new HashMap<>();
+        Map<Node, Node> dict = new HashMap<>();
         Position pos_start = currentToken.pos_start.copy();
 
         if (!currentToken.type.equals(TT_OPEN)) return res.failure(Error.InvalidSyntax(
