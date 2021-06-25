@@ -2,7 +2,6 @@ package lemon.jpizza;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
-import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Generators.Lexer;
 import lemon.jpizza.Generators.Parser;

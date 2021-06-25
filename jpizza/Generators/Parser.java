@@ -906,7 +906,7 @@ public class Parser {
     public ParseResult funcDef() {
         ParseResult res = new ParseResult();
 
-        if (!currentToken.matches(TT_KEYWORD, "function")) return res.failure(Error.InvalidSyntax(
+        if (!currentToken.matches(TT_KEYWORD, "function") && !currentToken.matches(TT_KEYWORD, "fn")) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected 'function'"
         )); advance(); res.registerAdvancement();
