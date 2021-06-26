@@ -28,17 +28,24 @@ public class SymbolTable {
         bins = new HashMap<>();
     }
 
-    public Object get(String name) {
-        VarNode value = symbols.get(name);
-        if (value == null && parent != null)
-            return parent.get(name);
-        return value != null ? value.value_node : null;
-    }
     public boolean locked(String name) {
         VarNode value = symbols.get(name);
         if (value == null && parent != null)
             return parent.locked(name);
         return value != null && value.locked;
+    }
+    public boolean defined(String name) {
+        VarNode value = symbols.get(name);
+        if (value == null && parent != null)
+            return parent.defined(name);
+        return value != null;
+    }
+
+    public Object get(String name) {
+        VarNode value = symbols.get(name);
+        if (value == null && parent != null)
+            return parent.get(name);
+        return value != null ? value.value_node : null;
     }
     public void remove(String name) {
         VarNode value = symbols.get(name);
@@ -49,12 +56,29 @@ public class SymbolTable {
         }
         symbols.remove(name);
     }
-    public String set(String name, Object value, boolean locked) {
+
+    public String define(String name, Object value, boolean locked) {
         if (symbols.containsKey(name) && symbols.get(name).locked) {
             return "Baked variable already defined";
         }
         symbols.put(name, new VarNode(value, locked));
         return null;
+    }
+    public String define(String name, Object value) {
+        return define(name, value, false);
+    }
+
+    public String set(String name, Object value, boolean locked) {
+        if (symbols.containsKey(name)) {
+            if (symbols.get(name).locked)
+                return "Baked variable already defined";
+            symbols.put(name, new VarNode(value, locked));
+            return null;
+        }
+        if (parent != null) {
+            return parent.set(name, value, locked);
+        }
+        return "Variable not defined!";
     }
     public String set(String name, Object value) { return set(name, value, false); }
 

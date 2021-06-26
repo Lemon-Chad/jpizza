@@ -88,14 +88,14 @@ public class Interpreter {
         RTResult res = new RTResult();
         Dict dict = new Dict(new HashMap<>());
 
-        Map.Entry<Object, Object>[] entrySet = new Map.Entry[0];
+        Map.Entry<Node, Node>[] entrySet = new Map.Entry[0];
         entrySet = (((DictNode) node).dict).entrySet().toArray(entrySet);
         int length = entrySet.length;
         for (int i = 0; i < length; i++) {
-            Map.Entry<Object, Object> entry = entrySet[i];
-            Obj key = (Obj) res.register(visit((Node) entry.getKey(), context));
+            Map.Entry<Node, Node> entry = entrySet[i];
+            Obj key = (Obj) res.register(visit(entry.getKey(), context));
             if (res.shouldReturn()) return res;
-            Obj value = (Obj) res.register(visit((Node) entry.getValue(), context));
+            Obj value = (Obj) res.register(visit(entry.getValue(), context));
             if (res.shouldReturn()) return res;
             dict.set(key, value);
         } return res.success(dict.set_context(context).set_pos(node.pos_start, node.pos_end));
@@ -135,7 +135,7 @@ public class Interpreter {
                     "Start must be an integer!",
                     context
             ));
-            step = ((Num) startNode).trueValue();
+            step = ((Num) stepNode).trueValue();
         } else {
             step = 1;
         }
@@ -150,10 +150,56 @@ public class Interpreter {
         String vtk = (String) loop.var_name_tok.value;
         Obj value;
 
+        context.symbolTable.define(vtk, new Null());
         // clock.tick();
         while (condition.go(i)) {
             context.symbolTable.set(vtk, new Num(i));
             i += step;
+
+            value = (Obj) res.register(visit(loop.body_node, context));
+            // value = null;
+            if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
+
+            if (res.continueLoop) continue;
+            if (res.breakLoop) break;
+
+            elements.add(value);
+            // System.out.println(clock.tick());
+        }
+
+        context.symbolTable.remove(vtk);
+
+        return res.success(
+                loop.retnull ? new Null() : new PList(elements).set_context(context)
+                        .set_pos(node.pos_start, node.pos_end)
+        );
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult visit_IterNode(Node node, Context context) {
+        RTResult res = new RTResult();
+        List<Obj> elements = new ArrayList<>();
+
+        IterNode loop = (IterNode) node;
+
+        Obj iterableNode = ((Obj) res.register(visit(loop.iterable_node, context)));
+        if (res.shouldReturn()) return res;
+        if (!(iterableNode instanceof PList)) return res.failure(new RTError(
+                iterableNode.pos_start, iterableNode.pos_end,
+                "Value must be an iterable!",
+                context
+        ));
+        List<Obj> iterable = ((PList) iterableNode).trueValue();
+
+        double size = iterable.size();
+
+        String vtk = (String) loop.var_name_tok.value;
+        Obj value;
+
+        context.symbolTable.define(vtk, new Null());
+        // clock.tick();
+        for (int i = 0; i < size; i++) {
+            context.symbolTable.set(vtk, iterable.get(i));
 
             value = (Obj) res.register(visit(loop.body_node, context));
             // value = null;
@@ -221,7 +267,7 @@ public class Interpreter {
         CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNames, defNode.bin, defNode.async,
                 defNode.autoreturn);
 
-        context.symbolTable.set(funcName, methValue);
+        context.symbolTable.define(funcName, methValue);
         return res.success(methValue);
     }
 
@@ -249,7 +295,7 @@ public class Interpreter {
 
         Value classValue = new ClassPlate(name, attributes, make, methods)
                 .set_context(classContext).set_pos(node.pos_start, node.pos_end);
-        context.symbolTable.set(name, classValue);
+        context.symbolTable.define(name, classValue);
 
         return res.success(classValue);
     }
@@ -271,7 +317,7 @@ public class Interpreter {
         Value funcValue = new Function(funcName, bodyNode, argNames, defNode.async, defNode.autoreturn)
                 .set_context(context).set_pos(node.pos_start, node.pos_end);
 
-        if (funcName != null) context.symbolTable.set(funcName, funcValue);
+        if (funcName != null) context.symbolTable.define(funcName, funcValue);
 
         return res.success(funcValue);
     }
@@ -297,8 +343,9 @@ public class Interpreter {
         RTResult res = new RTResult();
         List<Obj> args = new ArrayList<>();
         CallNode cn = (CallNode) node;
-        Obj valueToCall = ((Obj) res.register(visit(cn.nodeToCall, context))).function();
+        Obj valueToCall = ((Obj) res.register(visit(cn.nodeToCall, context)));
         if (res.shouldReturn()) return res;
+        valueToCall = valueToCall.function();
         if (valueToCall instanceof CMethod)
             valueToCall = valueToCall.copy().set_pos(node.pos_start, node.pos_end);
         else
@@ -432,7 +479,11 @@ public class Interpreter {
         Obj value = (Obj) res.register(visit(assignment.value_node, context));
         if (res.shouldReturn()) return res;
 
-        String error = context.symbolTable.set(varName, value, assignment.locked);
+        String error;
+        if (assignment.defining)
+            error = context.symbolTable.define(varName, value, assignment.locked);
+        else
+            error = context.symbolTable.set(varName, value, assignment.locked);
         if (error != null) return res.failure(new RTError(
                 node.pos_start, node.pos_end,
                 error,
@@ -490,7 +541,7 @@ public class Interpreter {
                 "Module does not exist!",
                 context
         ));
-        context.symbolTable.set(fn, imp);
+        context.symbolTable.define(fn, imp);
         return res.success(new Null());
     }
 

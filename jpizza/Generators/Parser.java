@@ -88,8 +88,9 @@ public class Parser {
                 advance();
                 newlineCount++;
             }
-            if (newlineCount == 0)
+            if (newlineCount == 0) {
                 moreStatements = false;
+            }
             if (!moreStatements)
                 break;
             statement = (Node) res.try_register(this.statement());
@@ -182,9 +183,13 @@ public class Parser {
             if (res.error != null) return res;
 
             if (!currentToken.type.equals(TT_EQ))
-                return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '=>'"
+                return res.success(new VarAssignNode(
+                        var_name, new NullNode(new Token(
+                                        TT_IDENTIFIER,
+                                        "null",
+                                        currentToken.pos_start.copy(),
+                                        currentToken.pos_end.copy()
+                                ))
                 ));
 
             res.registerAdvancement();
@@ -358,7 +363,14 @@ public class Parser {
                         new VarAccessNode(tok),
                         origin
                 ));
-            } return res.success(new VarAccessNode(tok));
+            }
+            if (currentToken.type.equals(TT_EQ)) {
+                res.registerAdvancement(); advance();
+                Node value = (Node) res.register(expr());
+                if (res.error != null) return res;
+                return res.success(new VarAssignNode(tok, value, false, 1));
+            }
+            return res.success(new VarAccessNode(tok));
         }
         else if (tok.type.equals(TT_BOOL)) {
             res.registerAdvancement(); advance();
@@ -577,7 +589,8 @@ public class Parser {
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected '}'"
             ));
-
+        tokens.add(tokIdx + 1, new Token(TT_NEWLINE, currentToken.pos_start.copy(), currentToken.pos_start.copy()));
+        tokount++;
         res.registerAdvancement(); advance();
 
         return res.success(statements);
@@ -589,7 +602,7 @@ public class Parser {
 
     public ParseResult ifExpr() {
         ParseResult res = new ParseResult();
-        Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.ifExprCases("if"));
+        Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.ifExprCases("if", true));
         if (res.error != null)
             return res;
         List<Case> cases = allCases.a;
@@ -597,7 +610,7 @@ public class Parser {
         return res.success(new QueryNode(cases, elseCase));
     }
 
-    public ParseResult ifExprCases(String caseKeyword) {
+    public ParseResult ifExprCases(String caseKeyword, boolean parenthesis) {
         ParseResult res = new ParseResult();
         List<Case> cases = new ArrayList<>();
 
@@ -607,18 +620,36 @@ public class Parser {
                     String.format("Expected %s", caseKeyword)
             ));
 
-        res.registerAdvancement(); advance();
+        res.registerAdvancement();
+        advance();
 
+        if (parenthesis) {
+            if (!currentToken.type.equals(TT_LPAREN))
+                return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected '('"
+                ));
+            res.registerAdvancement(); advance();
+        }
         Node condition = (Node) res.register(this.expr());
         if (res.error != null)
             return res;
+        if (parenthesis) {
+            if (!currentToken.type.equals(TT_RPAREN))
+                return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected ')'"
+                ));
+            res.registerAdvancement();
+            advance();
+        }
 
         Node statements = (Node) res.register(this.block());
         if (res.error != null)
             return res;
         cases.add(new Case(condition, statements, true));
 
-        Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.elifElse());
+        Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.elifElse(parenthesis));
         List<Case> newCases = allCases.a;
         ElseCase elseCase = allCases.b;
         cases.addAll(newCases);
@@ -626,13 +657,13 @@ public class Parser {
         return res.success(new Double<>(cases, elseCase));
     }
 
-    public ParseResult elifElse() {
+    public ParseResult elifElse(boolean parenthesis) {
         ParseResult res = new ParseResult();
         List<Case> cases = new ArrayList<>();
         ElseCase elseCase;
 
         if (currentToken.matches(TT_KEYWORD, "elif")) {
-            Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.elifExpr());
+            Double<List<Case>, ElseCase> allCases = (Double<List<Case>, ElseCase>) res.register(this.elifExpr(parenthesis));
             if (res.error != null)
                 return res;
             cases = allCases.a;
@@ -647,8 +678,8 @@ public class Parser {
 
     }
 
-    public ParseResult elifExpr() {
-        return ifExprCases("elif");
+    public ParseResult elifExpr(boolean parenthesis) {
+        return ifExprCases("elif", parenthesis);
     }
 
     public ParseResult elseExpr() {
@@ -738,6 +769,14 @@ public class Parser {
 
         res.registerAdvancement(); advance();
 
+        if (!currentToken.type.equals(TT_LPAREN))
+            return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected '('"
+            ));
+        res.registerAdvancement();
+        advance();
+
         if (!currentToken.type.equals(TT_IDENTIFIER))
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -747,13 +786,42 @@ public class Parser {
         Token varName = currentToken;
         res.registerAdvancement(); advance();
 
-        if (!currentToken.type.equals(TT_LAMBDA))
+        boolean iterating = currentToken.type.equals(TT_ITER);
+        if (!currentToken.type.equals(TT_LAMBDA) && !currentToken.type.equals(TT_ITER))
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected weak assignment ('->')"
+                    "Expected weak assignment or iter ('->', '<-')"
             ));
         res.registerAdvancement(); advance();
 
+        if (iterating) {
+            Node iterableNode = (Node) res.register(this.expr());
+            if (res.error != null) return res;
+            if (!currentToken.type.equals(TT_RPAREN))
+                return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected ')'"
+                ));
+            res.registerAdvancement();
+            advance();
+            Node body;
+            switch (currentToken.type) {
+                case TT_OPEN:
+                    body = (Node) res.register(this.block());
+                    if (res.error != null) return res;
+                    return res.success(new IterNode(varName, iterableNode, body, true));
+                case TT_EQ:
+                    res.registerAdvancement(); advance();
+                    body = (Node) res.register(this.statement());
+                    if (res.error != null) return res;
+                    return res.success(new IterNode(varName, iterableNode, body, false));
+                default:
+                    return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected '{' or '=>'"
+                    ));
+            }
+        }
         Node start = (Node) res.register(this.expr());
         if (res.error != null) return res;
 
@@ -772,6 +840,14 @@ public class Parser {
             res.registerAdvancement(); advance();
             step = (Node) res.register(this.expr());
         } else step = null;
+
+        if (!currentToken.type.equals(TT_RPAREN))
+            return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected ')'"
+            ));
+        res.registerAdvancement();
+        advance();
 
         Node body;
         switch (currentToken.type) {
@@ -802,8 +878,22 @@ public class Parser {
         ));
         res.registerAdvancement(); advance();
 
+        if (!currentToken.type.equals(TT_LPAREN))
+            return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected '('"
+            ));
+        res.registerAdvancement(); advance();
+
         Node condition = (Node) res.register(this.expr());
         if (res.error != null) return res;
+
+        if (!currentToken.type.equals(TT_RPAREN))
+            return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected ')'"
+            ));
+        res.registerAdvancement(); advance();
 
         Node body;
         switch (currentToken.type) {

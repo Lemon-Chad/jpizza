@@ -22,7 +22,7 @@ public class FuncDefNode extends Node {
         this.autoreturn = autoreturn;
 
         pos_start = var_name_tok != null ? var_name_tok.pos_start : (
-                arg_name_toks != null ? arg_name_toks.get(0).pos_start : body_node.pos_start
+                arg_name_toks != null && arg_name_toks.size() > 0 ? arg_name_toks.get(0).pos_start : body_node.pos_start
                 );
         pos_end = body_node.pos_end;
 

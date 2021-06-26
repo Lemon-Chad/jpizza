@@ -71,7 +71,7 @@ public class Library extends BaseFunction {
                 e.printStackTrace();
                 return;
             }
-            libTable.set(k, val);
+            libTable.define(k, val);
         });
         if (adlib) Constants.LIBRARIES.put(libName, libContext);
     }

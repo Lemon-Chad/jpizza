@@ -56,7 +56,7 @@ public class BaseFunction extends Value {
             String argName = argNames.get(i);
             Obj argValue = args.get(i);
             argValue.set_context(execCtx);
-            execCtx.symbolTable.set(argName, argValue);
+            execCtx.symbolTable.define(argName, argValue);
         }
     }
 

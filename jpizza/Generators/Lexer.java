@@ -68,7 +68,25 @@ public class Lexer {
                 tokens.add(make_identifier());
             } else if (String.valueOf(NUMBERS).contains(currentChar)) {
                 tokens.add(make_number());
-            } else if ("!<>=".contains(currentChar)) {
+            } else if (currentChar.equals("!")) {
+                int nextdex = 1;
+                while (next(nextdex) != null && Character.isWhitespace(next(nextdex).charAt(0)))
+                    nextdex++;
+                if (next(nextdex).equals("<") || next(nextdex).equals("{") ||
+                        (next(nextdex) + next(nextdex + 1)).equals("->")) {
+                    tokens.add(new Token(TT_KEYWORD, "fn", pos.copy(), pos.copy().advance()));
+                    advance();
+                } else {
+                    Double<Token, Error> d = make_equals_expr();
+                    Token tok = d.a; Error error = d.b;
+                    if (error != null) {
+                        return new Double<>(
+                                new ArrayList<>(),
+                                error
+                        );
+                    } tokens.add(tok);
+                }
+            } else if ("<>=".contains(currentChar)) {
                 Double<Token, Error> d = make_equals_expr();
                 Token tok = d.a; Error error = d.b;
                 if (error != null) {

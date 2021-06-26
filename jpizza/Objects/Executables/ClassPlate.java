@@ -44,7 +44,7 @@ public class ClassPlate extends Value {
         RTResult res = new RTResult();
         Context classContext = new Context(name, context, pos_start);
         classContext.symbolTable = new SymbolTable(context.symbolTable);
-        classContext.symbolTable.set("this", name);
+        classContext.symbolTable.define("this", name);
         int length = attributes.length;
         for (int i = 0; i < length; i++) classContext.symbolTable.declareattr(attributes[i], classContext);
         CMethod make = (CMethod) this.make.copy();
