@@ -76,7 +76,7 @@ public class Lexer {
                         (next(nextdex) + next(nextdex + 1)).equals("->")) {
                     tokens.add(new Token(TT_KEYWORD, "fn", pos.copy(), pos.copy().advance()));
                     advance();
-                } else {
+                } else if (currentChar.equals("!")){
                     Double<Token, Error> d = make_equals_expr();
                     Token tok = d.a; Error error = d.b;
                     if (error != null) {
@@ -147,7 +147,7 @@ public class Lexer {
         String c = currentChar;
         advance();
 
-        if (currentChar.equals("=")) {
+        if (currentChar != null && currentChar.equals("=")) {
             advance();
 
             return new Double<>(

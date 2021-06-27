@@ -11,6 +11,7 @@ import lemon.jpizza.Objects.Executables.ClassInstance;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.PList;
+import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.ParseResult;
 
 import java.io.IOException;
@@ -83,6 +84,8 @@ public class Shell {
         for (int i = 0; i < 1000000; i++) l.add(i + 1);
         System.out.println(clock.tick());*/
 
+        PList cmdargs = new PList(new ArrayList<>());
+
         if (args.length == 1) {
             if (args[0].equals("help")) {
                 System.out.println("""
@@ -94,6 +97,7 @@ public class Shell {
             } else if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
                     String scrpt = Files.readString(Path.of(args[0]));
+                    globalSymbolTable.define("CMDARGS", cmdargs);
                     Double<Obj, Error> res = run(args[0], scrpt);
                     if (res.b != null)
                         System.out.println(res.b.asString());
@@ -106,6 +110,24 @@ public class Shell {
             return;
         }
 
+        if (args.length > 1) {
+            if (args[0].endsWith(".devp")) {
+                if (Files.exists(Path.of(args[0]))) {
+                    String scrpt = Files.readString(Path.of(args[0]));
+                    Double<Obj, Error> res = run(args[0], scrpt);
+                    for (int i = 1; i < args.length; i++)
+                        cmdargs.add(new Str(args[i]));
+                    globalSymbolTable.define("CMDARGS", cmdargs);
+                    if (res.b != null)
+                        System.out.println(res.b.asString());
+                } else {
+                    System.out.println("File does not exist.");
+                }
+            }
+            return;
+        }
+
+        globalSymbolTable.define("CMDARGS", cmdargs);
         while (true) {
             System.out.print("-> "); String input = in.nextLine();
             if (input.equals("quit"))

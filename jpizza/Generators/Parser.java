@@ -56,6 +56,7 @@ public class Parser {
 
     public ParseResult parse() {
         ParseResult res = statements();
+        System.out.println(currentToken);
         if (res.error == null && !currentToken.type.equals(TT_EOF)) {
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -296,6 +297,8 @@ public class Parser {
                     return res.success(forExpr);
 
                 case "function":
+
+                case "yourmom":
 
                 case "fn":
                     Node funcDef = (Node) res.register(this.funcDef());
@@ -570,7 +573,8 @@ public class Parser {
         } return res.success(argNameToks);
     }
 
-    public ParseResult block() {
+    public ParseResult block() { return block(true); }
+    public ParseResult block(boolean vLine) {
         ParseResult res = new ParseResult();
         if (!currentToken.type.equals(TT_OPEN))
             return res.failure(Error.InvalidSyntax(
@@ -589,8 +593,10 @@ public class Parser {
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected '}'"
             ));
-        tokens.add(tokIdx + 1, new Token(TT_NEWLINE, currentToken.pos_start.copy(), currentToken.pos_start.copy()));
-        tokount++;
+        if (vLine) {
+            tokens.add(tokIdx + 1, new Token(TT_NEWLINE, currentToken.pos_start.copy(), currentToken.pos_start.copy()));
+            tokount++;
+        }
         res.registerAdvancement(); advance();
 
         return res.success(statements);
@@ -996,7 +1002,9 @@ public class Parser {
     public ParseResult funcDef() {
         ParseResult res = new ParseResult();
 
-        if (!currentToken.matches(TT_KEYWORD, "function") && !currentToken.matches(TT_KEYWORD, "fn")) return res.failure(Error.InvalidSyntax(
+        String tokV = (String) currentToken.value;
+        if (!currentToken.type.equals(TT_KEYWORD) && Arrays.asList("fn", "function", "yourmom").contains(tokV))
+            return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected 'function'"
         )); advance(); res.registerAdvancement();
@@ -1009,6 +1017,11 @@ public class Parser {
 
         Token varNameTok = null;
         if (currentToken.type.equals(TT_IDENTIFIER)) {
+            if (tokV.equals("yourmom"))
+                return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "yourmom is invalid B) (must be a lambda)"
+                ));
             varNameTok = currentToken;
             res.registerAdvancement(); advance();
         }
@@ -1018,8 +1031,9 @@ public class Parser {
 
         Node nodeToReturn;
         switch (currentToken.type) {
-            case TT_LAMBDA:
-                res.registerAdvancement(); advance();
+            case TT_LAMBDA -> {
+                res.registerAdvancement();
+                advance();
                 nodeToReturn = (Node) res.register(this.expr());
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
@@ -1029,7 +1043,8 @@ public class Parser {
                         true,
                         async
                 ));
-            case TT_OPEN:
+            }
+            case TT_OPEN -> {
                 nodeToReturn = (Node) res.register(this.block());
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
@@ -1039,11 +1054,18 @@ public class Parser {
                         false,
                         async
                 ));
-            default:
+            }
+            default -> {
+                if (tokV.equals("yourmom"))
+                    return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "yourmom is used badly B) (expected '->' or '{')"
+                    ));
                 return res.failure(Error.InvalidSyntax(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected '->' or '{'"
                 ));
+            }
         }
 
     }
@@ -1099,7 +1121,7 @@ public class Parser {
             if (currentToken.value.equals("ingredients")) {
                 advance(); res.registerAdvancement();
                 argNameToks = (List<Token>) res.register(gatherArgs()); if (res.error != null) return res;
-                ingredientNode = (Node) res.register(this.block()); if (res.error != null) return res;
+                ingredientNode = (Node) res.register(this.block(false)); if (res.error != null) return res;
             }
             else if (currentToken.value.equals("method")) {
                 res.registerAdvancement(); advance();
@@ -1135,7 +1157,7 @@ public class Parser {
                                 async
                         )); break;
                     case TT_OPEN:
-                         nodeToReturn = (Node) res.register(this.block());
+                         nodeToReturn = (Node) res.register(this.block(false));
                          if (res.error != null) return res;
                          methods.add(new MethDefNode(
                                  varNameTok,

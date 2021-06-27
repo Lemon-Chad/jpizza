@@ -14,13 +14,11 @@ public class RTError extends Error {
 
     public String asString() {
         return String.format(
-                    "%s%s%s: %s\nFile %s, line %s\n\n%s%s",
-                    Constants.TEXT_YELLOW,
+                    "%s%s: %s\nFile %s, line %s\n\n%s",
                     generateTraceback(),
                     error_name, details,
                     pos_start.fn, pos_start.ln + 1,
-                    Constants.stringWithArrows(pos_start.ftext, pos_start, pos_end),
-                    Constants.TEXT_RESET
+                    Constants.stringWithArrows(pos_start.ftext, pos_start, pos_end)
                 );
     }
 
