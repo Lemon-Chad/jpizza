@@ -16,9 +16,9 @@ public class Position {
 
     public Position advance(char current_char) {
         idx++;
-        col++;
+        if (current_char != '\t') col++;
 
-        if (current_char == Constants.BREAK) {
+        if (current_char == Constants.splitter) {
             ln++;
             col = 0;
         }

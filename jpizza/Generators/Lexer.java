@@ -25,7 +25,7 @@ public class Lexer {
     }
 
     public void advance() {
-        pos.advance();
+        pos.advance(currentChar == null ? ' ' : currentChar.charAt(0));
         currentChar = pos.idx < text.length() ? String.valueOf(text.charAt(pos.idx)) : null;
     }
 

@@ -41,7 +41,7 @@ public class Constants {
     public static char BREAK = ';';
     public static char[] IGNORE = new char[]{' ', '\n', '\t'};
     public static Map<String, Context> LIBRARIES = new HashMap<>();
-    public static char splitter = BREAK;
+    public static char splitter = '\n';
 
     public static String stringWithArrows(String text, Position pos_start, Position pos_end) {
         StringBuilder result = new StringBuilder();
