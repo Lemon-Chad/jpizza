@@ -119,9 +119,11 @@ public class Shell {
                         if (!debug) System.out.println(res.b.asString());
                         else {
                             Error e = res.b;
-                            int startIdx = e.pos_start.idx; int endIdx = e.pos_end.idx;
                             String message = String.format("%s: %s", e.error_name, e.details);
-                            System.out.printf("{\"indices\": [%s, %s], \"msg\": \"%s\"}", startIdx, endIdx, message);
+                            System.out.printf("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
+                                    e.pos_start.ln, e.pos_end.ln,
+                                    e.pos_start.col, e.pos_end.col,
+                                    message);
                         }
                     }
                 } else {
