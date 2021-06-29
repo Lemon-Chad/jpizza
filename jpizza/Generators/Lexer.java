@@ -46,6 +46,16 @@ public class Lexer {
         advance();
     }
 
+    public void skip_multiline_comment() {
+        advance();
+
+        while (currentChar != null && next() != null && !(currentChar + next()).equals("<<")) {
+            advance();
+        }
+
+        advance(); advance();
+    }
+
     public Double<List<Token>, Error> make_tokens() {
         List<Token> tokens = new ArrayList<>();
         while (currentChar != null) {
@@ -53,6 +63,8 @@ public class Lexer {
                 advance();
             } else if (next() != null && (currentChar + next()).equals("<>")) {
                 skip_comment();
+            } else if (next() != null && (currentChar + next()).equals("<<")) {
+                skip_multiline_comment();
             } else if ("\"'".contains(currentChar)) {
                 tokens.add(make_string(currentChar));
             } else if (currentChar.equals("}")) {
