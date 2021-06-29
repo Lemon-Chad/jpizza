@@ -2,7 +2,6 @@ package lemon.jpizza.Objects.Primitives;
 
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Nodes.Values.NumberNode;
-import lemon.jpizza.Objects.Executables.BaseFunction;
 import lemon.jpizza.Objects.Executables.Function;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Value;

@@ -1,7 +1,6 @@
 package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
-import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
@@ -97,9 +96,8 @@ public class ClassInstance extends Obj {
         return x;
     }
 
-    public Obj type() {
+    public Obj tstr(CMethod func) {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("type");
         if (func == null)
             return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
         Obj x = (Obj) res.register(func.execute(new ArrayList<>(), new Interpreter()));
@@ -108,15 +106,14 @@ public class ClassInstance extends Obj {
         return x;
     }
 
+    public Obj type() {
+        CMethod func = value.symbolTable.getbin("type");
+        return tstr(func);
+    }
+
     public Obj astring() {
-        RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("string");
-        if (func == null)
-            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = (Obj) res.register(func.execute(new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
-            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
-        return x;
+        return tstr(func);
     }
 
     public Obj number() {

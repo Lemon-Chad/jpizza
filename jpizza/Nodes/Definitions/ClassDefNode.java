@@ -1,7 +1,6 @@
 package lemon.jpizza.Nodes.Definitions;
 
 import lemon.jpizza.Nodes.Node;
-import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Position;
 import lemon.jpizza.Token;
 

@@ -3,7 +3,6 @@ package lemon.jpizza.Objects.Primitives;
 import lemon.jpizza.Double;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Nodes.Values.StringNode;
-import lemon.jpizza.Objects.Executables.BaseFunction;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Token;

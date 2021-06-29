@@ -383,7 +383,7 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(new PList(listAval));
     }
 
-    public RTResult execute_get(Context execCtx) {
+    public RTResult keyInDict(Context execCtx) {
         Obj dict = ((Obj) execCtx.symbolTable.get("dict")).dictionary();
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (!(dict instanceof Dict)) return new RTResult().failure(new RTError(
@@ -397,24 +397,23 @@ public class BuiltInFunction extends Library {
                 "Key not in dict",
                 execCtx
         ));
-        return new RTResult().success(x.get(value));
+        return new RTResult().success(new Double<>(dict, value));
+    }
+
+    public RTResult execute_get(Context execCtx) {
+        RTResult res = new RTResult();
+        Double<Dict, Obj> dble = (Double<Dict, Obj>) res.register(keyInDict(execCtx));
+        Dict x = dble.a;
+        Obj value = dble.b;
+        return res.success(x.get(value));
     }
 
     public RTResult execute_delete(Context execCtx) {
-        Obj dict = ((Obj) execCtx.symbolTable.get("dict")).dictionary();
-        Obj value = ((Obj) execCtx.symbolTable.get("value"));
-        if (!(dict instanceof Dict)) return new RTResult().failure(new RTError(
-                pos_start, pos_end,
-                "Argument must be a list!",
-                execCtx
-        ));
-        Dict x = (Dict) dict;
-        if (!x.contains(value)) return new RTResult().failure(new RTError(
-                pos_start, pos_end,
-                "Key not in dict",
-                execCtx
-        ));
-        return new RTResult().success(x.delete(value));
+        RTResult res = new RTResult();
+        Double<Dict, Obj> dble = (Double<Dict, Obj>) res.register(keyInDict(execCtx));
+        Dict x = dble.a;
+        Obj value = dble.b;
+        return res.success(x.delete(value));
     }
 
     public RTResult execute_set(Context execCtx) {

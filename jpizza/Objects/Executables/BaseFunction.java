@@ -2,21 +2,14 @@ package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
-import lemon.jpizza.Double;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
-import lemon.jpizza.Nodes.Values.StringNode;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
-import lemon.jpizza.Token;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import static lemon.jpizza.Tokens.TT_STRING;
 
 public class BaseFunction extends Value {
     public String name;

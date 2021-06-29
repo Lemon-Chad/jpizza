@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("ALL")
 public class Value extends Obj {
     public Object value;
     public Position pos_start; public Position pos_end;

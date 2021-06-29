@@ -28,19 +28,6 @@ public class SymbolTable {
         bins = new HashMap<>();
     }
 
-    public boolean locked(String name) {
-        VarNode value = symbols.get(name);
-        if (value == null && parent != null)
-            return parent.locked(name);
-        return value != null && value.locked;
-    }
-    public boolean defined(String name) {
-        VarNode value = symbols.get(name);
-        if (value == null && parent != null)
-            return parent.defined(name);
-        return value != null;
-    }
-
     public Object get(String name) {
         VarNode value = symbols.get(name);
         if (value == null && parent != null)
@@ -64,8 +51,8 @@ public class SymbolTable {
         symbols.put(name, new VarNode(value, locked));
         return null;
     }
-    public String define(String name, Object value) {
-        return define(name, value, false);
+    public void define(String name, Object value) {
+        define(name, value, false);
     }
 
     public String set(String name, Object value, boolean locked) {
@@ -80,7 +67,9 @@ public class SymbolTable {
         }
         return "Variable not defined!";
     }
-    public String set(String name, Object value) { return set(name, value, false); }
+    public void set(String name, Object value) {
+        set(name, value, false);
+    }
 
     public void declareattr(Token name_tok, Context context) {
         attributes.put(name_tok.value.toString(), new AttrNode(new Null().set_pos(name_tok.pos_start).set_context(context)));

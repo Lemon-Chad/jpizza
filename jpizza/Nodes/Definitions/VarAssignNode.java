@@ -27,6 +27,7 @@ public class VarAssignNode extends Node {
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
     }
 
+    @SuppressWarnings("unused")
     public VarAssignNode(Token var_name_tok, Node value_node, boolean defining, int _x) {
         this.var_name_tok = var_name_tok;
         this.value_node = value_node;

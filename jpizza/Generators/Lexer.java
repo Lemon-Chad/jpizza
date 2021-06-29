@@ -89,7 +89,7 @@ public class Lexer {
                     tokens.add(new Token(TT_KEYWORD, "fn", pos.copy(), pos.copy().advance()));
                     advance();
                 } else if (currentChar.equals("!")){
-                    Double<Token, Error> d = make_equals_expr();
+                    @SuppressWarnings("DuplicatedCode") Double<Token, Error> d = make_equals_expr();
                     Token tok = d.a; Error error = d.b;
                     if (error != null) {
                         return new Double<>(

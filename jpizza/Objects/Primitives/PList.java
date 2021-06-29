@@ -10,6 +10,7 @@ import lemon.jpizza.Objects.Value;
 import java.util.*;
 import lemon.jpizza.Double;
 
+@SuppressWarnings("unused")
 public class PList extends Value {
     public PList(List<Obj> value) {super(value);}
     public List<Obj> trueValue() { return (ArrayList<Obj>) value; }
@@ -30,23 +31,9 @@ public class PList extends Value {
     // Methods
 
     public Double<Obj, RTError> dot(Obj o) {
-        if (!(o.number() instanceof Num)) return new Double<>(null, new RTError(
-                pos_start, pos_end,
-                "List index must be a number!",
-                context
-        ));
-        Num other = (Num) o.number();
-        if (other.floating())
-            return new Double<>(null, new RTError(
-                    pos_start, pos_end,
-                    "List index must be long, not double",
-                    context
-            ));
-        if (other.trueValue() + 1 > trueValue().size()) return new Double<>(null, new RTError(
-                pos_start, pos_end,
-                "List index out of range",
-                context
-        ));
+        Double<Num, RTError> dble = inRange(o);
+        if (dble.b != null) return new Double<>(null, dble.b);
+        Num other = dble.a;
         return new Double<>(trueValue().get(Math.toIntExact(Math.round(other.trueValue()))), null);
     }
     public Double<Obj, RTError> div(Obj other) {
@@ -93,7 +80,7 @@ public class PList extends Value {
                 null
         );
     }
-    public Double<Obj, RTError> pop(Obj o) {
+    public Double<Num, RTError> inRange(Obj o) {
         if (!(o.number() instanceof Num)) return new Double<>(null, new RTError(
                 pos_start, pos_end,
                 "List index must be a number!",
@@ -111,6 +98,12 @@ public class PList extends Value {
                 "List index out of range",
                 context
         ));
+        return new Double<>(other, null);
+    }
+    public Double<Obj, RTError> pop(Obj o) {
+        Double<Num, RTError> dble = inRange(o);
+        if (dble.b != null) return new Double<>(null, dble.b);
+        Num other = dble.a;
         ArrayList<Obj> x = new ArrayList<>(trueValue());
         x.remove(x.get(Math.toIntExact(Math.round(other.trueValue()))));
         return new Double<>(

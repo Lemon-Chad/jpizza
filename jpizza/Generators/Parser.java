@@ -255,14 +255,19 @@ public class Parser {
         } return pow();
     }
 
-    public ParseResult useExpr() {
+    public ParseResult expectIdentifier() {
         ParseResult res = new ParseResult();
         advance(); res.registerAdvancement();
         if (!currentToken.type.equals(TT_IDENTIFIER)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected identifier"
-        ));
-        Token useToken = currentToken;
+        )); return res.success(currentToken);
+    }
+
+    public ParseResult useExpr() {
+        ParseResult res = new ParseResult();
+        Token useToken = (Token) res.register(expectIdentifier());
+        if (res.error != null) return res;
         advance(); res.registerAdvancement();
         return res.success(new UseNode(useToken));
     }
@@ -469,12 +474,8 @@ public class Parser {
 
         if (res.error != null) return res;
         if (currentToken.type.equals(TT_CLACCESS)) {
-            advance(); res.registerAdvancement();
-            if (!currentToken.type.equals(TT_IDENTIFIER)) return res.failure(Error.InvalidSyntax(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected identifier"
-            )); Token tok = currentToken;
-            advance(); res.registerAdvancement();
+            Token tok = (Token) res.register(expectIdentifier());
+            if (res.error != null) return res;
             return res.success(new ClaccessNode(node, tok));
         } return res.success(node);
 
@@ -800,15 +801,8 @@ public class Parser {
         res.registerAdvancement(); advance();
 
         if (iterating) {
-            Node iterableNode = (Node) res.register(this.expr());
+            Node iterableNode = (Node) res.register(getClosing());
             if (res.error != null) return res;
-            if (!currentToken.type.equals(TT_RPAREN))
-                return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected ')'"
-                ));
-            res.registerAdvancement();
-            advance();
             Node body;
             switch (currentToken.type) {
                 case TT_OPEN:
@@ -874,6 +868,19 @@ public class Parser {
 
     }
 
+    public ParseResult getClosing() {
+        ParseResult res = new ParseResult();
+        Node condition = (Node) res.register(this.expr());
+        if (res.error != null) return res;
+        if (!currentToken.type.equals(TT_RPAREN))
+            return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected ')'"
+            ));
+        res.registerAdvancement(); advance();
+        return res.success(condition);
+    }
+
     public ParseResult whileExpr() {
         ParseResult res = new ParseResult();
 
@@ -890,16 +897,8 @@ public class Parser {
             ));
         res.registerAdvancement(); advance();
 
-        Node condition = (Node) res.register(this.expr());
+        Node condition = (Node) res.register(getClosing());
         if (res.error != null) return res;
-
-        if (!currentToken.type.equals(TT_RPAREN))
-            return res.failure(Error.InvalidSyntax(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected ')'"
-            ));
-        res.registerAdvancement(); advance();
-
         Node body;
         switch (currentToken.type) {
             case TT_EQ:

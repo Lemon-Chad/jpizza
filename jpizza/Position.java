@@ -14,7 +14,7 @@ public class Position {
         this.ftext = ftext;
     }
 
-    public Position advance(char current_char) {
+    public void advance(char current_char) {
         idx++;
         if (current_char != '\t') col++;
 
@@ -23,7 +23,6 @@ public class Position {
             col = 0;
         }
 
-        return this;
     }
 
     public Position advance() {

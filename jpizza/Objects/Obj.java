@@ -2,8 +2,8 @@ package lemon.jpizza.Objects;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Position;
-import lemon.jpizza.Double;
 
+@SuppressWarnings("ALL")
 public abstract class Obj {
     public Object value;
     public Position pos_start, pos_end;

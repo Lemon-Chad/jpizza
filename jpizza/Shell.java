@@ -25,8 +25,6 @@ import lemon.jpizza.Results.RTResult;
 
 public class Shell {
 
-    static Clock clock = new Clock();
-
     static SymbolTable globalSymbolTable = new SymbolTable();
 
     public static void main(String[] args) throws IOException {
@@ -82,11 +80,6 @@ public class Shell {
             put("clear", new ArrayList<>());
 
         }}, globalSymbolTable);
-
-        /*clock.tick();
-        ArrayList<Integer> l = new ArrayList<>();
-        for (int i = 0; i < 1000000; i++) l.add(i + 1);
-        System.out.println(clock.tick());*/
 
         PList cmdargs = new PList(new ArrayList<>());
 
@@ -176,8 +169,6 @@ public class Shell {
         Context context = new Context(fn, null, null);
         context.symbolTable = globalSymbolTable;
         RTResult result = new Interpreter().visit(ast.a, context);
-        // System.out.println(clock.tick());
-        // System.out.println(result.value.getClass().getName());
         return new Double<>((Obj) result.value, result.error);
     }
     //Another public static 🥱

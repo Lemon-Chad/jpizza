@@ -2,6 +2,7 @@ package lemon.jpizza;
 
 public class Clock {
     long time = 0;
+    @SuppressWarnings("unused")
     public double tick() {
         long time = System.nanoTime();
         double diff = (time - this.time) / 1e6;

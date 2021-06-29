@@ -1,6 +1,5 @@
 package lemon.jpizza.Results;
 
-import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Errors.Error;
 
 public class RTResult {

@@ -2,7 +2,6 @@ package lemon.jpizza.Objects.Primitives;
 
 import lemon.jpizza.Double;
 import lemon.jpizza.Errors.RTError;
-import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Nodes.Values.DictNode;
 import lemon.jpizza.Objects.Executables.Function;
 import lemon.jpizza.Objects.Obj;
@@ -18,7 +17,6 @@ public class Dict extends Value {
 
     // Functions
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean contains(Obj other) {
         Obj[] keySet = (Obj[]) trueValue().keySet().toArray();
         int length = keySet.length;

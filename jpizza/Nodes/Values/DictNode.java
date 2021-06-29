@@ -1,7 +1,6 @@
 package lemon.jpizza.Nodes.Values;
 
 import lemon.jpizza.Nodes.Node;
-import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Position;
 
 import java.util.Map;
@@ -18,17 +17,4 @@ public class DictNode extends Node {
     public Object get(Node key) {
         return dict.get(key);
     }
-
-    public DictNode delete(Node key) {
-        dict.remove(key);
-        return this;
-    }
-
-    public DictNode set(Node key, Node value) {
-        dict.put(key, value);
-        return this;
-    }
-
-
-
 }

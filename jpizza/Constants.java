@@ -2,7 +2,6 @@ package lemon.jpizza;
 
 import lemon.jpizza.Contextuals.Context;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,8 +37,8 @@ public class Constants {
             "#",
             "fn",
     };
-    public static char BREAK = ';';
-    public static char[] IGNORE = new char[]{' ', '\n', '\t'};
+    @SuppressWarnings("unused") public static char BREAK = ';';
+    @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};
     public static Map<String, Context> LIBRARIES = new HashMap<>();
     public static char splitter = '\n';
 
