@@ -53,13 +53,11 @@ public class Interpreter {
     public RTResult visit(Node node, Context context) {
         String methodName = "visit_"+node.getClass().getSimpleName();
         try {
-            //clock.tick();
             Method method = Interpreter.class.getMethod(methodName, Node.class, Context.class);
-            //System.out.println(clock.tick());
             return (RTResult) method.invoke(this, node, context);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
-            System.out.printf("No %s method defined!%n", methodName); return null;
+            Shell.logger.outln(String.format("No %s method defined!", methodName)); return null;
         }
     }
 
@@ -164,7 +162,6 @@ public class Interpreter {
             if (res.breakLoop) break;
 
             elements.add(value);
-            // System.out.println(clock.tick());
         }
 
         context.symbolTable.remove(vtk);
@@ -209,7 +206,6 @@ public class Interpreter {
             if (res.breakLoop) break;
 
             elements.add(value);
-            // System.out.println(clock.tick());
         }
 
         context.symbolTable.remove(vtk);

@@ -5,6 +5,7 @@ import lemon.jpizza.Objects.Executables.Library;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Results.RTResult;
+import lemon.jpizza.Shell;
 
 @SuppressWarnings("unused")
 public class DemoLibrary extends Library {
@@ -40,7 +41,7 @@ public class DemoLibrary extends Library {
         // Convert value argument to a string type
         value = value.astring();
         // Print value argument
-        System.out.println(value);
+        Shell.logger.outln(value);
         // Return null
         return new RTResult().success(new Null());
     }

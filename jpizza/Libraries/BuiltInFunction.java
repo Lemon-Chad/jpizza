@@ -30,12 +30,12 @@ public class BuiltInFunction extends Library {
     public BuiltInFunction(String name) { super(name); }
 
     public RTResult execute_println(Context execCtx) {
-        System.out.println(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.outln(((Obj) execCtx.symbolTable.get("value")).astring());
         return new RTResult().success(new Null());
     }
 
     public RTResult execute_print(Context execCtx) {
-        System.out.print(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.outln(((Obj) execCtx.symbolTable.get("value")).astring());
         return new RTResult().success(new Null());
     }
 
@@ -163,7 +163,7 @@ public class BuiltInFunction extends Library {
                 String.format("Failed to finish executing script \"%s\"%n%s", fn, runtime.b.asString()),
                 execCtx
         ));
-        System.out.println(runtime.a);
+        Shell.logger.outln(runtime.a);
         return res.success(runtime.a != null ? runtime.a : new Null());
     }
 
@@ -260,18 +260,18 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_printback(Context execCtx) {
         Obj obj = ((Obj) execCtx.symbolTable.get("value")).astring();
-        System.out.print(obj);
+        Shell.logger.outln(obj);
         return new RTResult().success(new Str(obj.toString()));
     }
 
     public RTResult execute_field(Context execCtx) {
-        System.out.print(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.outln(((Obj) execCtx.symbolTable.get("value")).astring());
         String text = scanner.nextLine();
         return new RTResult().success(new Str(text));
     }
 
     public RTResult execute_nfield(Context execCtx) {
-        System.out.print(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.outln(((Obj) execCtx.symbolTable.get("value")).astring());
         String text;
         do {
             text = scanner.nextLine();

@@ -7,6 +7,7 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
+import lemon.jpizza.Shell;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,14 +43,14 @@ public class Function extends BaseFunction {
         res.register(checkPopArgs(argNames, args, execCtx));
         if (res.shouldReturn()) {
             if (async && res.error != null)
-                System.out.printf("Async function %s:\n%s%n", name, res.error.asString());
+                Shell.logger.outln(String.format("Async function %s:\n%s", name, res.error.asString()));
             return res;
         }
 
         Obj value = (Obj) res.register(interpreter.visit(bodyNode, execCtx));
         if (res.shouldReturn() && res.funcReturn == null) {
             if (async && res.error != null)
-                System.out.printf("Async function %s:\n%s%n", name, res.error.asString());
+                Shell.logger.outln(String.format("Async function %s:\n%s", name, res.error.asString()));
             return res;
         }
 

@@ -25,6 +25,7 @@ import lemon.jpizza.Results.RTResult;
 
 public class Shell {
 
+    public static Logger logger = new Logger();
     static SymbolTable globalSymbolTable = new SymbolTable();
 
     public static void main(String[] args) throws IOException {
@@ -85,7 +86,7 @@ public class Shell {
 
         if (args.length == 1) {
             if (args[0].equals("help")) {
-                System.out.println("""
+                Shell.logger.outln("""
                         dp -> Open venv
                         dp help -> List commands
                         dp docs -> Link to documentation
@@ -97,12 +98,12 @@ public class Shell {
                     globalSymbolTable.define("CMDARGS", cmdargs);
                     Double<Obj, Error> res = run(args[0], scrpt);
                     if (res.b != null)
-                        System.out.println(res.b.asString());
+                        Shell.logger.outln(res.b.asString());
                 } else {
-                    System.out.println("File does not exist.");
+                    Shell.logger.outln("File does not exist.");
                 }
             } else if (args[0].equals("docs")) {
-                System.out.println("Documentation: https://bit.ly/3vM8G0a");
+                Shell.logger.outln("Documentation: https://bit.ly/3vM8G0a");
             }
             return;
         }
@@ -111,23 +112,26 @@ public class Shell {
             if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
                     boolean debug = false;
-                    if (args[1].equals("--debug")) debug = true;
+                    if (args[1].equals("--debug")) {
+                        debug = true;
+                        logger.disableLogging();
+                    }
                     String scrpt = Files.readString(Path.of(args[0]));
                     globalSymbolTable.define("CMDARGS", cmdargs);
                     Double<Obj, Error> res = run(args[0], scrpt);
                     if (res.b != null) {
-                        if (!debug) System.out.println(res.b.asString());
+                        if (!debug) Shell.logger.outln(res.b.asString());
                         else {
                             Error e = res.b;
                             String message = String.format("%s: %s", e.error_name, e.details);
-                            System.out.printf("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
+                            Shell.logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
                                     e.pos_start.ln, e.pos_end.ln,
                                     e.pos_start.col, e.pos_end.col,
-                                    message);
+                                    message));
                         }
                     }
                 } else {
-                    System.out.println("File does not exist.");
+                    Shell.logger.outln("File does not exist.");
                 }
             }
             return;
@@ -142,9 +146,9 @@ public class Shell {
                         cmdargs.add(new Str(args[i]));
                     globalSymbolTable.define("CMDARGS", cmdargs);
                     if (res.b != null)
-                        System.out.println(res.b.asString());
+                        Shell.logger.outln(res.b.asString());
                 } else {
-                    System.out.println("File does not exist.");
+                    Shell.logger.outln("File does not exist.");
                 }
             }
             return;
@@ -152,11 +156,11 @@ public class Shell {
 
         globalSymbolTable.define("CMDARGS", cmdargs);
         while (true) {
-            System.out.print("-> "); String input = in.nextLine();
+            Shell.logger.out("-> "); String input = in.nextLine();
             if (input.equals("quit"))
                 break;
             Double<Obj, Error> a = run("<shell>", input);
-            if (a.b != null) System.out.println(a.b.asString());
+            if (a.b != null) Shell.logger.outln(a.b.asString());
             else {
                 List<Obj> results = ((PList) a.a).trueValue();
                 if (results.size() > 0) {
@@ -166,7 +170,7 @@ public class Shell {
                         if (!(results.get(i) instanceof Null)) out.append(results.get(i)).append(", ");
                     }
                     if (out.length() > 0) out.setLength(out.length() - 2);
-                    System.out.println(out);
+                    Shell.logger.outln(out);
                 }
             }
         }
@@ -174,16 +178,13 @@ public class Shell {
 
     public static Double<Node, Error> getAst(String fn, String text) {
         Lexer lexer = new Lexer(fn, text);
-        //clock.tick();
         Double<List<Token>, Error> x = lexer.make_tokens();
-        //System.out.println(clock.tick());
         List<Token> tokens = x.a;
         Error error = x.b;
         if (error != null)
             return new Double<>(null, error);
         Parser parser = new Parser(tokens);
         ParseResult ast = parser.parse();
-        //System.out.println(clock.tick());
         if (ast.error != null)
             return new Double<>(null, ast.error);
         return new Double<>((Node)ast.node, null);
