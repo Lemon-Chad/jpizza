@@ -16,9 +16,9 @@ public class DemoLibrary extends Library {
     The code for this library would be:
 
                                        Reference to the class
-                                              ||
-                   Name of library in code    ||
-                           vvv                V
+                                              |
+                   Name of library in code    |
+                            vvv               ↓
     DemoLibrary.intialize("demo", DemoLibrary.class, new HashMap<>(){{
 
         put("printDemo", Collections.singletonList("value"));
