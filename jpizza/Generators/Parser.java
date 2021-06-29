@@ -56,7 +56,6 @@ public class Parser {
 
     public ParseResult parse() {
         ParseResult res = statements();
-        System.out.println(currentToken);
         if (res.error == null && !currentToken.type.equals(TT_EOF)) {
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
