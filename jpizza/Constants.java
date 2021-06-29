@@ -52,8 +52,8 @@ public class Constants {
             if (idx_end < 0)
                     idx_end = text.length() + idx_end + 1;
             line = text.substring(idx_start, idx_end);
-            col_start = i == 0 ? pos_start.col : 0;
-            col_end = i == line_count - 1 ? pos_end.col : line.length() - 1;
+            col_start = i == 0 ? pos_start.tcol : 0;
+            col_end = i == line_count - 1 ? pos_end.tcol : line.length() - 1;
             result.append(line).append('\n');
             result.append(" ".repeat(col_start)).append("^".repeat(col_end - col_start));
             idx_start = idx_end;

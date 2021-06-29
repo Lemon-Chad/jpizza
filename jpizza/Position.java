@@ -4,6 +4,7 @@ public class Position {
     public int idx;
     public int ln;
     public int col;
+    public int tcol;
     public String fn;
     public String ftext;
     public Position(int idx, int ln, int col, String fn, String ftext) {
@@ -16,7 +17,8 @@ public class Position {
 
     public void advance(char current_char) {
         idx++;
-        if (current_char != '\t') col++;
+        col++;
+        if (current_char != '\t') tcol++;
 
         if (current_char == Constants.splitter) {
             ln++;
