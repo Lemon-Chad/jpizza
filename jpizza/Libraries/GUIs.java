@@ -11,7 +11,7 @@ public class GUIs extends Library {
 
     public GUIs(String name) { super(name); }
 
-    public RTResult execute_printDemo(Context execCtx) {
+    public RTResult execute_GUI(Context execCtx) {
         // Get value arg from variables passed into function
         Obj value = (Obj) execCtx.symbolTable.get("value");
         // Convert value argument to a string type
