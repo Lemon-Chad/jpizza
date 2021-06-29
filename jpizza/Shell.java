@@ -6,6 +6,7 @@ import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Generators.Lexer;
 import lemon.jpizza.Generators.Parser;
 import lemon.jpizza.Libraries.BuiltInFunction;
+import lemon.jpizza.Libraries.GUIs;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Executables.ClassInstance;
 import lemon.jpizza.Objects.Obj;
@@ -32,8 +33,9 @@ public class Shell {
         Scanner in = new Scanner(System.in);
 
         // Load librarys
-        GUIs.intialize("GUIs", GUIs.class, new HashMap<>(){{
-        put("GUI", Collections.singletonList("value"));
+        GUIs.initialize("GUIs", GUIs.class, new HashMap<>(){{
+            put("GUI", Collections.singletonList("value"));
+        }});
 
         BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
             put("insert", Arrays.asList("list", "item", "index"));
