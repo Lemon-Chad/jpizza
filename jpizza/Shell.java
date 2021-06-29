@@ -124,6 +124,7 @@ public class Shell {
                         else {
                             Error e = res.b;
                             String message = String.format("%s: %s", e.error_name, e.details);
+                            Shell.logger.enableLogging();
                             Shell.logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
                                     e.pos_start.ln, e.pos_end.ln,
                                     e.pos_start.col, e.pos_end.col,
