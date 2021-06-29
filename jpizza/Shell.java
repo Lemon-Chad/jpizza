@@ -32,6 +32,8 @@ public class Shell {
         Scanner in = new Scanner(System.in);
 
         // Load librarys
+        GUIs.intialize("GUIs", GUIs.class, new HashMap<>(){{
+        put("GUI", Collections.singletonList("value"));
 
         BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
             put("insert", Arrays.asList("list", "item", "index"));
