@@ -19,7 +19,7 @@ public class DemoLibrary extends Library {
                                               |
                    Name of library in code    |
                             vvv               ↓
-    DemoLibrary.intialize("demo", DemoLibrary.class, new HashMap<>(){{
+    DemoLibrary.initialize("demo", DemoLibrary.class, new HashMap<>(){{
 
         put("printDemo", Collections.singletonList("value"));
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
