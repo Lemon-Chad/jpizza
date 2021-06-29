@@ -4,10 +4,10 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Position;
 
 public class Error {
-    Position pos_start;
-    Position pos_end;
-    String error_name;
-    String details;
+    public Position pos_start;
+    public Position pos_end;
+    public String error_name;
+    public String details;
 
     public Error(Position pos_start, Position pos_end, String error_name, String details) {
         this.pos_start = pos_start;

@@ -107,6 +107,30 @@ public class Shell {
             return;
         }
 
+        if (args.length == 2) {
+            if (args[0].endsWith(".devp")) {
+                if (Files.exists(Path.of(args[0]))) {
+                    boolean debug = false;
+                    if (args[1].equals("--debug")) debug = true;
+                    String scrpt = Files.readString(Path.of(args[0]));
+                    globalSymbolTable.define("CMDARGS", cmdargs);
+                    Double<Obj, Error> res = run(args[0], scrpt);
+                    if (res.b != null) {
+                        if (!debug) System.out.println(res.b.asString());
+                        else {
+                            Error e = res.b;
+                            int startIdx = e.pos_start.idx; int endIdx = e.pos_end.idx;
+                            String message = String.format("%s: %s", e.error_name, e.details);
+                            System.out.printf("{\"indices\": [%s, %s], \"msg\": \"%s\"}", startIdx, endIdx, message);
+                        }
+                    }
+                } else {
+                    System.out.println("File does not exist.");
+                }
+            }
+            return;
+        }
+
         if (args.length > 1) {
             if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
