@@ -38,8 +38,6 @@ public class Tokens {
     public static final String TT_LAMBDA = "LAMBDA";
     public static final String TT_STEP = "STEP";
     public static final String TT_COMMA = "COMMA";
-    public static final String TT_OPENSIGN = "OPENSIGN";
-    public static final String TT_CLOSESIGN = "CLOSESIGN";
     public static final String TT_LSQUARE = "LSQUARE";
     public static final String TT_RSQUARE = "RSQUARE";
     public static final String TT_OPEN = "OPEN";
@@ -51,7 +49,6 @@ public class Tokens {
     public static final String TT_POE = "POE";
     public static final String TT_INCR = "INCR";
     public static final String TT_DECR = "DECR";
-    public static final String TT_DICT = "DICT";
     public static final String TT_DOT = "DOT";
     public static final String TT_USE = "USE";
     public static final String TT_ITER = "ITER";
