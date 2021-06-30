@@ -95,6 +95,9 @@ public class Shell {
             } else if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
                     String scrpt = Files.readString(Path.of(args[0]));
+                    String newDir = Path.of(args[0]).toString();
+                    newDir = newDir.substring(0, newDir.lastIndexOf('\\'));
+                    System.setProperty("user.dir", newDir);
                     globalSymbolTable.define("CMDARGS", cmdargs);
                     Double<Obj, Error> res = run(args[0], scrpt);
                     if (res.b != null)

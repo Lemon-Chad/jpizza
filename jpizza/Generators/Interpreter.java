@@ -515,7 +515,7 @@ public class Interpreter {
     public RTResult visit_ImportNode(Node node, Context context) throws IOException {
         ImportNode in = (ImportNode) node;
         String fn = (String) in.file_name_tok.value;
-        String file_name = fn + ".devp";
+        String file_name = System.getProperty("user.dir") + "\\" + fn + ".devp";
         String modPath = "C:\\DP\\modules\\" + fn;
         String modFilePath = modPath + "\\" + file_name;
         var mkdirs = new File("C:\\DP\\modules").mkdirs();
@@ -528,7 +528,7 @@ public class Interpreter {
                 imp = (ClassInstance) res.register(getImprt(modFilePath, fn, context, node.pos_start,
                         node.pos_end));
             else if (Files.exists(Paths.get(file_name)))
-                imp = (ClassInstance) res.register(getImprt(modFilePath, file_name, context, node.pos_start,
+                imp = (ClassInstance) res.register(getImprt(file_name, fn, context, node.pos_start,
                         node.pos_end));
             if (res.error != null) return res;
         }
