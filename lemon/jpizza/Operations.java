@@ -1,0 +1,38 @@
+package lemon.jpizza;
+
+public class Operations {
+    public enum OP {
+        BRACKET,
+        NUMBER,
+        DICTIONARY,
+        ALIST,
+        ASTRING,
+        BOOL,
+        ANULL,
+        FUNCTION,
+        DELETE,
+        GET,
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        MOD,
+        FASTPOW,
+        LTE,
+        LT,
+        ALSO,
+        INCLUDING,
+        INVERT,
+        APPEND,
+        EXTEND,
+        POP,
+        REMOVE,
+        EXECUTE,
+        EQ,
+        NE,
+        TOSTRING,
+        COPY,
+        TYPE,
+        ACCESS,
+    }
+}

@@ -1,0 +1,105 @@
+package lemon.jpizza.Objects.Executables;
+
+import lemon.jpizza.Constants;
+import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Generators.Interpreter;
+import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Objects.Primitives.*;
+import lemon.jpizza.Objects.Value;
+import lemon.jpizza.Results.RTResult;
+
+import java.util.List;
+
+public class BaseFunction extends Value {
+    public String name;
+    public BaseFunction(String name) {
+        super();
+        this.name = name != null ? name : "<anonymous>";
+        jptype = Constants.JPType.BaseFunction;
+    }
+
+    // Functions
+
+    public Context newContext() {
+        Context newContext = new Context(name, context, pos_start);
+        newContext.symbolTable = new SymbolTable(newContext.parent.symbolTable);
+        return newContext;
+    }
+
+    public RTResult checkArgs(List<String> argNames, List<String> argTypes, List<Obj> args) {
+        RTResult res = new RTResult();
+
+        int aSize = args.size();
+        int size = argNames.size();
+        if (aSize > size) return res.failure(new RTError(
+                pos_start, pos_end,
+                String.format("%s too many args passed into '%s'", args.size() - argNames.size(), name),
+                context
+        ));
+        if (aSize < size) return res.failure(new RTError(
+                pos_start, pos_end,
+                String.format("%s too few args passed into '%s'", argNames.size() - args.size(), name),
+                context
+        ));
+
+        int tSize = Math.min(size, argTypes.size());
+        for (int i = 0; i < tSize; i++) {
+            String type = argTypes.get(i);
+            if (type.equals("any")) continue;
+
+            Obj arg = args.get(i);
+            Obj oType = arg.type().astring();
+            if (oType.jptype != Constants.JPType.String) return res.failure(new RTError(
+                    arg.get_start(), arg.get_end(),
+                    "Type is not a string!",
+                    arg.get_ctx()
+            ));
+
+            String oT = ((Str) oType).trueValue();
+            if (!oT.equals(type)) return res.failure(new RTError(
+                    arg.get_start(), arg.get_end(),
+                    String.format("Expected type %s, got %s", type, oT),
+                    arg.get_ctx()
+            ));
+
+        }
+
+        return res.success(null);
+    }
+
+    public void populateArgs(List<String> argNames, List<Obj> args, Context execCtx) {
+        int size = args.size();
+        for (int i = 0; i < size; i++) {
+            String argName = argNames.get(i);
+            Obj argValue = args.get(i);
+            argValue.set_context(execCtx);
+            execCtx.symbolTable.define(argName, argValue);
+        }
+    }
+
+    public RTResult checkPopArgs(List<String> argNames, List<String> argTypes, List<Obj> args, Context execCtx) {
+        RTResult res = new RTResult();
+        res.register(checkArgs(argNames, argTypes, args));
+        if (res.shouldReturn())
+            return res;
+        populateArgs(argNames, args, execCtx);
+        if (res.shouldReturn())
+            return res;
+        return res.success(null);
+    }
+
+
+    // Methods
+
+    // Conversions
+
+    // Defaults
+
+    public Obj copy() { return new BaseFunction(name).set_context(context).set_pos(pos_start, pos_end); }
+    public Obj type() { return new Str("<base-function>").set_context(context).set_pos(pos_start, pos_end); }
+    public String toString() { return "<base-function>"; }
+    public boolean isAsync() { return false; }
+    public RTResult execute(List<Obj> args, Interpreter parent) { return new RTResult().success(new Null()); }
+}
