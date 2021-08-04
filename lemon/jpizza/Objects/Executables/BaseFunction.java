@@ -28,19 +28,18 @@ public class BaseFunction extends Value {
         return newContext;
     }
 
-    public RTResult checkArgs(List<String> argNames, List<String> argTypes, List<Obj> args) {
+    public RTResult checkArgs(List<String> argNames, List<String> argTypes, List<Obj> args, int minArgs, int maxArgs) {
         RTResult res = new RTResult();
 
-        int aSize = args.size();
-        int size = argNames.size();
-        if (aSize > size) return res.failure(new RTError(
+        int size = args.size();
+        if (size > maxArgs) return res.failure(new RTError(
                 pos_start, pos_end,
-                String.format("%s too many args passed into '%s'", args.size() - argNames.size(), name),
+                String.format("%s too many args passed into '%s'", args.size() - maxArgs, name),
                 context
         ));
-        if (aSize < size) return res.failure(new RTError(
+        if (size < minArgs) return res.failure(new RTError(
                 pos_start, pos_end,
-                String.format("%s too few args passed into '%s'", argNames.size() - args.size(), name),
+                String.format("%s too few args passed into '%s'", minArgs - args.size(), name),
                 context
         ));
 
@@ -69,22 +68,28 @@ public class BaseFunction extends Value {
         return res.success(null);
     }
 
-    public void populateArgs(List<String> argNames, List<Obj> args, Context execCtx) {
-        int size = args.size();
+    public void populateArgs(List<String> argNames, List<Obj> args, List<Obj> defaults, Context execCtx) {
+        int size = argNames.size();
+        int aSize = args.size();
         for (int i = 0; i < size; i++) {
+            Obj argValue;
+            if (i >= aSize)
+                argValue = defaults.get(i - aSize);
+            else
+                argValue = args.get(i);
             String argName = argNames.get(i);
-            Obj argValue = args.get(i);
             argValue.set_context(execCtx);
             execCtx.symbolTable.define(argName, argValue);
         }
     }
 
-    public RTResult checkPopArgs(List<String> argNames, List<String> argTypes, List<Obj> args, Context execCtx) {
+    public RTResult checkPopArgs(List<String> argNames, List<String> argTypes, List<Obj> args, Context execCtx,
+                                 List<Obj> defaults, int minArgs, int maxArgs) {
         RTResult res = new RTResult();
-        res.register(checkArgs(argNames, argTypes, args));
+        res.register(checkArgs(argNames, argTypes, args, minArgs, maxArgs));
         if (res.shouldReturn())
             return res;
-        populateArgs(argNames, args, execCtx);
+        populateArgs(argNames, args, defaults, execCtx);
         if (res.shouldReturn())
             return res;
         return res.success(null);

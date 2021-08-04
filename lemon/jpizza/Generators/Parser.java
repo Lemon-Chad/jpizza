@@ -765,8 +765,14 @@ public class Parser {
     @SuppressWarnings("DuplicatedCode")
     public ParseResult gatherArgs() {
         ParseResult res = new ParseResult();
+
         List<Token> argNameToks = new ArrayList<>();
         List<Token> argTypeToks = new ArrayList<>();
+
+        List<Node> defaults = new ArrayList<>();
+        int defaultCount = 0;
+        boolean optionals = false;
+
         Token anyToken = new Token(TT.IDENTIFIER, "any");
         if (currentToken.type.equals(TT.LT)) {
             advance(); res.registerAdvancement();
@@ -808,6 +814,20 @@ public class Parser {
                     argTypeToks.add(currentToken);
                     res.registerAdvancement(); advance();
                 } else argTypeToks.add(anyToken);
+                if (currentToken.type.equals(TT.EQS)) {
+                    res.registerAdvancement(); advance();
+
+                    Node val = (Node) res.register(arithExpr());
+                    if (res.error != null) return res;
+
+                    defaults.add(val);
+                    defaultCount++;
+                    optionals = true;
+                } else if (optionals) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected default value"
+                ));
+                else defaults.add(null);
 
             }
 
@@ -816,7 +836,9 @@ public class Parser {
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected '>'"
             )); advance(); res.registerAdvancement();
-        } return res.success(new Pair<>(argNameToks, argTypeToks));
+        } return res.success(new Pair<>(
+                new Pair<>(argNameToks, argTypeToks),
+                new Pair<>(defaults, defaultCount)));
     }
 
     public void endLine(int offset) {
@@ -1273,7 +1295,13 @@ public class Parser {
             res.registerAdvancement(); advance();
         }
 
-        var argTKs = (Pair< List<Token>, List<Token> >) res.register(gatherArgs());
+        var argTKs = (Pair<
+                Pair< List<Token>, List<Token> >,
+                Pair< List<Node>, Integer >
+                >) res.register(gatherArgs());
+        if (res.error != null) return res;
+
+        String retype = (String) res.register(staticRet());
         if (res.error != null) return res;
 
         Node nodeToReturn;
@@ -1285,11 +1313,14 @@ public class Parser {
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
-                        argTKs.a,
-                        argTKs.b,
+                        argTKs.a.a,
+                        argTKs.a.b,
                         nodeToReturn,
                         true,
-                        async
+                        async,
+                        retype,
+                        argTKs.b.a,
+                        argTKs.b.b
                 ));
             }
             case OPEN -> {
@@ -1297,11 +1328,14 @@ public class Parser {
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
-                        argTKs.a,
-                        argTKs.b,
+                        argTKs.a.a,
+                        argTKs.a.b,
                         nodeToReturn,
                         false,
-                        async
+                        async,
+                        retype,
+                        argTKs.b.a,
+                        argTKs.b.b
                 ));
             }
             default -> {
@@ -1317,6 +1351,18 @@ public class Parser {
             }
         }
 
+    }
+
+    public ParseResult staticRet() {
+        ParseResult res = new ParseResult();
+        String retype = "any";
+        if (currentToken.type.equals(TT.EQS)) {
+            Token etok = (Token) res.register(expectIdentifier());
+            if (res.error != null) return res;
+            res.registerAdvancement(); advance();
+
+            retype = (String) etok.value;
+        } return res.success(retype);
     }
 
     public ParseResult classDef() {
@@ -1358,7 +1404,13 @@ public class Parser {
             )); advance(); res.registerAdvancement();
         }
 
-        Pair< List<Token>, List<Token> > argTKs = new Pair<>(new ArrayList<>(), new ArrayList<>());
+        Pair<
+            Pair< List<Token>, List<Token> >,
+            Pair< List<Node>, Integer >
+        > argTKs = new Pair<>(
+                new Pair<>(new ArrayList<>(), new ArrayList<>()),
+                new Pair<>(new ArrayList<>(), 0)
+        );
         Node ingredientNode = new ListNode(
                 new ArrayList<>(),
                 classNameTok.pos_start.copy(),
@@ -1369,7 +1421,10 @@ public class Parser {
                 (currentToken.value.equals("method") || currentToken.value.equals("ingredients"))) {
             if (currentToken.value.equals("ingredients")) {
                 advance(); res.registerAdvancement();
-                argTKs = (Pair< List<Token>, List<Token> >) res.register(gatherArgs());
+                argTKs = (Pair<
+                        Pair< List<Token>, List<Token> >,
+                        Pair< List<Node>, Integer >
+                        >) res.register(gatherArgs());
                 if (res.error != null) return res;
 
                 ingredientNode = (Node) res.register(this.block(false));
@@ -1392,7 +1447,13 @@ public class Parser {
                 ));
                 Token varNameTok = currentToken;
                 res.registerAdvancement(); advance();
-                var args = (Pair< List<Token>, List<Token> >) res.register(gatherArgs());
+                var args = (Pair<
+                        Pair< List<Token>, List<Token> >,
+                        Pair< List<Node>, Integer >
+                        >) res.register(gatherArgs());
+
+                String retype = (String) res.register(staticRet());
+                if (res.error != null) return res;
 
                 Node nodeToReturn;
                 switch (currentToken.type) {
@@ -1402,24 +1463,30 @@ public class Parser {
                         if (res.error != null) return res;
                         methods.add(new MethDefNode(
                                 varNameTok,
-                                args.a,
-                                args.b,
+                                args.a.a,
+                                args.a.b,
                                 nodeToReturn,
                                 true,
                                 bin,
-                                async
+                                async,
+                                retype,
+                                args.b.a,
+                                args.b.b
                         )); break;
                     case OPEN:
                          nodeToReturn = (Node) res.register(this.block(false));
                          if (res.error != null) return res;
                          methods.add(new MethDefNode(
                                  varNameTok,
-                                 argTKs.a,
-                                 argTKs.b,
+                                 argTKs.a.a,
+                                 argTKs.a.b,
                                  nodeToReturn,
                                  false,
                                  bin,
-                                 async
+                                 async,
+                                 retype,
+                                 argTKs.b.a,
+                                 argTKs.b.b
                          )); break;
                     default:
                         return res.failure(Error.InvalidSyntax(
@@ -1437,11 +1504,13 @@ public class Parser {
         return res.success(new ClassDefNode(
                 classNameTok,
                 attributeDeclarations,
-                argTKs.a,
-                argTKs.b,
+                argTKs.a.a,
+                argTKs.a.b,
                 ingredientNode,
                 methods,
-                currentToken.pos_end.copy()
+                currentToken.pos_end.copy(),
+                argTKs.b.a,
+                argTKs.b.b
         ));
     }
 

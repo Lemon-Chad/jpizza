@@ -173,10 +173,9 @@ public class Lexer {
                     null
             );
         } else if (c.equals("=")) {
-            advance();
             return new Pair<>(
-                    null,
-                    ExpectedCharError(pos_start, pos, String.format("'=' (after '%s')", c))
+                    new Token(TT.EQS, pos_start),
+                    null
             );
         } else {
             return new Pair<>(

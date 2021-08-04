@@ -14,9 +14,13 @@ public class MethDefNode extends Node {
     public boolean async;
     public boolean bin;
     public List<Token> arg_type_toks;
+    public String returnType;
+    public List<Node> defaults;
+    public int defaultCount;
 
     public MethDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
-                       boolean autoreturn, boolean bin, boolean async) {
+                       boolean autoreturn, boolean bin, boolean async, String returnType, List<Node> defaults,
+                       int defaultCount) {
         this.var_name_tok = var_name_tok;
         this.async = async;
         this.arg_name_toks = arg_name_toks;
@@ -24,6 +28,9 @@ public class MethDefNode extends Node {
         this.body_node = body_node;
         this.autoreturn = autoreturn;
         this.bin = bin;
+        this.returnType = returnType;
+        this.defaults = defaults;
+        this.defaultCount = defaultCount;
 
         pos_start = var_name_tok.pos_start;
         pos_end = body_node.pos_end;

@@ -7,7 +7,6 @@ import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
-import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
 
 import java.lang.reflect.Constructor;
@@ -101,7 +100,8 @@ public class Library extends BaseFunction {
                     context
             ));
         }
-        res.register(checkPopArgs(argNames, new ArrayList<>(), args, execCtx));
+        res.register(checkPopArgs(argNames, new ArrayList<>(), args, execCtx, new ArrayList<>(),
+                argNames.size(), argNames.size()));
         if (res.shouldReturn()) return res;
 
         Obj returnValue;

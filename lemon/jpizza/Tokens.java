@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class Tokens {
     public enum TT {
+        EQS,
         INT,
         FLOAT,
         STRING,

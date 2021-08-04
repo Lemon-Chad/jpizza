@@ -2,11 +2,11 @@ package lemon.jpizza.Objects.Executables;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
-import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Shell;
 
@@ -19,23 +19,35 @@ public class Function extends BaseFunction {
     Node bodyNode;
     List<String> argNames;
     List<String> argTypes;
+    List<Obj> defaults;
+    int defaultCount;
     boolean async;
     boolean autoreturn;
-    public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes, boolean async, boolean autoreturn) {
+    String returnType;
+
+    public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes,
+                    boolean async, boolean autoreturn, String returnType, List<Obj> defaults, int defaultCount) {
         super(name);
+        this.defaultCount = defaultCount;
         this.bodyNode = bodyNode;
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.async = async; this.autoreturn = autoreturn;
         this.argTypes = argTypes != null ? argTypes : new ArrayList<>();
+        this.returnType = returnType;
+        this.defaults = defaults;
         jptype = Constants.JPType.Function;
     }
 
-    public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes) {
+    public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes, String returnType,
+                    List<Obj> defaults, int defaultCount) {
         super(name);
+        this.defaultCount = defaultCount;
         this.bodyNode = bodyNode;
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.argTypes = argTypes != null ? argTypes : new ArrayList<>();
         this.async = false; this.autoreturn = true;
+        this.returnType = returnType;
+        this.defaults = defaults;
         jptype = Constants.JPType.Function;
     }
 
@@ -44,8 +56,12 @@ public class Function extends BaseFunction {
         this.bodyNode = bodyNode;
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.argTypes = new ArrayList<>();
-        for (int i = 0; i < this.argNames.size(); i++)
+        this.defaultCount = 0;
+        for (int i = 0; i < this.argNames.size(); i++) {
             this.argTypes.add("any");
+            this.defaults.add(null);
+        }
+        this.returnType = "any";
         this.async = false; this.autoreturn = true;
         jptype = Constants.JPType.Function;
     }
@@ -57,7 +73,8 @@ public class Function extends BaseFunction {
         Interpreter interpreter = new Interpreter(parent.memo);
         Context execCtx = newContext();
 
-        res.register(checkPopArgs(argNames, argTypes, args, execCtx));
+        res.register(checkPopArgs(argNames, argTypes, args, execCtx, defaults,
+                argNames.size() - defaultCount, argNames.size()));
         if (res.shouldReturn()) {
             if (async && res.error != null)
                 Shell.logger.outln(String.format("Async function %s:\n%s", name, res.error.asString()));
@@ -74,6 +91,23 @@ public class Function extends BaseFunction {
         Obj retValue = autoreturn ? value : (
                     res.funcReturn != null ? res.funcReturn : new Null()
                 );
+
+        if (!returnType.equals("any")) {
+            Obj type = retValue.type().astring();
+            if (type.jptype != Constants.JPType.String) return res.failure(new RTError(
+                    pos_start, pos_end,
+                    "Return value type is not a string",
+                    context
+            ));
+
+            String rtype = ((Str) type).trueValue();
+            if (!rtype.equals(returnType)) return res.failure(new RTError(
+                    pos_start, pos_end,
+                    "Return value has mismatched type",
+                    context
+            ));
+        }
+
         return res.success(retValue);
     }
 
@@ -103,7 +137,8 @@ public class Function extends BaseFunction {
 
     // Defaults
 
-    public Obj copy() { return new Function(name, bodyNode, argNames, argTypes, async, autoreturn)
+    public Obj copy() { return new Function(name, bodyNode, argNames, argTypes, async, autoreturn, returnType, defaults,
+                                            defaultCount)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("function").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<function-"+name+">"; }

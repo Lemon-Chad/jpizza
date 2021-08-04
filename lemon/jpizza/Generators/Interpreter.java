@@ -328,8 +328,19 @@ public class Interpreter {
         Token nameTok = node.var_name_tok;
         Node bodyNode = node.body_node;
         var argNT = gatherArgs(node.arg_name_toks, node.arg_type_toks);
+
+        List<Obj> defaults = new ArrayList<>();
+        for (Node n : node.defaults)
+            if (n == null)
+                defaults.add(null);
+            else {
+                Obj val = res.register(visit(n, context));
+                if (res.error != null) return res;
+                defaults.add(val);
+            }
+
         CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNT.a, argNT.b, node.bin, node.async,
-                node.autoreturn);
+                node.autoreturn, node.returnType, defaults, node.defaultCount);
 
         context.symbolTable.define(funcName, methValue);
         return res.success(methValue);
@@ -350,8 +361,20 @@ public class Interpreter {
             argNames.add((String) node.arg_name_toks.get(i).value);
             argTypes.add((String) node.arg_type_toks.get(i).value);
         }
+
+        List<Obj> defaults = new ArrayList<>();
+        for (Node n : node.defaults)
+            if (n == null)
+                defaults.add(null);
+            else {
+                Obj val = res.register(visit(n, context));
+                if (res.error != null) return res;
+                defaults.add(val);
+            }
+
         CMethod make = (CMethod) new CMethod("<make>", null, classContext, node.make_node, argNames,
-                argTypes, false, false, false).set_pos(node.pos_start, node.pos_end);
+                argTypes, false, false, false, "any", defaults, node.defaultCount)
+                .set_pos(node.pos_start, node.pos_end);
         size = node.methods.size();
         CMethod[] methods = new CMethod[size];
         for (int i = 0; i < size; i++) {
@@ -384,7 +407,17 @@ public class Interpreter {
         String funcName = node.var_name_tok != null ? (String) node.var_name_tok.value : null;
         Node bodyNode = node.body_node;
         var argNT = gatherArgs(node.arg_name_toks, node.arg_type_toks);
-        Obj funcValue = new Function(funcName, bodyNode, argNT.a, argNT.b, node.async, node.autoreturn)
+        List<Obj> defaults = new ArrayList<>();
+        for (Node n : node.defaults)
+            if (n == null)
+                defaults.add(null);
+            else {
+                Obj val = res.register(visit(n, context));
+                if (res.error != null) return res;
+                defaults.add(val);
+            }
+        Obj funcValue = new Function(funcName, bodyNode, argNT.a, argNT.b, node.async, node.autoreturn, node.returnType,
+                defaults, node.defaultCount)
                 .set_context(context).set_pos(node.pos_start, node.pos_end);
 
         if (funcName != null) context.symbolTable.define(funcName, funcValue);
