@@ -28,7 +28,7 @@ public class BaseFunction extends Value {
         return newContext;
     }
 
-    public RTResult checkArgs(List<String> argNames, List<String> argTypes, List<Obj> args, int minArgs, int maxArgs) {
+    public RTResult checkArgs(List<Obj> defaults, List<String> argTypes, List<Obj> args, int minArgs, int maxArgs) {
         RTResult res = new RTResult();
 
         int size = args.size();
@@ -43,12 +43,17 @@ public class BaseFunction extends Value {
                 context
         ));
 
-        int tSize = Math.min(size, argTypes.size());
+        int tSize = argTypes.size();
         for (int i = 0; i < tSize; i++) {
             String type = argTypes.get(i);
             if (type.equals("any")) continue;
 
-            Obj arg = args.get(i);
+            Obj arg;
+            if (i >= size)
+                arg = defaults.get(i - size);
+            else
+                arg = args.get(i);
+
             Obj oType = arg.type().astring();
             if (oType.jptype != Constants.JPType.String) return res.failure(new RTError(
                     arg.get_start(), arg.get_end(),
@@ -86,7 +91,7 @@ public class BaseFunction extends Value {
     public RTResult checkPopArgs(List<String> argNames, List<String> argTypes, List<Obj> args, Context execCtx,
                                  List<Obj> defaults, int minArgs, int maxArgs) {
         RTResult res = new RTResult();
-        res.register(checkArgs(argNames, argTypes, args, minArgs, maxArgs));
+        res.register(checkArgs(defaults, argTypes, args, minArgs, maxArgs));
         if (res.shouldReturn())
             return res;
         populateArgs(argNames, args, defaults, execCtx);
