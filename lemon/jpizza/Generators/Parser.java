@@ -302,7 +302,12 @@ public class Parser {
         Token useToken = (Token) res.register(expectIdentifier());
         if (res.error != null) return res;
         advance(); res.registerAdvancement();
-        return res.success(new UseNode(useToken));
+        List<Token> args = new ArrayList<>();
+        while (currentToken.type.equals(TT.IDENTIFIER)) {
+            args.add(currentToken);
+            res.registerAdvancement(); advance();
+        }
+        return res.success(new UseNode(useToken, args));
     }
 
     public ParseResult atom() {
@@ -836,7 +841,8 @@ public class Parser {
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected '>'"
             )); advance(); res.registerAdvancement();
-        } return res.success(new Pair<>(
+        }
+        return res.success(new Pair<>(
                 new Pair<>(argNameToks, argTypeToks),
                 new Pair<>(defaults, defaultCount)));
     }
@@ -1478,15 +1484,15 @@ public class Parser {
                          if (res.error != null) return res;
                          methods.add(new MethDefNode(
                                  varNameTok,
-                                 argTKs.a.a,
-                                 argTKs.a.b,
+                                 args.a.a,
+                                 args.a.b,
                                  nodeToReturn,
                                  false,
                                  bin,
                                  async,
                                  retype,
-                                 argTKs.b.a,
-                                 argTKs.b.b
+                                 args.b.a,
+                                 args.b.b
                          )); break;
                     default:
                         return res.failure(Error.InvalidSyntax(
