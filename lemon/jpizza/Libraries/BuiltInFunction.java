@@ -73,6 +73,15 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(new Null());
     }
 
+    public RTResult execute_createDennis(Context execCtx) {
+        execCtx.symbolTable.define("dennis", new EnumJ("dennis", new HashMap<>(){{
+            String[] members = new String[]{"Ocean", "Frozen", "Icey", "Yeetus", "Triangle", "Clown", "Lake"};
+            for (int i = 0; i < members.length; i++)
+                put(members[i], new EnumJChild(i));
+        }}));
+        return new RTResult().success(new Null());
+    }
+
     public RTResult execute_print(Context execCtx) {
         Shell.logger.out(((Obj) execCtx.symbolTable.get("value")).astring());
         return new RTResult().success(new Null());
