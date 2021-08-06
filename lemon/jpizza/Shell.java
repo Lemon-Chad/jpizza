@@ -138,6 +138,11 @@ public class Shell {
         initLibs();
 
         PList cmdargs = new PList(new ArrayList<>());
+        for (int i = 0; i < args.length; i++) {
+            cmdargs.append(new Str(args[i]));
+        }
+        globalSymbolTable.define("CMDARGS", cmdargs);
+
         if (args.length == 1) {
             if (args[0].equals("help")) {
                 Shell.logger.outln("""
@@ -153,7 +158,6 @@ public class Shell {
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    globalSymbolTable.define("CMDARGS", cmdargs);
                     Pair<Obj, Error> res = run(fn, scrpt);
                     if (res.b != null)
                         Shell.logger.outln(res.b.asString());
@@ -169,7 +173,6 @@ public class Shell {
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    globalSymbolTable.define("CMDARGS", cmdargs);
                     Pair<Obj, Error> res = runCompiled(fn, args[0]);
                     if (res.b != null)
                         Shell.logger.outln(res.b.asString());
@@ -189,7 +192,6 @@ public class Shell {
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    globalSymbolTable.define("CMDARGS", cmdargs);
                     if (args[1].equals("--debug")) {
                         debug = true;
                         logger.disableLogging();
@@ -234,9 +236,6 @@ public class Shell {
                 if (Files.exists(Path.of(args[0]))) {
                     String scrpt = Files.readString(Path.of(args[0]));
                     Pair<Obj, Error> res = run(args[0], scrpt);
-                    for (int i = 1; i < args.length; i++)
-                        cmdargs.add(new Str(args[i]));
-                    globalSymbolTable.define("CMDARGS", cmdargs);
                     if (res.b != null)
                         Shell.logger.outln(res.b.asString());
                 } else {
@@ -245,8 +244,6 @@ public class Shell {
             }
             return;
         }
-
-        globalSymbolTable.define("CMDARGS", cmdargs);
         while (true) {
             Shell.logger.out("-> "); String input = in.nextLine();
             if (input.equals("quit"))
