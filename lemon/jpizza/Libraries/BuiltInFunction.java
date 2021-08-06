@@ -316,7 +316,7 @@ public class BuiltInFunction extends Library {
                 "Expected string input!",
                 execCtx
         ));
-        var out = Shell.run("<sim>", ((Str) in).trueValue());
+        var out = Shell.run("<sim>", ((Str) in).trueValue(), false);
         if (out.b != null) return new RTResult().failure(out.b);
         return new RTResult().success(out.a);
     }

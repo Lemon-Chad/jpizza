@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class Function extends BaseFunction {
     Node bodyNode;
-    List<String> argNames;
+    public List<String> argNames;
     List<String> argTypes;
     List<Obj> defaults;
     int defaultCount;

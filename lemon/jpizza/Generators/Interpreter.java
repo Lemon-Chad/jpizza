@@ -37,6 +37,10 @@ public class Interpreter {
     public boolean reflection = false;
 
     public Memo memo = new Memo();
+    boolean main = false;
+
+    String fnFinish = null;
+    String clFinish = null;
 
     public Interpreter(Memo memo) {
         this.memo = memo;
@@ -44,8 +48,76 @@ public class Interpreter {
 
     public Interpreter() {}
 
+    public void makeMain() {
+        main = true;
+    }
+
     interface Condition {
         boolean go(double x);
+    }
+
+    public RTResult finish(Context context) {
+        RTResult res = new RTResult();
+
+        if (!main) return res.success(new Null());
+
+        Object cargs = context.symbolTable.get("CMDARGS");
+        Obj cmdArgs = cargs != null ? (PList) cargs : new PList(new ArrayList<>());
+
+        if (fnFinish != null) {
+            Object func = context.symbolTable.get(fnFinish);
+            if (!(func instanceof Function)) return new RTResult().failure(new RTError(
+                    null, null,
+                    "Main function provided does not exist",
+                    context
+            ));
+
+            Function fn = (Function) func;
+            if (fn.argNames.size() != 1) return new RTResult().failure(new RTError(
+                    fn.pos_start, fn.pos_end,
+                    "Function must take 1 argument (CMD line arguments)",
+                    context
+            ));
+            res.register(fn.execute(Collections.singletonList(cmdArgs), this));
+            if (res.error != null) return res;
+        }
+        else if (clFinish != null) {
+            Object cls = context.symbolTable.get(clFinish);
+            if (!(cls instanceof ClassPlate)) return new RTResult().failure(new RTError(
+                    null, null,
+                    "Main recipe provided does not exist",
+                    context
+            ));
+
+            ClassPlate recipe = (ClassPlate) cls;
+            if (recipe.make.argNames.size() != 0) return new RTResult().failure(new RTError(
+                    recipe.get_start(), recipe.get_end(),
+                    "Recipe shouldn't take any arguments",
+                    context
+            ));
+
+            ClassInstance clsi = (ClassInstance) res.register(recipe.execute(new ArrayList<>(), this));
+            if (res.error != null) return res;
+
+            Object func = clsi.getattr(OP.ACCESS, new Str("main").set_context(recipe.context));
+            if (!(func instanceof CMethod)) return new RTResult().failure(new RTError(
+                    recipe.get_start(), recipe.get_end(),
+                    "Recipe has no main method",
+                    recipe.context
+            ));
+
+            CMethod meth = (CMethod) func;
+            if (meth.argNames.size() != 1) return new RTResult().failure(new RTError(
+                    recipe.get_start(), recipe.get_end(),
+                    "Method does not take in 1 argument",
+                    recipe.context
+            ));
+
+            res.register(meth.execute(Collections.singletonList(cmdArgs), this));
+            if (res.error != null) return res;
+        }
+
+        return res.success(new Null());
     }
 
     public RTResult visit(Node node, Context context) {
@@ -329,18 +401,12 @@ public class Interpreter {
         Node bodyNode = node.body_node;
         var argNT = gatherArgs(node.arg_name_toks, node.arg_type_toks);
 
-        List<Obj> defaults = new ArrayList<>();
-        for (Node n : node.defaults)
-            if (n == null)
-                defaults.add(null);
-            else {
-                Obj val = res.register(visit(n, context));
-                if (res.error != null) return res;
-                defaults.add(val);
-            }
+        var dfts = getDefaults(node.defaults, context);
+        res.register(dfts.a);
+        if (res.error != null) return res;
 
         CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNT.a, argNT.b, node.bin, node.async,
-                node.autoreturn, node.returnType, defaults, node.defaultCount);
+                node.autoreturn, node.returnType, dfts.b, node.defaultCount);
 
         context.symbolTable.define(funcName, methValue);
         return res.success(methValue);
@@ -362,18 +428,12 @@ public class Interpreter {
             argTypes.add((String) node.arg_type_toks.get(i).value);
         }
 
-        List<Obj> defaults = new ArrayList<>();
-        for (Node n : node.defaults)
-            if (n == null)
-                defaults.add(null);
-            else {
-                Obj val = res.register(visit(n, context));
-                if (res.error != null) return res;
-                defaults.add(val);
-            }
+        var dfts = getDefaults(node.defaults, context);
+        res.register(dfts.a);
+        if (res.error != null) return res;
 
         CMethod make = (CMethod) new CMethod("<make>", null, classContext, node.make_node, argNames,
-                argTypes, false, false, false, "any", defaults, node.defaultCount)
+                argTypes, false, false, false, "any", dfts.b, node.defaultCount)
                 .set_pos(node.pos_start, node.pos_end);
         size = node.methods.size();
         CMethod[] methods = new CMethod[size];
@@ -401,23 +461,33 @@ public class Interpreter {
         return new Pair<>(argNames, argTypes);
     }
 
+    public Pair< RTResult, List<Obj> > getDefaults(List<Node> dfts, Context ctx) {
+        RTResult res = new RTResult();
+        List<Obj> defaults = new ArrayList<>();
+        for (Node n : dfts)
+            if (n == null)
+                defaults.add(null);
+            else {
+                Obj val = res.register(visit(n, ctx));
+                if (res.error != null) return new Pair<>(res, defaults);
+                defaults.add(val);
+            }
+        return new Pair<>(res, defaults);
+    }
+
     public RTResult visit_FuncDefNode(FuncDefNode node, Context context) {
         RTResult res = new RTResult();
 
         String funcName = node.var_name_tok != null ? (String) node.var_name_tok.value : null;
         Node bodyNode = node.body_node;
         var argNT = gatherArgs(node.arg_name_toks, node.arg_type_toks);
-        List<Obj> defaults = new ArrayList<>();
-        for (Node n : node.defaults)
-            if (n == null)
-                defaults.add(null);
-            else {
-                Obj val = res.register(visit(n, context));
-                if (res.error != null) return res;
-                defaults.add(val);
-            }
+
+        var dfts = getDefaults(node.defaults, context);
+        res.register(dfts.a);
+        if (res.error != null) return res;
+
         Obj funcValue = new Function(funcName, bodyNode, argNT.a, argNT.b, node.async, node.autoreturn, node.returnType,
-                defaults, node.defaultCount)
+                dfts.b, node.defaultCount)
                 .set_context(context).set_pos(node.pos_start, node.pos_end);
 
         if (funcName != null) context.symbolTable.define(funcName, funcValue);
@@ -770,16 +840,33 @@ public class Interpreter {
         return res.success(number.set_pos(node.pos_start, node.pos_end).set_context(context));
     }
 
-    @SuppressWarnings("SwitchStatementWithTooFewBranches")
     public RTResult visit_UseNode(UseNode node, Context context) {
         Token useToken = node.useToken;
         switch ((String) useToken.value) {
-            case "memoize":
+            case "memoize" ->
                 context.doMemoize();
-                break;
-            default:
-                break;
+            case "func" -> {
+                if (!main) break;
 
+                if (node.args.size() < 1) return new RTResult().failure(new RTError(
+                        node.pos_start, node.pos_end,
+                        "Expected function name",
+                        context
+                ));
+
+                fnFinish = (String) node.args.get(0).value;
+            }
+            case "object" -> {
+                if (!main) break;
+
+                if (node.args.size() < 1) return new RTResult().failure(new RTError(
+                        node.pos_start, node.pos_end,
+                        "Expected object name",
+                        context
+                ));
+
+                clFinish = (String) node.args.get(0).value;
+            }
         }
         return new RTResult().success(new Null());
     }

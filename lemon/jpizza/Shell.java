@@ -283,16 +283,18 @@ public class Shell {
     }
 
     public static Pair<Obj, Error> run(String fn, String text) {
-        return run(fn, text, false);
+        return run(fn, text, true);
     }
-    public static Pair<Obj, Error> run(String fn, String text, boolean reflect) {
+    public static Pair<Obj, Error> run(String fn, String text, boolean main) {
         Pair<Node, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         Context context = new Context(fn, null, null);
         context.symbolTable = globalSymbolTable;
         Interpreter inter = new Interpreter();
-        inter.reflection = reflect;
+        if (main) inter.makeMain();
         RTResult result = inter.visit(ast.a, context);
+        if (result.error != null) return new Pair<>(result.value, result.error);
+        result.register(inter.finish(context));
         return new Pair<>(result.value, result.error);
     }
 
@@ -342,7 +344,10 @@ public class Shell {
             Context context = new Context(fn, null, null);
             context.symbolTable = globalSymbolTable;
             Interpreter inter = new Interpreter();
+            inter.makeMain();
             RTResult result = inter.visit(ast, context);
+            if (result.error != null) return new Pair<>(result.value, result.error);
+            result.register(inter.finish(context));
             return new Pair<>(result.value, result.error);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

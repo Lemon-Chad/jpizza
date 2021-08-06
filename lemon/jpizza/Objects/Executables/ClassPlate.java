@@ -16,7 +16,7 @@ import java.util.List;
 
 public class ClassPlate extends Value {
     String name;
-    CMethod make;
+    public CMethod make;
     CMethod[] methods;
     Token[] attributes;
 
