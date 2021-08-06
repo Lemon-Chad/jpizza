@@ -128,6 +128,7 @@ public class Shell {
             put("floating", Collections.singletonList("value"));
             put("random", new ArrayList<>());
             put("clear", new ArrayList<>());
+            put("createDennis", new ArrayList<>());
 
         }}, globalSymbolTable);
     }
