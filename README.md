@@ -12,7 +12,7 @@ A fast to type and easy to ship language for developers on the go!
 - Open source
 
 ## Resources
-- [Documentation](https://bit.ly/3uOasNG) -> The good ol' docs
+- [Documentation](https://jpizza.rtfd.io) -> The good ol' docs
 - [JPizza](https://bit.ly/3xXW5ci) -> Download/update to the latest JPizza
 - [Fridge](https://bit.ly/34C4jcz) -> A public package manager for posting your libraries and downloading others
 - [VSCode](https://bit.ly/jp2vscode) -> Add JPizza2 to VSCode
