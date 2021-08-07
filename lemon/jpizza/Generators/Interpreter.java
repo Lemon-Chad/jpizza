@@ -689,9 +689,9 @@ public class Interpreter {
     public RTResult visit_ImportNode(ImportNode node, Context context) throws IOException {
         String fn = (String) node.file_name_tok.value;
         String file_name = System.getProperty("user.dir") + "\\" + fn + ".devp";
-        String modPath = "C:\\DP\\modules\\" + fn;
+        String modPath = Shell.root + "\\modules\\" + fn;
         String modFilePath = modPath + "\\" + fn + ".devp";
-        var mkdirs = new File("C:\\DP\\modules").mkdirs();
+        var mkdirs = new File(Shell.root + "\\modules").mkdirs();
         ClassInstance imp = null;
         RTResult res = new RTResult();
         if (Constants.LIBRARIES.containsKey(fn)) imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))

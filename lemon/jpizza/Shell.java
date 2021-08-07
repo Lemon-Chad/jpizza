@@ -26,6 +26,7 @@ public class Shell {
 
     public static Logger logger = new Logger();
     static SymbolTable globalSymbolTable = new SymbolTable();
+    public static String root;
 
     public static String[] getFNDirs(String dir) {
         int ind = dir.lastIndexOf('\\');
@@ -135,6 +136,7 @@ public class Shell {
 
     @SuppressWarnings("DuplicatedCode")
     public static void main(String[] args) throws IOException {
+        root = System.getProperty("user.dir");
         Scanner in = new Scanner(System.in);
         initLibs();
 
