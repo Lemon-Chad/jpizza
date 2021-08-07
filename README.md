@@ -16,9 +16,5 @@ A fast to type and easy to ship language for developers on the go!
 - [JPizza](https://bit.ly/3xXW5ci) -> Download/update to the latest JPizza
 - [Fridge](https://bit.ly/34C4jcz) -> A public package manager for posting your libraries and downloading others
 - [VSCode](https://bit.ly/jp2vscode) -> Add JPizza2 to VSCode
-- [PizzaBox](https://bit.ly/dpizzabox) -> 3 in 1 installer that downloads/updates:
-  - The latest version of JPizza
-  - The latest version of Mozzarella (Deprecated)
-  - The latest version of Fridge
 - [JPX](https://bit.ly/jpx) -> Framework adding fun import features and helps you ship your app to other machines without the need for JPizza2
 - [Video Tutorials](https://bit.ly/jp2tutorial) -> A full video tutorial series over JPizza2, Fridge, and even JPX!
