@@ -49,6 +49,11 @@ public class Shell {
             put("postRequest", Arrays.asList("url", "params", "body"));
         }});
 
+        JasonLib.initialize("json", JasonLib.class, new HashMap<>(){{
+            put("loads", Collections.singletonList("value"));
+            put("dumps", Collections.singletonList("value"));
+        }});
+
         Time.initialize("time", Time.class, new HashMap<>(){{
             put("halt", Collections.singletonList("ms"));
             put("stopwatch", Collections.singletonList("func"));
