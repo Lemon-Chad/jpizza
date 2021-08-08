@@ -127,16 +127,18 @@ public class Parser {
             if (expr == null)
                 reverse(res.toReverseCount);
             return res.success(new ReturnNode(expr, pos_start, currentToken.pos_end.copy()));
-        } if (currentToken.matches(TT.KEYWORD, "continue")) {
+        }
+        else if (currentToken.matches(TT.KEYWORD, "continue")) {
             res.registerAdvancement();
             advance();
             return res.success(new ContinueNode(pos_start, currentToken.pos_end.copy()));
-        } if (currentToken.matches(TT.KEYWORD, "break")) {
+        }
+        else if (currentToken.matches(TT.KEYWORD, "break")) {
             res.registerAdvancement();
             advance();
             return res.success(new BreakNode(pos_start, currentToken.pos_end.copy()));
         }
-        if (currentToken.matches(TT.KEYWORD, "pass")) {
+        else if (currentToken.matches(TT.KEYWORD, "pass")) {
             res.registerAdvancement();
             advance();
             return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
@@ -366,11 +368,18 @@ public class Parser {
                         return res;
                     return res.success(funcDef);
 
+                case "loop":
                 case "while":
                     Node whileExpr = (Node) res.register(this.whileExpr());
                     if (res.error != null)
                         return res;
                     return res.success(whileExpr);
+
+                case "do":
+                    Node doExpr = (Node) res.register(this.doExpr());
+                    if (res.error != null)
+                        return res;
+                    return res.success(doExpr);
 
                 case "import":
                     advance();
@@ -884,7 +893,7 @@ public class Parser {
 
     public ParseResult ifExpr() {
         ParseResult res = new ParseResult();
-        Pair<List<Case>, ElseCase> allCases = (Pair<List<Case>, ElseCase>) res.register(this.ifExprCases("if", true));
+        var allCases = (Pair<List<Case>, ElseCase>) res.register(this.ifExprCases("if", true));
         if (res.error != null)
             return res;
         List<Case> cases = allCases.a;
@@ -927,7 +936,16 @@ public class Parser {
             advance();
         }
 
-        Node statements = (Node) res.register(this.block(false));
+        Node statements;
+        if (currentToken.type.equals(TT.OPEN))
+            statements = (Node) res.register(this.block(false));
+        else {
+            statements = (Node) res.register(this.statement());
+            if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start, currentToken.pos_end,
+                    "Missing semicolon"
+            )); res.registerAdvancement(); advance();
+        }
         if (res.error != null)
             return res;
         cases.add(new Case(condition, statements, true));
@@ -946,12 +964,13 @@ public class Parser {
         ElseCase elseCase;
 
         if (currentToken.matches(TT.KEYWORD, "elif")) {
-            Pair<List<Case>, ElseCase> allCases = (Pair<List<Case>, ElseCase>) res.register(this.elifExpr(parenthesis));
+            var allCases = (Pair<List<Case>, ElseCase>) res.register(this.elifExpr(parenthesis));
             if (res.error != null)
                 return res;
             cases = allCases.a;
             elseCase = allCases.b;
-        } else {
+        }
+        else {
             elseCase = (ElseCase) res.register(this.elseExpr());
             if (res.error != null)
                 return res;
@@ -972,7 +991,16 @@ public class Parser {
         if (currentToken.matches(TT.KEYWORD, "else")) {
             res.registerAdvancement(); advance();
 
-            Node statements = (Node) res.register(this.block(false));
+            Node statements;
+            if (currentToken.type.equals(TT.OPEN))
+                statements = (Node) res.register(this.block());
+            else {
+                statements = (Node) res.register(this.statement());
+                if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start, currentToken.pos_end,
+                        "Missing semicolon"
+                )); res.registerAdvancement(); advance();
+            }
             if (res.error != null)
                 return res;
             elseCase = new ElseCase(statements, true);
@@ -1158,35 +1186,89 @@ public class Parser {
         return res.success(condition);
     }
 
-    public ParseResult whileExpr() {
+    public ParseResult getWhileCondition() {
         ParseResult res = new ParseResult();
 
         if (!currentToken.matches(TT.KEYWORD, "while")) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected 'while'"
         ));
-        res.registerAdvancement(); advance();
+        res.registerAdvancement();
+        advance();
 
         if (!currentToken.type.equals(TT.LPAREN))
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected '('"
             ));
-        res.registerAdvancement(); advance();
+        res.registerAdvancement();
+        advance();
 
         Node condition = (Node) res.register(getClosing());
         if (res.error != null) return res;
+
+        return res.success(condition);
+    }
+
+    public ParseResult doExpr() {
+        ParseResult res = new ParseResult();
+
+        if (!currentToken.matches(TT.KEYWORD, "do")) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                "Expected 'do'"
+        ));
+        res.registerAdvancement();
+        advance();
+
+        Node body;
+        boolean bracket = currentToken.type == TT.OPEN;
+        switch (currentToken.type) {
+            case EQ:
+                res.registerAdvancement(); advance();
+                body = (Node) res.register(this.statement());
+                if (res.error != null) return res;
+                break;
+            case OPEN:
+                body = (Node) res.register(block(false));
+                if (res.error != null) return res;
+                break;
+            default:
+                return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected '{' or '=>'"
+                ));
+        }
+
+        Node condition = (Node) res.register(getWhileCondition());
+        if (res.error != null) return res;
+
+        return res.success(new WhileNode(condition, body, bracket, true));
+    }
+
+    public ParseResult whileExpr() {
+        ParseResult res = new ParseResult();
+
+        Node condition;
+        if (currentToken.matches(TT.KEYWORD, "loop")) {
+            Token loopTok = currentToken;
+            res.registerAdvancement();
+            advance();
+            condition = new BooleanNode(new Token(TT.BOOL, true, loopTok.pos_start, loopTok.pos_end));
+        } else {
+            condition = (Node) res.register(getWhileCondition());
+            if (res.error != null) return res;
+        }
         Node body;
         switch (currentToken.type) {
             case EQ:
                 res.registerAdvancement(); advance();
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
-                return res.success(new WhileNode(condition, body, false));
+                return res.success(new WhileNode(condition, body, false, false));
             case OPEN:
                 body = (Node) res.register(block());
                 if (res.error != null) return res;
-                return res.success(new WhileNode(condition, body, true));
+                return res.success(new WhileNode(condition, body, true, false));
             default:
                 return res.failure(Error.InvalidSyntax(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -1315,7 +1397,7 @@ public class Parser {
             case LAMBDA -> {
                 res.registerAdvancement();
                 advance();
-                nodeToReturn = (Node) res.register(this.expr());
+                nodeToReturn = (Node) res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
@@ -1465,7 +1547,7 @@ public class Parser {
                 switch (currentToken.type) {
                     case LAMBDA:
                         res.registerAdvancement(); advance();
-                        nodeToReturn = (Node) res.register(this.expr());
+                        nodeToReturn = (Node) res.register(this.statement());
                         if (res.error != null) return res;
                         methods.add(new MethDefNode(
                                 varNameTok,
