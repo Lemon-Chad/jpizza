@@ -370,10 +370,12 @@ public class Interpreter {
         Node conditionNode = node.condition_node;
         Obj condition, value;
         while (true) {
-            condition = res.register(visit(conditionNode, context));
-            if (res.shouldReturn()) return res;
+            if (!node.conLast) {
+                condition = res.register(visit(conditionNode, context));
+                if (res.shouldReturn()) return res;
 
-            if (!((Bool) condition.bool()).trueValue()) break;
+                if (!((Bool) condition.bool()).trueValue()) break;
+            }
 
             value = res.register(visit(node.body_node, context));
             if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
@@ -382,6 +384,13 @@ public class Interpreter {
             if (res.breakLoop) break;
 
             elements.add(value);
+
+            if (node.conLast) {
+                condition = res.register(visit(conditionNode, context));
+                if (res.shouldReturn()) return res;
+
+                if (!((Bool) condition.bool()).trueValue()) break;
+            }
         }
 
         return res.success(node.retnull ? new Null() : new PList(new ArrayList<>(elements)).set_context(context)
