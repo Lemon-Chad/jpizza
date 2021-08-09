@@ -29,11 +29,14 @@ public class RTError extends Error {
         Context ctx = context;
 
         while (ctx != null) {
-            result = String.format(
-                        "\tFile %s, line %s, in %s\n%s",
-                        pos.fn, pos.ln + 1, ctx.displayName,
-                        result
-                    );
+            if (pos != null)
+                result = String.format(
+                            "\tFile %s, line %s, in %s\n%s",
+                            pos.fn, pos.ln + 1, ctx.displayName,
+                            result
+                        );
+            else
+                result = String.format("\t%s\n%s", ctx.displayName, result);
             pos = ctx.parentEntryPos; ctx = ctx.parent;
         }
 
