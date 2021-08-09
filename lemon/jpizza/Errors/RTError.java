@@ -13,7 +13,7 @@ public class RTError extends Error {
     }
 
     public String asString() {
-        if (pos_start == null) return String.format("%s: %s", error_name, details);
+        if (pos_start == null || pos_end == null) return String.format("%s: %s", error_name, details);
         return String.format(
                     "%s%s: %s\nFile %s, line %s\n\n%s",
                     generateTraceback(),
