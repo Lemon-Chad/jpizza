@@ -368,6 +368,12 @@ public class Parser {
                         return res;
                     return res.success(funcDef);
 
+                case "struct":
+                    Node structDef = (Node) res.register(this.structDef());
+                    if (res.error != null)
+                        return res;
+                    return res.success(structDef);
+
                 case "loop":
                 case "while":
                     Node whileExpr = (Node) res.register(this.whileExpr());
@@ -470,6 +476,72 @@ public class Parser {
                 tok.pos_start.copy(), tok.pos_end != null ? tok.pos_end.copy() : tok.pos_start.copy(),
                 String.format("Expected long, double, identifier, '+', '-', or '('. Found %s", tok)
         ));
+    }
+
+    public ParseResult structDef() {
+        ParseResult res = new ParseResult();
+        if (!currentToken.matches(TT.KEYWORD, "struct")) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                "Expected 'struct'"
+        ));
+
+        List<Token> children = new ArrayList<>();
+        List<Token> types = new ArrayList<>();
+        List<Node> assignment = new ArrayList<>();
+
+        Token identifier = (Token) res.register(expectIdentifier());
+        if (res.error != null) return res;
+        res.registerAdvancement(); advance();
+
+        if (currentToken.type != TT.OPEN) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                "Expected '{'"
+        ));
+        res.registerAdvancement(); advance();
+
+        Position start = currentToken.pos_start.copy();
+
+        if (currentToken.type == TT.IDENTIFIER)
+            do {
+                if (currentToken.type == TT.COMMA) {
+                    res.registerAdvancement();
+                    advance();
+                }
+
+                if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected identifier"
+                ));
+
+                children.add(currentToken);
+                types.add(new Token(TT.IDENTIFIER, "any", currentToken.pos_start, currentToken.pos_end));
+                assignment.add(new AttrAssignNode(
+                        currentToken,
+                        new VarAccessNode(currentToken)
+                ));
+
+                res.registerAdvancement(); advance();
+            } while (currentToken.type == TT.COMMA);
+        Position end = currentToken.pos_end.copy();
+
+        if (currentToken.type != TT.CLOSE) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                "Expected '}'"
+        ));
+        res.registerAdvancement(); advance();
+
+        return res.success(new ClassDefNode(
+                identifier,
+                children,
+                children,
+                types,
+                new ListNode(assignment, start, end),
+                new ArrayList<>(),
+                end,
+                new ArrayList<>(),
+                0
+        ));
+
     }
 
     public ParseResult enumExpr() {

@@ -12,6 +12,7 @@ public class Constants {
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
     public static String[] KEYWORDS = {
+            "struct",
             "do",
             "loop",
             "pass",
