@@ -252,6 +252,7 @@ public class Shell {
             }
             return;
         }
+        Shell.logger.outln("Exit with 'quit'");
         while (true) {
             Shell.logger.out("-> "); String input = in.nextLine();
             if (input.equals("quit"))
