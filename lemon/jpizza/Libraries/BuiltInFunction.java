@@ -65,7 +65,7 @@ public class BuiltInFunction extends Library {
                 context
         ));
         var val = ((ClassInstance) o)._access(acc);
-        return new RTResult().success(new Bool(!(value instanceof RTError)));
+        return new RTResult().success(new Bool(!(val instanceof RTError)));
     }
 
     public RTResult execute_println(Context execCtx) {
