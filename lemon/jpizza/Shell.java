@@ -297,9 +297,18 @@ public class Shell {
         context.symbolTable = globalSymbolTable;
         Interpreter inter = new Interpreter();
         if (main) inter.makeMain();
-        RTResult result = inter.visit(ast.a, context);
-        if (result.error != null) return new Pair<>(result.value, result.error);
-        result.register(inter.finish(context));
+        RTResult result;
+        try {
+            result = inter.visit(ast.a, context);
+            if (result.error != null) return new Pair<>(result.value, result.error);
+            result.register(inter.finish(context));
+        } catch (OutOfMemoryError e) {
+            return new Pair<>(null, new RTError(
+                    null, null,
+                    "Out of memory!",
+                    context
+            ));
+        }
         return new Pair<>(result.value, result.error);
     }
 
