@@ -10,6 +10,7 @@ import lemon.jpizza.Objects.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static lemon.jpizza.Operations.OP;
@@ -21,18 +22,13 @@ public class Dict extends Value {
     // Functions
 
     public boolean contains(Obj other) {
-        Obj[] keySet = (Obj[]) trueValue().keySet().toArray();
-        int length = keySet.length;
-        for (int i = 0; i < length; i++)
-            if (((Bool)((Pair<Obj, RTError>) keySet[i].getattr(OP.EQ, other)).a).trueValue()) return true;
+        for (Obj key : trueValue().keySet())
+            if (((Bool)((Pair<Obj, RTError>) key.getattr(OP.EQ, other)).a).trueValue()) return true;
         return false;
     }
     public Obj delete(Obj other) {
         Obj key = null;
-        Obj[] entrySet = (Obj[]) trueValue().keySet().toArray();
-        int length = entrySet.length;
-        for (int i = 0; i < length; i++) {
-            Obj k = entrySet[i];
+        for (Obj k : trueValue().keySet()) {
             if (((Bool)((Pair<Obj, RTError>) k.getattr(OP.EQ, other)).a).trueValue()) {
                 key = k; break;
             }

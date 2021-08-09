@@ -131,10 +131,8 @@ public class Library extends BaseFunction {
     public Obj bool() { return new Bool(true).set_context(context).set_pos(pos_start, pos_end); }
     public Obj string() { return new Str(toString()).set_context(context).set_pos(pos_start, pos_end); }
     public Obj dictionary() { return new Dict(new HashMap<>(){{
-        Obj[] vallist = (Obj[]) valList().toArray();
-        int length = vallist.length;
-        for (int i = 0; i < length; i++)
-            add(vallist[i]);
+        for (Obj i : valList())
+            add(i);
     }}).set_context(context).set_pos(pos_start, pos_end); }
 
     // Defaults
