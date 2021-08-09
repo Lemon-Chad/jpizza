@@ -93,6 +93,7 @@ public class Shell {
             put("insert", Arrays.asList("list", "item", "index"));
             put("set", Arrays.asList("dict", "key", "value"));
             put("getattr", Arrays.asList("instance", "value"));
+            put("hasattr", Arrays.asList("instance", "value"));
             put("get", Arrays.asList("dict", "value"));
             put("delete", Arrays.asList("dict", "value"));
             put("foreach", Arrays.asList("list", "func"));
