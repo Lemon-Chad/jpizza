@@ -31,6 +31,7 @@ public abstract class Obj implements Serializable {
     public abstract Obj function();
     public abstract Obj dictionary();
     public abstract Obj astring();
+    public abstract Obj bytes();
 
     public abstract Object getattr(Operations.OP name, Object... argx);
 
