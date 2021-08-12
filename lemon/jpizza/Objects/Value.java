@@ -2,6 +2,7 @@ package lemon.jpizza.Objects;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Objects.Primitives.Bytes;
 import lemon.jpizza.Pair;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
@@ -60,6 +61,11 @@ public class Value extends Obj {
     public Obj anull() { return new Null().set_context(context).set_pos(pos_start, pos_end); }
     public Obj astring() { return new Str(toString()).set_context(context).set_pos(pos_start, pos_end); }
     public Obj function() { return this; }
+    public Obj bytes() {
+        return new Bytes(Constants.objToBytes(Constants.toObject(this)))
+                .set_context(context)
+                .set_pos(pos_start, pos_end);
+    }
 
     // Dictionary defaults
 

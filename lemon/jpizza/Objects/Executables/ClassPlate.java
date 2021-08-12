@@ -80,6 +80,7 @@ public class ClassPlate extends Value {
     public Obj dictionary() { return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end); }
     public Obj alist() { return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end); }
     public Obj bool() { return new Bool(true).set_context(context).set_pos(pos_start, pos_end); }
+    public Obj bytes() { return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end); }
 
     // Defaults
 

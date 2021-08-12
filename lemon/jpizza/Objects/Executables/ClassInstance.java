@@ -180,6 +180,17 @@ public class ClassInstance extends Obj {
         return x;
     }
 
+    public Obj bytes() {
+        RTResult res = new RTResult();
+        CMethod func = value.symbolTable.getbin("bytes");
+        if (func == null)
+            return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
+        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        if (res.error != null)
+            return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
+        return x;
+    }
+
     public Obj bool() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("boolean");
