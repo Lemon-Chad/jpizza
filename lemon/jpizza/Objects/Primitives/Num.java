@@ -16,39 +16,99 @@ import java.util.HashMap;
 import static lemon.jpizza.Tokens.*;
 
 public class Num extends Value {
+    public boolean floating;
+
+    public long longForm;
+    public double doubleForm;
+
     public Num(double v) {
         value = v;
+
+        floating = Math.floor(v) != v;
+
+        if (floating)
+            doubleForm = v;
+        else
+            longForm = (long) v;
+
         jptype = Constants.JPType.Number;
     }
-    public double trueValue() { return (double) value; }
 
-    // Functions
+    public Num(double v, boolean f, boolean confirmed) {
+        value = v;
 
-    public boolean floating() {
-        return Math.round((double) value) != (double) value;
+        if (confirmed)
+            floating = f;
+        else
+            floating = f && Math.floor(v) != v;
+
+        if (floating)
+            doubleForm = v;
+        else
+            longForm = (long) v;
+
+        jptype = Constants.JPType.Number;
     }
+
+    public Num(double v, boolean f) {
+        value = v;
+
+        floating = f && Math.floor(v) != v;
+
+        if (floating)
+            doubleForm = v;
+        else
+            longForm = (long) v;
+
+        jptype = Constants.JPType.Number;
+    }
+
+    public double trueValue() { return (double) value; }
 
     // Methods
 
     public Pair<Obj, RTError> add(Obj o) {
         Num other = (Num) o.number();
-        double v = other.trueValue() + trueValue();
-        return new Pair<>(new Num(v).set_context(context), null);
-    }
-    public Pair<Obj, RTError> add(Num o) {
-        return new Pair<>(new Num(o.trueValue() + trueValue()).set_context(context), null);
+        double v;
+
+        if (other.floating)
+            v = other.doubleForm + (floating ? doubleForm : longForm);
+        else
+            v = other.longForm + (floating ? doubleForm : longForm);
+
+        return new Pair<>(new Num(v, other.floating || floating)
+                .set_context(context), null);
     }
     public Pair<Obj, RTError> mod(Obj o) {
         Num other = (Num) o.number();
-        return new Pair<>(new Num(other.trueValue() % trueValue()).set_context(context), null);
+        double v;
+        if (other.floating)
+            v = other.doubleForm % (floating ? doubleForm : longForm);
+        else
+            v = other.longForm % (floating ? doubleForm : longForm);
+
+        return new Pair<>(new Num(v, other.floating || floating)
+                .set_context(context), null);
     }
     public Pair<Obj, RTError> sub(Obj o) {
         Num other = (Num) o.number();
-        return new Pair<>(new Num(trueValue() - other.trueValue()).set_context(context), null);
+        double v;
+        if (other.floating)
+            v = (floating ? doubleForm : longForm) - other.doubleForm;
+        else
+            v = (floating ? doubleForm : longForm) - other.longForm;
+
+        return new Pair<>(new Num(v, other.floating || floating).set_context(context), null);
     }
     public Pair<Obj, RTError> mul(Obj o) {
         Num other = (Num) o.number();
-        return new Pair<>(new Num(other.trueValue() * trueValue()).set_context(context), null);
+        double v;
+        if (other.floating)
+            v = other.doubleForm * (floating ? doubleForm : longForm);
+        else
+            v = other.longForm * (floating ? doubleForm : longForm);
+
+        return new Pair<>(new Num(v, other.floating || floating).set_context(context), null);
     }
     public Pair<Obj, RTError> div(Obj o) {
         Num other = (Num) o.number();
@@ -58,11 +118,24 @@ public class Num extends Value {
                     "Division by 0",
                     context
             ));
-        return new Pair<>(new Num(trueValue() / other.trueValue()).set_context(context), null);
+
+        double v;
+        if (other.floating)
+            v = (floating ? doubleForm : longForm) / other.doubleForm;
+        else
+            v = (floating ? doubleForm : longForm) / other.longForm;
+
+        return new Pair<>(new Num(v, true).set_context(context), null);
     }
     public Pair<Obj, RTError> fastpow(Obj o) {
         Num other = (Num) o.number();
-        return new Pair<>(new Num(Math.pow(trueValue(), other.trueValue())).set_context(context), null);
+        double v;
+        if (other.floating)
+            v = Math.pow(floating ? doubleForm : longForm, other.doubleForm);
+        else
+            v = Math.pow(floating ? doubleForm : longForm, other.longForm);
+
+        return new Pair<>(new Num(v, other.floating || floating).set_context(context), null);
     }
     public Pair<Obj, RTError> lt(Obj o) {
         Num other = (Num) o.number();
@@ -73,7 +146,7 @@ public class Num extends Value {
         return new Pair<>(new Bool(trueValue() <= other.trueValue()).set_context(context), null);
     }
     public Pair<Obj, RTError> invert() {
-        return new Pair<>(new Num(-trueValue()).set_context(context), null);
+        return new Pair<>(new Num(-trueValue(), floating).set_context(context), null);
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
@@ -89,7 +162,7 @@ public class Num extends Value {
                 .set_pos(pos_start, pos_end);
     }
     public Obj function() { return new Function(
-            null, new NumberNode(new Token(floating() ? TT.FLOAT : TT.INT, trueValue(), pos_start, pos_end)), null)
+            null, new NumberNode(new Token(floating ? TT.FLOAT : TT.INT, trueValue(), pos_start, pos_end)), null)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj number() { return this; }
     public Obj bool() { return new Bool(trueValue() > 0)
@@ -98,12 +171,12 @@ public class Num extends Value {
 
     // Defaults
 
-    public Obj copy() { return new Num(trueValue())
+    public Obj copy() { return new Num(trueValue(), floating)
                                         .set_context(context)
                                         .set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("num").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() {
-        if (!floating()) return String.valueOf((long) trueValue());
+        if (!floating) return String.valueOf((long) trueValue());
         return String.valueOf(trueValue());
     }
 

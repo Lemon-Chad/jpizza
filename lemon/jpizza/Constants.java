@@ -19,6 +19,12 @@ public class Constants {
     public static char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
+    public enum NumberType {
+        INT,
+        LONG,
+        FLOAT,
+        DOUBLE
+    }
     public static String[] KEYWORDS = {
             "struct",
             "do",

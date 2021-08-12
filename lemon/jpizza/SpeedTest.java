@@ -11,7 +11,7 @@ public class SpeedTest {
         Pair<Obj, Error> out;
         String demoCode = """
         import time;
-        println(time::stopwatch(! -> for (i -> 0:10000000) => i + 1 + 1 + 1));
+        println(time::stopwatch(! -> for (i -> 0.0:10000000.0) => i + 1.1));
         """;
 
         Shell.logger.enableLogging();

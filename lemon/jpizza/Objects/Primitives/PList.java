@@ -57,7 +57,7 @@ public class PList extends Value {
                 context
         ));
         Num other = (Num) n;
-        if (other.floating())
+        if (other.floating)
             return new Pair<>(null, new RTError(
                     pos_start, pos_end,
                     "Multiplier must be long, not double",
@@ -93,7 +93,7 @@ public class PList extends Value {
                 context
         ));
         Num other = (Num) n;
-        if (other.floating())
+        if (other.floating)
             return new Pair<>(null, new RTError(
                     pos_start, pos_end,
                     "List index must be long, not double",

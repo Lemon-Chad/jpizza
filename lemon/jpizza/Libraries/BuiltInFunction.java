@@ -97,7 +97,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        return new RTResult().success(new Bool(((Num) num).floating()));
+        return new RTResult().success(new Bool(((Num) num).floating));
     }
 
     public RTResult execute_random(Context _execCtx) {
@@ -356,7 +356,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number!",
                 execCtx
         ));
-        if (((Num) num).floating()) return new RTResult().failure(new RTError(
+        if (((Num) num).floating) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
                 "Argument must be an long!",
                 execCtx

@@ -401,7 +401,7 @@ public class Interpreter {
     }
 
     public RTResult visit_NumberNode(NumberNode node, Context context) {
-        return new RTResult().success(new Num(node.val).set_context(context)
+        return new RTResult().success(new Num(node.val, node.flt, true).set_context(context)
                 .set_pos(node.pos_start, node.pos_end));
     }
 
@@ -825,12 +825,12 @@ public class Interpreter {
 
         if (Arrays.asList(TT.BITAND, TT.BITOR, TT.BITXOR, TT.LEFTSHIFT, TT.RIGHTSHIFT, TT.SIGNRIGHTSHIFT)
                 .contains(node.op_tok.type)) {
-            if (left.jptype != Constants.JPType.Number || ((Num) left).floating()) return res.failure(new RTError(
+            if (left.jptype != Constants.JPType.Number || ((Num) left).floating) return res.failure(new RTError(
                     left.get_start(), left.get_end(),
                     "Left operand must be an integer",
                     context
             ));
-            if (right.jptype != Constants.JPType.Number || ((Num) right).floating()) return res.failure(new RTError(
+            if (right.jptype != Constants.JPType.Number || ((Num) right).floating) return res.failure(new RTError(
                     right.get_start(), right.get_end(),
                     "Right operand must be an integer",
                     context
@@ -883,7 +883,7 @@ public class Interpreter {
         if (res.shouldReturn()) return res;
 
         if (node.op_tok.type == TT.BITCOMPL) {
-            if (number.jptype != Constants.JPType.Number || ((Num) number).floating()) return res.failure(new RTError(
+            if (number.jptype != Constants.JPType.Number || ((Num) number).floating) return res.failure(new RTError(
                     number.get_start(), number.get_end(),
                     "Operand must be an integer",
                     context

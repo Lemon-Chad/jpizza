@@ -189,7 +189,7 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newServer(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || ((Num) p).floating()) return new RTResult().failure(new RTError(
+        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(new RTError(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
@@ -507,7 +507,7 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newClient(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || ((Num) p).floating()) return new RTResult().failure(new RTError(
+        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(new RTError(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
