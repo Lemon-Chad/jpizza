@@ -1,3 +1,5 @@
+![](jpn.png)
+
 # JPizza2
 
 A fast to type and easy to ship language for developers on the go!
