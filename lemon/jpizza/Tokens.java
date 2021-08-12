@@ -5,7 +5,15 @@ import java.util.Map;
 
 public class Tokens {
     public enum TT {
+        LEFTSHIFT,
+        RIGHTSHIFT,
+        SIGNRIGHTSHIFT,
         EQS,
+        BITAND,
+        BITOR,
+        BITXOR,
+        BITCOMPL,
+        TOBYTE,
         INT,
         FLOAT,
         STRING,
@@ -58,6 +66,14 @@ public class Tokens {
     
     public static final Map<String, TT> TOKEY = new HashMap<>(){{
         put("[", TT.LSQUARE);
+        put("~~", TT.RIGHTSHIFT);
+        put("~>", TT.SIGNRIGHTSHIFT);
+        put("<~", TT.LEFTSHIFT);
+        put("@", TT.TOBYTE);
+        put("~&", TT.BITAND);
+        put("~|", TT.BITOR);
+        put("~^", TT.BITXOR);
+        put("~", TT.BITCOMPL);
         put("<-", TT.ITER);
         put("::", TT.CLACCESS);
         put("%", TT.MOD);

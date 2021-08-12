@@ -23,8 +23,10 @@ import lemon.jpizza.Results.RTResult;
 import static lemon.jpizza.Operations.*;
 import static lemon.jpizza.Tokens.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -153,6 +155,7 @@ public class Interpreter {
             case AttrAccess -> visit_AttrAccessNode ((AttrAccessNode)   node, context);
             case VarAccess  -> visit_VarAccessNode  ((VarAccessNode)    node, context);
             case Enum       -> visit_EnumNode       ((EnumNode)         node, context);
+            case Bytes      -> visit_BytesNode      ((BytesNode)        node, context);
             case Import     -> {
                 try {
                     yield visit_ImportNode((ImportNode) node, context);
@@ -400,6 +403,22 @@ public class Interpreter {
     public RTResult visit_NumberNode(NumberNode node, Context context) {
         return new RTResult().success(new Num(node.val).set_context(context)
                 .set_pos(node.pos_start, node.pos_end));
+    }
+
+    public RTResult visit_BytesNode(BytesNode node, Context context) {
+        RTResult res = new RTResult();
+
+        Obj toBytes = res.register(visit(node.toBytes, context));
+        if (res.error != null) return res;
+
+        Obj bytearrq = toBytes.bytes();
+        if (bytearrq.jptype != Constants.JPType.Bytes) return res.failure(new RTError(
+                bytearrq.get_start(), bytearrq.get_end(),
+                "Object has no {BYTE-ARRAY} form",
+                context
+        ));
+
+        return new RTResult().success(bytearrq);
     }
 
     public RTResult visit_MethDefNode(MethDefNode node, Context context) {
@@ -804,6 +823,33 @@ public class Interpreter {
         Obj right = res.register(visit(node.right_node, context));
         if (res.shouldReturn()) return res;
 
+        if (Arrays.asList(TT.BITAND, TT.BITOR, TT.BITXOR, TT.LEFTSHIFT, TT.RIGHTSHIFT, TT.SIGNRIGHTSHIFT)
+                .contains(node.op_tok.type)) {
+            if (left.jptype != Constants.JPType.Number || ((Num) left).floating()) return res.failure(new RTError(
+                    left.get_start(), left.get_end(),
+                    "Left operand must be an integer",
+                    context
+            ));
+            if (right.jptype != Constants.JPType.Number || ((Num) right).floating()) return res.failure(new RTError(
+                    right.get_start(), right.get_end(),
+                    "Right operand must be an integer",
+                    context
+            ));
+
+            long a = Double.valueOf(((Num) left).trueValue()).longValue();
+            long b = Double.valueOf(((Num) right).trueValue()).longValue();
+
+            return res.success(new Num(switch (node.op_tok.type) {
+                case BITAND -> a & b;
+                case BITOR -> a | b;
+                case BITXOR -> a ^ b;
+                case LEFTSHIFT -> a << b;
+                case RIGHTSHIFT -> a >> b;
+                case SIGNRIGHTSHIFT -> a >>> b;
+                default -> -1;
+            }));
+        }
+
         OP op = switch (node.op_tok.type) {
             case PLUS    -> OP.ADD;
             case MINUS   -> OP.SUB;
@@ -824,7 +870,8 @@ public class Interpreter {
 
         if (node.op_tok.type == TT.GT || node.op_tok.type == TT.GTE) {
             ret = (Pair<Obj, RTError>) right.getattr(node.op_tok.type.hashCode() == TT.GT.hashCode() ? OP.LT : OP.LTE, left);
-        } else ret = (Pair<Obj, RTError>) left.getattr(op, right);
+        }
+        else ret = (Pair<Obj, RTError>) left.getattr(op, right);
         if (ret.b != null) return res.failure(ret.b);
         return res.success((ret.a).set_pos(node.pos_start, node.pos_end).set_context(context));
     }
@@ -834,6 +881,39 @@ public class Interpreter {
 
         Obj number = res.register(visit(node.node, context));
         if (res.shouldReturn()) return res;
+
+        if (node.op_tok.type == TT.BITCOMPL) {
+            if (number.jptype != Constants.JPType.Number || ((Num) number).floating()) return res.failure(new RTError(
+                    number.get_start(), number.get_end(),
+                    "Operand must be an integer",
+                    context
+            ));
+
+            long n = Double.valueOf(((Num) number).trueValue()).longValue();
+
+            return res.success(new Num(~n));
+        } else if (node.op_tok.type == TT.QUEBACK) {
+            if (number.jptype != Constants.JPType.Bytes) return res.failure(new RTError(
+                    number.get_start(), number.get_end(),
+                    "Operand must be bytes",
+                    context
+            ));
+            byte[] bytes = ((Bytes) number).arr;
+            ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+            try {
+                ObjectInputStream is = new ObjectInputStream(in);
+                Object obj = is.readObject();
+                Obj from = Constants.getFromValue(obj);
+                return res.success(from);
+            } catch (IOException | ClassNotFoundException e) {
+                return res.failure(new RTError(
+                        number.get_start(), number.get_end(),
+                        "Internal byte error: " + e.toString(),
+                        context
+                ));
+            }
+        }
+
 
         TT opTokType = node.op_tok.type;
         Pair<Obj, RTError> ret = switch (opTokType) {

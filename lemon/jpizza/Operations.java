@@ -2,6 +2,14 @@ package lemon.jpizza;
 
 public class Operations {
     public enum OP {
+        BITCOMPL,
+        BITAND,
+        BITOR,
+        BITXOR,
+        LEFTSHIFT,
+        RIGHTSHIFT,
+        FROMBYTE,
+        SIGNRIGHTSHIFT,
         BRACKET,
         NUMBER,
         DICTIONARY,

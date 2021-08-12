@@ -312,6 +312,44 @@ public class Parser {
         return res.success(new UseNode(useToken, args));
     }
 
+    public ParseResult btshftExpr() {
+        return binOp(this::btwsExpr, Arrays.asList(TT.LEFTSHIFT, TT.RIGHTSHIFT, TT.SIGNRIGHTSHIFT), this::expr);
+    }
+
+    public ParseResult btwsExpr() {
+        return binOp(this::complExpr, Arrays.asList(TT.BITAND, TT.BITOR, TT.BITXOR), this::expr);
+    }
+
+    public ParseResult complExpr() {
+        ParseResult res = new ParseResult();
+        if (currentToken.type == TT.BITCOMPL || currentToken.type == TT.QUEBACK) {
+            Token opToken = currentToken;
+            res.registerAdvancement();
+            advance();
+
+            Node expr = (Node) res.register(this.expr());
+            if (res.error != null) return res;
+
+            return res.success(new UnaryOpNode(opToken, expr));
+        } return byteExpr();
+    }
+
+    public ParseResult byteExpr() {
+        ParseResult res = new ParseResult();
+        boolean toBytes = currentToken.type == TT.TOBYTE;
+        if (toBytes) {
+            res.registerAdvancement();
+            advance();
+        }
+
+        Node expr = (Node) res.register(this.compExpr());
+        if (res.error != null) return res;
+
+        if (toBytes)
+            return res.success(new BytesNode(expr));
+        return res.success(expr);
+    }
+
     public ParseResult atom() {
         ParseResult res = new ParseResult();
         Token tok = currentToken;
@@ -812,7 +850,7 @@ public class Parser {
 
     public ParseResult getExpr() {
         ParseResult res = new ParseResult();
-        Node node = (Node) res.register(binOp(this::compExpr, Arrays.asList(TT.AND, TT.OR)));
+        Node node = (Node) res.register(binOp(this::btshftExpr, Arrays.asList(TT.AND, TT.OR)));
         if (res.error != null)
             return res;
         return res.success(node);
