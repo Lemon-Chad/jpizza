@@ -2,6 +2,7 @@ package lemon.jpizza.Libraries;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Objects.Primitives.Bytes;
 import lemon.jpizza.Pair;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
@@ -65,6 +66,28 @@ public class SockLib extends Library {
             return null;
         }
 
+        public RTError sendBytes(Obj data) {
+            if (data.jptype != Constants.JPType.Bytes) return new RTError(
+                    data.get_start(), data.get_end(),
+                    "Expected bytearray",
+                    data.get_ctx()
+            );
+            byte[] msg = ((Bytes) data).arr;
+
+            try {
+                out.writeInt(msg.length);
+                out.write(msg);
+            } catch (IOException e) {
+                return new RTError(
+                        pos_start, pos_end,
+                        e.toString(),
+                        context
+                );
+            }
+
+            return null;
+        }
+
         public RTError send(Obj data) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos;
@@ -120,6 +143,26 @@ public class SockLib extends Library {
                 return new RTResult().failure(new RTError(
                         pos_start, pos_end,
                         "Invalid data recieved..",
+                        context
+                ));
+            }
+        }
+
+        public RTResult receiveBytes() {
+            try {
+                int length = in.readInt();
+                Obj res = new Bytes(new byte[0]);
+                if (length > 0) {
+                    byte [] message = new byte[length];
+                    in.readFully(message, 0, message.length);
+
+                    res = new Bytes(message);
+                }
+                return new RTResult().success(res);
+            } catch (IOException e) {
+                return new RTResult().failure(new RTError(
+                        pos_start, pos_end,
+                        e.toString(),
                         context
                 ));
             }
@@ -246,12 +289,33 @@ public class SockLib extends Library {
         return new RTResult().success(new Null());
     }
 
+    public RTResult execute_serverSendBytes(Context execCtx) {
+        Pair< ServerConn, RTError > c = getServerConn(execCtx);
+        if (c.b != null) return new RTResult().failure(c.b);
+        ServerConn conn = c.a;
+
+        Obj msg = (Obj) execCtx.symbolTable.get("msg");
+        RTError e = conn.sendBytes(msg);
+
+        if (e != null) return new RTResult().failure(e);
+
+        return new RTResult().success(new Null());
+    }
+
     public RTResult execute_serverRecv(Context execCtx) {
         Pair< ServerConn, RTError > c = getServerConn(execCtx);
         if (c.b != null) return new RTResult().failure(c.b);
         ServerConn conn = c.a;
 
         return conn.receive();
+    }
+
+    public RTResult execute_serverRecvBytes(Context execCtx) {
+        Pair< ServerConn, RTError > c = getServerConn(execCtx);
+        if (c.b != null) return new RTResult().failure(c.b);
+        ServerConn conn = c.a;
+
+        return conn.receiveBytes();
     }
 
     public RTResult execute_closeServerConnection(Context execCtx) {
@@ -347,6 +411,28 @@ public class SockLib extends Library {
             return null;
         }
 
+        public RTError sendBytes(Obj data) {
+            if (data.jptype != Constants.JPType.Bytes) return new RTError(
+                    data.get_start(), data.get_end(),
+                    "Expected bytearray",
+                    data.get_ctx()
+            );
+            byte[] msg = ((Bytes) data).arr;
+
+            try {
+                out.writeInt(msg.length);
+                out.write(msg);
+            } catch (IOException e) {
+                return new RTError(
+                        pos_start, pos_end,
+                        e.toString(),
+                        context
+                );
+            }
+
+            return null;
+        }
+
         public RTResult receive() {
             try {
                 int length = in.readInt();
@@ -378,6 +464,26 @@ public class SockLib extends Library {
                 return new RTResult().failure(new RTError(
                         pos_start, pos_end,
                         "Invalid data recieved..",
+                        context
+                ));
+            }
+        }
+
+        public RTResult receiveBytes() {
+            try {
+                int length = in.readInt();
+                Obj res = new Bytes(new byte[0]);
+                if (length > 0) {
+                    byte [] message = new byte[length];
+                    in.readFully(message, 0, message.length);
+
+                    res = new Bytes(message);
+                }
+                return new RTResult().success(res);
+            } catch (IOException e) {
+                return new RTResult().failure(new RTError(
+                        pos_start, pos_end,
+                        e.toString(),
                         context
                 ));
             }
@@ -466,12 +572,33 @@ public class SockLib extends Library {
         return new RTResult().success(new Null());
     }
 
+    public RTResult execute_clientSendBytes(Context execCtx) {
+        var c = getConn(execCtx);
+        if (c.b != null) return new RTResult().failure(c.b);
+        ClientConn conn = c.a;
+
+        Obj msg = (Obj) execCtx.symbolTable.get("msg");
+
+        RTError e = conn.sendBytes(msg);
+        if (e != null) return new RTResult().failure(e);
+
+        return new RTResult().success(new Null());
+    }
+
     public RTResult execute_clientRecv(Context execCtx) {
         var c = getConn(execCtx);
         if (c.b != null) return new RTResult().failure(c.b);
         ClientConn conn = c.a;
 
         return conn.receive();
+    }
+
+    public RTResult execute_clientRecvBytes(Context execCtx) {
+        var c = getConn(execCtx);
+        if (c.b != null) return new RTResult().failure(c.b);
+        ClientConn conn = c.a;
+
+        return conn.receiveBytes();
     }
 
     public RTResult execute_clientClose(Context execCtx) {

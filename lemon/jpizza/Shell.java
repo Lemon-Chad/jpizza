@@ -78,13 +78,17 @@ public class Shell {
             put("connect", Collections.singletonList("server"));
 
             put("serverSend", Arrays.asList("client", "msg"));
+            put("serverSendBytes", Arrays.asList("client", "msg"));
             put("serverRecv", Collections.singletonList("client"));
+            put("serverRecvBytes", Collections.singletonList("client"));
 
             put("closeServerConnection", Collections.singletonList("client"));
             put("closeServer", Collections.singletonList("server"));
 
             put("clientSend", Arrays.asList("client", "msg"));
+            put("clientSendBytes", Arrays.asList("client", "msg"));
             put("clientRecv", Collections.singletonList("client"));
+            put("clientRecvBytes", Collections.singletonList("client"));
 
             put("clientClose", Collections.singletonList("client"));
         }});
