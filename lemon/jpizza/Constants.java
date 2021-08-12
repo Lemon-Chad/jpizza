@@ -1,8 +1,16 @@
 package lemon.jpizza;
 
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Objects.Primitives.*;
+import lemon.jpizza.Objects.Value;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Constants {
@@ -50,6 +58,7 @@ public class Constants {
     public static char splitter = '\n';
 
     public enum JPType {
+        Bytes,
         ClassInstance,
         ClassPlate,
         CMethod,
@@ -113,6 +122,60 @@ public class Constants {
                 idx_end = text.length();
         }
         return result.toString().replace("\t", "");
+    }
+
+    public static Obj getFromValue(Object val) {
+        if (val instanceof String)
+            return new Str((String) val);
+        else if (val instanceof Double)
+            return new Num((double) val);
+        else if (val instanceof List)
+            return new PList((List<Obj>) val);
+        else if (val instanceof Map)
+            return new Dict((Map<Obj, Obj>) val);
+        else if (val instanceof byte[])
+            return new Bytes((byte[]) val);
+        else if (val instanceof Boolean)
+            return new Bool((boolean) val);
+        else return new Null();
+    }
+
+    public static byte[] objToBytes(Object obj) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(obj);
+            oos.flush();
+            return bos.toByteArray();
+        } catch (IOException ignored) {
+            return new byte[0];
+        }
+    }
+
+    public static Object toObject(Obj obj) {
+        if (obj instanceof Dict) {
+            Dict dct = (Dict) obj;
+            Map<Object, Object> objMap = new HashMap<>();
+            Map<Obj, Obj> deMap = dct.trueValue();
+
+            for (Obj k : deMap.keySet())
+                objMap.put(toObject(k), toObject(deMap.get(k)));
+
+            return objMap;
+        }
+        else if (obj instanceof PList) {
+            PList lst = (PList) obj;
+            List<Object> objLst = new ArrayList<>();
+
+            for (Obj o : lst.trueValue())
+                objLst.add(toObject(o));
+
+            return objLst;
+        }
+        else if (obj instanceof Value) {
+            return ((Value) obj).value;
+        }
+        return null;
     }
 
 }
