@@ -31,6 +31,7 @@ public class BuiltInFunction extends Library {
 
     public BuiltInFunction(String name) { super(name); }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));
         if (o.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(new RTError(
@@ -51,6 +52,7 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(((Obj)val).set_context(((ClassInstance)o).value));
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_hasattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));
         if (o.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(new RTError(
@@ -68,8 +70,35 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(new Bool(!(val instanceof RTError)));
     }
 
+    public RTResult execute_byter(Context execCtx) {
+        Obj bytelist = ((Obj) execCtx.symbolTable.get("value")).alist();
+        if (bytelist.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
+                bytelist.get_start(), bytelist.get_end(),
+                "Expected list",
+                execCtx
+        ));
+        List<Obj> prelst = ((PList) bytelist).trueValue();
+        byte[] bytes = new byte[prelst.size()];
+        for (int i = 0; i < prelst.size(); i++) {
+            Obj n = prelst.get(i).number();
+            if (n.jptype != Constants.JPType.Number) return new RTResult().failure(new RTError(
+                    bytelist.get_start(), bytelist.get_end(),
+                    "Expected byte",
+                    execCtx
+            ));
+            double val = ((Num) n).trueValue();
+            if ((byte) val != val) return new RTResult().failure(new RTError(
+                    bytelist.get_start(), bytelist.get_end(),
+                    "Byte out of range",
+                    execCtx
+            ));
+            bytes[i] = (byte) val;
+        }
+        return new RTResult().success(new Bytes(bytes));
+    }
+
     public RTResult execute_println(Context execCtx) {
-        Shell.logger.outln(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.outln(execCtx.symbolTable.get("value"));
         return new RTResult().success(new Null());
     }
 
@@ -82,7 +111,7 @@ public class BuiltInFunction extends Library {
     }
 
     public RTResult execute_print(Context execCtx) {
-        Shell.logger.out(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.out(execCtx.symbolTable.get("value"));
         return new RTResult().success(new Null());
     }
 
@@ -312,7 +341,7 @@ public class BuiltInFunction extends Library {
     }
 
     public RTResult execute_field(Context execCtx) {
-        Shell.logger.out(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.out(execCtx.symbolTable.get("value"));
         String text = scanner.nextLine();
         return new RTResult().success(new Str(text));
     }
@@ -330,7 +359,7 @@ public class BuiltInFunction extends Library {
     }
 
     public RTResult execute_nfield(Context execCtx) {
-        Shell.logger.out(((Obj) execCtx.symbolTable.get("value")).astring());
+        Shell.logger.out(execCtx.symbolTable.get("value"));
         String text;
         do {
             text = scanner.nextLine();
