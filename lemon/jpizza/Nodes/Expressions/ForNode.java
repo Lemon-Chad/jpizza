@@ -72,9 +72,10 @@ public class ForNode extends Node {
             step = 1;
         }
         long round = Math.round((end - start) / step);
-        Obj[] elements = new Obj[(int) round + 1];
+        Obj[] elements = new Obj[(int) round];
 
         double i = start;
+        int index = 0;
         Interpreter.Condition condition = step >= 0 ? x -> x < end : x -> x > end;
 
         String vtk = (String) var_name_tok.value;
@@ -93,7 +94,8 @@ public class ForNode extends Node {
             if (res.continueLoop) continue;
             if (res.breakLoop) break;
 
-            elements[(int) i] = value;
+            elements[index] = value;
+            index++;
         }
         context.symbolTable.remove(vtk);
 
