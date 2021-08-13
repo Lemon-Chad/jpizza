@@ -82,14 +82,4 @@ public class JasonLib extends Library {
         return new RTResult().success(new Str(toStr(value)));
     }
 
-    public RTResult execute_printDemo(Context execCtx) {
-        // Get value arg from variables passed into function
-        Obj value = (Obj) execCtx.symbolTable.get("value");
-        // Convert value argument to a string type
-        value = value.astring();
-        // Print value argument
-        Shell.logger.outln(value);
-        // Return null
-        return new RTResult().success(new Null());
-    }
 }
