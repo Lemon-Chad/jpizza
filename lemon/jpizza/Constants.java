@@ -19,12 +19,6 @@ public class Constants {
     public static char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
-    public enum NumberType {
-        INT,
-        LONG,
-        FLOAT,
-        DOUBLE
-    }
     public static String[] KEYWORDS = {
             "struct",
             "do",
@@ -135,10 +129,24 @@ public class Constants {
             return new Str((String) val);
         else if (val instanceof Double)
             return new Num((double) val);
-        else if (val instanceof List)
-            return new PList((List<Obj>) val);
-        else if (val instanceof Map)
-            return new Dict((Map<Obj, Obj>) val);
+        else if (val instanceof List) {
+            List<Obj> lst = new ArrayList<>();
+            List<Object> list = (List<Object>) val;
+
+            for (Object item : list)
+                lst.add(getFromValue(item));
+
+            return new PList(lst);
+        }
+        else if (val instanceof Map) {
+            Map<Obj, Obj> mp = new HashMap<>();
+            Map<Object, Object> map = (Map<Object, Object>) val;
+
+            for (Object key : map.keySet())
+                mp.put(getFromValue(key), getFromValue(map.get(key)));
+
+            return new Dict(mp);
+        }
         else if (val instanceof byte[])
             return new Bytes((byte[]) val);
         else if (val instanceof Boolean)
