@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -70,7 +71,12 @@ public class Bytes extends Value {
     // Defaults
 
     public String toString() {
-        return "{BYTE-ARRAY}";
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < arr.length; i++)
+            sb.append(arr[i]).append(", ");
+
+        return "{ " + sb.toString() + "len=" + arr.length + " }";
     }
 
     public Obj copy() { return new Bytes(arr).set_context(context).set_pos(pos_start, pos_end); }
