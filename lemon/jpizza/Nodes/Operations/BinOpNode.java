@@ -1,8 +1,15 @@
 package lemon.jpizza.Nodes.Operations;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.*;
+import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
-import lemon.jpizza.Token;
+import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Objects.Primitives.Num;
+import lemon.jpizza.Results.RTResult;
+
+import java.util.Arrays;
 
 public class BinOpNode extends Node {
     public Node left_node;
@@ -19,5 +26,69 @@ public class BinOpNode extends Node {
     }
 
     public String toString() { return String.format("(%s, %s, %s)", left_node, op_tok, right_node); }
+
+    public RTResult visit(Interpreter inter, Context context) {
+        RTResult res = new RTResult();
+        Pair<Obj, RTError> ret;
+
+        Obj left = res.register(left_node.visit(inter, context));
+        if (res.shouldReturn()) return res;
+        Obj right = res.register(right_node.visit(inter, context));
+        if (res.shouldReturn()) return res;
+
+        if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
+                Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
+                .contains(op_tok.type)) {
+            if (left.jptype != Constants.JPType.Number || ((Num) left).floating) return res.failure(new RTError(
+                    left.get_start(), left.get_end(),
+                    "Left operand must be an integer",
+                    context
+            ));
+            if (right.jptype != Constants.JPType.Number || ((Num) right).floating) return res.failure(new RTError(
+                    right.get_start(), right.get_end(),
+                    "Right operand must be an integer",
+                    context
+            ));
+
+            long a = Double.valueOf(((Num) left).trueValue()).longValue();
+            long b = Double.valueOf(((Num) right).trueValue()).longValue();
+
+            return res.success(new Num(switch (op_tok.type) {
+                case BITAND -> a & b;
+                case BITOR -> a | b;
+                case BITXOR -> a ^ b;
+                case LEFTSHIFT -> a << b;
+                case RIGHTSHIFT -> a >> b;
+                case SIGNRIGHTSHIFT -> a >>> b;
+                default -> -1;
+            }));
+        }
+
+        Operations.OP op = switch (op_tok.type) {
+            case PLUS    -> Operations.OP.ADD;
+            case MINUS   -> Operations.OP.SUB;
+            case MUL     -> Operations.OP.MUL;
+            case DIV     -> Operations.OP.DIV;
+            case POWER   -> Operations.OP.FASTPOW;
+            case EE      -> Operations.OP.EQ;
+            case NE      -> Operations.OP.NE;
+            case LT      -> Operations.OP.LT;
+            case LTE     -> Operations.OP.LTE;
+            case AND     -> Operations.OP.INCLUDING;
+            case OR      -> Operations.OP.ALSO;
+            case MOD     -> Operations.OP.MOD;
+            case DOT     -> Operations.OP.GET;
+            case LSQUARE -> Operations.OP.BRACKET;
+            default      -> null;
+        };
+
+        if (op_tok.type == Tokens.TT.GT || op_tok.type == Tokens.TT.GTE) {
+            ret = (Pair<Obj, RTError>) right.getattr(op_tok.type == Tokens.TT.GT ? Operations.OP.LT : Operations.OP.LTE,
+                    left);
+        }
+        else ret = (Pair<Obj, RTError>) left.getattr(op, right);
+        if (ret.b != null) return res.failure(ret.b);
+        return res.success((ret.a).set_pos(pos_start, pos_end).set_context(context));
+    }
 
 }

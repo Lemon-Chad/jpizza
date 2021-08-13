@@ -1,7 +1,12 @@
 package lemon.jpizza.Nodes.Definitions;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
+import lemon.jpizza.Objects.Executables.Function;
+import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.List;
@@ -36,4 +41,23 @@ public class FuncDefNode extends Node {
         jptype = Constants.JPType.FuncDef;
     }
 
+    public RTResult visit(Interpreter inter, Context context) {
+        RTResult res = new RTResult();
+
+        String funcName = var_name_tok != null ? (String) var_name_tok.value : null;
+        Node bodyNode = body_node;
+        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks);
+
+        var dfts = inter.getDefaults(defaults, context);
+        res.register(dfts.a);
+        if (res.error != null) return res;
+
+        Obj funcValue = new Function(funcName, bodyNode, argNT.a, argNT.b, async, autoreturn, returnType,
+                dfts.b, defaultCount)
+                .set_context(context).set_pos(pos_start, pos_end);
+
+        if (funcName != null) context.symbolTable.define(funcName, funcValue);
+
+        return res.success(funcValue);
+    }
 }

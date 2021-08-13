@@ -1,7 +1,11 @@
 package lemon.jpizza.Nodes.Definitions;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
+import lemon.jpizza.Objects.Executables.CMethod;
+import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.List;
@@ -37,4 +41,22 @@ public class MethDefNode extends Node {
         jptype = Constants.JPType.MethDef;
     }
 
+    public RTResult visit(Interpreter inter, Context context) {
+        RTResult res = new RTResult();
+
+        String funcName = (String) var_name_tok.value;
+        Token nameTok = var_name_tok;
+        Node bodyNode = body_node;
+        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks);
+
+        var dfts = inter.getDefaults(defaults, context);
+        res.register(dfts.a);
+        if (res.error != null) return res;
+
+        CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNT.a, argNT.b, bin, async,
+                autoreturn, returnType, dfts.b, defaultCount);
+
+        context.symbolTable.define(funcName, methValue);
+        return res.success(methValue);
+    }
 }

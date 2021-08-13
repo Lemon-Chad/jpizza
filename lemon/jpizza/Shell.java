@@ -305,7 +305,7 @@ public class Shell {
         if (main) inter.makeMain();
         RTResult result;
         try {
-            result = inter.visit(ast.a, context);
+            result = ast.a.visit(inter, context);
             if (result.error != null) return new Pair<>(result.value, result.error);
             result.register(inter.finish(context));
         } catch (OutOfMemoryError e) {
@@ -365,7 +365,7 @@ public class Shell {
             context.symbolTable = globalSymbolTable;
             Interpreter inter = new Interpreter();
             inter.makeMain();
-            RTResult result = inter.visit(ast, context);
+            RTResult result = ast.visit(inter, context);
             if (result.error != null) return new Pair<>(result.value, result.error);
             result.register(inter.finish(context));
             return new Pair<>(result.value, result.error);
