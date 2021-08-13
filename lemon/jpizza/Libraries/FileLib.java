@@ -6,6 +6,7 @@ import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Bool;
+import lemon.jpizza.Objects.Primitives.Bytes;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.RTResult;
@@ -80,12 +81,10 @@ public class FileLib extends Library {
             ObjectInputStream ois = new ObjectInputStream(fis);
 
             Object oit = ois.readObject();
-            if (!(oit instanceof Obj)) return res.failure(new RTError(
-                    value.pos_start, value.pos_end,
-                    "File is not a JPizza Serialized File!",
-                    execCtx
-            ));
-            out = (Obj) oit;
+            if (!(oit instanceof Obj))
+                out = Constants.getFromValue(oit);
+            else
+                out = (Obj) oit;
 
             ois.close();
             fis.close();
@@ -194,9 +193,12 @@ public class FileLib extends Library {
         try {
             created = file.createNewFile();
             FileOutputStream fout = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fout);
-            oos.writeObject(val);
-            oos.close();
+            if (val.jptype != Constants.JPType.Bytes) {
+                ObjectOutputStream oos = new ObjectOutputStream(fout);
+                oos.writeObject(val);
+                oos.close();
+            } else
+                fout.write(((Bytes) val).arr);
             fout.close();
         } catch (IOException e) {
             e.printStackTrace();
