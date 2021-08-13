@@ -136,6 +136,7 @@ public class Shell {
             put("field", Collections.singletonList("value"));
             put("nfield", Collections.singletonList("value"));
             put("choose", Collections.singletonList("value"));
+            put("byter", Collections.singletonList("value"));
             put("floating", Collections.singletonList("value"));
             put("random", new ArrayList<>());
             put("clear", new ArrayList<>());
@@ -270,10 +271,11 @@ public class Shell {
                     StringBuilder out = new StringBuilder();
                     int size = results.size();
                     for (int i = 0; i < size; i++) {
-                        if (results.get(i).jptype != Constants.JPType.Null) out.append(results.get(i)).append(", ");
+                        if (results.get(i).jptype != Constants.JPType.Null)
+                            out.append(Shell.logger.ots(results.get(i))).append(", ");
                     }
                     if (out.length() > 0) out.setLength(out.length() - 2);
-                    Shell.logger.outln(out);
+                    Shell.logger.outln(out.toString());
                 }
             }
         }
