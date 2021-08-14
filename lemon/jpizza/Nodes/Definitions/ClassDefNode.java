@@ -3,11 +3,14 @@ package lemon.jpizza.Nodes.Definitions;
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.Error;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Executables.CMethod;
 import lemon.jpizza.Objects.Executables.ClassPlate;
 import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Pair;
 import lemon.jpizza.Position;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
@@ -24,10 +27,11 @@ public class ClassDefNode extends Node {
     public List<Token> arg_type_toks;
     public List<Node> defaults;
     public int defaultCount;
+    public Token parentToken;
 
     public ClassDefNode(Token class_name_tok, List<Token> attribute_name_toks, List<Token> arg_name_toks,
                         List<Token> arg_type_toks, Node make_node, List<MethDefNode> methods, Position pos_end,
-                        List<Node> defaults, int defaultCount) {
+                        List<Node> defaults, int defaultCount, Token pTK) {
         this.class_name_tok = class_name_tok;
         this.defaultCount = defaultCount;
         this.defaults = defaults;
@@ -38,9 +42,12 @@ public class ClassDefNode extends Node {
         this.methods = methods;
         this.pos_end = pos_end;
         this.pos_start = class_name_tok.pos_start;
+
+        parentToken = pTK;
         jptype = Constants.JPType.ClassDef;
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult visit(Interpreter inter, Context context) {
             RTResult res = new RTResult();
 
@@ -72,7 +79,18 @@ public class ClassDefNode extends Node {
                 methods[i] = (CMethod) mthd;
             }
 
-            Obj classValue = new ClassPlate(name, attributes, make, methods)
+            ClassPlate parent = null;
+            if (parentToken != null) {
+                Obj p = (Obj) context.symbolTable.get(parentToken.value.toString());
+                if (p == null || p.jptype != Constants.JPType.ClassPlate) return res.failure(new RTError(
+                        parentToken.pos_start, parentToken.pos_end,
+                        "Parent does not exist",
+                        context
+                ));
+                parent = (ClassPlate) p;
+            }
+
+            Obj classValue = new ClassPlate(name, attributes, make, methods, parent)
                     .set_context(classContext).set_pos(pos_start, pos_end);
             context.symbolTable.define(name, classValue);
 

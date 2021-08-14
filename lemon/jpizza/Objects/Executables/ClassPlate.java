@@ -3,14 +3,19 @@ package lemon.jpizza.Objects.Executables;
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
+import lemon.jpizza.Nodes.Definitions.MethDefNode;
+import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
+import lemon.jpizza.Pair;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -19,13 +24,20 @@ public class ClassPlate extends Value {
     public CMethod make;
     CMethod[] methods;
     Token[] attributes;
+    ClassPlate parent;
+    List<String> methodNames;
 
-    public ClassPlate(String name, Token[] attributes, CMethod make, CMethod[] methods) {
+    public ClassPlate(String name, Token[] attributes, CMethod make, CMethod[] methods, ClassPlate parent) {
         this.name = name;
+        this.parent = parent;
         this.make = make;
         this.attributes = attributes;
         this.methods = methods;
         this.value = null;
+
+        methodNames = new ArrayList<>();
+        for (int i = 0; i < methods.length; i++)
+            methodNames.add(methods[i].name);
 
         set_pos(); set_context();
         jptype = Constants.JPType.ClassPlate;
@@ -34,10 +46,48 @@ public class ClassPlate extends Value {
     // Functions
 
     public CMethod[] copyMethods() {
+        CMethod[] methods = getMethods();
         int length = methods.length;
         CMethod[] newMethods = new CMethod[length];
         for (int i = 0; i < length; i++) newMethods[i] = (CMethod) methods[i].copy();
         return newMethods;
+    }
+
+    // Functions
+
+    public CMethod[] getMethods() {
+        List<CMethod> methods = new ArrayList<>(Arrays.asList(this.methods));
+
+        if (parent != null)
+            for (CMethod method : parent.getMethods())
+                if (!methodNames.contains(method.name))
+                    methods.add(method);
+
+        return methods.toArray(new CMethod[0]);
+    }
+
+    public CMethod getMake() {
+        CMethod make = this.make;
+        if (this.parent != null && ((ListNode) make.bodyNode).elements.size() == 0)
+            make = this.parent.make;
+        return make;
+    }
+
+    public Token[] getAttributes() {
+        List<String> attrNames = new ArrayList<>();
+        List<Token> attributes = new ArrayList<>();
+
+        for (Token attr : this.attributes) {
+            attributes.add(attr);
+            attrNames.add(attr.value.toString());
+        }
+
+        if (parent != null)
+            for (Token attr : parent.getAttributes())
+                if (!attrNames.contains(attr.value.toString()))
+                    attributes.add(attr);
+
+        return attributes.toArray(new Token[0]);
     }
 
     // Methods
@@ -47,18 +97,26 @@ public class ClassPlate extends Value {
 
         Context classContext = new Context(name, context, pos_start);
         classContext.symbolTable = new SymbolTable(context.symbolTable);
-        classContext.symbolTable.define("this", name);
 
+        Token[] attributes = getAttributes();
         int length = attributes.length;
-        for (int i = 0; i < length; i++) classContext.symbolTable.declareattr(attributes[i], classContext);
+        for (int i = 0; i < length; i++)
+            classContext.symbolTable.declareattr(attributes[i], classContext);
 
-        CMethod make = (CMethod) this.make.copy();
+        CMethod make = (CMethod) getMake().copy();
         make.set_context(classContext).set_pos(pos_start, pos_end);
 
         res.register(make.execute(args, parent));
         if (res.error != null) return res;
 
         CMethod[] methodCopies = copyMethods();
+        methodIterate(classContext, methodCopies);
+
+        return res.success(new ClassInstance(classContext).set_context(context).set_pos(pos_start, pos_end));
+    }
+
+    private void methodIterate(Context classContext, CMethod[] methodCopies) {
+        int length;
         length = methodCopies.length;
         for (int i = 0; i < length; i++) {
             CMethod method = methodCopies[i];
@@ -69,8 +127,6 @@ public class ClassPlate extends Value {
                 classContext.symbolTable.setattr((String) method.nameTok.value, method);
             } method.set_context(classContext);
         }
-
-        return res.success(new ClassInstance(classContext).set_context(context).set_pos(pos_start, pos_end));
     }
 
     // Conversions
@@ -85,7 +141,7 @@ public class ClassPlate extends Value {
     // Defaults
 
     public boolean isAsync() { return false; }
-    public Obj copy() { return new ClassPlate(name, attributes, (CMethod) make.copy(), copyMethods())
+    public Obj copy() { return new ClassPlate(name, attributes, (CMethod) make.copy(), copyMethods(), parent)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("recipe").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<recipe-"+name+">"; }

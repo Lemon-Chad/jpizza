@@ -22,6 +22,7 @@ public class ClassInstance extends Obj {
 
     public ClassInstance(Context value) {
         this.value = value;
+        value.symbolTable.define("this", this);
 
         set_pos(); set_context();
         jptype = Constants.JPType.ClassInstance;

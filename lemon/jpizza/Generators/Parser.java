@@ -577,7 +577,8 @@ public class Parser {
                 new ArrayList<>(),
                 end,
                 new ArrayList<>(),
-                0
+                0,
+                null
         ));
 
     }
@@ -1577,6 +1578,17 @@ public class Parser {
         Token classNameTok = currentToken;
         res.registerAdvancement(); advance();
 
+        Token ptk = null;
+        if (currentToken.type == TT.LAMBDA) {
+            advance(); res.registerAdvancement();
+            if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected identifier"
+            ));
+            ptk = currentToken;
+            res.registerAdvancement(); advance();
+        }
+
 
         if (!currentToken.type.equals(TT.OPEN)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -1708,7 +1720,8 @@ public class Parser {
                 methods,
                 currentToken.pos_end.copy(),
                 argTKs.b.a,
-                argTKs.b.b
+                argTKs.b.b,
+                ptk
         ));
     }
 
