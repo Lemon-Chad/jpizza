@@ -40,7 +40,7 @@ public class IterNode extends Node {
         if (res.shouldReturn()) return res;
         if (iterableNode.jptype != Constants.JPType.List) return res.failure(new RTError(
                 iterableNode.pos_start, iterableNode.pos_end,
-                "Value must be an iterable!",
+                "Value must be an iterable",
                 context
         ));
         List<Obj> iterable = ((PList) iterableNode).trueValue();

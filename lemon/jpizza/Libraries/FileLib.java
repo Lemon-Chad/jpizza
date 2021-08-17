@@ -43,7 +43,7 @@ public class FileLib extends Library {
         File file = new File(dir);
         if (!file.exists()) return res.failure(new RTError(
                 value.pos_start, value.pos_end,
-                "File does not exist!",
+                "File does not exist",
                 execCtx
         ));
 
@@ -71,7 +71,7 @@ public class FileLib extends Library {
         File file = new File(dir);
         if (!file.exists()) return res.failure(new RTError(
                 value.pos_start, value.pos_end,
-                "File does not exist!",
+                "File does not exist",
                 execCtx
         ));
 
@@ -131,7 +131,7 @@ public class FileLib extends Library {
         
         if (!file.exists() || !file.isDirectory()) return res.failure(new RTError(
                 value.pos_start, value.pos_end,
-                "Directory does not exist!",
+                "Directory does not exist",
                 execCtx
         ));
 

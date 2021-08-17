@@ -42,7 +42,7 @@ public class ClaccessNode extends Node {
             if (child == null)
                 return res.failure(new RTError(
                         pos_start.copy(), pos_end.copy(),
-                        "Enum child is undefined!",
+                        "Enum child is undefined",
                         context
                 ));
             return res.success(child.

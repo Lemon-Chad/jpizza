@@ -24,7 +24,7 @@ public class Time extends Library {
         value = value.number();
         if (value.jptype != Constants.JPType.Number) return new RTResult().failure(new RTError(
                 pos_start.copy(), pos_end.copy(),
-                "Argument must be a number!",
+                "Argument must be a number",
                 execCtx
         ));
         try {
@@ -32,7 +32,7 @@ public class Time extends Library {
         } catch (InterruptedException e) {
             return new RTResult().failure(new RTError(
                     pos_start.copy(), pos_end.copy(),
-                    "Delay was interrupted!",
+                    "Delay was interrupted",
                     execCtx
             ));
         }
@@ -45,7 +45,7 @@ public class Time extends Library {
         value = value.function();
         if (value.jptype != Constants.JPType.Function) return new RTResult().failure(new RTError(
                 pos_start.copy(), pos_end.copy(),
-                "Argument must be a function!",
+                "Argument must be a function",
                 execCtx
         ));
         long start = System.currentTimeMillis();

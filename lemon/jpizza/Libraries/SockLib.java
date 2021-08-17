@@ -231,7 +231,7 @@ public class SockLib extends Library {
 
         if (sock == null) return new Pair<>(null, new RTError(
                 serv.get_start(), serv.get_end(),
-                "Invalid ID!",
+                "Invalid ID",
                 serv.get_ctx()
         ));
 
@@ -250,7 +250,7 @@ public class SockLib extends Library {
 
         if (conn == null) return new Pair<>(null, new RTError(
                 serv.get_start(), serv.get_end(),
-                "Invalid ID!",
+                "Invalid ID",
                 serv.get_ctx()
         ));
 
@@ -552,7 +552,7 @@ public class SockLib extends Library {
 
         if (conn == null) return new Pair<>(null, new RTError(
                 serv.get_start(), serv.get_end(),
-                "Invalid ID!",
+                "Invalid ID",
                 serv.get_ctx()
         ));
 

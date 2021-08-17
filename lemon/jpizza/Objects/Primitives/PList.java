@@ -53,7 +53,7 @@ public class PList extends Value {
         Obj n = o.number();
         if (n.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
                 pos_start, pos_end,
-                "List index must be a number!",
+                "List index must be a number",
                 context
         ));
         Num other = (Num) n;
@@ -89,7 +89,7 @@ public class PList extends Value {
         Obj n = o.number();
         if (n.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
                 pos_start, pos_end,
-                "List index must be a number!",
+                "List index must be a number",
                 context
         ));
         Num other = (Num) n;

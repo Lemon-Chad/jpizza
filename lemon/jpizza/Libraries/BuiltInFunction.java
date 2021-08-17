@@ -316,14 +316,14 @@ public class BuiltInFunction extends Library {
         if (e.error != null) return e;
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         Num idx = (Num) index;
         PList lst = (PList) list;
         if (idx.trueValue() > lst.trueValue().size() || idx.trueValue() < 0) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Index is out of bounds!",
+                "Index is out of bounds",
                 execCtx
         ));
         lst.trueValue().add(Math.toIntExact(Math.round(idx.trueValue())), item);
@@ -335,7 +335,7 @@ public class BuiltInFunction extends Library {
         Obj splitter = ((Obj) execCtx.symbolTable.get("splitter")).astring();
         if (string.jptype != Constants.JPType.String || splitter.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a string!",
+                "Argument must be a string",
                 execCtx
         ));
         String str = ((Str) string).trueValue();
@@ -405,7 +405,7 @@ public class BuiltInFunction extends Library {
         Obj in = ((Obj) execCtx.symbolTable.get("value")).astring();
         if (in.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
                 in.pos_start, in.pos_end,
-                "Expected string input!",
+                "Expected string input",
                 execCtx
         ));
         var out = Shell.run("<sim>", ((Str) in).trueValue(), false);
@@ -426,7 +426,7 @@ public class BuiltInFunction extends Library {
         Obj list = ((Obj) execCtx.symbolTable.get("value")).alist();
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 context
         ));
         List<Obj> value = ((PList) list).trueValue();
@@ -437,12 +437,12 @@ public class BuiltInFunction extends Library {
     private RTResult isInt(Obj num, Context execCtx) {
         if (num.jptype != Constants.JPType.Number) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a number!",
+                "Argument must be a number",
                 execCtx
         ));
         if (((Num) num).floating) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be an long!",
+                "Argument must be an long",
                 execCtx
         ));
         return new RTResult().success(new Null());
@@ -467,7 +467,7 @@ public class BuiltInFunction extends Library {
         Obj value = (Obj) execCtx.symbolTable.get("value");
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         Pair<Obj, RTError> result = ((PList) list).append(value);
@@ -480,7 +480,7 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         Pair<Obj, RTError> result = ((PList) list).remove(value);
@@ -493,7 +493,7 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         return new RTResult().success(((PList) list).contains(value));
@@ -504,7 +504,7 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value")).number();
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         RTResult e = isInt(value, execCtx);
@@ -519,7 +519,7 @@ public class BuiltInFunction extends Library {
         Obj listB = ((Obj) execCtx.symbolTable.get("listB")).alist();
         if (listA.jptype != Constants.JPType.List || listB.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         List<Obj> listAval = ((PList) listA).trueValue();
@@ -531,7 +531,7 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (dict.jptype != Constants.JPType.Dict) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         Dict x = (Dict) dict;
@@ -568,7 +568,7 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (dict.jptype != Constants.JPType.Dict) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be a list!",
+                "Argument must be a list",
                 execCtx
         ));
         Dict x = (Dict) dict;

@@ -66,7 +66,7 @@ public class HTTPLIB extends Library {
         } catch (URISyntaxException e) {
             return new Pair<>(null, new RTError(
                     urlObj.get_start(), urlObj.get_end(),
-                    "URI Syntax Error!",
+                    "URI Syntax Error",
                     urlObj.get_ctx()
             ));
         }

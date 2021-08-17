@@ -57,7 +57,7 @@ public class BaseFunction extends Value {
             Obj oType = arg.type().astring();
             if (oType.jptype != Constants.JPType.String) return res.failure(new RTError(
                     arg.get_start(), arg.get_end(),
-                    "Type is not a string!",
+                    "Type is not a string",
                     arg.get_ctx()
             ));
 

@@ -51,7 +51,7 @@ public class ClassInstance extends Obj {
         else if (c != null) return c;
         else return new RTError(
                     o.get_start(), o.get_end(),
-                    "Attribute does not exist!",
+                    "Attribute does not exist",
                     o.get_ctx()
             );
     }
