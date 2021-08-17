@@ -7,6 +7,7 @@ import lemon.jpizza.Nodes.Variables.VarNode;
 import lemon.jpizza.Objects.Executables.CMethod;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Null;
+import lemon.jpizza.Objects.Primitives.Num;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Token;
 import lemon.jpizza.StringHash;
@@ -64,24 +65,32 @@ public class SymbolTable implements Serializable {
         symbolKeys.remove(name);
     }
 
-    public String define(String name, Object value, boolean locked, String type) {
-        if (symbolKeys.contains(name) && symbols.get(name).locked)
+    public String define(String name, Object value, boolean locked, String type, Integer min, Integer max) {
+        VarNode curr = symbols.get(name);
+        if (symbolKeys.contains(name) && curr.locked)
             return "Baked variable already defined";
+        if (min != null || max != null)
+            type = "num";
         if (!type.equals("any")) {
             Obj t = ((Obj) value).type().astring();
             String provided;
             if (t.jptype != Constants.JPType.String)
-                return "Type is not a string!";
+                return "Type is not a string";
             else if (!type.equals(provided = ((Str) t).trueValue()))
                 return "Got type " + provided + ", expected type " + type;
         }
-        symbols.put(name, new VarNode(value, locked));
+        if (min != null || max != null) {
+            double v = ((Num) value).trueValue();
+            if ((max != null && v > max) || (min != null && v < min))
+                return "Number not in range";
+        }
+        symbols.put(name, new VarNode(value, locked).setRange(min, max));
         types.put(name, type);
         symbolKeys.add(name);
         return null;
     }
     public void define(String name, Object value, String type) {
-        define(name, value, false, type);
+        define(name, value, false, type, null, null);
     }
 
     public void define(String name, Object value) {
@@ -90,15 +99,21 @@ public class SymbolTable implements Serializable {
 
     public String set(String name, Obj value, boolean locked) {
         if (symbolKeys.contains(name)) {
-            if (symbols.get(name).locked)
+            VarNode curr = symbols.get(name);
+            if (curr.locked)
                 return "Baked variable already defined";
-            VarNode vn = new VarNode(value, locked);
+            if (curr.min != null || curr.max != null) {
+                double v = ((Num) value).trueValue();
+                if ((curr.max != null && v > curr.max) || (curr.min != null && v < curr.min))
+                    return "Number not in range";
+            }
+            VarNode vn = new VarNode(value, locked).setRange(curr.min, curr.max);
             Obj type = value.type().astring();
             String expect = types.get(name);
             String t;
             if (!expect.equals("any"))
                 if (type.jptype != Constants.JPType.String)
-                    return "Type is not a string!";
+                    return "Type is not a string";
                 else if (!expect.equals(t = ((Str) type).trueValue()))
                     return "Got type " + t + ", expected type " + expect;
 
@@ -108,7 +123,7 @@ public class SymbolTable implements Serializable {
         else if (parent != null) {
             return parent.set(name, value, locked);
         } else
-            return "Variable not defined!";
+            return "Variable not defined";
     }
 
     public void setDyn(String name, Node value) {

@@ -190,6 +190,45 @@ public class Parser {
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
 
+            Integer min = null;
+            Integer max = null;
+
+            if (currentToken.type == TT.LSQUARE) {
+                res.registerAdvancement(); advance();
+                boolean neg = false;
+                if (currentToken.type == TT.MINUS) {
+                    neg = true;
+                    res.registerAdvancement(); advance();
+                }
+                if (currentToken.type != TT.INT) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start, currentToken.pos_end,
+                        "Expected integer"
+                ));
+                min = 0;
+                max = ((Double) currentToken.value).intValue() * (neg ? -1 : 1);
+                res.registerAdvancement(); advance();
+                if (currentToken.type == TT.OR) {
+                    res.registerAdvancement(); advance();
+                    neg = false;
+                    if (currentToken.type == TT.MINUS) {
+                        neg = true;
+                        res.registerAdvancement(); advance();
+                    }
+                    if (currentToken.type != TT.INT) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start, currentToken.pos_end,
+                            "Expected integer"
+                    ));
+                    min = max;
+                    max = ((Double) currentToken.value).intValue() * (neg ? -1 : 1);
+                    res.registerAdvancement(); advance();
+                }
+                if (currentToken.type != TT.RSQUARE) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start, currentToken.pos_end,
+                        "Expected ']'"
+                ));
+                res.registerAdvancement(); advance();
+            }
+
             if (currentToken.type.equals(TT.USE)) {
                 advance(); res.registerAdvancement();
                 if (!currentToken.type.equals(TT.IDENTIFIER) && !currentToken.type.equals(TT.KEYWORD)) return res.failure(Error.InvalidSyntax(
@@ -215,7 +254,9 @@ public class Parser {
             Node expr = (Node) res.register(this.expr());
             if (res.error != null)
                 return res;
-            return res.success(new VarAssignNode(var_name, expr, locked).setType(type));
+            return res.success(new VarAssignNode(var_name, expr, locked)
+                    .setType(type)
+                    .setRange(min, max));
         }
         else if (currentToken.matches(TT.KEYWORD, "cal")) {
             Token var_name = (Token) res.register(extractVarTok());
