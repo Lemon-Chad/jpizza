@@ -1557,7 +1557,7 @@ public class Parser {
                 ).setCatcher(isCatcher));
             }
             case OPEN -> {
-                nodeToReturn = (Node) res.register(this.block());
+                nodeToReturn = (Node) res.register(this.block(varNameTok != null));
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
