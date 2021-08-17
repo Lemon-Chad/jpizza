@@ -356,6 +356,10 @@ public class Parser {
 
         if (tok.type.equals(TT.KEYWORD))
             switch ((String) tok.value) {
+                case "throw":
+                    Node throwNode = (Node) res.register(this.throwExpr());
+                    if (res.error != null) return res;
+                    return res.success(throwNode);
                 case "recipe":
                     Node classDef = (Node) res.register(this.classDef());
                     if (res.error != null)
@@ -514,6 +518,20 @@ public class Parser {
                 tok.pos_start.copy(), tok.pos_end != null ? tok.pos_end.copy() : tok.pos_start.copy(),
                 String.format("Expected long, double, identifier, '+', '-', or '('. Found %s", tok)
         ));
+    }
+
+    public ParseResult throwExpr() {
+        ParseResult res = new ParseResult();
+        if (!currentToken.matches(TT.KEYWORD, "throw")) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                "Expected 'throw'"
+        )); res.registerAdvancement(); advance();
+
+        Node expr = (Node) res.register(this.expr());
+        if (res.error != null)
+            return res;
+
+        return res.success(new ThrowNode(expr));
     }
 
     public ParseResult structDef() {
@@ -1465,6 +1483,19 @@ public class Parser {
         return res.success(new DictNode(dict, pos_start, currentToken.pos_end.copy()));
     }
 
+    public ParseResult isCatcher() {
+        ParseResult res = new ParseResult();
+        if (currentToken.type == TT.LSQUARE) {
+            res.registerAdvancement(); advance();
+            if (currentToken.type != TT.RSQUARE) return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start, currentToken.pos_end,
+                    "Expected ']'"
+            ));
+            res.registerAdvancement(); advance();
+            return res.success(true);
+        } return res.success(false);
+    }
+
     // Executables
 
     public ParseResult funcDef() {
@@ -1500,6 +1531,9 @@ public class Parser {
                 >) res.register(gatherArgs());
         if (res.error != null) return res;
 
+        boolean isCatcher = (boolean) res.register(this.isCatcher());
+        if (res.error != null) return res;
+
         String retype = (String) res.register(staticRet());
         if (res.error != null) return res;
 
@@ -1520,7 +1554,7 @@ public class Parser {
                         retype,
                         argTKs.b.a,
                         argTKs.b.b
-                ));
+                ).setCatcher(isCatcher));
             }
             case OPEN -> {
                 nodeToReturn = (Node) res.register(this.block());
@@ -1535,7 +1569,7 @@ public class Parser {
                         retype,
                         argTKs.b.a,
                         argTKs.b.b
-                ));
+                ).setCatcher(isCatcher));
             }
             default -> {
                 if (tokV.equals("yourmom"))
@@ -1662,6 +1696,9 @@ public class Parser {
                         Pair< List<Node>, Integer >
                         >) res.register(gatherArgs());
 
+                boolean isCatcher = (boolean) res.register(this.isCatcher());
+                if (res.error != null) return res;
+
                 String retype = (String) res.register(staticRet());
                 if (res.error != null) return res;
 
@@ -1682,7 +1719,7 @@ public class Parser {
                                 retype,
                                 args.b.a,
                                 args.b.b
-                        )); break;
+                        ).setCatcher(isCatcher)); break;
                     case OPEN:
                          nodeToReturn = (Node) res.register(this.block(false));
                          if (res.error != null) return res;
@@ -1697,7 +1734,7 @@ public class Parser {
                                  retype,
                                  args.b.a,
                                  args.b.b
-                         )); break;
+                         ).setCatcher(isCatcher)); break;
                     default:
                         return res.failure(Error.InvalidSyntax(
                                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),

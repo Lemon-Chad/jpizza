@@ -21,6 +21,7 @@ public class MethDefNode extends Node {
     public String returnType;
     public List<Node> defaults;
     public int defaultCount;
+    public boolean catcher = false;
 
     public MethDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean bin, boolean async, String returnType, List<Node> defaults,
@@ -41,6 +42,11 @@ public class MethDefNode extends Node {
         jptype = Constants.JPType.MethDef;
     }
 
+    public MethDefNode setCatcher(boolean c) {
+        this.catcher = c;
+        return this;
+    }
+
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
@@ -57,6 +63,6 @@ public class MethDefNode extends Node {
                 autoreturn, returnType, dfts.b, defaultCount);
 
         context.symbolTable.define(funcName, methValue);
-        return res.success(methValue);
+        return res.success(methValue.setCatch(catcher));
     }
 }

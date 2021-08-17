@@ -31,6 +31,61 @@ public class BuiltInFunction extends Library {
 
     public BuiltInFunction(String name) { super(name); }
 
+    public RTResult execute_fail(Context execCtx) {
+        Obj r = (Obj) execCtx.symbolTable.get("res");
+        if (r.jptype != Constants.JPType.Res) return new RTResult().success(new Null());
+        Result res = (Result) r;
+        if (res.ok())
+            return new RTResult().success(new Null());
+        return new RTResult().failure(new RTError(
+                r.get_start(), r.get_end(),
+                res.fail().toString(),
+                execCtx
+        ));
+    }
+
+    public RTResult execute_catch(Context execCtx) {
+        Obj r = (Obj) execCtx.symbolTable.get("res");
+        if (r.jptype != Constants.JPType.Res)
+            return new RTResult().failure(new RTError(
+                    r.get_start(), r.get_end(),
+                    "Expected catcher type",
+                    execCtx
+            ));
+        Result res = (Result) r;
+        return new RTResult().success(res.ok() ? new Null() : res.fail());
+    }
+
+    public RTResult execute_ok(Context execCtx) {
+        Obj r = (Obj) execCtx.symbolTable.get("res");
+        if (r.jptype != Constants.JPType.Res)
+            return new RTResult().failure(new RTError(
+                    r.get_start(), r.get_end(),
+                    "Expected catcher type",
+                    execCtx
+            ));
+        Result res = (Result) r;
+        return new RTResult().success(new Bool(res.ok()));
+    }
+
+    public RTResult execute_resolve(Context execCtx) {
+        Obj r = (Obj) execCtx.symbolTable.get("res");
+        if (r.jptype != Constants.JPType.Res)
+            return new RTResult().failure(new RTError(
+                    r.get_start(), r.get_end(),
+                    "Expected catcher type",
+                    execCtx
+            ));
+        Result res = (Result) r;
+        if (!res.ok())
+            return new RTResult().failure(new RTError(
+                    r.get_start(), r.get_end(),
+                    "Unresolved error in catcher",
+                    execCtx
+            ));
+        return new RTResult().success(res.resolve());
+    }
+
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));

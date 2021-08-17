@@ -20,6 +20,7 @@ public class Constants {
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
     public static String[] KEYWORDS = {
+            "throw",
             "struct",
             "do",
             "loop",
@@ -99,7 +100,7 @@ public class Constants {
         Generic,
         Switch,
         Enum,
-        EnumChild,
+        EnumChild, Res,
     }
 
     public static String stringWithArrows(String text, Position pos_start, Position pos_end) {

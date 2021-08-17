@@ -24,6 +24,7 @@ public class Function extends BaseFunction {
     boolean async;
     boolean autoreturn;
     String returnType;
+    boolean catcher = false;
 
     public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes,
                     boolean async, boolean autoreturn, String returnType, List<Obj> defaults, int defaultCount) {
@@ -68,7 +69,26 @@ public class Function extends BaseFunction {
 
     // Functions
 
+    public Function setCatch(boolean c) {
+        this.catcher = c;
+        return this;
+    }
+
     public RTResult execute(List<Obj> args, Interpreter parent) {
+        return ifCatcher(args, parent);
+    }
+
+    public RTResult ifCatcher(List<Obj> args, Interpreter parent) {
+        RTResult res = run(args, parent);
+        if (catcher) {
+            if (res.error != null)
+                return res.success(new Result(res.error.details));
+            else
+                return res.success(new Result(res.value));
+        } return res;
+    }
+
+    public RTResult run(List<Obj> args, Interpreter parent) {
         RTResult res = new RTResult();
         Interpreter interpreter = new Interpreter(parent.memo);
         Context execCtx = newContext();
@@ -138,7 +158,7 @@ public class Function extends BaseFunction {
     // Defaults
 
     public Obj copy() { return new Function(name, bodyNode, argNames, argTypes, async, autoreturn, returnType, defaults,
-                                            defaultCount)
+                                            defaultCount).setCatch(catcher)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("function").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<function-"+name+">"; }

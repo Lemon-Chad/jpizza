@@ -42,7 +42,7 @@ public class CMethod extends Function {
     // Default
 
     public Obj copy() { return new CMethod(name, nameTok, context, bodyNode, argNames, argTypes,
-            bin, async, autoreturn, returnType, defaults, defaultCount)
+            bin, async, autoreturn, returnType, defaults, defaultCount).setCatch(catcher)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("<class-method>").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<"+context.displayName+"-method-"+name+">"; }

@@ -21,6 +21,7 @@ public class FuncDefNode extends Node {
     public String returnType;
     public List<Node> defaults;
     public int defaultCount;
+    public boolean catcher = false;
 
     public FuncDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean async, String returnType, List<Node> defaults, int defaultCount) {
@@ -41,6 +42,11 @@ public class FuncDefNode extends Node {
         jptype = Constants.JPType.FuncDef;
     }
 
+    public FuncDefNode setCatcher(boolean c) {
+        this.catcher = c;
+        return this;
+    }
+
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
@@ -53,7 +59,7 @@ public class FuncDefNode extends Node {
         if (res.error != null) return res;
 
         Obj funcValue = new Function(funcName, bodyNode, argNT.a, argNT.b, async, autoreturn, returnType,
-                dfts.b, defaultCount)
+                dfts.b, defaultCount).setCatch(catcher)
                 .set_context(context).set_pos(pos_start, pos_end);
 
         if (funcName != null) context.symbolTable.define(funcName, funcValue);

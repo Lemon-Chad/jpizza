@@ -122,6 +122,10 @@ public class Shell {
             put("size", Collections.singletonList("value"));
             put("str", Collections.singletonList("value"));
             put("list", Collections.singletonList("value"));
+            put("ok", Collections.singletonList("res"));
+            put("fail", Collections.singletonList("res"));
+            put("catch", Collections.singletonList("res"));
+            put("resolve", Collections.singletonList("res"));
             put("bool", Collections.singletonList("value"));
             put("num", Collections.singletonList("value"));
             put("dict", Collections.singletonList("value"));
