@@ -8,6 +8,7 @@ import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Executables.BaseFunction;
 import lemon.jpizza.Objects.Executables.ClassPlate;
 import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Objects.Primitives.EnumJChild;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Results.RTResult;
 
@@ -32,6 +33,7 @@ public class CallNode extends Node {
         List<Obj> args = new ArrayList<>();
         Obj valueToCall = res.register(nodeToCall.visit(inter, context));
         if (res.shouldReturn()) return res;
+
         valueToCall = valueToCall.function();
         if (valueToCall.jptype == Constants.JPType.CMethod)
             valueToCall = valueToCall.copy().set_pos(pos_start, pos_end);
@@ -42,6 +44,12 @@ public class CallNode extends Node {
             Obj obj = res.register(argNodes.get(i).visit(inter, context));
             args.add(obj);
             if (res.shouldReturn()) return res;
+        }
+
+        if (valueToCall.jptype == Constants.JPType.EnumChild) {
+            Obj ret = res.register(((EnumJChild) valueToCall).instance(context, args));
+            if (res.error != null) return res;
+            return res.success(ret);
         }
 
         BaseFunction bValueToCall;

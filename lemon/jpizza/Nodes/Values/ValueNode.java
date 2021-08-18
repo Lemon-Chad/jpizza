@@ -9,7 +9,7 @@ public class ValueNode extends Node {
 
     public ValueNode(Token tok) {
         this.tok = tok;
-        pos_start = tok.pos_start.copy(); pos_end = tok.pos_end.copy();
+        pos_start = tok.pos_start; pos_end = tok.pos_end;
         jptype = Constants.JPType.Value;
     }
 
