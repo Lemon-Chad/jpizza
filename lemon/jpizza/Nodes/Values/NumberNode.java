@@ -20,7 +20,7 @@ public class NumberNode extends ValueNode {
     }
 
     public RTResult visit(Interpreter inter, Context context) {
-        return new RTResult().success(new Num(val, flt, true).set_context(context)
+        return new RTResult().success(new Num(val, flt).set_context(context)
                 .set_pos(pos_start, pos_end));
     }
 

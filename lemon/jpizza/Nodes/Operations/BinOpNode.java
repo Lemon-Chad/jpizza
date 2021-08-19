@@ -15,6 +15,7 @@ public class BinOpNode extends Node {
     public Node left_node;
     public Token op_tok;
     public Node right_node;
+    public boolean fluctuating = true;
 
     public BinOpNode(Node left_node, Token op_tok, Node right_node) {
         this.left_node = left_node;
@@ -25,16 +26,33 @@ public class BinOpNode extends Node {
         jptype = Constants.JPType.BinOp;
     }
 
+    public BinOpNode fluctuates(boolean f) {
+        fluctuating = f;
+        return this;
+    }
+
     public String toString() { return String.format("(%s, %s, %s)", left_node, op_tok, right_node); }
 
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
         Pair<Obj, RTError> ret;
 
+        Operations.OP op = Constants.tto.get(op_tok.type);
+
         Obj left = res.register(left_node.visit(inter, context));
         if (res.shouldReturn()) return res;
         Obj right = res.register(right_node.visit(inter, context));
         if (res.shouldReturn()) return res;
+
+        /* Pair3<Obj, Operations.OP, Obj> pair = new Pair3<>(
+                left.set_context().set_pos(),
+                op,
+                right.set_context().set_pos()
+        );
+
+        if (Interpreter.compCache.containsKey(pair))
+            return res.success(Interpreter.compCache.get(new Pair3<>(left, op, right)));
+         */
 
         if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
                 Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
@@ -64,31 +82,13 @@ public class BinOpNode extends Node {
             }));
         }
 
-        Operations.OP op = switch (op_tok.type) {
-            case PLUS    -> Operations.OP.ADD;
-            case MINUS   -> Operations.OP.SUB;
-            case MUL     -> Operations.OP.MUL;
-            case DIV     -> Operations.OP.DIV;
-            case POWER   -> Operations.OP.FASTPOW;
-            case EE      -> Operations.OP.EQ;
-            case NE      -> Operations.OP.NE;
-            case LT      -> Operations.OP.LT;
-            case LTE     -> Operations.OP.LTE;
-            case AND     -> Operations.OP.INCLUDING;
-            case OR      -> Operations.OP.ALSO;
-            case MOD     -> Operations.OP.MOD;
-            case DOT     -> Operations.OP.GET;
-            case LSQUARE -> Operations.OP.BRACKET;
-            default      -> null;
-        };
-
         if (op_tok.type == Tokens.TT.GT || op_tok.type == Tokens.TT.GTE) {
             ret = (Pair<Obj, RTError>) right.getattr(op_tok.type == Tokens.TT.GT ? Operations.OP.LT : Operations.OP.LTE,
                     left);
         }
         else ret = (Pair<Obj, RTError>) left.getattr(op, right);
         if (ret.b != null) return res.failure(ret.b);
-        return res.success((ret.a).set_pos(pos_start, pos_end).set_context(context));
+        return res.success(ret.a.set_pos(pos_start, pos_end).set_context(context));
     }
 
 }

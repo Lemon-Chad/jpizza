@@ -33,7 +33,7 @@ public class Value extends Obj {
     }
 
     public Obj set_pos(Position ps, Position pe) {
-        this.pos_start = ps; this.pos_end = pe;
+        pos_start = ps; pos_end = pe;
         return this;
     }
     public Obj set_pos() {

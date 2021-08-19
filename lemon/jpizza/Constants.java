@@ -57,6 +57,23 @@ public class Constants {
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};
     public static Map<String, Context> LIBRARIES = new HashMap<>();
     public static char splitter = '\n';
+    
+    public static Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
+        put(Tokens.TT.PLUS, Operations.OP.ADD);
+        put(Tokens.TT.MINUS, Operations.OP.SUB);
+        put(Tokens.TT.MUL, Operations.OP.MUL);
+        put(Tokens.TT.DIV, Operations.OP.DIV);
+        put(Tokens.TT.POWER, Operations.OP.FASTPOW);
+        put(Tokens.TT.EE, Operations.OP.EQ);
+        put(Tokens.TT.NE, Operations.OP.NE);
+        put(Tokens.TT.LT, Operations.OP.LT);
+        put(Tokens.TT.LTE, Operations.OP.LTE);
+        put(Tokens.TT.AND, Operations.OP.INCLUDING);
+        put(Tokens.TT.OR, Operations.OP.ALSO);
+        put(Tokens.TT.MOD, Operations.OP.MOD);
+        put(Tokens.TT.DOT, Operations.OP.GET);
+        put(Tokens.TT.LSQUARE, Operations.OP.BRACKET);
+    }};
 
     public enum JPType {
         Bytes,

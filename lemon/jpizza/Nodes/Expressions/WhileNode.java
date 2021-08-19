@@ -18,6 +18,7 @@ public class WhileNode extends Node {
     public Node body_node;
     public boolean retnull;
     public boolean conLast;
+    public boolean fluctuating = true;
 
     public WhileNode(Node condition_node, Node body_node, boolean retnull, boolean conLast) {
         this.condition_node = condition_node;

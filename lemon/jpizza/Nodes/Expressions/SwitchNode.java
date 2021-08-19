@@ -21,6 +21,7 @@ public class SwitchNode extends Node {
     public List<Case> cases;
     public ElseCase elseCase;
     public Node reference;
+    public boolean fluctuating = true;
 
     public SwitchNode(Node ref, List<Case> css, ElseCase else_case, boolean autoret) {
         elseCase = else_case;

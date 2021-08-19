@@ -30,31 +30,46 @@ public class RTResult {
     }
 
     public RTResult success(Obj value) {
-        reset();
+        error = null;
+        funcReturn = null;
+        continueLoop = false;
+        breakLoop = false;
         this.value = value;
         return this;
     }
 
     public RTResult sreturn(Obj value) {
-        reset();
+        this.value = null;
+        error = null;
+        continueLoop = false;
+        breakLoop = false;
         funcReturn = value;
         return this;
     }
 
     public RTResult scontinue() {
-        reset();
+        value = null;
+        error = null;
+        funcReturn = null;
+        breakLoop = false;
         continueLoop = true;
         return this;
     }
 
     public RTResult sbreak() {
-        reset();
+        value = null;
+        error = null;
+        funcReturn = null;
+        continueLoop = false;
         breakLoop = true;
         return this;
     }
 
     public RTResult failure(Error error) {
-        reset();
+        value = null;
+        funcReturn = null;
+        continueLoop = false;
+        breakLoop = false;
         this.error = error;
         return this;
     }

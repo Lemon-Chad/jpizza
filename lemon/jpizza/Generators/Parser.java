@@ -2,6 +2,7 @@ package lemon.jpizza.Generators;
 
 import lemon.jpizza.Cases.Case;
 import lemon.jpizza.Cases.ElseCase;
+import lemon.jpizza.Constants;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Nodes.Definitions.*;
 import lemon.jpizza.Nodes.Expressions.*;
@@ -945,12 +946,14 @@ public class Parser {
             right_func = left_func;
         Node right; Node left;
         left = (Node) res.register(left_func.execute());
+        boolean instantSimplify = left == null || left.fluctuating;
 
         while (ops.contains(currentToken.type)) {
             Token op_tok = currentToken;
             res.registerAdvancement();
             advance();
             right = (Node) res.register(right_func.execute());
+            instantSimplify = instantSimplify && (right == null || right.fluctuating);
             if (res.error != null)
                 return res;
             if (op_tok.type == TT.LSQUARE) {
@@ -958,9 +961,11 @@ public class Parser {
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected closing bracket (']')"
                 ));
-                advance(); res.registerAdvancement();
+                advance();
+                res.registerAdvancement();
             }
-            left = new BinOpNode(left, op_tok, right);
+            //noinspection ConstantConditions
+            left = new BinOpNode(left, op_tok, right).fluctuates(instantSimplify);
         }
         return res.success(left);
     }

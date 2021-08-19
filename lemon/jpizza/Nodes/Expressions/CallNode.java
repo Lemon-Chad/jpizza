@@ -18,6 +18,7 @@ import java.util.List;
 public class CallNode extends Node {
     public Node nodeToCall;
     public List<Node> argNodes;
+    public boolean fluctuating = true;
 
     public CallNode(Node nodeToCall, List<Node> argNodes) {
         this.nodeToCall = nodeToCall;

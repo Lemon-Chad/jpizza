@@ -50,8 +50,7 @@ public class SymbolTable implements Serializable {
     }
 
     public boolean isDyn(String name) {
-        if (symbolKeys.contains(name)) return false;
-        else return dynKeys.contains(name);
+        return !symbolKeys.contains(name) && dynKeys.contains(name);
     }
 
     public void remove(String name) {
@@ -98,25 +97,26 @@ public class SymbolTable implements Serializable {
     }
 
     public String set(String name, Obj value, boolean locked) {
-        if (symbolKeys.contains(name)) {
-            VarNode curr = symbols.get(name);
+        VarNode curr = symbols.get(name);
+        if (curr != null) {
+            String expect = types.get(name);
             if (curr.locked)
                 return "Baked variable already defined";
-            if (curr.min != null || curr.max != null) {
+            else if (curr.min != null || curr.max != null) {
                 double v = ((Num) value).trueValue();
                 if ((curr.max != null && v > curr.max) || (curr.min != null && v < curr.min))
                     return "Number not in range";
             }
-            VarNode vn = new VarNode(value, locked).setRange(curr.min, curr.max);
-            Obj type = value.type().astring();
-            String expect = types.get(name);
-            String t;
-            if (!expect.equals("any"))
+            else if (!expect.equals("any")) {
+                Obj type = value.type().astring();
+                String t;
                 if (type.jptype != Constants.JPType.String)
                     return "Type is not a string";
                 else if (!expect.equals(t = ((Str) type).trueValue()))
                     return "Got type " + t + ", expected type " + expect;
+            }
 
+            VarNode vn = new VarNode(value, locked).setRange(curr.min, curr.max);
             symbols.replace(name, vn);
             return null;
         }

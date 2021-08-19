@@ -14,6 +14,7 @@ import java.util.List;
 public class UseNode extends Node {
     public Token useToken;
     public List<Token> args;
+    public boolean fluctuating = true;
 
     public UseNode(Token useToken, List<Token> args) {
         this.useToken = useToken;

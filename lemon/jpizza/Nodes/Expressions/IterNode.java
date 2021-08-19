@@ -19,6 +19,7 @@ public class IterNode extends Node {
     public Node iterable_node;
     public Node body_node;
     public boolean retnull;
+    public boolean fluctuating = true;
 
     public IterNode(Token var_name_tok, Node iterable_node, Node body_node,
                     boolean retnull) {

@@ -34,22 +34,6 @@ public class Num extends Value {
         jptype = Constants.JPType.Number;
     }
 
-    public Num(double v, boolean f, boolean confirmed) {
-        value = v;
-
-        if (confirmed)
-            floating = f;
-        else
-            floating = f && Math.floor(v) != v;
-
-        if (floating)
-            doubleForm = v;
-        else
-            longForm = (long) v;
-
-        jptype = Constants.JPType.Number;
-    }
-
     public Num(double v, boolean f) {
         value = v;
 
@@ -68,7 +52,12 @@ public class Num extends Value {
     // Methods
 
     public Pair<Obj, RTError> add(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         double v;
 
         if (other.floating)
@@ -80,7 +69,12 @@ public class Num extends Value {
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> mod(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         double v;
         if (other.floating)
             v = other.doubleForm % (floating ? doubleForm : longForm);
@@ -91,7 +85,12 @@ public class Num extends Value {
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> sub(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         double v;
         if (other.floating)
             v = (floating ? doubleForm : longForm) - other.doubleForm;
@@ -101,7 +100,12 @@ public class Num extends Value {
         return new Pair<>(new Num(v, other.floating || floating).set_context(context), null);
     }
     public Pair<Obj, RTError> mul(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         double v;
         if (other.floating)
             v = other.doubleForm * (floating ? doubleForm : longForm);
@@ -111,7 +115,12 @@ public class Num extends Value {
         return new Pair<>(new Num(v, other.floating || floating).set_context(context), null);
     }
     public Pair<Obj, RTError> div(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         if (other.trueValue() == 0)
             return new Pair<>(null, new RTError(
                     pos_start, pos_end,
@@ -128,7 +137,12 @@ public class Num extends Value {
         return new Pair<>(new Num(v, true).set_context(context), null);
     }
     public Pair<Obj, RTError> fastpow(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         double v;
         if (other.floating)
             v = Math.pow(floating ? doubleForm : longForm, other.doubleForm);
@@ -138,11 +152,21 @@ public class Num extends Value {
         return new Pair<>(new Num(v, other.floating || floating).set_context(context), null);
     }
     public Pair<Obj, RTError> lt(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         return new Pair<>(new Bool(trueValue() < other.trueValue()).set_context(context), null);
     }
     public Pair<Obj, RTError> lte(Obj o) {
-        Num other = (Num) o.number();
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+                pos_start, pos_end,
+                "Expected number",
+                context
+        ));
+        Num other = (Num) o;
         return new Pair<>(new Bool(trueValue() <= other.trueValue()).set_context(context), null);
     }
     public Pair<Obj, RTError> invert() {

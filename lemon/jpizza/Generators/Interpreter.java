@@ -24,6 +24,8 @@ public class Interpreter {
     Clock clock = new Clock();
     public boolean reflection = false;
 
+    public static Map< Pair3<Obj, OP, Obj>, Obj > compCache = new HashMap<>();
+
     public Memo memo = new Memo();
     public boolean main = false;
 

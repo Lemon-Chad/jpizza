@@ -22,6 +22,7 @@ public class ForNode extends Node {
     public Node step_value_node;
     public Node body_node;
     public boolean retnull;
+    public boolean fluctuating = true;
 
     public ForNode(Token var_name_tok, Node start_value_node, Node end_value_node, Node step_value_node, Node body_node,
                    boolean retnull) {
@@ -76,7 +77,12 @@ public class ForNode extends Node {
 
         double i = start;
         int index = 0;
-        Interpreter.Condition condition = step >= 0 ? x -> x < end : x -> x > end;
+        Interpreter.Condition condition;
+
+        if (step >= 0)
+            condition = x -> x < end;
+        else
+            condition = x -> x < end;
 
         String vtk = (String) var_name_tok.value;
         Obj value;
@@ -84,18 +90,20 @@ public class ForNode extends Node {
         context.symbolTable.define(vtk, new Null());
         // clock.tick();
         while (condition.go(i)) {
-            context.symbolTable.set(vtk, new Num(i));
+            if (!vtk.equals("_"))
+                context.symbolTable.set(vtk, new Num(i));
             i += step;
 
             value = res.register(body_node.visit(inter, context));
             // value = null;
-            if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
-
             if (res.continueLoop) continue;
-            if (res.breakLoop) break;
+            else if (res.breakLoop) break;
+            else if (res.error != null || res.funcReturn != null) return res;
 
-            elements[index] = value;
-            index++;
+            if (!retnull) {
+                elements[index] = value;
+                index++;
+            }
         }
         context.symbolTable.remove(vtk);
 

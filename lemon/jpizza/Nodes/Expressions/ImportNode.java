@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 
 public class ImportNode extends Node {
     public Token file_name_tok;
+    public boolean fluctuating = true;
 
     public ImportNode(Token file_name_tok) {
         this.file_name_tok = file_name_tok;

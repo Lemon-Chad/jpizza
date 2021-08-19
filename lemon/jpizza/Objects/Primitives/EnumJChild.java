@@ -42,6 +42,8 @@ public class EnumJChild extends Value {
                 String.format("Expected %s args, got %s", params.size(), args.size()),
                 parent
         ));
+        ctx.symbolTable.define("$child", val);
+        ctx.symbolTable.define("$parent", parent);
         for (int i = 0; i < args.size(); i++)
             ctx.symbolTable.define(params.get(i), args.get(i));
         return new RTResult().success(new ClassInstance(ctx));
