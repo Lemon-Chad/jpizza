@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EnumJChild extends Value {
-    EnumJ parent;
-    int val;
+    public EnumJ parent;
+    public int val;
     List<String> params;
 
 
@@ -43,7 +43,7 @@ public class EnumJChild extends Value {
                 parent
         ));
         ctx.symbolTable.define("$child", val);
-        ctx.symbolTable.define("$parent", parent);
+        ctx.symbolTable.define("$parent", this.parent.name);
         for (int i = 0; i < args.size(); i++)
             ctx.symbolTable.define(params.get(i), args.get(i));
         return new RTResult().success(new ClassInstance(ctx));

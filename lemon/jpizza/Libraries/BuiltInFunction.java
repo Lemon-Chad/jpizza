@@ -165,6 +165,27 @@ public class BuiltInFunction extends Library {
         }}));
     }
 
+    public RTResult execute_enumProps(Context execCtx) {
+        Obj p = (Obj) execCtx.symbolTable.get("prop");
+        Obj ec = (Obj) execCtx.symbolTable.get("enumChild");
+        if (p.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(new RTError(
+                p.get_start(), p.get_end(),
+                "Expected prop",
+                execCtx
+        ));
+        if (ec.jptype != Constants.JPType.EnumChild) return new RTResult().failure(new RTError(
+                p.get_start(), p.get_end(),
+                "Expected enum child",
+                execCtx
+        ));
+        EnumJChild enumChild = (EnumJChild) ec;
+        ClassInstance prop = (ClassInstance) p;
+        return new RTResult().success(new Bool(
+            enumChild.parent.name.equals(prop.access(new Str("$parent"))) &&
+                    enumChild.val == (int) prop.access(new Str("$child"))
+        ));
+    }
+
     public RTResult execute_print(Context execCtx) {
         Shell.logger.out(execCtx.symbolTable.get("value"));
         return new RTResult().success(new Null());

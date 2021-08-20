@@ -108,6 +108,7 @@ public class Shell {
             put("contains", Arrays.asList("list", "value"));
             put("randint", Arrays.asList("min", "max"));
             put("split", Arrays.asList("value", "splitter"));
+            put("enumProps", Arrays.asList("prop", "enumChild"));
             put("println", Collections.singletonList("value"));
             put("print", Collections.singletonList("value"));
             put("printback", Collections.singletonList("value"));
