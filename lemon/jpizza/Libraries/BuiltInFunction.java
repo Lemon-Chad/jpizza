@@ -161,7 +161,7 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(new EnumJ("dennis", new HashMap<>(){{
             String[] members = new String[]{"Ocean", "Frozen", "Icey", "Yeetus", "Triangle", "Clown", "Lake"};
             for (int i = 0; i < members.length; i++)
-                put(members[i], new EnumJChild(i, new ArrayList<>()));
+                put(members[i], new EnumJChild(i, new ArrayList<>(), new ArrayList<>()));
         }}));
     }
 

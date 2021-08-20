@@ -648,6 +648,7 @@ public class Parser {
 
         List<Token> children = new ArrayList<>();
         List< List<String> > childrenParam = new ArrayList<>();
+        List< List<String> > childrenTypes = new ArrayList<>();
         Token name;
 
         if (!currentToken.matches(TT.KEYWORD, "enum")) return res.failure(Error.InvalidSyntax(
@@ -676,11 +677,22 @@ public class Parser {
 
             if (currentToken.type == TT.OPEN) {
                 List<String> params = new ArrayList<>();
+                List<String> types = new ArrayList<>();
                 do {
                     Token tok = (Token) res.register(expectIdentifier());
                     if (res.error != null) return res;
                     params.add((String) tok.value);
                     res.registerAdvancement(); advance();
+
+                    if (currentToken.type == TT.BITE) {
+                        tok = (Token) res.register(expectIdentifier());
+                        if (res.error != null) return res;
+                        types.add((String) tok.value);
+                        res.registerAdvancement(); advance();
+                    } else {
+                        types.add("any");
+                    }
+
                 } while (currentToken.type == TT.COMMA);
                 if (currentToken.type != TT.CLOSE) return res.failure(Error.InvalidSyntax(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -688,8 +700,11 @@ public class Parser {
                 ));
                 res.registerAdvancement(); advance();
                 childrenParam.add(params);
-            } else
+                childrenTypes.add(types);
+            } else {
                 childrenParam.add(new ArrayList<>());
+                childrenTypes.add(new ArrayList<>());
+            }
 
             if (currentToken.type != TT.COMMA) return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -705,7 +720,7 @@ public class Parser {
             ));
         res.registerAdvancement(); advance();
 
-        return res.success(new EnumNode(name, children, childrenParam));
+        return res.success(new EnumNode(name, children, childrenParam, childrenTypes));
     }
 
     @SuppressWarnings("DuplicatedCode")

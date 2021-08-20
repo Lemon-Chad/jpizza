@@ -15,9 +15,13 @@ import java.util.Map;
 public class EnumNode extends ValueNode {
     public List<Token> children;
     public List< List<String> > childrenParams;
-    public EnumNode(Token tok, List<Token> children, List< List<String> > childrenParams) {
+    public List< List<String> > childrenTypes;
+
+    public EnumNode(Token tok, List<Token> children, List< List<String> > childrenParams,
+                    List< List<String> > childrenTypes) {
         super(tok);
         this.childrenParams = childrenParams;
+        this.childrenTypes = childrenTypes;
         this.children = children;
         jptype = Constants.JPType.Enum;
     }
@@ -30,7 +34,7 @@ public class EnumNode extends ValueNode {
         for (int i = 0; i < size; i++) {
             children.put(
                     (String) this.children.get(i).value,
-                    new EnumJChild(i, this.childrenParams.get(i))
+                    new EnumJChild(i, this.childrenParams.get(i), this.childrenTypes.get(i))
             );
         }
 
