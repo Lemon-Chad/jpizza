@@ -12,6 +12,7 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.Results.RTResult;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -164,6 +166,14 @@ public class JDraw extends Library {
         canvas.setDoubleBuffered(true);
         canvas.setFocusable(true);
         canvas.requestFocusInWindow();
+
+        try {
+            URL url = new URL("https://raw.githubusercontent.com/Lemon-Chad/jpizza/main/pizzico512.png");
+            Image image = ImageIO.read(url);
+            frame.setIconImage(image);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         MouseListener mListener = new MouseListener() {
             @Override
@@ -499,6 +509,49 @@ public class JDraw extends Library {
         try {
             draw(new Img(pos.x, pos.y, filename));
         } catch (IOException e) {
+            return res.failure(new RTError(
+                    pos_start, pos_end,
+                    "Encountered IOException " + e.toString(),
+                    execCtx
+            ));
+        }
+        return res.success(new Null());
+    }
+
+    public RTResult execute_setIcon(Context execCtx) {
+        RTResult res = new RTResult();
+
+        String filename = execCtx.symbolTable.get("filename").toString();
+
+        try {
+            Image img = ImageIO.read(new File(filename));
+            frame.setIconImage(img);
+        } catch (IOException e) {
+            return res.failure(new RTError(
+                    pos_start, pos_end,
+                    "Encountered IOException " + e.toString(),
+                    execCtx
+            ));
+        }
+        return res.success(new Null());
+    }
+
+    public RTResult execute_playSound(Context execCtx) {
+        RTResult res = new RTResult();
+
+        String filename = execCtx.symbolTable.get("filename").toString();
+
+        try {
+            File soundFile = new File(filename);
+
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+            AudioFormat audioFormat = audioInputStream.getFormat();
+
+            DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
+            SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
+
+            new PlayThread(audioFormat, sourceDataLine, audioInputStream).start();
+        } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
             return res.failure(new RTError(
                     pos_start, pos_end,
                     "Encountered IOException " + e.toString(),

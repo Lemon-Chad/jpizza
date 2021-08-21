@@ -56,11 +56,13 @@ public class Shell {
             put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
             put("setSize", Arrays.asList("width", "height"));
             put("setTitle", Collections.singletonList("value"));
+            put("setIcon", Collections.singletonList("filename"));
             put("setBackgroundColor", Collections.singletonList("color"));
             put("mouseDown", Collections.singletonList("button"));
             put("keyDown", Collections.singletonList("key"));
             put("keyTyped", Collections.singletonList("key"));
             put("screenshot", Collections.singletonList("filename"));
+            put("playSound", Collections.singletonList("filename"));
             put("start", new ArrayList<>());
             put("keyString", new ArrayList<>());
             put("mousePos", new ArrayList<>());
