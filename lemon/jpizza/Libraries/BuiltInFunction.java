@@ -483,6 +483,42 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(new Num(num));
     }
 
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_min(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+        Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
+
+        res.register(isInt(a, execCtx));
+        res.register(isInt(b, execCtx));
+        if (res.error != null) return res;
+
+        int x = Math.toIntExact(Math.round(((Num) a).trueValue()));
+        int y = Math.toIntExact(Math.round(((Num) b).trueValue()));
+
+        double num = Math.min(x, y);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_max(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+        Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
+
+        res.register(isInt(a, execCtx));
+        res.register(isInt(b, execCtx));
+        if (res.error != null) return res;
+
+        int x = Math.toIntExact(Math.round(((Num) a).trueValue()));
+        int y = Math.toIntExact(Math.round(((Num) b).trueValue()));
+
+        double num = Math.max(x, y);
+        return new RTResult().success(new Num(num));
+    }
+
     public RTResult execute_append(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
         Obj value = (Obj) execCtx.symbolTable.get("value");

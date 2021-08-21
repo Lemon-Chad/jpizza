@@ -38,6 +38,37 @@ public class Library extends BaseFunction {
 
     // Functions
 
+    public static RTResult checkType(Object obj, String expect, Constants.JPType type) {
+        Obj o = (Obj) obj;
+        if (o.jptype != type) return new RTResult().failure(new RTError(
+                o.get_start(), o.get_end(),
+                "Expected " + expect,
+                o.get_ctx()
+        ));
+        return new RTResult().success(o);
+    }
+
+    public static RTResult checkInt(Object obj) {
+        Obj o = (Obj) obj;
+        if (o.jptype != Constants.JPType.Number || ((Num) o).floating) return new RTResult().failure(new RTError(
+                o.get_start(), o.get_end(),
+                "Expected an integer",
+                o.get_ctx()
+        ));
+        return new RTResult().success(o);
+    }
+
+    public static RTResult checkPosInt(Object obj) {
+        Obj o = (Obj) obj;
+        if (o.jptype != Constants.JPType.Number || ((Num) o).floating || ((Num) o).trueValue() < 0)
+            return new RTResult().failure(new RTError(
+                o.get_start(), o.get_end(),
+                "Expected a postiive integer",
+                o.get_ctx()
+        ));
+        return new RTResult().success(o);
+    }
+
     public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs) {
         Context libContext = new Context(libName, null, null);
         libContext.symbolTable = new SymbolTable();
@@ -50,6 +81,7 @@ public class Library extends BaseFunction {
         initialize(libName, cls, funcs, libContext, false);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs, Context libContext,
                                   boolean adlib) {
         SymbolTable libTable = libContext.symbolTable;
