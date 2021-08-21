@@ -1,5 +1,7 @@
 package lemon.jpizza.Libraries.JDraw;
 
+import lemon.jpizza.Shell;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.LineUnavailableException;
@@ -34,7 +36,7 @@ public class PlayThread extends Thread {
             sourceDataLine.drain();
             sourceDataLine.close();
         } catch (LineUnavailableException | IOException e) {
-            e.printStackTrace();
+            Shell.logger.outln("Error playing audio: " + e.toString());
         }
     }
 }
