@@ -82,7 +82,7 @@ public class ForNode extends Node {
         if (step >= 0)
             condition = x -> x < end;
         else
-            condition = x -> x < end;
+            condition = x -> x > end;
 
         String vtk = (String) var_name_tok.value;
         Obj value;
