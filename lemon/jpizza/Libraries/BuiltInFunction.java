@@ -494,8 +494,8 @@ public class BuiltInFunction extends Library {
         res.register(isInt(b, execCtx));
         if (res.error != null) return res;
 
-        int x = Math.toIntExact(Math.round(((Num) a).trueValue()));
-        int y = Math.toIntExact(Math.round(((Num) b).trueValue()));
+        double x = ((Num) a).trueValue();
+        double y = ((Num) b).trueValue();
 
         double num = Math.min(x, y);
         return new RTResult().success(new Num(num));
@@ -512,8 +512,22 @@ public class BuiltInFunction extends Library {
         res.register(checkType(b, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
+        double x = ((Num) a).trueValue();
+        double y = ((Num) b).trueValue();
+
+        double num = Math.max(x, y);
+        return new RTResult().success(new Num(num));
+    }
+
+    public RTResult execute_sin(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
         int x = Math.toIntExact(Math.round(((Num) a).trueValue()));
-        int y = Math.toIntExact(Math.round(((Num) b).trueValue()));
 
         double num = Math.max(x, y);
         return new RTResult().success(new Num(num));
