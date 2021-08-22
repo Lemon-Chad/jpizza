@@ -31,9 +31,9 @@ public class PizzaCanvas extends JPanel {
     public void setPixel(Point pixel, Color color) {
         Rect r = new Rect(pixel.x, pixel.y, 1, 1, color);
 
-        if (pixels.containsKey(pixel))
+        if (pixels.containsKey(pixel)) {
             pixels.replace(pixel, r);
-        else
+        } else
             pixels.put(pixel, r);
     }
 
@@ -53,9 +53,9 @@ public class PizzaCanvas extends JPanel {
         if (font != null)
             g.setFont(font.asFont());
 
-        var sliceCopy = new ArrayList<>(slices);
-        for (DrawSlice o : sliceCopy)
-            o.draw(g);
+        ArrayList<DrawSlice> sliceCopy = new ArrayList<>(slices);
+        for (int i = 0; i < sliceCopy.size(); i++)
+            sliceCopy.get(i).draw(g);
 
         for (Rect p : pixels.values())
             p.draw(g);
