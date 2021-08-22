@@ -29,6 +29,39 @@ public class BuiltInFunction extends Library {
     private final Random random = new Random();
     private final Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
+    static HashMap<String, String> upper = new HashMap<>(){{
+        put("1", "!");
+        put("2", "@");
+        put("3", "#");
+        put("4", "$");
+        put("5", "%");
+        put("6", "^");
+        put("7", "&");
+        put("8", "*");
+        put("9", "(");
+        put("0", ")");
+
+        put("`", "~");
+
+        put("'", "\"");
+        put(":", ";");
+
+        put("/", "?");
+        put(".", ">");
+        put(",", "<");
+
+        put("[", "{");
+        put("]", "}");
+        put("\\", "|");
+
+        put("-", "_");
+        put("=", "+");
+    }};
+    static HashMap<String, String> lower = new HashMap<>(){{
+        for (String k : upper.keySet())
+            put(upper.get(k), k);
+    }};
+
     public BuiltInFunction(String name) { super(name); }
 
     public RTResult execute_fail(Context execCtx) {
@@ -329,6 +362,7 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(((PList) list).len());
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_insert(Context execCtx) {
         Obj index = ((Obj) execCtx.symbolTable.get("index")).number();
         Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
@@ -351,6 +385,29 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(lst);
     }
 
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_setIndex(Context execCtx) {
+        Obj index = ((Obj) execCtx.symbolTable.get("index")).number();
+        Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
+        Obj item = ((Obj) execCtx.symbolTable.get("item"));
+        RTResult e = isInt(index, execCtx);
+        if (e.error != null) return e;
+        if (list.jptype != Constants.JPType.List) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "Argument must be a list",
+                execCtx
+        ));
+        Num idx = (Num) index;
+        PList lst = (PList) list;
+        if (idx.trueValue() > lst.trueValue().size() || idx.trueValue() < 0) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "Index is out of bounds",
+                execCtx
+        ));
+        lst.trueValue().set((int) idx.trueValue(), item);
+        return new RTResult().success(lst);
+    }
+
     public RTResult execute_split(Context execCtx) {
         Obj string = ((Obj) execCtx.symbolTable.get("value")).astring();
         Obj splitter = ((Obj) execCtx.symbolTable.get("splitter")).astring();
@@ -367,6 +424,38 @@ public class BuiltInFunction extends Library {
         for (int i = 0; i < length; i++) {
             fragments.add(new Str(pieces[i]));
         } return new RTResult().success(new PList(fragments));
+    }
+    public RTResult execute_strUpper(Context execCtx) {
+        String string = execCtx.symbolTable.get("value").toString();
+        return new RTResult().success(new Str(string.toUpperCase()));
+    }
+    public RTResult execute_strLower(Context execCtx) {
+        String string = execCtx.symbolTable.get("value").toString();
+        return new RTResult().success(new Str(string.toLowerCase()));
+    }
+    public RTResult execute_strShift(Context execCtx) {
+        String string = execCtx.symbolTable.get("value").toString();
+        StringBuilder sb = new StringBuilder();
+        for (char c : string.toCharArray()) {
+            String s = String.valueOf(c);
+            if (upper.containsKey(s))
+                sb.append(upper.get(s));
+            else
+                sb.append(s.toUpperCase());
+        }
+        return new RTResult().success(new Str(sb.toString()));
+    }
+    public RTResult execute_strUnshift(Context execCtx) {
+        String string = execCtx.symbolTable.get("value").toString();
+        StringBuilder sb = new StringBuilder();
+        for (char c : string.toCharArray()) {
+            String s = String.valueOf(c);
+            if (lower.containsKey(s))
+                sb.append(lower.get(s));
+            else
+                sb.append(s.toLowerCase());
+        }
+        return new RTResult().success(new Str(sb.toString()));
     }
 
     public RTResult execute_str(Context execCtx) {

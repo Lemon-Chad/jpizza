@@ -72,6 +72,8 @@ public class Shell {
             put("qUpdate", new ArrayList<>());
             put("fps", new ArrayList<>());
             put("refreshLoop", new ArrayList<>());
+            put("refreshUnloop", new ArrayList<>());
+            put("init", new ArrayList<>());
             put("clear", new ArrayList<>());
         }});
 
@@ -125,6 +127,7 @@ public class Shell {
         }});
 
         BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
+            put("setIndex", Arrays.asList("list", "item", "index"));
             put("insert", Arrays.asList("list", "item", "index"));
             put("set", Arrays.asList("dict", "key", "value"));
             put("arctan2", Arrays.asList("a", "b"));
@@ -177,6 +180,10 @@ public class Shell {
             put("choose", Collections.singletonList("value"));
             put("byter", Collections.singletonList("value"));
             put("floating", Collections.singletonList("value"));
+            put("strUpper", Collections.singletonList("value"));
+            put("strLower", Collections.singletonList("value"));
+            put("strShift", Collections.singletonList("value"));
+            put("strUnshift", Collections.singletonList("value"));
             put("sin", Collections.singletonList("a"));
             put("cos", Collections.singletonList("a"));
             put("tan", Collections.singletonList("a"));
