@@ -6,6 +6,7 @@ import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Num;
 import lemon.jpizza.Results.RTResult;
 
@@ -88,7 +89,7 @@ public class BinOpNode extends Node {
         }
         else ret = (Pair<Obj, RTError>) left.getattr(op, right);
         if (ret.b != null) return res.failure(ret.b);
-        return res.success(ret.a.set_pos(pos_start, pos_end).set_context(context));
+        return res.success(ret.a != null ? ret.a.set_pos(pos_start, pos_end).set_context(context) : new Null());
     }
 
 }
