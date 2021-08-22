@@ -463,7 +463,7 @@ public class BuiltInFunction extends Library {
         ));
         if (((Num) num).floating) return new RTResult().failure(new RTError(
                 pos_start, pos_end,
-                "Argument must be an long",
+                "Argument must be a long",
                 execCtx
         ));
         return new RTResult().success(new Null());
@@ -490,8 +490,8 @@ public class BuiltInFunction extends Library {
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
         Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
 
-        res.register(isInt(a, execCtx));
-        res.register(isInt(b, execCtx));
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(b, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
         double x = ((Num) a).trueValue();
