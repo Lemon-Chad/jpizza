@@ -508,8 +508,8 @@ public class BuiltInFunction extends Library {
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
         Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
 
-        res.register(isInt(a, execCtx));
-        res.register(isInt(b, execCtx));
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(b, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
         int x = Math.toIntExact(Math.round(((Num) a).trueValue()));
