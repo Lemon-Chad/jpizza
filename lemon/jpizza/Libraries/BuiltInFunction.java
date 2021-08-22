@@ -408,6 +408,65 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(lst);
     }
 
+    public RTResult execute_substr(Context execCtx) {
+        RTResult res = new RTResult();
+        String val = execCtx.symbolTable.get("str").toString();
+
+        Object start = execCtx.symbolTable.get("start");
+        Object end = execCtx.symbolTable.get("end");
+
+        res.register(checkPosInt(start));
+        res.register(checkPosInt(end));
+
+        if (res.error != null) return res;
+
+        int strt = (int)((Num) start).trueValue();
+        int nd = (int)((Num) end).trueValue();
+
+        if (strt > val.length() || strt < 0) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "Start is out of bounds",
+                execCtx
+        ));
+        if (nd > val.length() || nd < 0) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "End is out of bounds",
+                execCtx
+        ));
+
+        return res.success(new Str(val.substring(strt, nd)));
+    }
+    public RTResult execute_sublist(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Object start = execCtx.symbolTable.get("start");
+        Object end = execCtx.symbolTable.get("end");
+        Object val = execCtx.symbolTable.get("list");
+
+        res.register(checkPosInt(start));
+        res.register(checkPosInt(end));
+        res.register(checkType(val, "list", Constants.JPType.List));
+
+        if (res.error != null) return res;
+
+        int strt = (int)((Num) start).trueValue();
+        int nd = (int)((Num) end).trueValue();
+        List<Obj> lst = ((PList) val).trueValue();
+
+        if (strt > lst.size() || strt < 0) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "Start is out of bounds",
+                execCtx
+        ));
+        if (nd > lst.size() || nd < 0) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "End is out of bounds",
+                execCtx
+        ));
+
+        return res.success(new PList(lst.subList(strt, nd)));
+    }
+
     public RTResult execute_split(Context execCtx) {
         Obj string = ((Obj) execCtx.symbolTable.get("value")).astring();
         Obj splitter = ((Obj) execCtx.symbolTable.get("splitter")).astring();
@@ -455,6 +514,25 @@ public class BuiltInFunction extends Library {
             else
                 sb.append(s.toLowerCase());
         }
+        return new RTResult().success(new Str(sb.toString()));
+    }
+    public RTResult execute_join(Context execCtx) {
+        RTResult res = new RTResult();
+
+        StringBuilder sb = new StringBuilder();
+        String string = execCtx.symbolTable.get("string").toString();
+
+        Object val = execCtx.symbolTable.get("list");
+        res.register(checkType(val, "list", Constants.JPType.List));
+        if (res.error != null) return res;
+        List<Obj> it = ((PList) val).trueValue();
+
+        if (it.size() > 0) {
+            sb.append(it.get(0));
+            for (int i = 1; i < it.size(); i++)
+                sb.append(string).append(it.get(i));
+        }
+
         return new RTResult().success(new Str(sb.toString()));
     }
 
