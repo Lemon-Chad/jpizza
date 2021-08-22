@@ -106,6 +106,7 @@ public class JDraw extends Library {
         put("tab", VK_TAB);
         put("enter", VK_ENTER);
         put("backspace", VK_BACK_SPACE);
+        put("shift", VK_SHIFT);
         put("control", VK_CONTROL);
 
         put("[", VK_OPEN_BRACKET);
