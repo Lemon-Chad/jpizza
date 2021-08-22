@@ -2,7 +2,6 @@ package lemon.jpizza.Libraries.JDraw;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
-import lemon.jpizza.Contextuals.SymbolTable;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
@@ -20,8 +19,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -33,6 +30,8 @@ import static java.awt.event.KeyEvent.*;
 public class JDraw extends Library {
     static JFrame frame;
     static PizzaCanvas canvas;
+
+    static Timer refreshLoop;
 
     static int frames = 0;
     static double start = 1;
@@ -123,14 +122,17 @@ public class JDraw extends Library {
 
         put(" ", VK_SPACE);
     }};
+
     static HashMap<Integer, String> keycode = new HashMap<>(){{
         for (String key : keys.keySet())
             put(keys.get(key), key);
     }};
+
     static HashMap<Integer, Boolean> keypressed = new HashMap<>(){{
         for (Integer key : keys.values())
             put(key, false);
     }};
+
     static HashMap<Integer, Boolean> keytyped = new HashMap<>(){{
         for (Integer key : keys.values())
             put(key, false);
@@ -144,21 +146,89 @@ public class JDraw extends Library {
         super(name);
     }
 
-    public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs) {
-        Context libContext = new Context(libName, null, null);
-        libContext.symbolTable = new SymbolTable();
-        initialize(libName, cls, funcs, libContext, true);
+    public static Pair<Integer[], Error> getColor(Object col) {
+        RTResult res = new RTResult();
+
+        Obj lis = res.register(checkType(col, "list", Constants.JPType.List));
+        if (res.error != null) return new Pair<>(null, res.error);
+
+        List<Obj> list = ((PList) lis).trueValue();
+        String errmsg = "Expected list composed of 3 0-255 integers";
+        if (list.size() != 3) return new Pair<>(null, new RTError(
+                lis.get_start(), lis.get_end(),
+                errmsg,
+                lis.get_ctx()
+        ));
+
+        Integer[] color = new Integer[3];
+        for (int i = 0; i < 3; i++) {
+            Obj obj = list.get(i);
+            res.register(checkInt(obj));
+            if (res.error != null) return new Pair<>(null, res.error);
+            int num = (int)((Num)obj).trueValue();
+            if (0 > num || num > 255) return new Pair<>(null, new RTError(
+                    obj.get_start(), obj.get_end(),
+                    errmsg,
+                    obj.get_ctx()
+            ));
+            color[i] = num;
+        }
+
+        return new Pair<>(color, null);
     }
 
-    public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs, SymbolTable table) {
-        Context libContext = new Context(libName, null, null);
-        libContext.symbolTable = table;
-        initialize(libName, cls, funcs, libContext, false);
+    public RTResult isInit() {
+        if (frame == null || canvas == null) return new RTResult().failure(new RTError(
+                pos_start, pos_end,
+                "AWT not initialized",
+                context
+        ));
+        return new RTResult().success(null);
     }
 
     @SuppressWarnings("DuplicatedCode")
-    public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs, Context libContext,
-                                  boolean adlib) {
+    public static Pair<Point, Error> getCoords(Context ctx) {
+        RTResult res = new RTResult();
+        Obj cx = res.register(checkInt(ctx.symbolTable.get("x")));
+        Obj cy = res.register(checkInt(ctx.symbolTable.get("y")));
+
+        if (res.error != null) return new Pair<>(null, res.error);
+
+        int x = (int)((Num) cx).trueValue();
+        int y = (int)((Num) cy).trueValue();
+        return new Pair<>(new Point(x, y), null);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public static Pair<Point, Error> getDimensions(Context ctx) {
+        RTResult res = new RTResult();
+        Obj width = res.register(checkInt(ctx.symbolTable.get("width")));
+        Obj height = res.register(checkInt(ctx.symbolTable.get("height")));
+
+        if (res.error != null) return new Pair<>(null, res.error);
+
+        int w = (int)((Num) width).trueValue();
+        int h = (int)((Num) height).trueValue();
+        return new Pair<>(new Point(w, h), null);
+    }
+
+    public RTResult execute_setBackgroundColor(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        Obj col = (Obj) execCtx.symbolTable.get("color");
+
+        var r = getColor(col);
+        if (r.b != null) return res.failure(r.b);
+        Color color = new Color(r.a[0], r.a[1], r.a[2]);
+
+        canvas.setBackground(color);
+        return res.success(new Null());
+    }
+
+    public RTResult execute_init(Context execCtx) {
         frame = new JFrame("JPizzAwt");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         start = System.currentTimeMillis();
@@ -176,6 +246,7 @@ public class JDraw extends Library {
             e.printStackTrace();
         }
 
+
         MouseListener mListener = new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -183,6 +254,7 @@ public class JDraw extends Library {
             }
 
             @Override
+            @SuppressWarnings("DuplicatedCode")
             public void mousePressed(MouseEvent e) {
                 mousePos = e.getPoint();
                 int index = switch (e.getButton()) {
@@ -195,6 +267,7 @@ public class JDraw extends Library {
             }
 
             @Override
+            @SuppressWarnings("DuplicatedCode")
             public void mouseReleased(MouseEvent e) {
                 mousePos = e.getPoint();
                 int index = switch (e.getButton()) {
@@ -236,101 +309,15 @@ public class JDraw extends Library {
         };
         canvas.addKeyListener(kListener);
 
-        SymbolTable libTable = libContext.symbolTable;
-
-        Constructor<?> cons;
-        try {
-            cons = cls.getConstructor(String.class);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace(); return;
-        }
-
-        funcs.forEach((k, v) -> {
-            // Initialize here
-            atrs.put(k, v);
-            Library val;
-            try {
-                val = (Library) cons.newInstance(k);
-            } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace();
-                return;
-            }
-            libTable.define(k, val);
-        });
-        if (adlib) Constants.LIBRARIES.put(libName, libContext);
-    }
-
-    public static Pair<Integer[], Error> getColor(Object col) {
-        RTResult res = new RTResult();
-
-        Obj lis = res.register(checkType(col, "list", Constants.JPType.List));
-        if (res.error != null) return new Pair<>(null, res.error);
-
-        List<Obj> list = ((PList) lis).trueValue();
-        String errmsg = "Expected list composed of 3 0-255 integers";
-        if (list.size() != 3) return new Pair<>(null, new RTError(
-                lis.get_start(), lis.get_end(),
-                errmsg,
-                lis.get_ctx()
-        ));
-
-        Integer[] color = new Integer[3];
-        for (int i = 0; i < 3; i++) {
-            Obj obj = list.get(i);
-            res.register(checkInt(obj));
-            if (res.error != null) return new Pair<>(null, res.error);
-            int num = (int)((Num)obj).trueValue();
-            if (0 > num || num > 255) return new Pair<>(null, new RTError(
-                    obj.get_start(), obj.get_end(),
-                    errmsg,
-                    obj.get_ctx()
-            ));
-            color[i] = num;
-        }
-
-        return new Pair<>(color, null);
-    }
-
-    @SuppressWarnings("DuplicatedCode")
-    public static Pair<Point, Error> getCoords(Context ctx) {
-        RTResult res = new RTResult();
-        Obj cx = res.register(checkInt(ctx.symbolTable.get("x")));
-        Obj cy = res.register(checkInt(ctx.symbolTable.get("y")));
-
-        if (res.error != null) return new Pair<>(null, res.error);
-
-        int x = (int)((Num) cx).trueValue();
-        int y = (int)((Num) cy).trueValue();
-        return new Pair<>(new Point(x, y), null);
-    }
-
-    @SuppressWarnings("DuplicatedCode")
-    public static Pair<Point, Error> getDimensions(Context ctx) {
-        RTResult res = new RTResult();
-        Obj width = res.register(checkInt(ctx.symbolTable.get("width")));
-        Obj height = res.register(checkInt(ctx.symbolTable.get("height")));
-
-        if (res.error != null) return new Pair<>(null, res.error);
-
-        int w = (int)((Num) width).trueValue();
-        int h = (int)((Num) height).trueValue();
-        return new Pair<>(new Point(w, h), null);
-    }
-
-    public RTResult execute_setBackgroundColor(Context execCtx) {
-        Obj col = (Obj) execCtx.symbolTable.get("color");
-
-        var r = getColor(col);
-        if (r.b != null) return new RTResult().failure(r.b);
-        Color color = new Color(r.a[0], r.a[1], r.a[2]);
-
-        canvas.setBackground(color);
         return new RTResult().success(new Null());
     }
 
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_drawCircle(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         Obj rad = res.register(checkPosInt(execCtx.symbolTable.get("radius")));
         if (res.error != null) return res;
@@ -353,6 +340,9 @@ public class JDraw extends Library {
     public RTResult execute_drawSquare(Context execCtx) {
         RTResult res = new RTResult();
 
+        res.register(isInit());
+        if (res.error != null) return res;
+
         Obj rad = res.register(checkPosInt(execCtx.symbolTable.get("radius")));
         if (res.error != null) return res;
 
@@ -373,6 +363,9 @@ public class JDraw extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_drawOval(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         Obj width = res.register(checkPosInt(execCtx.symbolTable.get("width")));
         Obj height = res.register(checkPosInt(execCtx.symbolTable.get("height")));
@@ -398,6 +391,9 @@ public class JDraw extends Library {
     public RTResult execute_drawRect(Context execCtx) {
         RTResult res = new RTResult();
 
+        res.register(isInit());
+        if (res.error != null) return res;
+
         Obj width = res.register(checkPosInt(execCtx.symbolTable.get("width")));
         Obj height = res.register(checkPosInt(execCtx.symbolTable.get("height")));
         if (res.error != null) return res;
@@ -421,6 +417,9 @@ public class JDraw extends Library {
     public RTResult execute_setPixel(Context execCtx) {
         RTResult res = new RTResult();
 
+        res.register(isInit());
+        if (res.error != null) return res;
+
         var r = getColor(execCtx.symbolTable.get("color"));
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
@@ -435,13 +434,22 @@ public class JDraw extends Library {
     }
 
     public RTResult execute_setTitle(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         Obj value = (Obj) execCtx.symbolTable.get("value");
         frame.setTitle(value.toString());
-        return new RTResult().success(new Null());
+
+        return res.success(new Null());
     }
 
     public RTResult execute_setFont(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         String name = execCtx.symbolTable.get("fontName").toString();
 
@@ -458,11 +466,14 @@ public class JDraw extends Library {
 
         canvas.setFont(new Fnt(name, fontType, fontSize));
 
-        return new RTResult().success(new Null());
+        return res.success(new Null());
     }
 
     public RTResult execute_setSize(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         Obj na = res.register(checkPosInt(execCtx.symbolTable.get("width")));
         Obj nb = res.register(checkPosInt(execCtx.symbolTable.get("height")));
@@ -482,6 +493,9 @@ public class JDraw extends Library {
     public RTResult execute_drawText(Context execCtx) {
         RTResult res = new RTResult();
 
+        res.register(isInit());
+        if (res.error != null) return res;
+
         var p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
@@ -498,8 +512,12 @@ public class JDraw extends Library {
         return res.success(new Null());
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_drawImage(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         var p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
@@ -522,6 +540,9 @@ public class JDraw extends Library {
     public RTResult execute_setIcon(Context execCtx) {
         RTResult res = new RTResult();
 
+        res.register(isInit());
+        if (res.error != null) return res;
+
         String filename = execCtx.symbolTable.get("filename").toString();
 
         try {
@@ -539,6 +560,9 @@ public class JDraw extends Library {
 
     public RTResult execute_playSound(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         String filename = execCtx.symbolTable.get("filename").toString();
 
@@ -563,42 +587,91 @@ public class JDraw extends Library {
     }
 
     public RTResult execute_start(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         frame.add(canvas);
         frame.pack();
         frame.setVisible(true);
 
-        return new RTResult().success(new Null());
+        return res.success(new Null());
     }
 
     public RTResult execute_refresh(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         refresh();
 
-        return new RTResult().success(new Null());
+        return res.success(new Null());
     }
 
     public RTResult execute_qUpdate(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         canvas.push(slices, pixels);
 
-        return new RTResult().success(new Null());
+        return res.success(new Null());
     }
 
     public RTResult execute_refreshLoop(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        if (refreshLoop != null) refreshLoop.stop();
+
         ActionListener taskPerformer = e -> refresh();
         Timer timer = new Timer(10, taskPerformer);
         timer.start();
-        return new RTResult().success(new Null());
+
+        refreshLoop = timer;
+
+        return res.success(new Null());
+    }
+
+    public RTResult execute_refreshUnloop(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        if (refreshLoop != null) {
+            refreshLoop.stop();
+            refreshLoop = null;
+        }
+
+        return res.success(new Null());
     }
 
     public RTResult execute_clear(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         flush();
 
-        return new RTResult().success(new Null());
+        return res.success(new Null());
     }
 
     public RTResult execute_fps(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         double time = (System.currentTimeMillis() - start) / 1000;
 
-        return new RTResult().success(new Num(frames / time));
+        return res.success(new Num(frames / time));
     }
 
     public RTResult execute_toggleQRender(Context execCtx) {
@@ -610,6 +683,9 @@ public class JDraw extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_keyDown(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         String key = execCtx.symbolTable.get("key").toString().toLowerCase();
 
@@ -626,6 +702,9 @@ public class JDraw extends Library {
     public RTResult execute_keyTyped(Context execCtx) {
         RTResult res = new RTResult();
 
+        res.register(isInit());
+        if (res.error != null) return res;
+
         String key = execCtx.symbolTable.get("key").toString().toLowerCase();
 
         if (!keys.containsKey(key)) return res.failure(new RTError(
@@ -640,17 +719,25 @@ public class JDraw extends Library {
     }
 
     public RTResult execute_keyString(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         StringBuilder keystring = new StringBuilder();
         for (Integer key : keytyped.keySet()) {
             if (keytyped.get(key) && keycode.containsKey(key) && keycode.get(key).length() == 1)
                 keystring.append(keycode.get(key));
             keytyped.replace(key, false);
         }
-        return new RTResult().success(new Str(keystring.toString()));
+        return res.success(new Str(keystring.toString()));
     }
 
     public RTResult execute_mouseDown(Context execCtx) {
         RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
 
         Obj i = res.register(checkPosInt(execCtx.symbolTable.get("button")));
         if (res.error != null) return res;
@@ -666,9 +753,14 @@ public class JDraw extends Library {
     }
 
     public RTResult execute_mousePos(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         Point canvPos = canvas.getMousePosition();
         mousePos = canvPos != null ? canvPos : new Point(-1, -1);
-        return new RTResult().success(
+        return res.success(
                 new PList(Arrays.asList(
                         new Num(mousePos.x),
                         new Num(mousePos.y)
@@ -677,10 +769,20 @@ public class JDraw extends Library {
     }
 
     public RTResult execute_mouseIn(Context execCtx) {
-        return new RTResult().success(new Bool(canvas.getMousePosition() != null));
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        return res.success(new Bool(canvas.getMousePosition() != null));
     }
 
     public RTResult execute_screenshot(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
         Obj fn = (Obj) execCtx.symbolTable.get("filename");
         String filename = fn.toString();
 
@@ -693,14 +795,14 @@ public class JDraw extends Library {
             fileCreated = imageFile.createNewFile();
             ImageIO.write(img, "jpeg", imageFile);
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return res.failure(new RTError(
                     fn.get_start(), fn.get_end(),
                     "Encountered IOException " + e.toString(),
                     execCtx
             ));
         }
 
-        return new RTResult().success(new Bool(fileCreated));
+        return res.success(new Bool(fileCreated));
     }
 
     static void refresh() {
