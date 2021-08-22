@@ -220,7 +220,7 @@ public class JDraw extends Library {
 
         Obj col = (Obj) execCtx.symbolTable.get("color");
 
-        var r = getColor(col);
+        Pair<Integer[], Error> r = getColor(col);
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
@@ -324,11 +324,11 @@ public class JDraw extends Library {
 
         int radius = (int)((Num) rad).trueValue();
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
-        var r = getColor(execCtx.symbolTable.get("color"));
+        Pair<Integer[], Error> r = getColor(execCtx.symbolTable.get("color"));
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
@@ -348,11 +348,11 @@ public class JDraw extends Library {
 
         int radius = (int)((Num) rad).trueValue();
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
-        var r = getColor(execCtx.symbolTable.get("color"));
+        Pair<Integer[], Error> r = getColor(execCtx.symbolTable.get("color"));
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
@@ -371,7 +371,7 @@ public class JDraw extends Library {
         Obj height = res.register(checkPosInt(execCtx.symbolTable.get("height")));
         if (res.error != null) return res;
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
@@ -379,7 +379,7 @@ public class JDraw extends Library {
         if (p.b != null) return res.failure(p.b);
         Point dim = p.a;
 
-        var r = getColor(execCtx.symbolTable.get("color"));
+        Pair<Integer[], Error> r = getColor(execCtx.symbolTable.get("color"));
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
@@ -398,7 +398,7 @@ public class JDraw extends Library {
         Obj height = res.register(checkPosInt(execCtx.symbolTable.get("height")));
         if (res.error != null) return res;
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
@@ -406,7 +406,7 @@ public class JDraw extends Library {
         if (p.b != null) return res.failure(p.b);
         Point dim = p.a;
 
-        var r = getColor(execCtx.symbolTable.get("color"));
+        Pair<Integer[], Error> r = getColor(execCtx.symbolTable.get("color"));
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
@@ -420,11 +420,11 @@ public class JDraw extends Library {
         res.register(isInit());
         if (res.error != null) return res;
 
-        var r = getColor(execCtx.symbolTable.get("color"));
+        Pair<Integer[], Error> r = getColor(execCtx.symbolTable.get("color"));
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
@@ -441,6 +441,37 @@ public class JDraw extends Library {
 
         Obj value = (Obj) execCtx.symbolTable.get("value");
         frame.setTitle(value.toString());
+
+        return res.success(new Null());
+    }
+
+    public RTResult execute_lockSize(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        Obj value = ((Obj) execCtx.symbolTable.get("value")).bool();
+        if (value.jptype != Constants.JPType.Boolean) return res.failure(new RTError(
+                value.get_start(), value.get_end(),
+                "Expected bool",
+                execCtx
+        ));
+        frame.setResizable(!((Bool) value).trueValue());
+
+        return res.success(new Null());
+    }
+
+    public RTResult execute_gpuCompute(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj value = ((Obj) execCtx.symbolTable.get("value")).bool();
+        if (value.jptype != Constants.JPType.Boolean) return res.failure(new RTError(
+                value.get_start(), value.get_end(),
+                "Expected bool",
+                execCtx
+        ));
+        System.setProperty("sun.java2d.opengl", ((Bool) value).trueValue() ? "true" : "false");
 
         return res.success(new Null());
     }
@@ -469,6 +500,7 @@ public class JDraw extends Library {
         return res.success(new Null());
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_setSize(Context execCtx) {
         RTResult res = new RTResult();
 
@@ -496,11 +528,11 @@ public class JDraw extends Library {
         res.register(isInit());
         if (res.error != null) return res;
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
-        var col = getColor(execCtx.symbolTable.get("color"));
+        Pair<Integer[], Error> col = getColor(execCtx.symbolTable.get("color"));
         if (p.b != null) return res.failure(p.b);
         Color color = new Color(col.a[0], col.a[1], col.a[2]);
 
@@ -519,7 +551,7 @@ public class JDraw extends Library {
         res.register(isInit());
         if (res.error != null) return res;
 
-        var p = getCoords(execCtx);
+        Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
         Point pos = p.a;
 
