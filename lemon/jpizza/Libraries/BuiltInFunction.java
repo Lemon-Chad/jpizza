@@ -519,6 +519,7 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(new Num(num));
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_sin(Context execCtx) {
         RTResult res = new RTResult();
 
@@ -527,9 +528,102 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        int x = Math.toIntExact(Math.round(((Num) a).trueValue()));
+        double x = ((Num) a).trueValue();
 
-        double num = Math.max(x, y);
+        double num = Math.sin(x);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_cos(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
+        double x = ((Num) a).trueValue();
+
+        double num = Math.cos(x);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_tan(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
+        double x = ((Num) a).trueValue();
+
+        double num = Math.tan(x);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_arcsin(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
+        double x = ((Num) a).trueValue();
+
+        double num = Math.asin(x);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_arccos(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
+        double x = ((Num) a).trueValue();
+
+        double num = Math.acos(x);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_arctan(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+
+        res.register(checkType(a, "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
+        double x = ((Num) a).trueValue();
+
+        double num = Math.atan(x);
+        return new RTResult().success(new Num(num));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_arctan2(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
+        Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
+
+        res.register(isInt(a, execCtx));
+        res.register(isInt(b, execCtx));
+        if (res.error != null) return res;
+
+        double x = ((Num) a).trueValue();
+        double y = ((Num) b).trueValue();
+
+        double num = Math.atan2(y, x);
         return new RTResult().success(new Num(num));
     }
 

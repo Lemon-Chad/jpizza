@@ -127,6 +127,7 @@ public class Shell {
         BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
             put("insert", Arrays.asList("list", "item", "index"));
             put("set", Arrays.asList("dict", "key", "value"));
+            put("arctan2", Arrays.asList("a", "b"));
             put("getattr", Arrays.asList("instance", "value"));
             put("hasattr", Arrays.asList("instance", "value"));
             put("get", Arrays.asList("dict", "value"));
@@ -176,6 +177,12 @@ public class Shell {
             put("choose", Collections.singletonList("value"));
             put("byter", Collections.singletonList("value"));
             put("floating", Collections.singletonList("value"));
+            put("sin", Collections.singletonList("a"));
+            put("cos", Collections.singletonList("a"));
+            put("tan", Collections.singletonList("a"));
+            put("arcsin", Collections.singletonList("a"));
+            put("arccos", Collections.singletonList("a"));
+            put("arctan", Collections.singletonList("a"));
             put("random", new ArrayList<>());
             put("clear", new ArrayList<>());
             put("createDennis", new ArrayList<>());
