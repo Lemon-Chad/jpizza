@@ -56,6 +56,8 @@ public class Shell {
             put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
             put("setSize", Arrays.asList("width", "height"));
             put("setTitle", Collections.singletonList("value"));
+            put("lockSize", Collections.singletonList("value"));
+            put("gpuCompute", Collections.singletonList("value"));
             put("setIcon", Collections.singletonList("filename"));
             put("setBackgroundColor", Collections.singletonList("color"));
             put("mouseDown", Collections.singletonList("button"));
@@ -129,8 +131,11 @@ public class Shell {
         BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
             put("setIndex", Arrays.asList("list", "item", "index"));
             put("insert", Arrays.asList("list", "item", "index"));
+            put("substr", Arrays.asList("str", "start", "end"));
+            put("sublist", Arrays.asList("list", "start", "end"));
             put("set", Arrays.asList("dict", "key", "value"));
             put("arctan2", Arrays.asList("a", "b"));
+            put("join", Arrays.asList("string", "list"));
             put("getattr", Arrays.asList("instance", "value"));
             put("hasattr", Arrays.asList("instance", "value"));
             put("get", Arrays.asList("dict", "value"));
