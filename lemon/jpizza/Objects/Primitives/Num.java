@@ -77,9 +77,9 @@ public class Num extends Value {
         Num other = (Num) o;
         double v;
         if (other.floating)
-            v = other.doubleForm % (floating ? doubleForm : longForm);
+            v = (floating ? doubleForm : longForm) % other.doubleForm;
         else
-            v = other.longForm % (floating ? doubleForm : longForm);
+            v = (floating ? doubleForm : longForm) % other.longForm;
 
         return new Pair<>(new Num(v, other.floating || floating)
                 .set_context(context), null);
