@@ -33,6 +33,10 @@ public class JDraw extends Library {
 
     static Timer refreshLoop;
 
+    static boolean changed = false;
+
+    static Fnt font;
+
     static int frames = 0;
     static double start = 1;
 
@@ -225,6 +229,7 @@ public class JDraw extends Library {
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
         canvas.setBackground(color);
+        changed = true;
         return res.success(new Null());
     }
 
@@ -495,7 +500,7 @@ public class JDraw extends Library {
         if (res.error != null) return res;
         int fontSize = (int)((Num)s).trueValue();
 
-        canvas.setFont(new Fnt(name, fontType, fontSize));
+        font = new Fnt(name, fontType, fontSize);
 
         return res.success(new Null());
     }
@@ -517,6 +522,7 @@ public class JDraw extends Library {
         Dimension dim = new Dimension((int) width.trueValue(), (int) height.trueValue());
 
         canvas.setPreferredSize(dim);
+        changed = true;
 
         return res.success(new Null());
     }
@@ -540,7 +546,7 @@ public class JDraw extends Library {
         if (res.error != null) return res;
         String msg = ((Str)txt).trueValue();
 
-        draw(new Txt(pos.x, pos.y, msg, color));
+        draw(new Txt(pos.x, pos.y, msg, color, font));
         return res.success(new Null());
     }
 
@@ -648,7 +654,8 @@ public class JDraw extends Library {
         res.register(isInit());
         if (res.error != null) return res;
 
-        canvas.push(slices, pixels);
+        if (changed)
+            canvas.push(slices, pixels);
 
         return res.success(new Null());
     }
@@ -838,11 +845,15 @@ public class JDraw extends Library {
     }
 
     static void refresh() {
-        canvas.repaint();
+        if (changed) {
+            canvas.repaint();
+            changed = false;
+        }
         frames++;
     }
 
     static void draw(DrawSlice o) {
+        changed = true;
         if (queue)
             slices.add(o);
         else
@@ -850,6 +861,7 @@ public class JDraw extends Library {
     }
 
     static void setPixel(Point p, Color color) {
+        changed = true;
         if (queue) {
             Rect r = new Rect(p.x, p.y, 1, 1, color);
 
@@ -862,6 +874,7 @@ public class JDraw extends Library {
     }
 
     static void flush() {
+        changed = true;
         if (queue) {
             slices = new ArrayList<>();
             pixels = new ConcurrentHashMap<>();

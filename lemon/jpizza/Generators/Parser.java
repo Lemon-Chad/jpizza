@@ -2,7 +2,6 @@ package lemon.jpizza.Generators;
 
 import lemon.jpizza.Cases.Case;
 import lemon.jpizza.Cases.ElseCase;
-import lemon.jpizza.Constants;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Nodes.Definitions.*;
 import lemon.jpizza.Nodes.Expressions.*;
@@ -512,7 +511,6 @@ public class Parser {
                 if (res.error != null) return res;
                 return res.success(val);
             }
-            System.out.println("AH");
             res.registerAdvancement(); advance();
             return res.success(new StringNode(tok));
         }

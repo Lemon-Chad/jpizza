@@ -7,7 +7,6 @@ import lemon.jpizza.Token;
 
 import java.util.*;
 
-import static lemon.jpizza.Errors.Error.ExpectedCharError;
 import static lemon.jpizza.Errors.Error.IllegalCharError;
 import static lemon.jpizza.Tokens.*;
 import static lemon.jpizza.Constants.*;

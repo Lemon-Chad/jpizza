@@ -6,7 +6,6 @@ import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Dict;
-import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.PList;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.RTResult;

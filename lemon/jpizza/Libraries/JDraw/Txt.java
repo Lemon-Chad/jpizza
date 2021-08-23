@@ -6,15 +6,18 @@ public class Txt implements DrawSlice {
     String msg;
     int x, y;
     Color color;
+    Fnt fnt;
 
-    public Txt(int x, int y, String msg, Color color) {
+    public Txt(int x, int y, String msg, Color color, Fnt fnt) {
         this.msg = msg;
         this.x = x;
         this.y = y;
+        this.fnt = fnt;
         this.color = color;
     }
 
     public void draw(Graphics g) {
+        g.setFont(fnt.asFont());
         g.setColor(color);
         g.drawString(msg, x, y);
     }

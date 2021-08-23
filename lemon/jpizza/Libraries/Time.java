@@ -10,7 +10,6 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Num;
 import lemon.jpizza.Results.RTResult;
-import lemon.jpizza.Shell;
 
 import java.util.ArrayList;
 
