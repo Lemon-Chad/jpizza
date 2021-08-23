@@ -507,6 +507,12 @@ public class Parser {
             return res.success(useExpr);
         }
         else if (tok.type.equals(TT.STRING)) {
+            if (((Pair<String, Boolean>) tok.value).b) {
+                Node val = (Node) res.register(formatStringExpr());
+                if (res.error != null) return res;
+                return res.success(val);
+            }
+            System.out.println("AH");
             res.registerAdvancement(); advance();
             return res.success(new StringNode(tok));
         }
@@ -560,6 +566,53 @@ public class Parser {
                 tok.pos_start.copy(), tok.pos_end != null ? tok.pos_end.copy() : tok.pos_start.copy(),
                 String.format("Expected long, double, identifier, '+', '-', or '('. Found %s", tok)
         ));
+    }
+
+    public ParseResult formatStringExpr() {
+        ParseResult res = new ParseResult();
+        Token tok = currentToken;
+        StringBuilder sb = new StringBuilder();
+        Pair<String, Boolean> val = (Pair<String, Boolean>) tok.value;
+
+        Token addToken = new Token(TT.PLUS, tok.pos_start, tok.pos_end);
+        Node node = new StringNode(new Token(TT.STRING, new Pair<>("", false), tok.pos_start, tok.pos_end));
+        for (int i = 0; i < val.a.length(); i++) {
+            char current = val.a.charAt(i);
+            char next = i + 1 < val.a.length() ? val.a.charAt(i + 1) : ' ';
+            if (current == '!' && next == '$') {
+                sb.append("$");
+                i++;
+            } else if (current == '$' && next == '{') {
+                node = new BinOpNode(node, addToken,
+                        new StringNode(new Token(TT.STRING, new Pair<>(sb.toString(), false),
+                                tok.pos_start, tok.pos_end)));
+                sb = new StringBuilder();
+                StringBuilder expr = new StringBuilder();
+                i += 2;
+                while (i < val.a.length() && val.a.charAt(i) != '}') {
+                    current = val.a.charAt(i);
+                    expr.append(current);
+                    i++;
+                }
+
+                if (i >= val.a.length()) return res.failure(Error.InvalidSyntax(
+                        tok.pos_start, tok.pos_end,
+                        "Unmatched bracket"
+                )); i++;
+
+                Pair<List<Token>, Error> ts = new Lexer("<fstring>", expr.toString()).make_tokens();
+                if (ts.b != null) return res.failure(ts.b);
+                Node r = (Node) res.register(new Parser(ts.a).statement());
+                if (res.error != null) return res;
+                node = new BinOpNode(node, addToken, r);
+            } else {
+                sb.append(current);
+            }
+        }
+
+        res.registerAdvancement(); advance();
+        return res.success(new BinOpNode(node, addToken,
+                new StringNode(new Token(TT.STRING, new Pair<>(sb.toString(), false), tok.pos_start, tok.pos_end))));
     }
 
     public ParseResult throwExpr() {

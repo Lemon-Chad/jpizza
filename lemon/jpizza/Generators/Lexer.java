@@ -65,7 +65,7 @@ public class Lexer {
                 skip_comment();
             } else if (next() != null && (currentChar + next()).equals("<<")) {
                 skip_multiline_comment();
-            } else if ("\"'".contains(currentChar)) {
+            } else if ("\"'`".contains(currentChar)) {
                 tokens.add(make_string(currentChar));
             } else if (currentChar.equals("}")) {
                 tokens.add(new Token(TT.CLOSE, pos));
@@ -151,7 +151,7 @@ public class Lexer {
         }
 
         advance();
-        return new Token(TT.STRING, string.toString(), pos_start, pos);
+        return new Token(TT.STRING, new Pair<>(string.toString(), q.equals("`")), pos_start, pos);
     }
 
     public Pair<Token, Error> make_equals_expr() {

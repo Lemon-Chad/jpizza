@@ -4,6 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Primitives.Str;
+import lemon.jpizza.Pair;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
@@ -11,7 +12,7 @@ public class StringNode extends ValueNode {
     public String val;
     public StringNode(Token tok) {
         super(tok);
-        val = (String) tok.value;
+        val = ((Pair<String, Boolean>) tok.value).a;
         jptype = Constants.JPType.String;
     }
 
