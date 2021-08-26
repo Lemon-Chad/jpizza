@@ -2,6 +2,8 @@
 
 # JPizza2
 
+<a href="https://github.com/Lemon-Chad/jpizza/blob/master/LICENSE"><img alt="GitHub license" src="https://img.shields.io/github/license/Lemon-Chad/jpizza"></a> <a href="https://github.com/Lemon-Chad/jpizza/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Lemon-Chad/jpizza"></a> <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/Lemon-Chad/jpizza/total"> <img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/Lemon-Chad/jpizza?label=Version">
+
 A fast to type and easy to ship language for developers on the go!
 
 ## Why Use It?
