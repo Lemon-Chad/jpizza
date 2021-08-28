@@ -84,6 +84,12 @@ public class Shell {
             put("postRequest", Arrays.asList("url", "params", "body"));
         }});
 
+        JGens.initialize("gens", JGens.class, new HashMap<>(){{
+            put("range", Arrays.asList("start", "stop", "step"));
+            put("linear", Arrays.asList("start", "stop", "step", "slope", "y-inter"));
+            put("quadratic", Arrays.asList("start", "stop", "step", "a", "b", "c"));
+        }});
+
         JasonLib.initialize("json", JasonLib.class, new HashMap<>(){{
             put("loads", Collections.singletonList("value"));
             put("dumps", Collections.singletonList("value"));
