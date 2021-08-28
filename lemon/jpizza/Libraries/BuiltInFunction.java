@@ -77,6 +77,30 @@ public class BuiltInFunction extends Library {
         ));
     }
 
+    public RTResult execute__version_(Context execCtx) {
+        return new RTResult().success(new Str("v1.1.1"));
+    }
+
+    public RTResult execute_pi(Context execCtx) {
+        return new RTResult().success(new Num(Math.PI));
+    }
+
+    public RTResult execute_euler(Context execCtx) {
+        return new RTResult().success(new Num(Math.E));
+    }
+
+    public RTResult execute_log(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj v = res.register(checkType(execCtx.symbolTable.get("value"), "number", Constants.JPType.Number));
+        Obj b = res.register(checkType(execCtx.symbolTable.get("base"), "number", Constants.JPType.Number));
+        if (res.error != null) return res;
+
+        double value = ((Num) v).trueValue();
+        double base = ((Num) b).trueValue();
+
+        return res.success(new Num(Math.log(value) / Math.log(base)));
+    }
+
     public RTResult execute_catch(Context execCtx) {
         Obj r = (Obj) execCtx.symbolTable.get("res");
         if (r.jptype != Constants.JPType.Res)

@@ -151,6 +151,7 @@ public class Shell {
             put("max", Arrays.asList("a", "b"));
             put("split", Arrays.asList("value", "splitter"));
             put("enumProps", Arrays.asList("prop", "enumChild"));
+            put("log", Arrays.asList("value", "base"));
             put("println", Collections.singletonList("value"));
             put("print", Collections.singletonList("value"));
             put("printback", Collections.singletonList("value"));
@@ -198,6 +199,9 @@ public class Shell {
             put("random", new ArrayList<>());
             put("clear", new ArrayList<>());
             put("createDennis", new ArrayList<>());
+            put("_version_", new ArrayList<>());
+            put("pi", new ArrayList<>());
+            put("euler", new ArrayList<>());
 
         }}, globalSymbolTable);
     }
