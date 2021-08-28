@@ -2,7 +2,13 @@
 
 # JPizza2
 
+<a href="https://github.com/Lemon-Chad/jpizza/blob/master/LICENSE"><img alt="GitHub license" src="https://img.shields.io/github/license/Lemon-Chad/jpizza"></a> <a href="https://github.com/Lemon-Chad/jpizza/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Lemon-Chad/jpizza"></a> <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/Lemon-Chad/jpizza/total"> <img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/Lemon-Chad/jpizza?label=Version">
+
 A fast to type and easy to ship language for developers on the go!
+
+## Why Use It?
+
+Now you’ve just heard of this new lang called JPizza, but why use it? We’ll let’s dissect it. JPizza has unique syntax that’s fun to use and fast to type. It’s multiparadigm and supports a variety of coding styles. Do you like static typing? You can statically type functions, arguments, variables, etc. by using special syntax. Do you like dynamic typing? Leave out the static typing syntax or statically type to the ‘any’ type. Enjoy functional programming? Use the ‘func’ header to set the main function. Object-oriented fan? Use the ‘object’ header to set the main object for the file. So as you can see so far, no matter what paradigm or theory you’re a fan of, you can use it in JPizza. But what about runtime? Do you like compiling your code? Compile the AST to a ‘jbox’ file using the ‘compile’ tag when running your code, or just run it without the tag to run it interpreted! But what’s the point of all of this if you don’t know what you can do with JPizza? Well… you can do everything! Bytecode manipulation, GUIs, games, CLIs, apps, networks, discord bots, and more! So there is virtually no reason to learn JPizza, so you should probably get started. 
 
 ## Features
 - Syntactic sugar to increase speed when programming
