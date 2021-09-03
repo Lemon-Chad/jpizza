@@ -596,7 +596,7 @@ public class Parser {
                 if (i >= val.a.length()) return res.failure(Error.InvalidSyntax(
                         tok.pos_start, tok.pos_end,
                         "Unmatched bracket"
-                )); i++;
+                ));
 
                 Pair<List<Token>, Error> ts = new Lexer("<fstring>", expr.toString()).make_tokens();
                 if (ts.b != null) return res.failure(ts.b);
