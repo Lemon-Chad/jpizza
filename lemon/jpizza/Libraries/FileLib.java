@@ -99,6 +99,39 @@ public class FileLib extends Library {
         return res.success(out);
     }
 
+    public RTResult execute_readBytes(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
+        Obj d = res.register(getdirectory(value, execCtx));
+        if (res.error != null) return res;
+        String dir = ((Str) d).trueValue();
+
+        File file = new File(dir);
+        if (!file.exists()) return res.failure(new RTError(
+                value.pos_start, value.pos_end,
+                "File does not exist",
+                execCtx
+        ));
+
+        Obj out;
+        try {
+            FileInputStream fis = new FileInputStream(file);
+
+            byte[] bytes = fis.readAllBytes();
+            out = new Bytes(bytes);
+
+            fis.close();
+        } catch (IOException e) {
+            return res.failure(new RTError(
+                    value.pos_start, value.pos_end,
+                    "IOException occurred while reading..",
+                    execCtx
+            ));
+        }
+
+        return res.success(out);
+    }
+
     public RTResult execute_fileExists(Context execCtx) {
         RTResult res = new RTResult();
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
