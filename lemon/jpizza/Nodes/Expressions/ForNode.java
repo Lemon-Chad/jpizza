@@ -107,10 +107,10 @@ public class ForNode extends Node {
         }
         context.symbolTable.remove(vtk);
 
-        return res.success(
-                retnull ? new Null() : new PList(new ArrayList<>(Arrays.asList(elements))).set_context(context)
-                        .set_pos(pos_start, pos_end)
-        );
+        if (retnull)
+            return res.success(new Null());
+        Obj lst = new PList(new ArrayList<>(Arrays.asList(elements))).set_context(context).set_pos(pos_start, pos_end);
+        return res.success(lst);
     }
 
 }

@@ -5,7 +5,7 @@ public class RunClient {
         Shell.initLibs();
         var out = Shell.run("<test>", """
                 run("client.devp");
-                """);
+                """, false);
         if (out.b != null)
             System.out.println(out.b.asString());
     }

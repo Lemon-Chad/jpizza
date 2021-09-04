@@ -149,7 +149,7 @@ public class Library extends BaseFunction {
         }
         if (res.shouldReturn()) return res;
 
-        return res.success(returnValue);
+        return res.success(returnValue.set_context(context));
     }
 
     // Methods

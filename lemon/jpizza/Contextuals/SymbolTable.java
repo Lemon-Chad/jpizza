@@ -10,17 +10,12 @@ import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Num;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Token;
-import lemon.jpizza.StringHash;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SymbolTable implements Serializable {
-    StringHash symbolKeys = new StringHash();
-    StringHash attrKeys = new StringHash();
-    StringHash binKeys = new StringHash();
-    StringHash dynKeys = new StringHash();
     public Map<String, VarNode> symbols = new HashMap<>();
     public Map<String, String> types = new HashMap<>();
     Map<String, AttrNode> attributes = new HashMap<>();
@@ -50,23 +45,20 @@ public class SymbolTable implements Serializable {
     }
 
     public boolean isDyn(String name) {
-        return !symbolKeys.contains(name) && dynKeys.contains(name);
+        return !symbols.containsKey(name) && dyns.containsKey(name);
     }
 
     public void remove(String name) {
-        VarNode value = symbols.get(name);
-        if (value == null) {
+        if (!symbols.containsKey(name)) {
             if (parent != null) {
                 parent.remove(name);
             } return;
         }
         symbols.remove(name);
-        symbolKeys.remove(name);
     }
 
     public String define(String name, Object value, boolean locked, String type, Integer min, Integer max) {
-        VarNode curr = symbols.get(name);
-        if (symbolKeys.contains(name) && curr.locked)
+        if (symbols.containsKey(name) && symbols.get(name).locked)
             return "Baked variable already defined";
         if (min != null || max != null)
             type = "num";
@@ -85,7 +77,6 @@ public class SymbolTable implements Serializable {
         }
         symbols.put(name, new VarNode(value, locked).setRange(min, max));
         types.put(name, type);
-        symbolKeys.add(name);
         return null;
     }
     public void define(String name, Object value, String type) {
@@ -128,7 +119,6 @@ public class SymbolTable implements Serializable {
 
     public void setDyn(String name, Node value) {
         dyns.put(name, value);
-        dynKeys.add(name);
     }
 
     public void set(String name, Obj value) {
@@ -138,14 +128,13 @@ public class SymbolTable implements Serializable {
     public void declareattr(Token name_tok, Context context) {
         String tokenVal = name_tok.value.toString();
         attributes.put(tokenVal, new AttrNode(new Null().set_pos(name_tok.pos_start).set_context(context)));
-        attrKeys.add(tokenVal);
     }
     public Object getattr(String name) {
-        if (attrKeys.contains(name)) { return attributes.get(name).value_node; }
+        if (attributes.containsKey(name)) { return attributes.get(name).value_node; }
         return parent != null ? parent.getattr(name) : null;
     }
     public void setattr(String name, Object value) {
-        if (attrKeys.contains(name)) {
+        if (attributes.containsKey(name)) {
             attributes.replace(name, new AttrNode(value));
         } else if (parent != null) {
             parent.setattr(name, value);
@@ -154,10 +143,9 @@ public class SymbolTable implements Serializable {
 
     public void setbin(String name, CMethod method) {
         bins.put(name, method);
-        binKeys.add(name);
     }
     public CMethod getbin(String name) {
-        if (binKeys.contains(name)) return bins.get(name);
+        if (bins.containsKey(name)) return bins.get(name);
         return parent != null ? parent.getbin(name) : null;
     }
 }

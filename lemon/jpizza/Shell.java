@@ -9,6 +9,7 @@ import lemon.jpizza.Generators.Parser;
 import lemon.jpizza.Libraries.*;
 import lemon.jpizza.Libraries.JDraw.JDraw;
 import lemon.jpizza.Nodes.Node;
+import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Executables.ClassInstance;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.PList;
@@ -51,6 +52,8 @@ public class Shell {
             put("drawCircle", Arrays.asList("radius", "x", "y", "color"));
             put("drawText", Arrays.asList("txt", "x", "y", "color"));
             put("drawSquare", Arrays.asList("radius", "x", "y", "color"));
+            put("drawPoly", Arrays.asList("points", "color"));
+            put("tracePoly", Arrays.asList("points", "color"));
             put("setPixel", Arrays.asList("x", "y", "color"));
             put("drawImage", Arrays.asList("x", "y", "filename"));
             put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
@@ -240,7 +243,7 @@ public class Shell {
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    Pair<Obj, Error> res = run(fn, scrpt);
+                    Pair<Obj, Error> res = run(fn, scrpt, false);
                     if (res.b != null)
                         Shell.logger.outln(res.b.asString());
                 } else {
@@ -293,7 +296,7 @@ public class Shell {
                         }
                         return;
                     }
-                    Pair<Obj, Error> res = run(args[0], scrpt);
+                    Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null) {
                         if (!debug) Shell.logger.outln(res.b.asString());
                         else {
@@ -317,7 +320,7 @@ public class Shell {
             if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
                     String scrpt = Files.readString(Path.of(args[0]));
-                    Pair<Obj, Error> res = run(args[0], scrpt);
+                    Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null)
                         Shell.logger.outln(res.b.asString());
                 } else {
@@ -331,7 +334,7 @@ public class Shell {
             Shell.logger.out("-> "); String input = in.nextLine();
             if (input.equals("quit"))
                 break;
-            Pair<Obj, Error> a = run("<shell>", input);
+            Pair<Obj, Error> a = run("<shell>", input, true);
             if (a.b != null) Shell.logger.outln(a.b.asString());
             else {
                 List<Obj> results = ((PList) a.a).trueValue();
@@ -345,11 +348,12 @@ public class Shell {
                     if (out.length() > 0) out.setLength(out.length() - 2);
                     Shell.logger.outln(out.toString());
                 }
+                a.a = null;
             }
         }
     }
 
-    public static Pair<Node, Error> getAst(String fn, String text) {
+    public static Pair<List<Node>, Error> getAst(String fn, String text) {
         Lexer lexer = new Lexer(fn, text);
         Pair<List<Token>, Error> x = lexer.make_tokens();
         List<Token> tokens = x.a;
@@ -360,14 +364,14 @@ public class Shell {
         ParseResult ast = parser.parse();
         if (ast.error != null)
             return new Pair<>(null, ast.error);
-        return new Pair<>((Node)ast.node, null);
+        return new Pair<>(((ListNode)ast.node).elements, null);
     }
 
-    public static Pair<Obj, Error> run(String fn, String text) {
-        return run(fn, text, true);
+    public static Pair<Obj, Error> run(String fn, String text, boolean log) {
+        return run(fn, text, true, log);
     }
-    public static Pair<Obj, Error> run(String fn, String text, boolean main) {
-        Pair<Node, Error> ast = getAst(fn, text);
+    public static Pair<Obj, Error> run(String fn, String text, boolean main, boolean log) {
+        Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         Context context = new Context(fn, null, null);
         context.symbolTable = globalSymbolTable;
@@ -375,7 +379,7 @@ public class Shell {
         if (main) inter.makeMain();
         RTResult result;
         try {
-            result = ast.a.visit(inter, context);
+            result = inter.interpret(ast.a, context, log);
             if (result.error != null) return new Pair<>(result.value, result.error);
             result.register(inter.finish(context));
         } catch (OutOfMemoryError e) {
@@ -389,9 +393,9 @@ public class Shell {
     }
 
     public static Pair<Obj, Error> compile(String fn, String text, String outpath) {
-        Pair<Node, Error> ast = getAst(fn, text);
+        Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
-        Node outNode = ast.a;
+        List<Node> outNode = ast.a;
         FileOutputStream fout;
         ObjectOutputStream oos;
 
@@ -430,12 +434,12 @@ public class Shell {
             fis.close();
             if (!(ost instanceof PizzaBox)) return new Pair<>(null, new RTError(null, null,
                     "File is not a JPizza AST!", null));
-            Node ast = ((PizzaBox) ost).value;
+            List<Node> ast = ((PizzaBox) ost).value;
             Context context = new Context(fn, null, null);
             context.symbolTable = globalSymbolTable;
             Interpreter inter = new Interpreter();
             inter.makeMain();
-            RTResult result = ast.visit(inter, context);
+            RTResult result = inter.interpret(ast, context, true);
             if (result.error != null) return new Pair<>(result.value, result.error);
             result.register(inter.finish(context));
             return new Pair<>(result.value, result.error);
@@ -447,11 +451,11 @@ public class Shell {
 
     //Another public static 🥱
     public static Pair<ClassInstance, Error> imprt(String fn, String text, Context parent, Position entry_pos) {
-        Pair<Node, Error> ast = getAst(fn, text);
+        Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         Context context = new Context(fn, parent, entry_pos);
         context.symbolTable = globalSymbolTable;
-        RTResult result = new Interpreter().visit(ast.a, context);
+        RTResult result = new Interpreter().interpret(ast.a, context, false);
         return new Pair<>(new ClassInstance(context), result.error);
     }
 

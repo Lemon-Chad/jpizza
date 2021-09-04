@@ -50,7 +50,8 @@ public class WhileNode extends Node {
             if (res.continueLoop) continue;
             if (res.breakLoop) break;
 
-            elements.add(value);
+            if (!retnull)
+                elements.add(value);
 
             if (conLast) {
                 condition = res.register(conditionNode.visit(inter, context));

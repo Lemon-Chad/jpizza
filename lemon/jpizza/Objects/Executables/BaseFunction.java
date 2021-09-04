@@ -83,7 +83,6 @@ public class BaseFunction extends Value {
             else
                 argValue = args.get(i);
             String argName = argNames.get(i);
-            argValue.set_context(execCtx);
             execCtx.symbolTable.define(argName, argValue);
         }
     }
