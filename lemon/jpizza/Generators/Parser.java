@@ -397,6 +397,11 @@ public class Parser {
 
         if (tok.type.equals(TT.KEYWORD))
             switch ((String) tok.value) {
+                case "free":
+                    Token varTok = (Token) res.register(expectIdentifier());
+                    if (res.error != null) return res;
+                    res.registerAdvancement(); advance();
+                    return res.success(new DropNode(varTok));
                 case "throw":
                     Node throwNode = (Node) res.register(this.throwExpr());
                     if (res.error != null) return res;
