@@ -15,7 +15,8 @@ public class Ovl implements DrawSlice {
     }
 
     public void draw(Graphics g) {
-        g.setColor(color);
+        if (g.getColor() != color)
+            g.setColor(color);
         g.fillOval(x, y, width, height);
     }
 }

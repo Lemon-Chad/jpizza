@@ -3,29 +3,31 @@ package lemon.jpizza.Libraries.JDraw;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PizzaCanvas extends JPanel {
-    ArrayList<DrawSlice> slices;
-    ConcurrentHashMap<Point, Rect> pixels;
+    Set<DrawSlice> slices = new HashSet<>();
+    ConcurrentHashMap<Point, Rect> pixels = new ConcurrentHashMap<>();
 
-    ArrayList<DrawSlice> _slices;
-    ConcurrentHashMap<Point, Rect> _pixels;
+    Set<DrawSlice> _slices = new HashSet<>();
+    ConcurrentHashMap<Point, Rect> _pixels = new ConcurrentHashMap<>();
     boolean painting = false;
 
     boolean fontChanged = false;
     Fnt font = null;
 
-    public void push(ArrayList<DrawSlice> slices, ConcurrentHashMap<Point, Rect> pixels) {
+    public void push(Set<DrawSlice> slices, ConcurrentHashMap<Point, Rect> pixels) {
         _slices = slices;
         _pixels = pixels;
     }
 
     public void flush() {
-        _slices = new ArrayList<>();
-        _pixels = new ConcurrentHashMap<>();
-        slices = new ArrayList<>();
-        pixels = new ConcurrentHashMap<>();
+        _slices.clear();
+        _pixels.clear();
+        slices.clear();
+        pixels.clear();
     }
 
     public void setPixel(Point pixel, Color color) {
@@ -53,9 +55,9 @@ public class PizzaCanvas extends JPanel {
         if (font != null)
             g.setFont(font.asFont());
 
-        ArrayList<DrawSlice> sliceCopy = new ArrayList<>(slices);
-        for (int i = 0; i < sliceCopy.size(); i++)
-            sliceCopy.get(i).draw(g);
+        HashSet<DrawSlice> sliceCopy = new HashSet<>(slices);
+        for (DrawSlice slice: sliceCopy)
+            slice.draw(g);
 
         for (Rect p : pixels.values())
             p.draw(g);

@@ -18,7 +18,8 @@ public class Txt implements DrawSlice {
 
     public void draw(Graphics g) {
         g.setFont(fnt.asFont());
-        g.setColor(color);
+        if (g.getColor() != color)
+            g.setColor(color);
         g.drawString(msg, x, y);
     }
 }

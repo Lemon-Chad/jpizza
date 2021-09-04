@@ -15,7 +15,8 @@ public class Rect implements DrawSlice {
     }
 
     public void draw(Graphics g) {
-        g.setColor(color);
+        if (g.getColor() != color)
+            g.setColor(color);
         g.fillRect(x, y, width, height);
     }
 

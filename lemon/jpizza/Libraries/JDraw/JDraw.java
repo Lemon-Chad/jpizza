@@ -143,7 +143,7 @@ public class JDraw extends Library {
     }};
 
     static boolean queue = false;
-    static ArrayList<DrawSlice> slices = new ArrayList<>();
+    static Set<DrawSlice> slices = new HashSet<>();
     static ConcurrentHashMap<Point, Rect> pixels = new ConcurrentHashMap<>();
 
     public JDraw(String name) {
@@ -390,6 +390,56 @@ public class JDraw extends Library {
 
         draw(new Ovl(pos.x - dim.x / 2, pos.y - dim.y / 2, dim.x, dim.y, color));
         return res.success(new Null());
+    }
+
+    public RTResult poly(Context execCtx, boolean outln) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        Obj lx = res.register(checkType(execCtx.symbolTable.get("points"), "list", Constants.JPType.List));
+        if (res.error != null) return res;
+        List<Obj> lst = ((PList) lx).trueValue();
+
+        Point[] points = new Point[lst.size()];
+        for (int i = 0; i < lst.size(); i++) {
+            Obj p = lst.get(i);
+
+            res.register(checkType(p, "list", Constants.JPType.List));
+            if (res.error != null) return res;
+            List<Obj> pL = ((PList) p).trueValue();
+
+            if (pL.size() != 2) return res.failure(new RTError(
+                    p.get_start(), p.get_end(),
+                    "Expected coordinates (list of 2 numbers)",
+                    context
+            ));
+
+            res.register(checkInt(pL.get(0)));
+            res.register(checkInt(pL.get(1)));
+            if (res.error != null) return res;
+
+            int x = (int)((Num) pL.get(0)).trueValue();
+            int y = (int)((Num) pL.get(1)).trueValue();
+
+            points[i] = new Point(x, y);
+        }
+
+        Pair<Integer[], Error> r = getColor(execCtx.symbolTable.get("color"));
+        if (r.b != null) return res.failure(r.b);
+        Color color = new Color(r.a[0], r.a[1], r.a[2]);
+
+        draw(new Polygon(points, color, outln));
+        return res.success(new Null());
+    }
+
+    public RTResult execute_drawPoly(Context execCtx) {
+        return poly(execCtx, false);
+    }
+
+    public RTResult execute_tracePoly(Context execCtx) {
+        return poly(execCtx, true);
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -876,7 +926,7 @@ public class JDraw extends Library {
     static void flush() {
         changed = true;
         if (queue) {
-            slices = new ArrayList<>();
+            slices = new HashSet<>();
             pixels = new ConcurrentHashMap<>();
         } else canvas.flush();
     }
