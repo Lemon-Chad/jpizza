@@ -366,7 +366,7 @@ public class BuiltInFunction extends Library {
                     execCtx
             ));
         }
-        Pair<Obj, Error> runtime = Shell.run(fn, script);
+        Pair<Obj, Error> runtime = Shell.run(fn, script, false);
         if (runtime.b != null) return res.failure(new RTError(
                 pos_start, pos_end,
                 String.format("Failed to finish executing script \"%s\"%n%s", fn, runtime.b.asString()),
