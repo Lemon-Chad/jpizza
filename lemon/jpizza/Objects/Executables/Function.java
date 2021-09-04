@@ -128,7 +128,7 @@ public class Function extends BaseFunction {
             ));
         }
 
-        return res.success(retValue);
+        return res.success(retValue.set_context(context));
     }
 
     // Methods
