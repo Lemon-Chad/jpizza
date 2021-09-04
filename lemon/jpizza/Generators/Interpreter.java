@@ -114,6 +114,17 @@ public class Interpreter {
         return node.visit(this, context);
     }
 
+    public RTResult interpret(List<Node> nodes, Context context, boolean log) {
+        RTResult res = new RTResult();
+        ArrayList<Obj> vals = new ArrayList<>();
+        for (Node node: nodes) {
+            Obj v = res.register(visit(node, context));
+            if (res.error != null) return res;
+            if (log) vals.add(v);
+        }
+        return res.success(new PList(vals));
+    }
+
     @SuppressWarnings("DuplicatedCode")
     public Pair< List<String>, List<String> > gatherArgs(List<Token> argNameToks, List<Token> argTypeToks) {
         List<String> argNames = new ArrayList<>();
