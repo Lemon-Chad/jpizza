@@ -11,6 +11,7 @@ public class SpeedTest {
         Pair<Obj, Error> out;
         String demoCode = """
 for (i -> 1:1000001) => i;
+println("Why is camel so bad???");
         """;
 
         Shell.logger.enableLogging();
