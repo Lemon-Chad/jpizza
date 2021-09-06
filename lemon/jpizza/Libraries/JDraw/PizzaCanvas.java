@@ -8,17 +8,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PizzaCanvas extends JPanel {
-    Set<DrawSlice> slices = new HashSet<>();
+    ArrayList<DrawSlice> slices = new ArrayList<>();
     ConcurrentHashMap<Point, Rect> pixels = new ConcurrentHashMap<>();
 
-    Set<DrawSlice> _slices = new HashSet<>();
+    ArrayList<DrawSlice> _slices = new ArrayList<>();
     ConcurrentHashMap<Point, Rect> _pixels = new ConcurrentHashMap<>();
     boolean painting = false;
 
     boolean fontChanged = false;
     Fnt font = null;
 
-    public void push(Set<DrawSlice> slices, ConcurrentHashMap<Point, Rect> pixels) {
+    public void push(ArrayList<DrawSlice> slices, ConcurrentHashMap<Point, Rect> pixels) {
         _slices = slices;
         _pixels = pixels;
     }

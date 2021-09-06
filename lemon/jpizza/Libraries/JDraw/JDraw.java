@@ -143,7 +143,7 @@ public class JDraw extends Library {
     }};
 
     static boolean queue = false;
-    static Set<DrawSlice> slices = new HashSet<>();
+    static ArrayList<DrawSlice> slices = new ArrayList<>();
     static ConcurrentHashMap<Point, Rect> pixels = new ConcurrentHashMap<>();
 
     public JDraw(String name) {
@@ -926,7 +926,7 @@ public class JDraw extends Library {
     static void flush() {
         changed = true;
         if (queue) {
-            slices = new HashSet<>();
+            slices = new ArrayList<>();
             pixels = new ConcurrentHashMap<>();
         } else canvas.flush();
     }
