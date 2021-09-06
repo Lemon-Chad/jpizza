@@ -144,6 +144,8 @@ public class Shell {
             put("substr", Arrays.asList("str", "start", "end"));
             put("sublist", Arrays.asList("list", "start", "end"));
             put("set", Arrays.asList("dict", "key", "value"));
+            put("preprocess", Arrays.asList("processed", "preprocessor"));
+            put("postprocess", Arrays.asList("processed", "postprocessor"));
             put("arctan2", Arrays.asList("a", "b"));
             put("join", Arrays.asList("string", "list"));
             put("getattr", Arrays.asList("instance", "value"));

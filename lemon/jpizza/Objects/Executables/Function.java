@@ -19,6 +19,8 @@ public class Function extends BaseFunction {
     Node bodyNode;
     public List<String> argNames;
     List<String> argTypes;
+    List<Function> preprocessors;
+    List<Function> postprocessors;
     List<Obj> defaults;
     int defaultCount;
     boolean async;
@@ -30,6 +32,8 @@ public class Function extends BaseFunction {
                     boolean async, boolean autoreturn, String returnType, List<Obj> defaults, int defaultCount) {
         super(name);
         this.defaultCount = defaultCount;
+        this.preprocessors = new ArrayList<>();
+        this.postprocessors = new ArrayList<>();
         this.bodyNode = bodyNode;
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.async = async; this.autoreturn = autoreturn;
@@ -43,6 +47,8 @@ public class Function extends BaseFunction {
                     List<Obj> defaults, int defaultCount) {
         super(name);
         this.defaultCount = defaultCount;
+        this.preprocessors = new ArrayList<>();
+        this.postprocessors = new ArrayList<>();
         this.bodyNode = bodyNode;
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.argTypes = argTypes != null ? argTypes : new ArrayList<>();
@@ -58,6 +64,8 @@ public class Function extends BaseFunction {
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.argTypes = new ArrayList<>();
         this.defaultCount = 0;
+        this.preprocessors = new ArrayList<>();
+        this.postprocessors = new ArrayList<>();
         for (int i = 0; i < this.argNames.size(); i++) {
             this.argTypes.add("any");
             this.defaults.add(null);
@@ -68,6 +76,22 @@ public class Function extends BaseFunction {
     }
 
     // Functions
+
+    public Function processors(List<Function> pre, List<Function> post) {
+        this.preprocessors = pre;
+        this.postprocessors = post;
+        return this;
+    }
+
+    public Function addPostProcessor(Function postProcessor) {
+        this.postprocessors.add(postProcessor);
+        return this;
+    }
+
+    public Function addPreProcessor(Function preProcessor) {
+        this.preprocessors.add(preProcessor);
+        return this;
+    }
 
     public Function setCatch(boolean c) {
         this.catcher = c;
@@ -101,6 +125,11 @@ public class Function extends BaseFunction {
             return res;
         }
 
+        for (Function f: this.preprocessors) {
+            res.register(((Function) f.copy().set_context(execCtx)).execute(args, interpreter));
+            if (res.error != null) return res;
+        }
+
         Obj value = res.register(interpreter.visit(bodyNode, execCtx));
         if (res.shouldReturn() && res.funcReturn == null) {
             if (async && res.error != null)
@@ -126,6 +155,13 @@ public class Function extends BaseFunction {
                     "Return value has mismatched type",
                     context
             ));
+        }
+
+        ArrayList<Obj> newArgs = new ArrayList<>(args);
+        newArgs.add(retValue);
+        for (Function f: this.postprocessors) {
+            retValue = res.register(((Function) f.copy().set_context(execCtx)).execute(newArgs, interpreter));
+            if (res.error != null) return res;
         }
 
         return res.success(retValue.set_context(context));
@@ -158,7 +194,7 @@ public class Function extends BaseFunction {
     // Defaults
 
     public Obj copy() { return new Function(name, bodyNode, argNames, argTypes, async, autoreturn, returnType, defaults,
-                                            defaultCount).setCatch(catcher)
+                                            defaultCount).setCatch(catcher).processors(preprocessors, postprocessors)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("function").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<function-"+name+">"; }

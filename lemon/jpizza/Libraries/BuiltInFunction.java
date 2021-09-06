@@ -64,6 +64,26 @@ public class BuiltInFunction extends Library {
 
     public BuiltInFunction(String name) { super(name); }
 
+    public RTResult execute_preprocess(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj par = res.register(checkType(execCtx.symbolTable.get("processed"),
+                "function", Constants.JPType.Function));
+        Obj proc = res.register(checkType(execCtx.symbolTable.get("preprocessor"),
+                "function", Constants.JPType.Function));
+        if (res.error != null) return res;
+        return res.success(((Function) par).addPreProcessor((Function) proc));
+    }
+
+    public RTResult execute_postprocess(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj par = res.register(checkType(execCtx.symbolTable.get("processed"),
+                "function", Constants.JPType.Function));
+        Obj proc = res.register(checkType(execCtx.symbolTable.get("postprocessor"),
+                "function", Constants.JPType.Function));
+        if (res.error != null) return res;
+        return res.success(((Function) par).addPostProcessor((Function) proc));
+    }
+
     public RTResult execute_fail(Context execCtx) {
         Obj r = (Obj) execCtx.symbolTable.get("res");
         if (r.jptype != Constants.JPType.Res) return new RTResult().success(new Null());
