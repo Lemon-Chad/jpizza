@@ -281,6 +281,19 @@ public class Shell {
                     System.setProperty("user.dir", newDir);
                     if (args[1].equals("--debug")) {
                         debug = true;
+                        Pair<List<Node>, Error> res = getAst(args[0], scrpt);
+                        if (res.b != null) {
+                            Error e = res.b;
+                            String message = String.format("%s: %s", e.error_name, e.details);
+                            logger.enableLogging();
+                            logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
+                                    e.pos_start.ln, e.pos_end.ln,
+                                    e.pos_start.col, e.pos_end.col,
+                                    message));
+                        } else {
+                            logger.enableLogging();
+                            logger.outln("{}");
+                        }
                         logger.disableLogging();
                     }
                     else if (args[1].equals("--compile")) {
@@ -301,15 +314,6 @@ public class Shell {
                     Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null) {
                         if (!debug) Shell.logger.outln(res.b.asString());
-                        else {
-                            Error e = res.b;
-                            String message = String.format("%s: %s", e.error_name, e.details);
-                            Shell.logger.enableLogging();
-                            Shell.logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
-                                    e.pos_start.ln, e.pos_end.ln,
-                                    e.pos_start.col, e.pos_end.col,
-                                    message));
-                        }
                     }
                 } else {
                     Shell.logger.outln("File does not exist.");
