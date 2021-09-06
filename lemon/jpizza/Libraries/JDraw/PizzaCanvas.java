@@ -55,7 +55,7 @@ public class PizzaCanvas extends JPanel {
         if (font != null)
             g.setFont(font.asFont());
 
-        HashSet<DrawSlice> sliceCopy = new HashSet<>(slices);
+        ArrayList<DrawSlice> sliceCopy = new ArrayList<>(slices);
         for (DrawSlice slice: sliceCopy)
             slice.draw(g);
 
