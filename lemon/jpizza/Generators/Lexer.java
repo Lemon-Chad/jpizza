@@ -171,12 +171,14 @@ public class Lexer {
                     }, pos_start),
                     null
             );
-        } else if (c.equals("=")) {
+        }
+        else if (c.equals("=")) {
             return new Pair<>(
                     new Token(TT.EQS, pos_start),
                     null
             );
-        } else {
+        }
+        else {
             return new Pair<>(
                     new Token(switch (c) {
                         case ">" -> TT.GT;
