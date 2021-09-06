@@ -33,7 +33,7 @@ public class JasonLib extends Library {
                 "Expected list or dict",
                 execCtx
         ));
-        var d = Shell.run("json-loads", jdata + ";", false);
+        var d = Shell.run("json-loads", jdata + ";", true);
 
         if (d.b != null) return new RTResult().failure(new RTError(
                 d.b.pos_start, d.b.pos_end,
