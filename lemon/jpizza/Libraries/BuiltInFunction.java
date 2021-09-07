@@ -44,7 +44,7 @@ public class BuiltInFunction extends Library {
         put("`", "~");
 
         put("'", "\"");
-        put(":", ";");
+        put(";", ":");
 
         put("/", "?");
         put(".", ">");
