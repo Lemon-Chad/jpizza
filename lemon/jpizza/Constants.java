@@ -19,6 +19,7 @@ public class Constants {
     public static char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
+    public static String hexDigits = "0123456789abcdef";
     public static String[] KEYWORDS = {
             "free",
             "throw",
@@ -147,7 +148,7 @@ public class Constants {
         if (val instanceof String)
             return new Str((String) val);
         else if (val instanceof Double)
-            return new Num((double) val);
+            return new Num((double) val, false);
         else if (val instanceof List) {
             List<Obj> lst = new ArrayList<>();
             List<Object> list = (List<Object>) val;

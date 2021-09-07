@@ -504,6 +504,14 @@ public class Parser {
         else if (Arrays.asList(TT.INT, TT.FLOAT).contains(tok.type)) {
             res.registerAdvancement(); advance();
             if (currentToken.type == TT.IDENTIFIER) {
+                if (currentToken.value.toString().startsWith("x") && tok.value.equals(0.0) && tok.type.equals(TT.INT)) {
+                    try {
+                        Token hexTk = currentToken;
+                        res.registerAdvancement(); advance();
+                        int hexForm = Integer.parseInt(hexTk.value.toString().substring(1), 16);
+                        return res.success(new NumberNode(hexForm, hexTk.pos_start, hexTk.pos_end));
+                    } catch (NumberFormatException ignored) {}
+                }
                 Node identifier = new VarAccessNode(currentToken);
                 res.registerAdvancement(); advance();
                 return res.success(new BinOpNode(
