@@ -503,6 +503,15 @@ public class Parser {
             }
         else if (Arrays.asList(TT.INT, TT.FLOAT).contains(tok.type)) {
             res.registerAdvancement(); advance();
+            if (currentToken.type == TT.IDENTIFIER) {
+                Node identifier = new VarAccessNode(currentToken);
+                res.registerAdvancement(); advance();
+                return res.success(new BinOpNode(
+                        new NumberNode(tok),
+                        new Token(TT.MUL, tok.pos_start, identifier.pos_end),
+                        identifier
+                ));
+            }
             return res.success(new NumberNode(tok));
         }
         else if (tok.type.equals(TT.USE)) {
