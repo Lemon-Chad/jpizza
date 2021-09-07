@@ -455,7 +455,7 @@ public class Shell {
         return new Pair<>(null, null);
     }
 
-    //Another public static 🥱
+    //Another public static 
     public static Pair<ClassInstance, Error> imprt(String fn, String text, Context parent, Position entry_pos) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
