@@ -235,12 +235,14 @@ public class JDraw extends Library {
 
     public RTResult execute_init(Context execCtx) {
         frame = new JFrame("JPizzAwt");
+        frame.setFocusTraversalKeysEnabled(false); 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         start = System.currentTimeMillis();
 
         canvas = new PizzaCanvas();
         canvas.setDoubleBuffered(true);
         canvas.setFocusable(true);
+        canvas.setFocusTraversalKeysEnabled(false);
         canvas.requestFocusInWindow();
 
         try {

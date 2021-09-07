@@ -1,3 +1,6 @@
 .replit
 replit.nix
 *.class
+*.jar
+sometoken.txt
+main.devp
