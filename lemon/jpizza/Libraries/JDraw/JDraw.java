@@ -107,6 +107,7 @@ public class JDraw extends Library {
         put("+", VK_PLUS);
 
         put("tab", VK_TAB);
+        put("capslock", VK_CAPS_LOCK);
         put("enter", VK_ENTER);
         put("backspace", VK_BACK_SPACE);
         put("shift", VK_SHIFT);
@@ -235,12 +236,14 @@ public class JDraw extends Library {
 
     public RTResult execute_init(Context execCtx) {
         frame = new JFrame("JPizzAwt");
+        frame.setFocusTraversalKeysEnabled(false); 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         start = System.currentTimeMillis();
 
         canvas = new PizzaCanvas();
         canvas.setDoubleBuffered(true);
         canvas.setFocusable(true);
+        canvas.setFocusTraversalKeysEnabled(false);
         canvas.requestFocusInWindow();
 
         try {
