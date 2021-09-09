@@ -48,6 +48,8 @@ public class Logger {
                 } else sb.append(b.arr[i]).append(", ");
 
             return "{ " + sb.toString() + "len=" + b.arr.length + " }";
+        } else if (text instanceof Obj) {
+            return ((Obj) text).astring().toString();
         }
         return text.toString();
     }
