@@ -9,7 +9,9 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
+import lemon.jpizza.Token;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class BaseFunction extends Value {
@@ -28,7 +30,8 @@ public class BaseFunction extends Value {
         return newContext;
     }
 
-    public RTResult checkArgs(List<Obj> defaults, List<String> argTypes, List<Obj> args, int minArgs, int maxArgs) {
+    public RTResult checkArgs(List<Obj> defaults, List<String> argTypes, HashMap<String, String> genericKey,
+                              List<Obj> args, int minArgs, int maxArgs) {
         RTResult res = new RTResult();
 
         int size = args.size();
@@ -62,9 +65,10 @@ public class BaseFunction extends Value {
             ));
 
             String oT = ((Str) oType).trueValue();
-            if (!oT.equals(type)) return res.failure(new RTError(
+            String gT = genericKey.get(type);
+            if (!oT.equals(type) && (gT == null || !gT.equals(oT))) return res.failure(new RTError(
                     arg.get_start(), arg.get_end(),
-                    String.format("Expected type %s, got %s", type, oT),
+                    String.format("Expected type %s, got %s", gT != null ? gT: type, oT),
                     arg.get_ctx()
             ));
 
@@ -89,9 +93,9 @@ public class BaseFunction extends Value {
     }
 
     public RTResult checkPopArgs(List<String> argNames, List<String> argTypes, List<Obj> args, Context execCtx,
-                                 List<Obj> defaults, int minArgs, int maxArgs) {
+                                 List<Obj> defaults, int minArgs, int maxArgs, HashMap<String, String> genericKey) {
         RTResult res = new RTResult();
-        res.register(checkArgs(defaults, argTypes, args, minArgs, maxArgs));
+        res.register(checkArgs(defaults, argTypes, genericKey, args, minArgs, maxArgs));
         if (res.shouldReturn())
             return res;
         populateArgs(argNames, args, defaults, execCtx);
@@ -111,5 +115,5 @@ public class BaseFunction extends Value {
     public Obj type() { return new Str("<base-function>").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<base-function>"; }
     public boolean isAsync() { return false; }
-    public RTResult execute(List<Obj> args, Interpreter parent) { return new RTResult().success(new Null()); }
+    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) { return new RTResult().success(new Null()); }
 }

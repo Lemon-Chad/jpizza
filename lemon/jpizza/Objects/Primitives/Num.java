@@ -220,7 +220,7 @@ public class Num extends Value {
     public Obj copy() { return new Num(trueValue(), floating, hex)
                                         .set_context(context)
                                         .set_pos(pos_start, pos_end); }
-    public Obj type() { return new Str(hex ? "num" : "hex").set_context(context).set_pos(pos_start, pos_end); }
+    public Obj type() { return new Str(hex ? "hex" : "num").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() {
         if (hex) return "0x" + Integer.toHexString(((Double) value).intValue());
         else if (!floating) return String.valueOf((long) trueValue());

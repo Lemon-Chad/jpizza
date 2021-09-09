@@ -317,7 +317,8 @@ public class BuiltInFunction extends Library {
         List<Obj> preList = (List<Obj>) list.value;
         int size = preList.size();
         for (int i = 0; i < size; i++) {
-            Obj after = res.register(func.execute(Collections.singletonList(preList.get(i)), new Interpreter()));
+            Obj after = res.register(func.execute(Collections.singletonList(preList.get(i)), new ArrayList<>(),
+                    new Interpreter()));
             if (res.error != null) return res;
             newList.add(after);
         }

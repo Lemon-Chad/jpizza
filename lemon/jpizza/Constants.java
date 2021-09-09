@@ -8,10 +8,7 @@ import lemon.jpizza.Objects.Value;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Constants {
     public static char[] NUMBERS = "0123456789".toCharArray();

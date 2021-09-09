@@ -18,6 +18,7 @@ public class MethDefNode extends Node {
     public boolean async;
     public boolean bin;
     public List<Token> arg_type_toks;
+    public List<Token> generic_toks;
     public String returnType;
     public List<Node> defaults;
     public int defaultCount;
@@ -25,8 +26,9 @@ public class MethDefNode extends Node {
 
     public MethDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean bin, boolean async, String returnType, List<Node> defaults,
-                       int defaultCount) {
+                       int defaultCount, List<Token> generics) {
         this.var_name_tok = var_name_tok;
+        this.generic_toks = generics;
         this.async = async;
         this.arg_name_toks = arg_name_toks;
         this.arg_type_toks = arg_type_toks;
@@ -60,7 +62,7 @@ public class MethDefNode extends Node {
         if (res.error != null) return res;
 
         CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNT.a, argNT.b, bin, async,
-                autoreturn, returnType, dfts.b, defaultCount);
+                autoreturn, returnType, dfts.b, defaultCount, generic_toks);
 
         context.symbolTable.define(funcName, methValue);
         return res.success(methValue.setCatch(catcher));

@@ -48,7 +48,7 @@ public class Time extends Library {
                 execCtx
         ));
         long start = System.currentTimeMillis();
-        res.register(((Function) value).execute(new ArrayList<>(), new Interpreter()));
+        res.register(((Function) value).execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null) return res;
         return res.success(new Num(System.currentTimeMillis() - start));
     }

@@ -711,7 +711,8 @@ public class Parser {
                 end,
                 new ArrayList<>(),
                 0,
-                null
+                null,
+                new ArrayList<>()
         ));
 
     }
@@ -940,13 +941,16 @@ public class Parser {
         return res.success(new SwitchNode(ref, cases, elseCase, true));
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public ParseResult call() {
         ParseResult res = new ParseResult();
         Node node = (Node) res.register(this.atom());
         if (res.error != null)
             return res;
-        while (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.CLACCESS)) {
-            if (currentToken.type.equals(TT.LPAREN)) {
+        while (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.CLACCESS) ||
+                currentToken.type.equals(TT.LT)) {
+            if (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.LT)) {
+                List<Token> generics = new ArrayList<>();
                 res.registerAdvancement();
                 advance();
                 List<Node> arg_nodes = new ArrayList<>();
@@ -974,9 +978,35 @@ public class Parser {
                 }
                 res.registerAdvancement();
                 advance();
+                if (currentToken.type == TT.LT) {
+                    res.registerAdvancement();
+                    advance();
+                    if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected type"
+                    ));
+                    generics.add(currentToken);
+                    res.registerAdvancement(); advance();
+                    while (currentToken.type == TT.COMMA) {
+                        res.registerAdvancement();
+                        advance();
+                        if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                                "Expected type"
+                        ));
+                        generics.add(currentToken);
+                        res.registerAdvancement(); advance();
+                    }
+                    if (currentToken.type != TT.GT) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected '>'"
+                    ));
+                    res.registerAdvancement(); advance();
+                }
                 node = new CallNode(
                         node,
-                        arg_nodes
+                        arg_nodes,
+                        generics
                 );
             }
             else {
@@ -1058,6 +1088,22 @@ public class Parser {
         return res.success(left);
     }
 
+    static class ArgData {
+        public List<Token> argNameToks;
+        public List<Token> argTypeToks;
+        public List<Token> generics;
+        public List<Node> defaults;
+        public int defaultCount;
+        public ArgData(List<Token> argNameToks, List<Token> argTypeToks, List<Node> defaults, int defaultCount,
+                       List<Token> generics) {
+            this.argNameToks = argNameToks;
+            this.argTypeToks = argTypeToks;
+            this.defaults = defaults;
+            this.defaultCount = defaultCount;
+            this.generics = generics;
+        }
+    }
+
     @SuppressWarnings("DuplicatedCode")
     public ParseResult gatherArgs() {
         ParseResult res = new ParseResult();
@@ -1133,9 +1179,36 @@ public class Parser {
                     "Expected '>'"
             )); advance(); res.registerAdvancement();
         }
-        return res.success(new Pair<>(
-                new Pair<>(argNameToks, argTypeToks),
-                new Pair<>(defaults, defaultCount)));
+
+        List<Token> generics = new ArrayList<>();
+        if (currentToken.type.equals(TT.LPAREN)) {
+            res.registerAdvancement(); advance();
+            do {
+                if (currentToken.type == TT.COMMA) {
+                    res.registerAdvancement(); advance();
+                }
+                if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected type"
+                ));
+                generics.add(currentToken);
+                res.registerAdvancement(); advance();
+            } while (currentToken.type == TT.COMMA);
+            if (!currentToken.type.equals(TT.RPAREN)) return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected ')'"
+            ));
+            res.registerAdvancement();
+            advance();
+        }
+
+        return res.success(new ArgData(
+                argNameToks,
+                argTypeToks,
+                defaults,
+                defaultCount,
+                generics
+        ));
     }
 
     public void endLine(int offset) {
@@ -1678,10 +1751,7 @@ public class Parser {
             res.registerAdvancement(); advance();
         }
 
-        var argTKs = (Pair<
-                Pair< List<Token>, List<Token> >,
-                Pair< List<Node>, Integer >
-                >) res.register(gatherArgs());
+        ArgData argTKs = (ArgData) res.register(gatherArgs());
         if (res.error != null) return res;
 
         boolean isCatcher = (boolean) res.register(this.isCatcher());
@@ -1699,14 +1769,15 @@ public class Parser {
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
-                        argTKs.a.a,
-                        argTKs.a.b,
+                        argTKs.argNameToks,
+                        argTKs.argTypeToks,
                         nodeToReturn,
                         true,
                         async,
                         retype,
-                        argTKs.b.a,
-                        argTKs.b.b
+                        argTKs.defaults,
+                        argTKs.defaultCount,
+                        argTKs.generics
                 ).setCatcher(isCatcher));
             }
             case OPEN -> {
@@ -1714,14 +1785,15 @@ public class Parser {
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
-                        argTKs.a.a,
-                        argTKs.a.b,
+                        argTKs.argNameToks,
+                        argTKs.argTypeToks,
                         nodeToReturn,
                         false,
                         async,
                         retype,
-                        argTKs.b.a,
-                        argTKs.b.b
+                        argTKs.defaults,
+                        argTKs.defaultCount,
+                        argTKs.generics
                 ).setCatcher(isCatcher));
             }
             default -> {
@@ -1801,13 +1873,14 @@ public class Parser {
             )); advance(); res.registerAdvancement();
         }
 
-        Pair<
-            Pair< List<Token>, List<Token> >,
-            Pair< List<Node>, Integer >
-        > argTKs = new Pair<>(
-                new Pair<>(new ArrayList<>(), new ArrayList<>()),
-                new Pair<>(new ArrayList<>(), 0)
+        ArgData argTKs = new ArgData(
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                0,
+                new ArrayList<>()
         );
+
         Node ingredientNode = new ListNode(
                 new ArrayList<>(),
                 classNameTok.pos_start.copy(),
@@ -1818,10 +1891,7 @@ public class Parser {
                 (currentToken.value.equals("method") || currentToken.value.equals("ingredients"))) {
             if (currentToken.value.equals("ingredients")) {
                 advance(); res.registerAdvancement();
-                argTKs = (Pair<
-                        Pair< List<Token>, List<Token> >,
-                        Pair< List<Node>, Integer >
-                        >) res.register(gatherArgs());
+                argTKs = (ArgData) res.register(gatherArgs());
                 if (res.error != null) return res;
 
                 ingredientNode = (Node) res.register(this.block(false));
@@ -1844,10 +1914,7 @@ public class Parser {
                 ));
                 Token varNameTok = currentToken;
                 res.registerAdvancement(); advance();
-                var args = (Pair<
-                        Pair< List<Token>, List<Token> >,
-                        Pair< List<Node>, Integer >
-                        >) res.register(gatherArgs());
+                ArgData args = (ArgData) res.register(gatherArgs());
 
                 boolean isCatcher = (boolean) res.register(this.isCatcher());
                 if (res.error != null) return res;
@@ -1863,30 +1930,32 @@ public class Parser {
                         if (res.error != null) return res;
                         methods.add(new MethDefNode(
                                 varNameTok,
-                                args.a.a,
-                                args.a.b,
+                                args.argNameToks,
+                                args.argTypeToks,
                                 nodeToReturn,
                                 true,
                                 bin,
                                 async,
                                 retype,
-                                args.b.a,
-                                args.b.b
+                                args.defaults,
+                                args.defaultCount,
+                                args.generics
                         ).setCatcher(isCatcher)); break;
                     case OPEN:
                          nodeToReturn = (Node) res.register(this.block(false));
                          if (res.error != null) return res;
                          methods.add(new MethDefNode(
                                  varNameTok,
-                                 args.a.a,
-                                 args.a.b,
+                                 args.argNameToks,
+                                 args.argTypeToks,
                                  nodeToReturn,
                                  false,
                                  bin,
                                  async,
                                  retype,
-                                 args.b.a,
-                                 args.b.b
+                                 args.defaults,
+                                 args.defaultCount,
+                                 args.generics
                          ).setCatcher(isCatcher)); break;
                     default:
                         return res.failure(Error.InvalidSyntax(
@@ -1904,14 +1973,15 @@ public class Parser {
         return res.success(new ClassDefNode(
                 classNameTok,
                 attributeDeclarations,
-                argTKs.a.a,
-                argTKs.a.b,
+                argTKs.argNameToks,
+                argTKs.argTypeToks,
                 ingredientNode,
                 methods,
                 currentToken.pos_end.copy(),
-                argTKs.b.a,
-                argTKs.b.b,
-                ptk
+                argTKs.defaults,
+                argTKs.defaultCount,
+                ptk,
+                argTKs.generics
         ));
     }
 

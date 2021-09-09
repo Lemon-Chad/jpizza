@@ -8,6 +8,7 @@ import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Results.RTResult;
+import lemon.jpizza.Token;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -108,7 +109,8 @@ public class Library extends BaseFunction {
         if (adlib) Constants.LIBRARIES.put(libName, libContext);
     }
 
-    public RTResult execute(List<Obj> args, Interpreter parent) {
+    @Override
+    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
         RTResult res = new RTResult();
         Context execCtx = newContext();
 
@@ -133,7 +135,7 @@ public class Library extends BaseFunction {
             ));
         }
         res.register(checkPopArgs(argNames, new ArrayList<>(), args, execCtx, new ArrayList<>(),
-                argNames.size(), argNames.size()));
+                argNames.size(), argNames.size(), new HashMap<>()));
         if (res.shouldReturn()) return res;
 
         Obj returnValue;

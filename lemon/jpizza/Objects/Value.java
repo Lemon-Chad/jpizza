@@ -1,17 +1,15 @@
 package lemon.jpizza.Objects;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.*;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Objects.Primitives.Bytes;
-import lemon.jpizza.Pair;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Objects.Primitives.Bool;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Str;
-import lemon.jpizza.Position;
 import lemon.jpizza.Results.RTResult;
-import lemon.jpizza.Shell;
+
 import static lemon.jpizza.Operations.*;
 
 import java.util.List;
@@ -103,8 +101,8 @@ public class Value extends Obj {
     // Function defaults
 
     //public RTResult execute(List<Obj> args) { return execute(args, new Interpreter()); }
-    public RTResult execute(List<Obj> args, Interpreter parent) {
-        return (RTResult) function().getattr(OP.EXECUTE, args, parent);
+    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
+        return (RTResult) function().getattr(OP.EXECUTE, args, generics, parent);
     }
 
     // Other
@@ -118,37 +116,37 @@ public class Value extends Obj {
 
     public Object getattr(OP name, Object... argx) {
         return switch (name) {
-            case NUMBER     -> number    (                                          );
-            case DICTIONARY -> dictionary(                                          );
-            case ALIST      -> alist     (                                          );
-            case BOOL       -> bool      (                                          );
-            case ANULL      -> anull     (                                          );
-            case ASTRING    -> astring   (                                          );
-            case FUNCTION   -> function  (                                          );
-            case DELETE     -> delete    ((Obj) argx[0]                             );
-            case GET        -> get       ((Obj) argx[0]                             );
-            case ADD        -> add       ((Obj) argx[0]                             );
-            case SUB        -> sub       ((Obj) argx[0]                             );
-            case MUL        -> mul       ((Obj) argx[0]                             );
-            case DIV        -> div       ((Obj) argx[0]                             );
-            case MOD        -> mod       ((Obj) argx[0]                             );
-            case FASTPOW    -> fastpow   ((Obj) argx[0]                             );
-            case LTE        -> lte       ((Obj) argx[0]                             );
-            case LT         -> lt        ((Obj) argx[0]                             );
-            case ALSO       -> also      ((Obj) argx[0]                             );
-            case INCLUDING  -> including ((Obj) argx[0]                             );
-            case INVERT     -> invert    (                                          );
-            case APPEND     -> append    ((Obj) argx[0]                             );
-            case EXTEND     -> extend    ((Obj) argx[0]                             );
-            case POP        -> pop       ((Obj) argx[0]                             );
-            case REMOVE     -> remove    ((Obj) argx[0]                             );
-            case EXECUTE    -> execute   ((List<Obj>) argx[0], (Interpreter) argx[1]);
-            case EQ         -> eq        ((Obj) argx[0]                             );
-            case NE         -> ne        ((Obj) argx[0]                             );
-            case TOSTRING   -> toString  (                                          );
-            case COPY       -> copy      (                                          );
-            case TYPE       -> type      (                                          );
-            case BRACKET    -> bracket   ((Obj) argx[0]                             );
+            case NUMBER     -> number    ();
+            case DICTIONARY -> dictionary();
+            case ALIST      -> alist     ();
+            case BOOL       -> bool      ();
+            case ANULL      -> anull     ();
+            case ASTRING    -> astring   ();
+            case FUNCTION   -> function  ();
+            case DELETE     -> delete    ((Obj) argx[0]);
+            case GET        -> get       ((Obj) argx[0]);
+            case ADD        -> add       ((Obj) argx[0]);
+            case SUB        -> sub       ((Obj) argx[0]);
+            case MUL        -> mul       ((Obj) argx[0]);
+            case DIV        -> div       ((Obj) argx[0]);
+            case MOD        -> mod       ((Obj) argx[0]);
+            case FASTPOW    -> fastpow   ((Obj) argx[0]);
+            case LTE        -> lte       ((Obj) argx[0]);
+            case LT         -> lt        ((Obj) argx[0]);
+            case ALSO       -> also      ((Obj) argx[0]);
+            case INCLUDING  -> including ((Obj) argx[0]);
+            case INVERT     -> invert    ();
+            case APPEND     -> append    ((Obj) argx[0]);
+            case EXTEND     -> extend    ((Obj) argx[0]);
+            case POP        -> pop       ((Obj) argx[0]);
+            case REMOVE     -> remove    ((Obj) argx[0]);
+            case EXECUTE    -> execute   ((List<Obj>) argx[0], (List<Token>) argx[1], (Interpreter) argx[2]);
+            case EQ         -> eq        ((Obj) argx[0]);
+            case NE         -> ne        ((Obj) argx[0]);
+            case TOSTRING   -> toString  ();
+            case COPY       -> copy      ();
+            case TYPE       -> type      ();
+            case BRACKET    -> bracket   ((Obj) argx[0]);
 
             default         -> {
                 Shell.logger.outln("Attribute " + name + " not found!");

@@ -3,14 +3,11 @@ package lemon.jpizza.Objects.Executables;
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
-import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
-import lemon.jpizza.Nodes.Definitions.MethDefNode;
 import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
-import lemon.jpizza.Pair;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
@@ -92,7 +89,7 @@ public class ClassPlate extends Value {
 
     // Methods
 
-    public RTResult execute(List<Obj> args, Interpreter parent) {
+    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
         RTResult res = new RTResult();
 
         Context classContext = new Context(name, context, pos_start);
@@ -106,7 +103,7 @@ public class ClassPlate extends Value {
         CMethod make = (CMethod) getMake().copy();
         make.set_context(classContext).set_pos(pos_start, pos_end);
 
-        res.register(make.execute(args, parent));
+        res.register(make.execute(args, generics, parent));
         if (res.error != null) return res;
 
         CMethod[] methodCopies = copyMethods();

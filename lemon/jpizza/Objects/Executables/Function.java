@@ -9,6 +9,7 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Shell;
+import lemon.jpizza.Token;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ public class Function extends BaseFunction {
     Node bodyNode;
     public List<String> argNames;
     List<String> argTypes;
+    List<Token> generics;
     List<Function> preprocessors;
     List<Function> postprocessors;
     List<Obj> defaults;
@@ -29,8 +31,10 @@ public class Function extends BaseFunction {
     boolean catcher = false;
 
     public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes,
-                    boolean async, boolean autoreturn, String returnType, List<Obj> defaults, int defaultCount) {
+                    boolean async, boolean autoreturn, String returnType, List<Obj> defaults, int defaultCount,
+                    List<Token> generics) {
         super(name);
+        this.generics = generics;
         this.defaultCount = defaultCount;
         this.preprocessors = new ArrayList<>();
         this.postprocessors = new ArrayList<>();
@@ -47,6 +51,7 @@ public class Function extends BaseFunction {
                     List<Obj> defaults, int defaultCount) {
         super(name);
         this.defaultCount = defaultCount;
+        this.generics = new ArrayList<>();
         this.preprocessors = new ArrayList<>();
         this.postprocessors = new ArrayList<>();
         this.bodyNode = bodyNode;
@@ -63,6 +68,7 @@ public class Function extends BaseFunction {
         this.bodyNode = bodyNode;
         this.argNames = argNames != null ? argNames : new ArrayList<>();
         this.argTypes = new ArrayList<>();
+        this.generics = new ArrayList<>();
         this.defaultCount = 0;
         this.preprocessors = new ArrayList<>();
         this.postprocessors = new ArrayList<>();
@@ -98,12 +104,12 @@ public class Function extends BaseFunction {
         return this;
     }
 
-    public RTResult execute(List<Obj> args, Interpreter parent) {
-        return ifCatcher(args, parent);
+    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
+        return ifCatcher(args, generics, parent);
     }
 
-    public RTResult ifCatcher(List<Obj> args, Interpreter parent) {
-        RTResult res = run(args, parent);
+    public RTResult ifCatcher(List<Obj> args, List<Token> generics, Interpreter parent) {
+        RTResult res = run(args, generics, parent);
         if (catcher) {
             if (res.error != null)
                 return res.success(new Result(res.error.details));
@@ -112,21 +118,43 @@ public class Function extends BaseFunction {
         } return res;
     }
 
-    public RTResult run(List<Obj> args, Interpreter parent) {
+    public RTResult run(List<Obj> args, List<Token> generics, Interpreter parent) {
         RTResult res = new RTResult();
         Interpreter interpreter = new Interpreter(parent.memo);
         Context execCtx = newContext();
 
+        if (generics.size() > this.generics.size()) {
+            return res.failure(new RTError(
+                    generics.get(this.generics.size()).pos_start, generics.get(generics.size() - 1).pos_end,
+                    String.format("Got %s too many generic types", generics.size() - this.generics.size()),
+                    context
+            ));
+        } else if (generics.size() < this.generics.size()) {
+            return res.failure(new RTError(
+                    generics.get(0).pos_start, generics.get(generics.size() - 1).pos_end,
+                    String.format("Got %s too few generic types", this.generics.size() - generics.size()),
+                    context
+            ));
+        }
+
+        HashMap<String, String> genericKey = new HashMap<>();
+        int genericSize = generics.size();
+        for (int i = 0; i < genericSize; i++)
+            genericKey.put(this.generics.get(i).value.toString(), generics.get(i).value.toString());
+
         res.register(checkPopArgs(argNames, argTypes, args, execCtx, defaults,
-                argNames.size() - defaultCount, argNames.size()));
+                argNames.size() - defaultCount, argNames.size(), genericKey));
         if (res.shouldReturn()) {
             if (async && res.error != null)
                 Shell.logger.outln(String.format("Async function %s:\n%s", name, res.error.asString()));
             return res;
         }
 
+        for (Map.Entry<String, String> entry : genericKey.entrySet())
+            execCtx.symbolTable.define(entry.getKey(), new Str(entry.getValue()));
+
         for (Function f: this.preprocessors) {
-            res.register(((Function) f.copy().set_context(execCtx)).execute(args, interpreter));
+            res.register(((Function) f.copy().set_context(execCtx)).execute(args, generics, interpreter));
             if (res.error != null) return res;
         }
 
@@ -160,7 +188,7 @@ public class Function extends BaseFunction {
         ArrayList<Obj> newArgs = new ArrayList<>(args);
         newArgs.add(retValue);
         for (Function f: this.postprocessors) {
-            retValue = res.register(((Function) f.copy().set_context(execCtx)).execute(newArgs, interpreter));
+            retValue = res.register(((Function) f.copy().set_context(execCtx)).execute(newArgs, generics, interpreter));
             if (res.error != null) return res;
         }
 
@@ -194,7 +222,7 @@ public class Function extends BaseFunction {
     // Defaults
 
     public Obj copy() { return new Function(name, bodyNode, argNames, argTypes, async, autoreturn, returnType, defaults,
-                                            defaultCount).setCatch(catcher).processors(preprocessors, postprocessors)
+                                            defaultCount, generics).setCatch(catcher).processors(preprocessors, postprocessors)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("function").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<function-"+name+">"; }

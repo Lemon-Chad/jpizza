@@ -11,6 +11,7 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.EnumJChild;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Results.RTResult;
+import lemon.jpizza.Token;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +19,13 @@ import java.util.List;
 public class CallNode extends Node {
     public Node nodeToCall;
     public List<Node> argNodes;
+    public List<Token> generics;
     public boolean fluctuating = true;
 
-    public CallNode(Node nodeToCall, List<Node> argNodes) {
+    public CallNode(Node nodeToCall, List<Node> argNodes, List<Token> generics) {
         this.nodeToCall = nodeToCall;
         this.argNodes = argNodes;
+        this.generics = generics;
 
         pos_start = nodeToCall.pos_start.copy();
         pos_end = (argNodes != null && argNodes.size() > 0 ? argNodes.get(argNodes.size() - 1) : nodeToCall).pos_end.copy();
@@ -58,7 +61,7 @@ public class CallNode extends Node {
         Obj retValue;
         if (valueToCall.jptype == Constants.JPType.ClassPlate) {
             cValueToCall = (ClassPlate) valueToCall;
-            retValue = res.register(cValueToCall.execute(args, inter));
+            retValue = res.register(cValueToCall.execute(args, generics, inter));
         } else {
             bValueToCall = (BaseFunction) valueToCall.copy().set_pos(pos_start, pos_end);
             Cache cache;
@@ -70,11 +73,11 @@ public class CallNode extends Node {
             if (context.memoize && (cache != null)) retValue = (Obj) cache.result;
             else {
                 if (bValueToCall.isAsync()) {
-                    Thread thread = new Thread(() -> bValueToCall.execute(args, inter));
+                    Thread thread = new Thread(() -> bValueToCall.execute(args, generics, inter));
                     thread.start();
                     return res.success(new Null().set_pos(pos_start, pos_end).set_context(context));
                 }
-                retValue = res.register(bValueToCall.execute(args, inter));
+                retValue = res.register(bValueToCall.execute(args, generics, inter));
                 if (context.memoize)
                     inter.memo.add(new Cache(bValueToCall.name, args.toArray(new Obj[0]), retValue));
             }

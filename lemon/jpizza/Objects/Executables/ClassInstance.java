@@ -33,7 +33,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("access");
         if (func == null)
             return _access(o);
-        Obj x = res.register(func.execute(Collections.singletonList(o), new Interpreter()));
+        Obj x = res.register(func.execute(Collections.singletonList(o), new ArrayList<>(), new Interpreter()));
         if (res.error != null) return res.error;
         return x;
     }
@@ -109,7 +109,7 @@ public class ClassInstance extends Obj {
             List<Obj> args = new ArrayList<>();
             int length = argx.length;
             for (int i = 0; i < length; i++) args.add((Obj) argx[i]);
-            RTResult awesomePossum = bin.execute(args, new Interpreter());
+            RTResult awesomePossum = bin.execute(args, new ArrayList<>(), new Interpreter());
             return new Pair<>(awesomePossum.value, awesomePossum.error);
         }
         return switch (name) {
@@ -133,7 +133,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("dictionary");
         if (func == null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -144,7 +144,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("list");
         if (func == null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -154,7 +154,7 @@ public class ClassInstance extends Obj {
         RTResult res = new RTResult();
         if (func == null)
             return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -175,7 +175,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("number");
         if (func == null)
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -186,7 +186,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("bytes");
         if (func == null)
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -197,7 +197,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("boolean");
         if (func == null)
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -208,7 +208,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("null");
         if (func == null)
             return new Null().set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new Null().set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -219,7 +219,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("copy");
         if (func == null)
             return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
         if (res.error != null)
             return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
         return x;
