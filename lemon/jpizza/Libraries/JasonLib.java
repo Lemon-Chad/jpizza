@@ -59,7 +59,6 @@ public class JasonLib extends Library {
                 execCtx
         ));
         for (Token tok: toks.a) {
-            System.out.println(tok.type);
             if (!acceptableJason.contains(tok.type)) return new RTResult().failure(new RTError(
                     tok.pos_start, tok.pos_end,
                     "Malformed JSON",
