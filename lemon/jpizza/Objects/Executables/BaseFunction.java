@@ -49,7 +49,8 @@ public class BaseFunction extends Value {
         int tSize = argTypes.size();
         for (int i = 0; i < tSize; i++) {
             String type = argTypes.get(i);
-            if (type.equals("any")) continue;
+            String generictype = genericKey.get(type);
+            if (type.equals("any") || (generictype != null && generictype.equals("any"))) continue;
 
             Obj arg;
             if (i >= size)
@@ -65,10 +66,9 @@ public class BaseFunction extends Value {
             ));
 
             String oT = ((Str) oType).trueValue();
-            String gT = genericKey.get(type);
-            if (!oT.equals(type) && (gT == null || !gT.equals(oT))) return res.failure(new RTError(
+            if (!oT.equals(type) && (generictype == null || !generictype.equals(oT))) return res.failure(new RTError(
                     arg.get_start(), arg.get_end(),
-                    String.format("Expected type %s, got %s", gT != null ? gT: type, oT),
+                    String.format("Expected type %s, got %s", generictype != null ? generictype: type, oT),
                     arg.get_ctx()
             ));
 
