@@ -3,6 +3,7 @@ package lemon.jpizza.Libraries;
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Errors.RTError;
+import lemon.jpizza.Generators.Lexer;
 import lemon.jpizza.Objects.Executables.Library;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Dict;
@@ -10,12 +11,29 @@ import lemon.jpizza.Objects.Primitives.PList;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Shell;
+import lemon.jpizza.Token;
+import lemon.jpizza.Tokens.TT;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
 public class JasonLib extends Library {
+
+    static List<TT> acceptableJason = Arrays.asList(
+            TT.STRING,
+            TT.FLOAT,
+            TT.INT,
+            TT.LSQUARE,
+            TT.RSQUARE,
+            TT.COMMA,
+            TT.BITE,
+            TT.OPEN,
+            TT.CLOSE,
+            TT.EOF
+    );
 
     public JasonLib(String name) { super(name); }
 
@@ -33,6 +51,22 @@ public class JasonLib extends Library {
                 "Expected list or dict",
                 execCtx
         ));
+
+        var toks = new Lexer("json-loads", jdata).make_tokens();
+        if (toks.b != null) return new RTResult().failure(new RTError(
+                toks.b.pos_start, toks.b.pos_end,
+                "Malformed JSON",
+                execCtx
+        ));
+        for (Token tok: toks.a) {
+            System.out.println(tok.type);
+            if (!acceptableJason.contains(tok.type)) return new RTResult().failure(new RTError(
+                    tok.pos_start, tok.pos_end,
+                    "Malformed JSON",
+                    execCtx
+            ));
+        }
+
         var d = Shell.run("json-loads", jdata + ";", true);
 
         if (d.b != null) return new RTResult().failure(new RTError(
