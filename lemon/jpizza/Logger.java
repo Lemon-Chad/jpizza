@@ -1,5 +1,6 @@
 package lemon.jpizza;
 
+import com.diogonunes.jcolor.Attribute;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Bytes;
 import lemon.jpizza.Objects.Primitives.Dict;
@@ -9,9 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.diogonunes.jcolor.Ansi.colorize;
+
 public class Logger {
     boolean log = true;
     int omitt = 5;
+    int warnlength = 10;
 
     public String ots(Object text) {
         if (text instanceof PList) {
@@ -56,6 +60,22 @@ public class Logger {
 
     public void out(Object text) {
         if (log) System.out.print(ots(text));
+    }
+
+    public void warn(Object text) {
+        if (log)
+            System.out.println(colorize(
+                    " ".repeat(warnlength / 2) + "WARNING\n" + "-".repeat(warnlength) + "\n" + ots(text),
+                    Attribute.YELLOW_TEXT()
+            ));
+    }
+
+    public void fail(Object text) {
+        if (log)
+            System.out.println(colorize(
+                    " ".repeat(warnlength / 2) + "WARNING\n" + "-".repeat(warnlength) + "\n" + ots(text),
+                    Attribute.RED_TEXT()
+            ));
     }
 
     public void outln(Object text) {

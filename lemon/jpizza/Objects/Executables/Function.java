@@ -146,7 +146,7 @@ public class Function extends BaseFunction {
                 argNames.size() - defaultCount, argNames.size(), genericKey));
         if (res.shouldReturn()) {
             if (async && res.error != null)
-                Shell.logger.outln(String.format("Async function %s:\n%s", name, res.error.asString()));
+                Shell.logger.warn(String.format("Async function %s:\n%s", name, res.error.asString()));
             return res;
         }
 
@@ -161,7 +161,7 @@ public class Function extends BaseFunction {
         Obj value = res.register(interpreter.visit(bodyNode, execCtx));
         if (res.shouldReturn() && res.funcReturn == null) {
             if (async && res.error != null)
-                Shell.logger.outln(String.format("Async function %s:\n%s", name, res.error.asString()));
+                Shell.logger.warn(String.format("Async function %s:\n%s", name, res.error.asString()));
             return res;
         }
 
