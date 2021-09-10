@@ -7,6 +7,7 @@ import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Generators.Lexer;
 import lemon.jpizza.Generators.Parser;
 import lemon.jpizza.Libraries.*;
+import lemon.jpizza.Libraries.HTTPretzel.HTTPretzel;
 import lemon.jpizza.Libraries.JDraw.JDraw;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Nodes.Values.ListNode;
@@ -85,6 +86,12 @@ public class Shell {
         HTTPLIB.initialize("httpx", HTTPLIB.class, new HashMap<>(){{
             put("getRequest", Arrays.asList("url", "params"));
             put("postRequest", Arrays.asList("url", "params", "body"));
+        }});
+
+        HTTPretzel.initialize("pretzel", HTTPretzel.class, new HashMap<>(){{
+            put("init", Arrays.asList("host", "addr"));
+            put("route", Arrays.asList("route", "func"));
+            put("start", new ArrayList<>());
         }});
 
         JGens.initialize("gens", JGens.class, new HashMap<>(){{

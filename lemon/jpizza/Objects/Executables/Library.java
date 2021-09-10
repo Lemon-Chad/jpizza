@@ -49,6 +49,17 @@ public class Library extends BaseFunction {
         return new RTResult().success(o);
     }
 
+    public static RTResult checkFunction(Object obj) {
+        Obj o = (Obj) obj;
+        if (o.jptype != Constants.JPType.Function && o.jptype != Constants.JPType.CMethod)
+            return new RTResult().failure(new RTError(
+                o.get_start(), o.get_end(),
+                "Expected function",
+                o.get_ctx()
+            ));
+        return new RTResult().success(o);
+    }
+
     public static RTResult checkInt(Object obj) {
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Number || ((Num) o).floating) return new RTResult().failure(new RTError(
