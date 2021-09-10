@@ -947,9 +947,8 @@ public class Parser {
         Node node = (Node) res.register(this.atom());
         if (res.error != null)
             return res;
-        while (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.CLACCESS) ||
-                currentToken.type.equals(TT.LT)) {
-            if (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.LT)) {
+        while (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.CLACCESS)) {
+            if (currentToken.type.equals(TT.LPAREN)) {
                 List<Token> generics = new ArrayList<>();
                 res.registerAdvancement();
                 advance();
