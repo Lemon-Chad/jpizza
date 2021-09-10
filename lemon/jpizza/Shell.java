@@ -254,7 +254,7 @@ public class Shell {
                     System.setProperty("user.dir", newDir);
                     Pair<Obj, Error> res = run(fn, scrpt, false);
                     if (res.b != null)
-                        Shell.logger.outln(res.b.asString());
+                        Shell.logger.fail(res.b.asString());
                 } else {
                     Shell.logger.outln("File does not exist.");
                 }
@@ -269,7 +269,7 @@ public class Shell {
                     System.setProperty("user.dir", newDir);
                     Pair<Obj, Error> res = runCompiled(fn, args[0]);
                     if (res.b != null)
-                        Shell.logger.outln(res.b.asString());
+                        Shell.logger.fail(res.b.asString());
                 } else {
                     Shell.logger.outln("File does not exist.");
                 }
@@ -320,7 +320,7 @@ public class Shell {
                     }
                     Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null) {
-                        if (!debug) Shell.logger.outln(res.b.asString());
+                        if (!debug) Shell.logger.fail(res.b.asString());
                     }
                 } else {
                     Shell.logger.outln("File does not exist.");
@@ -335,7 +335,7 @@ public class Shell {
                     String scrpt = Files.readString(Path.of(args[0]));
                     Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null)
-                        Shell.logger.outln(res.b.asString());
+                        Shell.logger.fail(res.b.asString());
                 } else {
                     Shell.logger.outln("File does not exist.");
                 }
@@ -348,7 +348,7 @@ public class Shell {
             if (input.equals("quit"))
                 break;
             Pair<Obj, Error> a = run("<shell>", input, true);
-            if (a.b != null) Shell.logger.outln(a.b.asString());
+            if (a.b != null) Shell.logger.fail(a.b.asString());
             else {
                 List<Obj> results = ((PList) a.a).trueValue();
                 if (results.size() > 0) {
