@@ -31,7 +31,7 @@ public class RTError extends Error {
         while (ctx != null) {
             if (pos != null)
                 result = String.format(
-                            "\tFile %s, line %s, in %s\n%s",
+                            "  ╰──  File %s, line %s, in %s\n%s",
                             pos.fn, pos.ln + 1, ctx.displayName,
                             result
                         );

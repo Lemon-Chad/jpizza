@@ -7,6 +7,6 @@ public class RunMain {
                 run("main.devp");
                 """, false);
         if (out.b != null)
-            System.out.println(out.b.asString());
+            Shell.logger.fail(out.b.asString());
     }
 }

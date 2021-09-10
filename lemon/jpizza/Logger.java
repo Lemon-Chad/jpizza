@@ -15,7 +15,7 @@ import static com.diogonunes.jcolor.Ansi.colorize;
 public class Logger {
     boolean log = true;
     int omitt = 5;
-    int tape = 10;
+    int tape = 40;
 
     public String ots(Object text) {
         if (text instanceof PList) {
@@ -77,7 +77,7 @@ public class Logger {
     public void fail(Object text) {
         if (log)
             System.out.println(colorize(
-                    getTape("FAIL") + "\n" + ots(text),
+                    getTape("FAILURE") + "\n" + ots(text),
                     Attribute.RED_TEXT()
             ));
     }

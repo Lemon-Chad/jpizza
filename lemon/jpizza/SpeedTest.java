@@ -17,7 +17,7 @@ println("Why is camel so bad???");
         Shell.logger.enableLogging();
         out = Shell.run("<unit-test>", demoCode, false);
         if (out.b != null)
-            System.out.println(out.b.asString());
+            Shell.logger.fail(out.b.asString());
 
     }
 }
