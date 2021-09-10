@@ -71,7 +71,7 @@ public class Logger {
     }
 
     private String getTape(String message) {
-        return " ".repeat((tape - message.length()) / 2) + message + "\n" + "-".repeat(tape);
+        return " ".repeat((tape - message.length()) / 2) + message + "\n" + "─".repeat(tape);
     }
 
     public void fail(Object text) {
