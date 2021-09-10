@@ -40,6 +40,12 @@ public class Library extends BaseFunction {
     // Functions
 
     public static RTResult checkType(Object obj, String expect, Constants.JPType type) {
+        if (obj == null)
+            return new RTResult().failure(new RTError(
+                    null, null,
+                    "Expected " + expect,
+                    null
+            ));
         Obj o = (Obj) obj;
         if (o.jptype != type) return new RTResult().failure(new RTError(
                 o.get_start(), o.get_end(),
@@ -50,6 +56,12 @@ public class Library extends BaseFunction {
     }
 
     public static RTResult checkFunction(Object obj) {
+        if (obj == null)
+            return new RTResult().failure(new RTError(
+                    null, null,
+                    "Expected function",
+                    null
+            ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Function && o.jptype != Constants.JPType.CMethod)
             return new RTResult().failure(new RTError(
@@ -61,6 +73,12 @@ public class Library extends BaseFunction {
     }
 
     public static RTResult checkInt(Object obj) {
+        if (obj == null)
+            return new RTResult().failure(new RTError(
+                    null, null,
+                    "Expected an integer",
+                    null
+            ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Number || ((Num) o).floating) return new RTResult().failure(new RTError(
                 o.get_start(), o.get_end(),
@@ -71,6 +89,12 @@ public class Library extends BaseFunction {
     }
 
     public static RTResult checkPosInt(Object obj) {
+        if (obj == null)
+            return new RTResult().failure(new RTError(
+                    null, null,
+                    "Expected a postive integer",
+                    null
+            ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Number || ((Num) o).floating || ((Num) o).trueValue() < 0)
             return new RTResult().failure(new RTError(
