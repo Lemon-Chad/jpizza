@@ -10,6 +10,7 @@ import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Position;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Pair;
+import lemon.jpizza.Shell;
 
 import java.util.*;
 
@@ -155,8 +156,13 @@ public class ClassInstance extends Obj {
         if (func == null)
             return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.String) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected String (" + value.displayName + "-" + func.name + ")");
             return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
 
@@ -176,8 +182,13 @@ public class ClassInstance extends Obj {
         if (func == null)
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.Number) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected num (" + value.displayName + "-" + func.name + ")");
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
 
@@ -187,8 +198,13 @@ public class ClassInstance extends Obj {
         if (func == null)
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.Bytes) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected bytes (" + value.displayName + "-" + func.name + ")");
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
 
@@ -198,8 +214,13 @@ public class ClassInstance extends Obj {
         if (func == null)
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.Boolean) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected bool (" + value.displayName + "-" + func.name + ")");
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
 
@@ -209,8 +230,13 @@ public class ClassInstance extends Obj {
         if (func == null)
             return new Null().set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.Null) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected null (" + value.displayName + "-" + func.name + ")");
             return new Null().set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
 
@@ -220,8 +246,13 @@ public class ClassInstance extends Obj {
         if (func == null)
             return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.ClassInstance) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected Instance (" + value.displayName + "-" + func.name + ")");
             return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
 
