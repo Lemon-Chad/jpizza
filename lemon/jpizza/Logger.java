@@ -15,7 +15,7 @@ import static com.diogonunes.jcolor.Ansi.colorize;
 public class Logger {
     boolean log = true;
     int omitt = 5;
-    int warnlength = 10;
+    int tape = 10;
 
     public String ots(Object text) {
         if (text instanceof PList) {
@@ -65,15 +65,19 @@ public class Logger {
     public void warn(Object text) {
         if (log)
             System.out.println(colorize(
-                    " ".repeat(warnlength / 2) + "WARNING\n" + "-".repeat(warnlength) + "\n" + ots(text),
+                    getTape("WARNING") + "\n" + ots(text),
                     Attribute.YELLOW_TEXT()
             ));
+    }
+
+    private String getTape(String message) {
+        return " ".repeat((tape - message.length()) / 2) + message + "\n" + "-".repeat(tape);
     }
 
     public void fail(Object text) {
         if (log)
             System.out.println(colorize(
-                    " ".repeat(warnlength / 2) + "WARNING\n" + "-".repeat(warnlength) + "\n" + ots(text),
+                    getTape("FAIL") + "\n" + ots(text),
                     Attribute.RED_TEXT()
             ));
     }
