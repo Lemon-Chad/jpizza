@@ -242,6 +242,15 @@ public class BuiltInFunction extends Library {
         }}));
     }
 
+    public RTResult execute_replace(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj s = res.register(checkType(execCtx.symbolTable.get("str"), "String", Constants.JPType.String));
+        Obj o = res.register(checkType(execCtx.symbolTable.get("old"), "String", Constants.JPType.String));
+        Obj n = res.register(checkType(execCtx.symbolTable.get("new"), "String", Constants.JPType.String));
+        if (res.error != null) return res;
+        return res.success(new Str(s.toString().replace(o.toString(), n.toString())));
+    }
+
     public RTResult execute_enumProps(Context execCtx) {
         Obj p = (Obj) execCtx.symbolTable.get("prop");
         Obj ec = (Obj) execCtx.symbolTable.get("enumChild");
