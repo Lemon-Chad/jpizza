@@ -82,6 +82,14 @@ public class Logger {
             ));
     }
 
+    public void tip(Object text) {
+        if (log)
+            System.out.println(colorize(
+                    getTape("TIP") + "\n" + ots(text),
+                    Attribute.CYAN_TEXT()
+            ));
+    }
+
     public void outln(Object text) {
         if (log) System.out.println(ots(text));
     }

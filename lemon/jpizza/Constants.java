@@ -119,6 +119,16 @@ public class Constants {
         EnumChild, Res,
     }
 
+    public static int nonWhitespace(String string){
+        char[] characters = string.toCharArray();
+        for(int i = 0; i < string.length(); i++){
+            if(!Character.isWhitespace(characters[i])){
+                return i;
+            }
+        }
+        return 0;
+    }
+
     public static String stringWithArrows(String text, Position pos_start, Position pos_end) {
         StringBuilder result = new StringBuilder();
 
@@ -131,8 +141,8 @@ public class Constants {
         for (int i = 0; i < line_count; i++) {
             String line = text.substring(idxStart, idxEnd);
 
-            int colStart = i == 0 ? pos_start.tcol : 0;
-            int colEnd = i == line_count - 1 ? pos_end.tcol : text.length() - 1;
+            int colStart = i == 0 ? pos_start.tcol : nonWhitespace(line);
+            int colEnd = i == line_count - 1 ? pos_end.tcol : line.length() - 1;
 
             String grouping = "";
             if (colEnd - colStart == 1) {
@@ -142,7 +152,7 @@ public class Constants {
             }
 
             result.append(line).append("\n")
-                    .append(" ".repeat(colStart)).append(grouping);
+                    .append(" ".repeat(Math.max(colStart - 1, 0))).append(grouping);
 
             idxStart = idxEnd;
             idxEnd = text.indexOf(splitter, idxStart + 1);
