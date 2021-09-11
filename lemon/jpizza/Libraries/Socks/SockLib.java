@@ -1,8 +1,7 @@
-package lemon.jpizza.Libraries;
+package lemon.jpizza.Libraries.Socks;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
-import lemon.jpizza.Objects.Primitives.Bytes;
 import lemon.jpizza.Pair;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
@@ -10,12 +9,10 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Num;
 import lemon.jpizza.Objects.Primitives.Str;
-import lemon.jpizza.Position;
 import lemon.jpizza.Results.RTResult;
 
 import java.io.*;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,160 +24,6 @@ public class SockLib extends Library {
     public SockLib(String name) { super(name); }
 
     // Server Side
-
-    @SuppressWarnings("DuplicatedCode")
-    static class ServerConn {
-        ServerSocket inner;
-        Socket client;
-        DataOutputStream out;
-        DataInputStream in;
-
-        Position pos_start, pos_end;
-        Context context;
-
-        double id;
-
-        public ServerConn(double iydee, Position ps, Position pe, Context ctx) {
-            id = iydee;
-            pos_start = ps; pos_end = pe;
-            context = ctx;
-        }
-
-        public RTError host(ServerSocket sock) {
-            inner = sock;
-            return null;
-        }
-
-        public RTError conn() {
-            try {
-                client = inner.accept();
-                out = new DataOutputStream(client.getOutputStream());
-                in = new DataInputStream(client.getInputStream());
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            }
-            return null;
-        }
-
-        public RTError sendBytes(Obj data) {
-            if (data.jptype != Constants.JPType.Bytes) return new RTError(
-                    data.get_start(), data.get_end(),
-                    "Expected bytearray",
-                    data.get_ctx()
-            );
-            byte[] msg = ((Bytes) data).arr;
-
-            try {
-                out.writeInt(msg.length);
-                out.write(msg);
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            }
-
-            return null;
-        }
-
-        public RTError send(Obj data) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos;
-            byte[] msg;
-
-            try {
-                oos = new ObjectOutputStream(bos);
-                oos.writeObject(data);
-                oos.flush();
-                msg = bos.toByteArray();
-
-                out.writeInt(msg.length);
-                out.write(msg);
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            }
-
-            return null;
-        }
-
-        public RTResult receive() {
-            try {
-                int length = in.readInt();
-                Obj res = new Null();
-                if (length > 0) {
-                    byte [] message = new byte[length];
-                    in.readFully(message, 0, message.length);
-
-                    ByteArrayInputStream bis = new ByteArrayInputStream(message);
-                    ObjectInputStream ois = new ObjectInputStream(bis);
-
-                    Object obj = ois.readObject();
-                    if (!(obj instanceof Obj)) return new RTResult().failure(new RTError(
-                            pos_start, pos_end,
-                            "Invalid data recieved..",
-                            context
-                    ));
-
-                    res = (Obj) obj;
-                }
-                return new RTResult().success(res);
-            } catch (IOException e) {
-                return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                ));
-            } catch (ClassNotFoundException e) {
-                return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        "Invalid data recieved..",
-                        context
-                ));
-            }
-        }
-
-        public RTResult receiveBytes() {
-            try {
-                int length = in.readInt();
-                Obj res = new Bytes(new byte[0]);
-                if (length > 0) {
-                    byte [] message = new byte[length];
-                    in.readFully(message, 0, message.length);
-
-                    res = new Bytes(message);
-                }
-                return new RTResult().success(res);
-            } catch (IOException e) {
-                return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                ));
-            }
-        }
-
-        public RTError close() {
-            try {
-                client.close();
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            } return null;
-        }
-
-    }
 
     static Map< Double, ServerSocket       > servers = new HashMap<>();
     static Map< ServerSocket,     List< ServerConn > > serverSocks = new HashMap<>();
@@ -310,12 +153,24 @@ public class SockLib extends Library {
         return conn.receive();
     }
 
-    public RTResult execute_serverRecvBytes(Context execCtx) {
+    public RTResult execute_serverRecvAllBytes(Context execCtx) {
         Pair< ServerConn, RTError > c = getServerConn(execCtx);
         if (c.b != null) return new RTResult().failure(c.b);
         ServerConn conn = c.a;
 
         return conn.receiveBytes();
+    }
+
+    public RTResult execute_serverRecvBytes(Context execCtx) {
+        Pair< ServerConn, RTError > c = getServerConn(execCtx);
+        if (c.b != null) return new RTResult().failure(c.b);
+        ServerConn conn = c.a;
+
+        RTResult res = new RTResult();
+        Obj length = res.register(checkPosInt(execCtx.symbolTable.get("length")));
+        if (res.error != null) return res;
+
+        return conn.receiveBytes((int) ((Num) length).trueValue());
     }
 
     public RTResult execute_closeServerConnection(Context execCtx) {
@@ -354,153 +209,6 @@ public class SockLib extends Library {
     }
 
     // Client Side
-
-    @SuppressWarnings("DuplicatedCode")
-    static class ClientConn {
-        Socket client;
-        DataOutputStream out;
-        DataInputStream in;
-
-        Position pos_start, pos_end;
-        Context context;
-
-        double id;
-
-        public ClientConn(double iydee, Position ps, Position pe, Context ctx) {
-            id = iydee;
-            pos_start = ps; pos_end = pe;
-            context = ctx;
-        }
-
-        public RTError conn(String host, double port) {
-            try {
-                client = new Socket(host, (int) port);
-                out = new DataOutputStream(client.getOutputStream());
-                in = new DataInputStream(client.getInputStream());
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        "IOException while connecting..",
-                        context
-                );
-            }
-            return null;
-        }
-
-        public RTError send(Obj data) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos;
-            byte[] msg;
-
-            try {
-                oos = new ObjectOutputStream(bos);
-                oos.writeObject(data);
-                oos.flush();
-                msg = bos.toByteArray();
-
-                out.writeInt(msg.length);
-                out.write(msg);
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            }
-
-            return null;
-        }
-
-        public RTError sendBytes(Obj data) {
-            if (data.jptype != Constants.JPType.Bytes) return new RTError(
-                    data.get_start(), data.get_end(),
-                    "Expected bytearray",
-                    data.get_ctx()
-            );
-            byte[] msg = ((Bytes) data).arr;
-
-            try {
-                out.writeInt(msg.length);
-                out.write(msg);
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            }
-
-            return null;
-        }
-
-        public RTResult receive() {
-            try {
-                int length = in.readInt();
-                Obj res = new Null();
-                if (length > 0) {
-                    byte [] message = new byte[length];
-                    in.readFully(message, 0, message.length);
-
-                    ByteArrayInputStream bis = new ByteArrayInputStream(message);
-                    ObjectInputStream ois = new ObjectInputStream(bis);
-
-                    Object obj = ois.readObject();
-                    if (!(obj instanceof Obj)) return new RTResult().failure(new RTError(
-                            pos_start, pos_end,
-                            "Invalid data recieved..",
-                            context
-                    ));
-
-                    res = (Obj) obj;
-                }
-                return new RTResult().success(res);
-            } catch (IOException e) {
-                return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                ));
-            } catch (ClassNotFoundException e) {
-                return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        "Invalid data recieved..",
-                        context
-                ));
-            }
-        }
-
-        public RTResult receiveBytes() {
-            try {
-                int length = in.readInt();
-                Obj res = new Bytes(new byte[0]);
-                if (length > 0) {
-                    byte [] message = new byte[length];
-                    in.readFully(message, 0, message.length);
-
-                    res = new Bytes(message);
-                }
-                return new RTResult().success(res);
-            } catch (IOException e) {
-                return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                ));
-            }
-        }
-
-        public RTError close() {
-            try {
-                client.close();
-            } catch (IOException e) {
-                return new RTError(
-                        pos_start, pos_end,
-                        e.toString(),
-                        context
-                );
-            } return null;
-        }
-    }
 
     static Map< Double, ClientConn > clients = new HashMap<>();
 
@@ -593,12 +301,24 @@ public class SockLib extends Library {
         return conn.receive();
     }
 
-    public RTResult execute_clientRecvBytes(Context execCtx) {
+    public RTResult execute_clientRecvAllBytes(Context execCtx) {
         var c = getConn(execCtx);
         if (c.b != null) return new RTResult().failure(c.b);
         ClientConn conn = c.a;
 
         return conn.receiveBytes();
+    }
+
+    public RTResult execute_clientRecvBytes(Context execCtx) {
+        var c = getConn(execCtx);
+        if (c.b != null) return new RTResult().failure(c.b);
+        ClientConn conn = c.a;
+
+        RTResult res = new RTResult();
+        Obj length = res.register(checkPosInt(execCtx.symbolTable.get("length")));
+        if (res.error != null) return res;
+
+        return conn.receiveBytes((int) ((Num) length).trueValue());
     }
 
     public RTResult execute_clientClose(Context execCtx) {

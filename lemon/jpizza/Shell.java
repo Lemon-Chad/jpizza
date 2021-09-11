@@ -9,6 +9,7 @@ import lemon.jpizza.Generators.Parser;
 import lemon.jpizza.Libraries.*;
 import lemon.jpizza.Libraries.HTTPretzel.HTTPretzel;
 import lemon.jpizza.Libraries.JDraw.JDraw;
+import lemon.jpizza.Libraries.Socks.SockLib;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Executables.ClassInstance;
@@ -132,7 +133,8 @@ public class Shell {
             put("serverSend", Arrays.asList("client", "msg"));
             put("serverSendBytes", Arrays.asList("client", "msg"));
             put("serverRecv", Collections.singletonList("client"));
-            put("serverRecvBytes", Collections.singletonList("client"));
+            put("serverRecvBytes", Arrays.asList("client", "length"));
+            put("serverRecvAllBytes", Collections.singletonList("client"));
 
             put("closeServerConnection", Collections.singletonList("client"));
             put("closeServer", Collections.singletonList("server"));
@@ -140,7 +142,8 @@ public class Shell {
             put("clientSend", Arrays.asList("client", "msg"));
             put("clientSendBytes", Arrays.asList("client", "msg"));
             put("clientRecv", Collections.singletonList("client"));
-            put("clientRecvBytes", Collections.singletonList("client"));
+            put("clientRecvBytes", Arrays.asList("client", "length"));
+            put("clientRecvAllBytes", Collections.singletonList("client"));
 
             put("clientClose", Collections.singletonList("client"));
         }});
