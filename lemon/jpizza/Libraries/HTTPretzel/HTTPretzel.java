@@ -66,7 +66,6 @@ public class HTTPretzel extends Library {
         Obj fnc = res.register(checkFunction(execCtx.symbolTable.get("func")));
         if (res.error != null) return res;
 
-        System.out.println(((Str) rte).trueValue());
         server.createContext(((Str) rte).trueValue(), new JHandle((Function) fnc));
 
         return res.success(new Null());
