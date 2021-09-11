@@ -166,6 +166,8 @@ public class Parser {
         return res.success(var_name);
     }
 
+    public ParseResult chainExpr() { return binOp(this::compExpr, Collections.singletonList(TT.BITE)); }
+
     public ParseResult expr() {
         ParseResult res = new ParseResult();
         String type = "any";
@@ -382,7 +384,7 @@ public class Parser {
             advance();
         }
 
-        Node expr = (Node) res.register(this.compExpr());
+        Node expr = (Node) res.register(this.chainExpr());
         if (res.error != null) return res;
 
         if (toBytes)
