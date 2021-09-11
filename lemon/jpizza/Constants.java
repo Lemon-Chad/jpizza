@@ -138,6 +138,7 @@ public class Constants {
         if (idxEnd < 0) idxEnd = text.length();
 
         int line_count = pos_end.ln - pos_start.ln + 1;
+        int offs = line_count > 1 ? -1 : 0;
         for (int i = 0; i < line_count; i++) {
             String line = text.substring(idxStart, idxEnd);
 
@@ -152,7 +153,7 @@ public class Constants {
             }
 
             result.append(line).append("\n")
-                    .append(" ".repeat(Math.max(colStart - 1, 0))).append(grouping);
+                    .append(" ".repeat(colStart + offs)).append(grouping);
 
             idxStart = idxEnd;
             idxEnd = text.indexOf(splitter, idxStart + 1);
