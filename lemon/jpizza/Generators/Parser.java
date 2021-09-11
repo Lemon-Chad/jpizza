@@ -1559,6 +1559,23 @@ public class Parser {
 
         Node condition = (Node) res.register(getClosing());
         if (res.error != null) return res;
+        if (condition.jptype == Constants.JPType.Boolean) {
+            if (((BooleanNode) condition).val) {
+                Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
+                        "Can be changed to a generic loop", """
+loop {
+    println("To infinity and beyond!");
+}""")
+                        .asString());
+            } else {
+                Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
+                        "Loop will never run", """
+while (false) {
+    println("Remove me!");
+}""")
+                        .asString());
+            }
+        }
 
         return res.success(condition);
     }
@@ -1609,6 +1626,7 @@ public class Parser {
             condition = new BooleanNode(new Token(TT.BOOL, true, loopTok.pos_start, loopTok.pos_end));
         } else {
             condition = (Node) res.register(getWhileCondition());
+
             if (res.error != null) return res;
         }
         Node body;
