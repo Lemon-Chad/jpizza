@@ -28,8 +28,9 @@ public class FileLib extends Library {
         ));
 
         String dir = ((Str) value).trueValue();
-        if (!dir.matches("^([A-Z]:|\\.).*"))
-            dir = System.getProperty("user.dir") + "\\" + dir;
+        //noinspection RegExpRedundantEscape
+        if (!dir.matches("^([A-Z]:|\\.|\\/|\\\\).*"))
+            dir = System.getProperty("user.dir") + "/" + dir;
         return new RTResult().success(new Str(dir));
     }
 
