@@ -110,7 +110,7 @@ public class JHandle implements HttpHandler {
         try {
             logError(exchange, exchange.getResponseBody());
         } catch (IOException g) {
-            Shell.logger.outln(g.toString());
+            Shell.logger.warn(g.toString());
         }
     }
 
