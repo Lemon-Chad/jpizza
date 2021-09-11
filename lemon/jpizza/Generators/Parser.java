@@ -1727,7 +1727,7 @@ while (false) {
         )); res.registerAdvancement(); advance();
 
         L kv = () -> {
-            Node key = (Node) res.register(expr());
+            Node key = (Node) res.register(compExpr());
             if (res.error != null) return res;
 
             Node value = (Node) res.register(this.kv());
