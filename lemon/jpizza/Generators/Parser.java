@@ -937,7 +937,20 @@ public class Parser {
             ));
         res.registerAdvancement(); advance();
 
-        return res.success(new SwitchNode(ref, cases, elseCase, true));
+        Node swtch = new SwitchNode(ref, cases, elseCase, true);
+
+        if (elseCase == null) {
+            Shell.logger.tip(new Tip(swtch.pos_start, swtch.pos_end,
+                                      "Match statement should have a default branch", """
+match (a) {
+    b -> c
+    default -> d
+    <> This runs in case none of the others match
+    <> and helps prevents stray null values.
+};""").asString());
+        }
+
+        return res.success(swtch);
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -1279,6 +1292,21 @@ public class Parser {
         Node condition = (Node) res.register(this.expr());
         if (res.error != null)
             return res;
+
+        if (((BooleanNode) condition).val) {
+            Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
+                    "Redundant conditional", """
+if (true)
+    println("This runs no matter what");""")
+                    .asString());
+        } else {
+            Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
+                    "Conditional will never run", """
+if (false)
+    println("Useless!!!");""")
+                    .asString());
+        }
+
         if (parenthesis) {
             if (!currentToken.type.equals(TT.RPAREN))
                 return res.failure(Error.InvalidSyntax(
