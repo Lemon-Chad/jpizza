@@ -12,15 +12,15 @@ public class Error implements Serializable {
     public String details;
 
     public Error(Position pos_start, Position pos_end, String error_name, String details) {
-        this.pos_start = pos_start;
-        this.pos_end = pos_end;
+        this.pos_start = pos_start != null ? pos_start.copy() : null;
+        this.pos_end = pos_end != null ? pos_end.copy() : null;
         this.error_name = error_name;
         this.details = details;
     }
 
     public String asString() {
         return String.format(
-                "%s: %s\nFile %s, line %s\n\n%s",
+                "%s: %s\nFile %s, line %s\n%s",
                 error_name, details,
                 pos_start.fn, pos_start.ln + 1,
                 Constants.stringWithArrows(pos_start.ftext, pos_start, pos_end)

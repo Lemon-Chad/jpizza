@@ -7,8 +7,10 @@ public class Position implements Serializable {
     public int ln;
     public int col;
     public int tcol;
+    public int tidx;
     public String fn;
     public String ftext;
+
     public Position(int idx, int ln, int col, String fn, String ftext) {
         this.idx = idx;
         this.ln = ln;
@@ -17,14 +19,25 @@ public class Position implements Serializable {
         this.ftext = ftext;
     }
 
+    public Position setT(int tcol, int tidx) {
+        this.tcol = tcol;
+        this.tidx = tidx;
+        return this;
+    }
+
     public void advance(char current_char) {
         idx++;
         col++;
-        if (current_char != '\t') tcol++;
+
+        if (current_char != '\t') {
+            tcol++;
+            tidx++;
+        }
 
         if (current_char == Constants.splitter) {
             ln++;
             col = 0;
+            tcol = 0;
         }
 
     }
@@ -36,6 +49,6 @@ public class Position implements Serializable {
     }
 
     public Position copy() {
-        return new Position(idx, ln, col, fn, ftext);
+        return new Position(idx, ln, col, fn, ftext).setT(tcol, tidx);
     }
 }

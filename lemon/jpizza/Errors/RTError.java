@@ -15,7 +15,7 @@ public class RTError extends Error {
     public String asString() {
         if (pos_start == null || pos_end == null) return String.format("%s: %s", error_name, details);
         return String.format(
-                    "%s%s: %s\nFile %s, line %s\n\n%s",
+                    "%s\n%s: %s\nFile %s, line %s\n%s\n",
                     generateTraceback(),
                     error_name, details,
                     pos_start.fn, pos_start.ln + 1,
@@ -31,7 +31,7 @@ public class RTError extends Error {
         while (ctx != null) {
             if (pos != null)
                 result = String.format(
-                            "  ╰──  File %s, line %s, in %s\n%s",
+                            "  ╰──>  File %s, line %s, in %s\n%s",
                             pos.fn, pos.ln + 1, ctx.displayName,
                             result
                         );

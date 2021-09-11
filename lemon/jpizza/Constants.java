@@ -121,23 +121,35 @@ public class Constants {
 
     public static String stringWithArrows(String text, Position pos_start, Position pos_end) {
         StringBuilder result = new StringBuilder();
-        int idx_start = Math.max(text.lastIndexOf(splitter, pos_start.idx), 0);
-        int idx_end = text.indexOf(splitter, idx_start + 1);
+
+        int idxStart = Math.max(0, text.lastIndexOf(splitter, pos_start.tidx));
+        int idxEnd = text.indexOf(splitter, idxStart + 1);
+
+        if (idxEnd < 0) idxEnd = text.length();
+
         int line_count = pos_end.ln - pos_start.ln + 1;
-        String line; int col_start; int col_end;
         for (int i = 0; i < line_count; i++) {
-            if (idx_end < 0)
-                    idx_end = text.length() + idx_end + 1;
-            line = text.substring(idx_start, idx_end);
-            col_start = i == 0 ? pos_start.tcol : 0;
-            col_end = i == line_count - 1 ? pos_end.tcol : line.length() - 1;
-            result.append(line).append('\n');
-            result.append(" ".repeat(col_start)).append("^".repeat(col_end - col_start));
-            idx_start = idx_end;
-            idx_end = text.indexOf(splitter, idx_start + 1);
-            if (idx_end < 0)
-                idx_end = text.length();
+            String line = text.substring(idxStart, idxEnd);
+
+            int colStart = i == 0 ? pos_start.tcol : 0;
+            int colEnd = i == line_count - 1 ? pos_end.tcol : text.length() - 1;
+
+            String grouping = "";
+            if (colEnd - colStart == 1) {
+                grouping = "^";
+            } else if (colEnd - colStart >= 2) {
+                grouping = "╰" + "─".repeat(colEnd - colStart - 2) + "╯";
+            }
+
+            result.append(line).append("\n")
+                    .append(" ".repeat(colStart)).append(grouping);
+
+            idxStart = idxEnd;
+            idxEnd = text.indexOf(splitter, idxStart + 1);
+
+            if (idxEnd < 0) idxEnd = text.length();
         }
+
         return result.toString().replace("\t", "");
     }
 
