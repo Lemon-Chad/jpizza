@@ -1,8 +1,10 @@
 package lemon.jpizza.Generators;
 
+import lemon.jpizza.*;
 import lemon.jpizza.Cases.Case;
 import lemon.jpizza.Cases.ElseCase;
 import lemon.jpizza.Errors.Error;
+import lemon.jpizza.Errors.Tip;
 import lemon.jpizza.Nodes.Definitions.*;
 import lemon.jpizza.Nodes.Expressions.*;
 import lemon.jpizza.Nodes.Node;
@@ -11,14 +13,11 @@ import lemon.jpizza.Nodes.Operations.UnaryOpNode;
 import lemon.jpizza.Nodes.Values.*;
 import lemon.jpizza.Nodes.Variables.AttrAccessNode;
 import lemon.jpizza.Nodes.Variables.VarAccessNode;
-import lemon.jpizza.Position;
 import lemon.jpizza.Results.ParseResult;
-import lemon.jpizza.Token;
 
 import java.util.*;
 
 import static lemon.jpizza.Tokens.*;
-import lemon.jpizza.Pair;
 
 public class Parser {
     Token currentToken;
@@ -1782,7 +1781,8 @@ public class Parser {
             case OPEN -> {
                 nodeToReturn = (Node) res.register(this.block(varNameTok != null));
                 if (res.error != null) return res;
-                return res.success(new FuncDefNode(
+
+                Node funcNode = new FuncDefNode(
                         varNameTok,
                         argTKs.argNameToks,
                         argTKs.argTypeToks,
@@ -1793,7 +1793,15 @@ public class Parser {
                         argTKs.defaults,
                         argTKs.defaultCount,
                         argTKs.generics
-                ).setCatcher(isCatcher));
+                ).setCatcher(isCatcher);
+
+                if (nodeToReturn.jptype == Constants.JPType.List && ((ListNode) nodeToReturn).elements.size() == 1) {
+                    Shell.logger.tip(new Tip(funcNode.pos_start, funcNode.pos_end,
+                                        "Can be refactored to use arrow syntax", "fn addOne<x> -> x + 1;")
+                                        .asString());
+                }
+
+                return res.success(funcNode);
             }
             default -> {
                 if (tokV.equals("yourmom"))
@@ -1969,7 +1977,8 @@ public class Parser {
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected '}'"
         )); advance(); res.registerAdvancement();
-        return res.success(new ClassDefNode(
+
+        Node classDef = new ClassDefNode(
                 classNameTok,
                 attributeDeclarations,
                 argTKs.argNameToks,
@@ -1981,7 +1990,20 @@ public class Parser {
                 argTKs.defaultCount,
                 ptk,
                 argTKs.generics
-        ));
+        );
+
+        if (argTKs.argNameToks.size() == attributeDeclarations.size() && methods.size() == 0) {
+            Shell.logger.tip(new Tip(classDef.pos_start, classDef.pos_end,
+                    "Can be refactored as a struct", """
+struct Vector3 {
+    x,
+    y,
+    z
+};""")
+                    .asString());
+        }
+
+        return res.success(classDef);
     }
 
 }
