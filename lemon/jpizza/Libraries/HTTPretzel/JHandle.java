@@ -115,7 +115,7 @@ public class JHandle implements HttpHandler {
     }
 
     private void logError(HttpExchange exchange, OutputStream os) throws IOException {
-        Shell.logger.fail(res.error.asString());
+        Shell.logger.warn(res.error.asString());
 
         exchange.sendResponseHeaders(404, res.error.details.length());
         os.write(res.error.details.getBytes());
