@@ -246,7 +246,10 @@ public class Shell {
                         dp        ->   Open venv
                         dp help   ->   List commands
                         dp docs   ->   Link to documentation
-                        dp <file> ->   Run file
+                        
+                        dp <file> ->            Run file
+                        dp <file> --compile ->  Compile file
+                        dp <file> --refactor -> Run file with refactoring tips
                         """);
             } else if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
@@ -283,47 +286,49 @@ public class Shell {
         if (args.length == 2) {
             if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
-                    boolean debug = false;
                     String scrpt = Files.readString(Path.of(args[0]));
                     String dir = Path.of(args[0]).toString();
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    if (args[1].equals("--debug")) {
-                        debug = true;
-                        Pair<List<Node>, Error> res = getAst(args[0], scrpt);
-                        if (res.b != null) {
-                            Error e = res.b;
-                            String message = String.format("%s: %s", e.error_name, e.details);
-                            logger.enableLogging();
-                            logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
-                                    e.pos_start.ln, e.pos_end.ln,
-                                    e.pos_start.col, e.pos_end.col,
-                                    message));
-                        } else {
-                            logger.enableLogging();
-                            logger.outln("{}");
+                    switch (args[1]) {
+                        case "--debug" -> {
+                            Pair<List<Node>, Error> res = getAst(args[0], scrpt);
+                            if (res.b != null) {
+                                Error e = res.b;
+                                String message = String.format("%s: %s", e.error_name, e.details);
+                                logger.enableLogging();
+                                logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
+                                        e.pos_start.ln, e.pos_end.ln,
+                                        e.pos_start.col, e.pos_end.col,
+                                        message));
+                            } else {
+                                logger.enableLogging();
+                                logger.outln("{}");
+                            }
+                            logger.disableLogging();
+                            return;
                         }
-                        logger.disableLogging();
-                    }
-                    else if (args[1].equals("--compile")) {
-                        Pair<Obj, Error> res = compile(fn, scrpt,
-                                newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox");
-                        if (res.b != null) {
-                            Error e = res.b;
-                            String message = String.format("%s: %s", e.error_name, e.details);
-                            Shell.logger.enableLogging();
-                            Shell.logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": " +
-                                            "\"%s\"}",
-                                    e.pos_start.ln, e.pos_end.ln,
-                                    e.pos_start.col, e.pos_end.col,
-                                    message));
+                        case "--compile" -> {
+                            Pair<Obj, Error> res = compile(fn, scrpt,
+                                    newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox");
+                            if (res.b != null) {
+                                Error e = res.b;
+                                String message = String.format("%s: %s", e.error_name, e.details);
+                                Shell.logger.enableLogging();
+                                Shell.logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": " +
+                                                "\"%s\"}",
+                                        e.pos_start.ln, e.pos_end.ln,
+                                        e.pos_start.col, e.pos_end.col,
+                                        message));
+                            }
+                            return;
                         }
-                        return;
+                        case "--refactor" -> logger.enableTips();
                     }
                     Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null) {
-                        if (!debug) Shell.logger.fail(res.b.asString());
+                        Shell.logger.fail(res.b.asString());
                     }
                 } else {
                     Shell.logger.outln("File does not exist.");
@@ -346,9 +351,10 @@ public class Shell {
             return;
         }
         Shell.logger.outln("Exit with 'quit'");
+        Shell.logger.enableTips();
         while (true) {
-            Shell.logger.out("-> "); String input = in.nextLine();
-            if (input.equals("quit"))
+            Shell.logger.out("-> "); String input = in.nextLine() + ";";
+            if (input.equals("quit;"))
                 break;
             Pair<Obj, Error> a = run("<shell>", input, true);
             if (a.b != null) Shell.logger.fail(a.b.asString());

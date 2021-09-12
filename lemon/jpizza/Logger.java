@@ -14,6 +14,7 @@ import static com.diogonunes.jcolor.Ansi.colorize;
 
 public class Logger {
     boolean log = true;
+    boolean tips = false;
     int omitt = 5;
     int tape = 40;
 
@@ -83,7 +84,7 @@ public class Logger {
     }
 
     public void tip(Object text) {
-        if (log)
+        if (log && tips)
             System.out.println(colorize(
                     getTape("TIP") + "\n" + ots(text),
                     Attribute.CYAN_TEXT()
@@ -96,4 +97,7 @@ public class Logger {
 
     public void disableLogging() { log = false; }
     public void enableLogging() { log = true; }
+
+    public void enableTips() { tips = true; }
+    public void disableTips() { tips = false; }
 }
