@@ -5,3 +5,5 @@ replit.nix
 sometoken.txt
 *.devp
 *.json
+.classpath
+.project
