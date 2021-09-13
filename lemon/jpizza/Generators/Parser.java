@@ -1295,13 +1295,13 @@ match (a) {
         if (res.error != null)
             return res;
 
-        if (((BooleanNode) condition).val) {
+        if (condition.jptype == Constants.JPType.Boolean && ((BooleanNode) condition).val) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                     "Redundant conditional", """
 if (true)
     println("This runs no matter what");""")
                     .asString());
-        } else {
+        } else if (condition.jptype == Constants.JPType.Boolean) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                     "Conditional will never run", """
 if (false)
