@@ -124,6 +124,7 @@ public class HTTPLIB extends Library {
         return new RTResult().success(ret);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
         if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
@@ -132,7 +133,6 @@ public class HTTPLIB extends Library {
                 urlObj.get_ctx()
         ));
 
-        @SuppressWarnings("DuplicatedCode")
         String url = ((Str) urlObj).trueValue();
         var buildData = getBuilder(execCtx, url, urlObj);
         if (buildData.b != null) return new RTResult().failure(buildData.b);
@@ -147,6 +147,30 @@ public class HTTPLIB extends Library {
         return buildRequest(request, params);
     }
 
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_deleteRequest(Context execCtx) {
+        Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                urlObj.get_start(), urlObj.get_end(),
+                "Expected URL string",
+                urlObj.get_ctx()
+        ));
+
+        String url = ((Str) urlObj).trueValue();
+        var buildData = getBuilder(execCtx, url, urlObj);
+        if (buildData.b != null) return new RTResult().failure(buildData.b);
+
+        Map<String, String> params = buildData.a.a;
+        HttpRequest.Builder builder = buildData.a.b;
+
+        HttpRequest request = builder
+                .timeout(Duration.of(10, SECONDS))
+                .DELETE().build();
+
+        return buildRequest(request, params);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_postRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
         if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
@@ -174,6 +198,90 @@ public class HTTPLIB extends Library {
         HttpRequest request = builder
                                 .timeout(Duration.of(10, SECONDS))
                                 .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+
+        return buildRequest(request, params);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult otherRequest(String method, Context execCtx) {
+        Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                urlObj.get_start(), urlObj.get_end(),
+                "Expected URL string",
+                urlObj.get_ctx()
+        ));
+
+        Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
+        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                urlObj.get_start(), urlObj.get_end(),
+                "Expected body string",
+                urlObj.get_ctx()
+        ));
+
+        String url = ((Str) urlObj).trueValue();
+        String body = ((Str) bodyObj).trueValue();
+
+        var buildData = getBuilder(execCtx, url, urlObj);
+        if (buildData.b != null) return new RTResult().failure(buildData.b);
+
+        Map<String, String> params = buildData.a.a;
+        HttpRequest.Builder builder = buildData.a.b;
+
+        HttpRequest request = builder
+                .timeout(Duration.of(10, SECONDS))
+                .method(method, HttpRequest.BodyPublishers.ofString(body)).build();
+
+        return buildRequest(request, params);
+    }
+
+    public RTResult execute_patchRequest(Context execCtx) {
+        return otherRequest("PATCH", execCtx);
+    }
+
+    public RTResult execute_traceRequest(Context execCtx) {
+        return otherRequest("TRACE", execCtx);
+    }
+
+    public RTResult execute_optionsRequest(Context execCtx) {
+        return otherRequest("OPTIONS", execCtx);
+    }
+
+    public RTResult execute_connectRequest(Context execCtx) {
+        return otherRequest("CONNECT", execCtx);
+    }
+
+    public RTResult execute_headRequest(Context execCtx) {
+        return otherRequest("HEAD", execCtx);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_putRequest(Context execCtx) {
+        Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                urlObj.get_start(), urlObj.get_end(),
+                "Expected URL string",
+                urlObj.get_ctx()
+        ));
+
+        Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
+        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                urlObj.get_start(), urlObj.get_end(),
+                "Expected body string",
+                urlObj.get_ctx()
+        ));
+
+        String url = ((Str) urlObj).trueValue();
+        String body = ((Str) bodyObj).trueValue();
+
+        var buildData = getBuilder(execCtx, url, urlObj);
+        if (buildData.b != null) return new RTResult().failure(buildData.b);
+
+        Map<String, String> params = buildData.a.a;
+        HttpRequest.Builder builder = buildData.a.b;
+
+        HttpRequest request = builder
+                .timeout(Duration.of(10, SECONDS))
+                .PUT(HttpRequest.BodyPublishers.ofString(body)).build();
 
         return buildRequest(request, params);
     }
