@@ -3,7 +3,14 @@ replit.nix
 *.class
 *.jar
 sometoken.txt
+.DS_STORE
 *.devp
 *.json
 .classpath
 .project
+.gradle
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
