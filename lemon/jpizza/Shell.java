@@ -86,7 +86,14 @@ public class Shell {
 
         HTTPLIB.initialize("httpx", HTTPLIB.class, new HashMap<>(){{
             put("getRequest", Arrays.asList("url", "params"));
+            put("deleteRequest", Arrays.asList("url", "params"));
             put("postRequest", Arrays.asList("url", "params", "body"));
+            put("putRequest", Arrays.asList("url", "params", "body"));
+            put("patchRequest", Arrays.asList("url", "params", "body"));
+            put("optionsRequest", Arrays.asList("url", "params", "body"));
+            put("connectRequest", Arrays.asList("url", "params", "body"));
+            put("traceRequest", Arrays.asList("url", "params", "body"));
+            put("headRequest", Arrays.asList("url", "params", "body"));
         }});
 
         HTTPretzel.initialize("pretzel", HTTPretzel.class, new HashMap<>(){{
