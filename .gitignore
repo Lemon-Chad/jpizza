@@ -8,6 +8,7 @@ sometoken.txt
 *.json
 .classpath
 .project
+.idea
 .gradle
 **/build/
 !src/**/build/
