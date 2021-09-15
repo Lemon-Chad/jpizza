@@ -9,16 +9,8 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
-}
-
-jar {
-    manifest {
-        attributes 'Main-Class': 'lemon.jpizza.Shell'
-    }
-}
-
-run{
-    standardInput = System.in
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'java'
 }
 
 repositories {
@@ -39,4 +31,17 @@ dependencies {
 application {
     // Define the main class for the application.
     mainClass = 'lemon.jpizza.Shell'
+}
+
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'lemon.jpizza.Shell'
+    }
+    configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
+
+}
+
+run{
+    standardInput = System.in
 }

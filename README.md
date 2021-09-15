@@ -27,6 +27,7 @@ A fast to type and easy to ship language for developers on the go!
 - [Documentation](https://jpizza.rtfd.io) -> The good ol' docs
 - [JPizza](https://bit.ly/3xXW5ci) -> Download/update to the latest JPizza
 - [Fridge](https://github.com/Lemon-Chad/frdge) -> A public package manager for posting your libraries and downloading others
+- [Contributing Guide](Contributing.md)
 - [VSCode](https://bit.ly/jp2vscode) -> Add JPizza2 to VSCode
 - [JPX](https://bit.ly/jpx) -> Framework adding fun import features and helps you ship your app to other machines without the need for JPizza2
 - [Video Tutorials](https://bit.ly/jp2tutorial) -> A full video tutorial series over JPizza2, Fridge, and even JPX!
