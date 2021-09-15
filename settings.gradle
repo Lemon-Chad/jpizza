@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'jpizza'
-include('app')
+include('jpizza')
