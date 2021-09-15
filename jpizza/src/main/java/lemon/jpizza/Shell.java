@@ -44,6 +44,14 @@ public class Shell {
 
     public static void initLibs() {
         // Load librarys
+        SysLib.initialize("sys", SysLib.class, new HashMap<>(){{
+            put("os", new ArrayList<>());
+            put("disableOut", new ArrayList<>());
+            put("enableOut", new ArrayList<>());
+            put("jpv", new ArrayList<>()); // <-- JPizza version command moved here
+            put("execute", Collections.singletonList("cmd"));
+        }});
+
         GUIs.initialize("GUIs", GUIs.class, new HashMap<>(){{
             put("GUI", Collections.singletonList("value"));
         }});
@@ -228,7 +236,6 @@ public class Shell {
             put("random", new ArrayList<>());
             put("clear", new ArrayList<>());
             put("createDennis", new ArrayList<>());
-            put("_version_", new ArrayList<>());
             put("pi", new ArrayList<>());
             put("euler", new ArrayList<>());
 
