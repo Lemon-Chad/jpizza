@@ -35,12 +35,15 @@ public class ImportNode extends Node {
         var mkdirs = new File(Shell.root + "/modules").mkdirs();
         ClassInstance imp = null;
         RTResult res = new RTResult();
+        String userDataDir = System.getProperty("user.dir");
         if (Constants.LIBRARIES.containsKey(fn)) imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))
                 .set_pos(pos_start, pos_end).set_context(context);
         else {
-            if (Files.exists(Paths.get(modPath)))
+            if (Files.exists(Paths.get(modFilePath))){
+                System.setProperty("user.dir", modPath);
                 imp = (ClassInstance) res.register(Interpreter.getImprt(modFilePath, fn, context, pos_start,
                         pos_end));
+                System.setProperty("user.dir", userDataDir);}
             else if (Files.exists(Paths.get(file_name)))
                 imp = (ClassInstance) res.register(Interpreter.getImprt(file_name, fn, context, pos_start,
                         pos_end));
