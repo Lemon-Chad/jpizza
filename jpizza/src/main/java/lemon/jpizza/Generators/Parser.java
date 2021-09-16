@@ -841,7 +841,7 @@ public class Parser {
             res.registerAdvancement(); advance();
 
             if (!def) {
-                condition = (Node) res.register(expr());
+                condition = (Node) res.register(compExpr());
                 if (res.error != null) return res;
             } else condition = null;
 
@@ -1413,7 +1413,7 @@ if (false)
 
         L getStatement = () -> {
             res.registerAdvancement(); advance();
-            Node condition = (Node) res.register(expr());
+            Node condition = (Node) res.register(compExpr());
             if (res.error != null) return res;
             Node expr_ = (Node) res.register(this.kv());
             if (res.error != null) return res;
@@ -1509,7 +1509,7 @@ if (false)
                     ));
             }
         }
-        Node start = (Node) res.register(this.expr());
+        Node start = (Node) res.register(this.compExpr());
         if (res.error != null) return res;
 
         if (!currentToken.type.equals(TT.BITE))
