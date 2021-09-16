@@ -23,6 +23,11 @@ public class SysLib extends Library {
         return new RTResult().success(new Str(os));
     }
 
+    public RTResult execute_home(Context execCtx) {
+        String home = System.getProperty("user.home");
+        return new RTResult().success(new Str(home));
+    }
+
     public RTResult execute_execute(Context execCtx) throws IOException, InterruptedException {
         Runtime run = Runtime.getRuntime();
 
