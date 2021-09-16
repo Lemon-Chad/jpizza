@@ -14,11 +14,29 @@ import lemon.jpizza.Results.RTResult;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 
 @SuppressWarnings("unused DuplicatedCode")
 public class FileLib extends Library {
 
     public FileLib(String name) { super(name); }
+
+    public static void initialize() {
+        initialize("iofile", FileLib.class, new HashMap<>(){{
+            put("readFile", Collections.singletonList("dir"));
+            put("readSerial", Collections.singletonList("dir"));
+            put("readBytes", Collections.singletonList("dir"));
+            put("writeFile", Arrays.asList("dir", "val"));
+            put("writeSerial", Arrays.asList("dir", "val"));
+            put("fileExists", Arrays.asList("dir", "val"));
+            put("makeDirs", Collections.singletonList("dir"));
+            put("setCWD", Collections.singletonList("dir"));
+            put("getCWD", new ArrayList<>());
+        }});
+    }
 
     private RTResult getdirectory(Obj value, Context ctx) {
         if (value.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(

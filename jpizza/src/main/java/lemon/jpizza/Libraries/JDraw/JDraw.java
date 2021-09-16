@@ -151,6 +151,44 @@ public class JDraw extends Library {
         super(name);
     }
 
+    public static void initialize() {
+        initialize("awt", JDraw.class, new HashMap<>(){{
+            put("drawOval", Arrays.asList("x", "y", "width", "height", "color"));
+            put("drawRect", Arrays.asList("x", "y", "width", "height", "color"));
+            put("drawCircle", Arrays.asList("radius", "x", "y", "color"));
+            put("drawText", Arrays.asList("txt", "x", "y", "color"));
+            put("drawSquare", Arrays.asList("radius", "x", "y", "color"));
+            put("drawPoly", Arrays.asList("points", "color"));
+            put("tracePoly", Arrays.asList("points", "color"));
+            put("setPixel", Arrays.asList("x", "y", "color"));
+            put("drawImage", Arrays.asList("x", "y", "filename"));
+            put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
+            put("setSize", Arrays.asList("width", "height"));
+            put("setTitle", Collections.singletonList("value"));
+            put("lockSize", Collections.singletonList("value"));
+            put("gpuCompute", Collections.singletonList("value"));
+            put("setIcon", Collections.singletonList("filename"));
+            put("setBackgroundColor", Collections.singletonList("color"));
+            put("mouseDown", Collections.singletonList("button"));
+            put("keyDown", Collections.singletonList("key"));
+            put("keyTyped", Collections.singletonList("key"));
+            put("screenshot", Collections.singletonList("filename"));
+            put("playSound", Collections.singletonList("filename"));
+            put("start", new ArrayList<>());
+            put("keyString", new ArrayList<>());
+            put("mousePos", new ArrayList<>());
+            put("mouseIn", new ArrayList<>());
+            put("refresh", new ArrayList<>());
+            put("toggleQRender", new ArrayList<>());
+            put("qUpdate", new ArrayList<>());
+            put("fps", new ArrayList<>());
+            put("refreshLoop", new ArrayList<>());
+            put("refreshUnloop", new ArrayList<>());
+            put("init", new ArrayList<>());
+            put("clear", new ArrayList<>());
+        }});
+    }
+
     public static Pair<Integer[], Error> getColor(Object col) {
         RTResult res = new RTResult();
 

@@ -6,10 +6,19 @@ import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Objects.Primitives.*;
 
+import java.util.Collections;
+import java.util.HashMap;
+
 @SuppressWarnings("unused")
 public class GUIs extends Library {
 
     public GUIs(String name) { super(name); }
+
+    public static void initialize() {
+        initialize("GUIs", GUIs.class, new HashMap<>(){{
+            put("GUI", Collections.singletonList("value"));
+        }});
+    }
 
     public RTResult execute_GUI(Context execCtx) {
         // Get value arg from variables passed into function

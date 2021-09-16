@@ -13,15 +13,38 @@ import lemon.jpizza.Results.RTResult;
 
 import java.io.*;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class SockLib extends Library {
 
     public SockLib(String name) { super(name); }
+
+    public static void initialize() {
+        initialize("sockets", SockLib.class, new HashMap<>(){{
+            put("newServer", Collections.singletonList("port"));
+            put("newClient", Arrays.asList("host", "port"));
+
+            put("connect", Collections.singletonList("server"));
+
+            put("serverSend", Arrays.asList("client", "msg"));
+            put("serverSendBytes", Arrays.asList("client", "msg"));
+            put("serverRecv", Collections.singletonList("client"));
+            put("serverRecvBytes", Arrays.asList("client", "length"));
+            put("serverRecvAllBytes", Collections.singletonList("client"));
+
+            put("closeServerConnection", Collections.singletonList("client"));
+            put("closeServer", Collections.singletonList("server"));
+
+            put("clientSend", Arrays.asList("client", "msg"));
+            put("clientSendBytes", Arrays.asList("client", "msg"));
+            put("clientRecv", Collections.singletonList("client"));
+            put("clientRecvBytes", Arrays.asList("client", "length"));
+            put("clientRecvAllBytes", Collections.singletonList("client"));
+
+            put("clientClose", Collections.singletonList("client"));
+        }});
+    }
 
     // Server Side
 

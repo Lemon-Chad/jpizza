@@ -29,7 +29,7 @@ import lemon.jpizza.Results.RTResult;
 public class Shell {
 
     public static Logger logger = new Logger();
-    static SymbolTable globalSymbolTable = new SymbolTable();
+    public static SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
 
     public static String[] getFNDirs(String dir) {
@@ -44,205 +44,17 @@ public class Shell {
 
     public static void initLibs() {
         // Load librarys
-        SysLib.initialize("sys", SysLib.class, new HashMap<>(){{
-            put("os", new ArrayList<>());
-            put("disableOut", new ArrayList<>());
-            put("enableOut", new ArrayList<>());
-            put("jpv", new ArrayList<>()); // <-- JPizza version command moved here
-            put("execute", Collections.singletonList("cmd"));
-            put("getEnvVar", Collections.singletonList("variableName"));
-            put("envVarExists", Collections.singletonList("variableName"));
-            put("home", new ArrayList<>());
-        }});
-
-        GUIs.initialize("GUIs", GUIs.class, new HashMap<>(){{
-            put("GUI", Collections.singletonList("value"));
-        }});
-
-        JDraw.initialize("awt", JDraw.class, new HashMap<>(){{
-            put("drawOval", Arrays.asList("x", "y", "width", "height", "color"));
-            put("drawRect", Arrays.asList("x", "y", "width", "height", "color"));
-            put("drawCircle", Arrays.asList("radius", "x", "y", "color"));
-            put("drawText", Arrays.asList("txt", "x", "y", "color"));
-            put("drawSquare", Arrays.asList("radius", "x", "y", "color"));
-            put("drawPoly", Arrays.asList("points", "color"));
-            put("tracePoly", Arrays.asList("points", "color"));
-            put("setPixel", Arrays.asList("x", "y", "color"));
-            put("drawImage", Arrays.asList("x", "y", "filename"));
-            put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
-            put("setSize", Arrays.asList("width", "height"));
-            put("setTitle", Collections.singletonList("value"));
-            put("lockSize", Collections.singletonList("value"));
-            put("gpuCompute", Collections.singletonList("value"));
-            put("setIcon", Collections.singletonList("filename"));
-            put("setBackgroundColor", Collections.singletonList("color"));
-            put("mouseDown", Collections.singletonList("button"));
-            put("keyDown", Collections.singletonList("key"));
-            put("keyTyped", Collections.singletonList("key"));
-            put("screenshot", Collections.singletonList("filename"));
-            put("playSound", Collections.singletonList("filename"));
-            put("start", new ArrayList<>());
-            put("keyString", new ArrayList<>());
-            put("mousePos", new ArrayList<>());
-            put("mouseIn", new ArrayList<>());
-            put("refresh", new ArrayList<>());
-            put("toggleQRender", new ArrayList<>());
-            put("qUpdate", new ArrayList<>());
-            put("fps", new ArrayList<>());
-            put("refreshLoop", new ArrayList<>());
-            put("refreshUnloop", new ArrayList<>());
-            put("init", new ArrayList<>());
-            put("clear", new ArrayList<>());
-        }});
-
-        HTTPLIB.initialize("httpx", HTTPLIB.class, new HashMap<>(){{
-            put("getRequest", Arrays.asList("url", "params"));
-            put("deleteRequest", Arrays.asList("url", "params"));
-            put("postRequest", Arrays.asList("url", "params", "body"));
-            put("putRequest", Arrays.asList("url", "params", "body"));
-            put("patchRequest", Arrays.asList("url", "params", "body"));
-            put("optionsRequest", Arrays.asList("url", "params", "body"));
-            put("connectRequest", Arrays.asList("url", "params", "body"));
-            put("traceRequest", Arrays.asList("url", "params", "body"));
-            put("headRequest", Arrays.asList("url", "params", "body"));
-        }});
-
-        HTTPretzel.initialize("pretzel", HTTPretzel.class, new HashMap<>(){{
-            put("init", Arrays.asList("host", "addr"));
-            put("route", Arrays.asList("route", "func"));
-            put("start", new ArrayList<>());
-        }});
-
-        JGens.initialize("gens", JGens.class, new HashMap<>(){{
-            put("range", Arrays.asList("start", "stop", "step"));
-            put("linear", Arrays.asList("start", "stop", "step", "slope", "y-inter"));
-            put("quadratic", Arrays.asList("start", "stop", "step", "a", "b", "c"));
-        }});
-
-        JasonLib.initialize("json", JasonLib.class, new HashMap<>(){{
-            put("loads", Collections.singletonList("value"));
-            put("dumps", Collections.singletonList("value"));
-        }});
-
-        Time.initialize("time", Time.class, new HashMap<>(){{
-            put("halt", Collections.singletonList("ms"));
-            put("stopwatch", Collections.singletonList("func"));
-            put("epoch", new ArrayList<>());
-        }});
-
-        FileLib.initialize("iofile", FileLib.class, new HashMap<>(){{
-            put("readFile", Collections.singletonList("dir"));
-            put("readSerial", Collections.singletonList("dir"));
-            put("readBytes", Collections.singletonList("dir"));
-            put("writeFile", Arrays.asList("dir", "val"));
-            put("writeSerial", Arrays.asList("dir", "val"));
-            put("fileExists", Arrays.asList("dir", "val"));
-            put("makeDirs", Collections.singletonList("dir"));
-            put("setCWD", Collections.singletonList("dir"));
-            put("getCWD", new ArrayList<>());
-        }});
-
-        SockLib.initialize("sockets", SockLib.class, new HashMap<>(){{
-            put("newServer", Collections.singletonList("port"));
-            put("newClient", Arrays.asList("host", "port"));
-
-            put("connect", Collections.singletonList("server"));
-
-            put("serverSend", Arrays.asList("client", "msg"));
-            put("serverSendBytes", Arrays.asList("client", "msg"));
-            put("serverRecv", Collections.singletonList("client"));
-            put("serverRecvBytes", Arrays.asList("client", "length"));
-            put("serverRecvAllBytes", Collections.singletonList("client"));
-
-            put("closeServerConnection", Collections.singletonList("client"));
-            put("closeServer", Collections.singletonList("server"));
-
-            put("clientSend", Arrays.asList("client", "msg"));
-            put("clientSendBytes", Arrays.asList("client", "msg"));
-            put("clientRecv", Collections.singletonList("client"));
-            put("clientRecvBytes", Arrays.asList("client", "length"));
-            put("clientRecvAllBytes", Collections.singletonList("client"));
-
-            put("clientClose", Collections.singletonList("client"));
-        }});
-
-        BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
-            put("setIndex", Arrays.asList("list", "item", "index"));
-            put("insert", Arrays.asList("list", "item", "index"));
-            put("substr", Arrays.asList("str", "start", "end"));
-            put("sublist", Arrays.asList("list", "start", "end"));
-            put("set", Arrays.asList("dict", "key", "value"));
-            put("preprocess", Arrays.asList("processed", "preprocessor"));
-            put("postprocess", Arrays.asList("processed", "postprocessor"));
-            put("arctan2", Arrays.asList("a", "b"));
-            put("join", Arrays.asList("string", "list"));
-            put("getattr", Arrays.asList("instance", "value"));
-            put("hasattr", Arrays.asList("instance", "value"));
-            put("get", Arrays.asList("dict", "value"));
-            put("delete", Arrays.asList("dict", "value"));
-            put("foreach", Arrays.asList("list", "func"));
-            put("append", Arrays.asList("list", "value"));
-            put("remove", Arrays.asList("list", "value"));
-            put("pop", Arrays.asList("list", "value"));
-            put("extend", Arrays.asList("listA", "listB"));
-            put("contains", Arrays.asList("list", "value"));
-            put("randint", Arrays.asList("min", "max"));
-            put("min", Arrays.asList("a", "b"));
-            put("max", Arrays.asList("a", "b"));
-            put("split", Arrays.asList("value", "splitter"));
-            put("enumProps", Arrays.asList("prop", "enumChild"));
-            put("log", Arrays.asList("value", "base"));
-            put("println", Collections.singletonList("value"));
-            put("print", Collections.singletonList("value"));
-            put("printback", Collections.singletonList("value"));
-            put("type", Collections.singletonList("value"));
-            put("value", Collections.singletonList("value"));
-            put("sim", Collections.singletonList("value"));
-            put("round", Collections.singletonList("value"));
-            put("floor", Collections.singletonList("value"));
-            put("ceil", Collections.singletonList("value"));
-            put("abs", Collections.singletonList("value"));
-            put("run", Collections.singletonList("fn"));
-            put("size", Collections.singletonList("value"));
-            put("str", Collections.singletonList("value"));
-            put("list", Collections.singletonList("value"));
-            put("ok", Collections.singletonList("res"));
-            put("fail", Collections.singletonList("res"));
-            put("catch", Collections.singletonList("res"));
-            put("resolve", Collections.singletonList("res"));
-            put("bool", Collections.singletonList("value"));
-            put("num", Collections.singletonList("value"));
-            put("dict", Collections.singletonList("value"));
-            put("func", Collections.singletonList("value"));
-            put("isList", Collections.singletonList("value"));
-            put("isFunction", Collections.singletonList("value"));
-            put("isBoolean", Collections.singletonList("value"));
-            put("isDict", Collections.singletonList("value"));
-            put("isNull", Collections.singletonList("value"));
-            put("isNumber", Collections.singletonList("value"));
-            put("isString", Collections.singletonList("value"));
-            put("field", Collections.singletonList("value"));
-            put("nfield", Collections.singletonList("value"));
-            put("choose", Collections.singletonList("value"));
-            put("byter", Collections.singletonList("value"));
-            put("floating", Collections.singletonList("value"));
-            put("strUpper", Collections.singletonList("value"));
-            put("strLower", Collections.singletonList("value"));
-            put("strShift", Collections.singletonList("value"));
-            put("strUnshift", Collections.singletonList("value"));
-            put("sin", Collections.singletonList("a"));
-            put("cos", Collections.singletonList("a"));
-            put("tan", Collections.singletonList("a"));
-            put("arcsin", Collections.singletonList("a"));
-            put("arccos", Collections.singletonList("a"));
-            put("arctan", Collections.singletonList("a"));
-            put("random", new ArrayList<>());
-            put("clear", new ArrayList<>());
-            put("createDennis", new ArrayList<>());
-            put("pi", new ArrayList<>());
-            put("euler", new ArrayList<>());
-
-        }}, globalSymbolTable);
+        BuiltInFunction.initialize();
+        SysLib.initialize();
+        JGens.initialize();
+        GUIs.initialize();
+        FileLib.initialize();
+        SockLib.initialize();
+        HTTPLIB.initialize();
+        JasonLib.initialize();
+        JDraw.initialize();
+        HTTPretzel.initialize();
+        Time.initialize();
     }
 
     @SuppressWarnings("DuplicatedCode")

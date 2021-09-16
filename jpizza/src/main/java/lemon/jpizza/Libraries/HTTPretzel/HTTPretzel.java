@@ -14,6 +14,9 @@ import lemon.jpizza.Results.RTResult;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 
 @SuppressWarnings("unused")
 public class HTTPretzel extends Library {
@@ -22,6 +25,14 @@ public class HTTPretzel extends Library {
 
     public HTTPretzel(String name) {
         super(name);
+    }
+
+    public static void initialize() {
+        initialize("pretzel", HTTPretzel.class, new HashMap<>(){{
+            put("init", Arrays.asList("host", "addr"));
+            put("route", Arrays.asList("route", "func"));
+            put("start", new ArrayList<>());
+        }});
     }
 
     public RTResult inited() {

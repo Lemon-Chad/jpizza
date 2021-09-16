@@ -12,11 +12,21 @@ import lemon.jpizza.Objects.Primitives.Num;
 import lemon.jpizza.Results.RTResult;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 @SuppressWarnings("unused")
 public class Time extends Library {
 
     public Time(String name) { super(name); }
+
+    public static void initialize() {
+        initialize("time", Time.class, new HashMap<>(){{
+            put("halt", Collections.singletonList("ms"));
+            put("stopwatch", Collections.singletonList("func"));
+            put("epoch", new ArrayList<>());
+        }});
+    }
 
     public RTResult execute_halt(Context execCtx) {
         Obj value = (Obj) execCtx.symbolTable.get("ms");

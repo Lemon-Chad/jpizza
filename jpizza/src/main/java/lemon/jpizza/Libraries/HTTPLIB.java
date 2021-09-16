@@ -15,10 +15,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 
@@ -26,6 +23,20 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 public class HTTPLIB extends Library {
 
     public HTTPLIB(String name) { super(name); }
+
+    public static void initialize() {
+        initialize("httpx", HTTPLIB.class, new HashMap<>(){{
+            put("getRequest", Arrays.asList("url", "params"));
+            put("deleteRequest", Arrays.asList("url", "params"));
+            put("postRequest", Arrays.asList("url", "params", "body"));
+            put("putRequest", Arrays.asList("url", "params", "body"));
+            put("patchRequest", Arrays.asList("url", "params", "body"));
+            put("optionsRequest", Arrays.asList("url", "params", "body"));
+            put("connectRequest", Arrays.asList("url", "params", "body"));
+            put("traceRequest", Arrays.asList("url", "params", "body"));
+            put("headRequest", Arrays.asList("url", "params", "body"));
+        }});
+    }
 
     /*
     Resources

@@ -88,6 +88,8 @@ public class Library extends BaseFunction {
         return new RTResult().success(o);
     }
 
+    public static void initialize() {}
+
     public static RTResult checkPosInt(Object obj) {
         if (obj == null)
             return new RTResult().failure(new RTError(

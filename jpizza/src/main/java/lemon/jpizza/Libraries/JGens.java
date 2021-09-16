@@ -15,11 +15,20 @@ import lemon.jpizza.Results.RTResult;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 
 @SuppressWarnings("unused")
 public class JGens extends Library {
     public JGens(String name) {
         super(name);
+    }
+
+    public static void initialize() {
+        initialize("gens", JGens.class, new HashMap<>(){{
+            put("range", Arrays.asList("start", "stop", "step"));
+            put("linear", Arrays.asList("start", "stop", "step", "slope", "y-inter"));
+            put("quadratic", Arrays.asList("start", "stop", "step", "a", "b", "c"));
+        }});
     }
 
     public Pair<Pair<Point3, Num[]>, Error> getRange(Context execCtx) {

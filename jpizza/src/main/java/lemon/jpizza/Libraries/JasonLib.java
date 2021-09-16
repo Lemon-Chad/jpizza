@@ -14,10 +14,7 @@ import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
 import lemon.jpizza.Tokens.TT;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class JasonLib extends Library {
@@ -36,6 +33,13 @@ public class JasonLib extends Library {
     );
 
     public JasonLib(String name) { super(name); }
+
+    public static void initialize() {
+        initialize("json", JasonLib.class, new HashMap<>(){{
+            put("loads", Collections.singletonList("value"));
+            put("dumps", Collections.singletonList("value"));
+        }});
+    }
 
     public RTResult execute_loads(Context execCtx) {
         Obj value = ((Obj) execCtx.symbolTable.get("value")).astring();

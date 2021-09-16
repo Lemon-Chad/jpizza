@@ -29,6 +29,87 @@ public class BuiltInFunction extends Library {
     private final Random random = new Random();
     private final Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
+    public static void initialize() {
+        BuiltInFunction.initialize("compiled", BuiltInFunction.class, new HashMap<>(){{
+            put("setIndex", Arrays.asList("list", "item", "index"));
+            put("insert", Arrays.asList("list", "item", "index"));
+            put("substr", Arrays.asList("str", "start", "end"));
+            put("sublist", Arrays.asList("list", "start", "end"));
+            put("set", Arrays.asList("dict", "key", "value"));
+            put("preprocess", Arrays.asList("processed", "preprocessor"));
+            put("postprocess", Arrays.asList("processed", "postprocessor"));
+            put("arctan2", Arrays.asList("a", "b"));
+            put("join", Arrays.asList("string", "list"));
+            put("getattr", Arrays.asList("instance", "value"));
+            put("hasattr", Arrays.asList("instance", "value"));
+            put("get", Arrays.asList("dict", "value"));
+            put("delete", Arrays.asList("dict", "value"));
+            put("foreach", Arrays.asList("list", "func"));
+            put("append", Arrays.asList("list", "value"));
+            put("remove", Arrays.asList("list", "value"));
+            put("pop", Arrays.asList("list", "value"));
+            put("extend", Arrays.asList("listA", "listB"));
+            put("contains", Arrays.asList("list", "value"));
+            put("randint", Arrays.asList("min", "max"));
+            put("min", Arrays.asList("a", "b"));
+            put("max", Arrays.asList("a", "b"));
+            put("split", Arrays.asList("value", "splitter"));
+            put("enumProps", Arrays.asList("prop", "enumChild"));
+            put("log", Arrays.asList("value", "base"));
+            put("println", Collections.singletonList("value"));
+            put("print", Collections.singletonList("value"));
+            put("printback", Collections.singletonList("value"));
+            put("type", Collections.singletonList("value"));
+            put("value", Collections.singletonList("value"));
+            put("sim", Collections.singletonList("value"));
+            put("round", Collections.singletonList("value"));
+            put("floor", Collections.singletonList("value"));
+            put("ceil", Collections.singletonList("value"));
+            put("abs", Collections.singletonList("value"));
+            put("run", Collections.singletonList("fn"));
+            put("size", Collections.singletonList("value"));
+            put("str", Collections.singletonList("value"));
+            put("list", Collections.singletonList("value"));
+            put("ok", Collections.singletonList("res"));
+            put("fail", Collections.singletonList("res"));
+            put("catch", Collections.singletonList("res"));
+            put("resolve", Collections.singletonList("res"));
+            put("bool", Collections.singletonList("value"));
+            put("num", Collections.singletonList("value"));
+            put("dict", Collections.singletonList("value"));
+            put("func", Collections.singletonList("value"));
+            put("isList", Collections.singletonList("value"));
+            put("isFunction", Collections.singletonList("value"));
+            put("isBoolean", Collections.singletonList("value"));
+            put("isDict", Collections.singletonList("value"));
+            put("isNull", Collections.singletonList("value"));
+            put("isNumber", Collections.singletonList("value"));
+            put("isString", Collections.singletonList("value"));
+            put("field", Collections.singletonList("value"));
+            put("nfield", Collections.singletonList("value"));
+            put("choose", Collections.singletonList("value"));
+            put("byter", Collections.singletonList("value"));
+            put("floating", Collections.singletonList("value"));
+            put("strUpper", Collections.singletonList("value"));
+            put("strLower", Collections.singletonList("value"));
+            put("strShift", Collections.singletonList("value"));
+            put("strUnshift", Collections.singletonList("value"));
+            put("sin", Collections.singletonList("a"));
+            put("cos", Collections.singletonList("a"));
+            put("tan", Collections.singletonList("a"));
+            put("arcsin", Collections.singletonList("a"));
+            put("arccos", Collections.singletonList("a"));
+            put("arctan", Collections.singletonList("a"));
+            put("random", new ArrayList<>());
+            put("clear", new ArrayList<>());
+            put("createDennis", new ArrayList<>());
+            put("pi", new ArrayList<>());
+            put("euler", new ArrayList<>());
+
+        }},
+                Shell.globalSymbolTable);
+    }
+
     static HashMap<String, String> upper = new HashMap<>(){{
         put("1", "!");
         put("2", "@");
