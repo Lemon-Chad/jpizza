@@ -69,32 +69,8 @@ public class JHandle implements HttpHandler {
     public void _handle(HttpExchange exchange) {
         Dict dat = new Dict(new HashMap<>());
         dat.set(new Str("method"), new Str(exchange.getRequestMethod()));
-        if ("GET".equals(exchange.getRequestMethod())) {
-            try {
-                handleGetRequest(exchange, dat);
-            } catch (IOException e) {
-                res.failure(new RTError(
-                        handle.pos_start, handle.pos_end,
-                        "IOException occurred... " + e.toString(),
-                        handle.context
-                ));
-                safeError(exchange, exchange.getResponseBody());
-                return;
-            }
-        } else if ("POST".equals(exchange.getRequestMethod())) {
-            try {
-                handlePostRequest(exchange, dat);
-            } catch (IOException e) {
-                res.failure(new RTError(
-                        handle.pos_start, handle.pos_end,
-                        "IOException occurred... " + e.toString(),
-                        handle.context
-                ));
-                safeError(exchange, exchange.getResponseBody());
-                return;
-            }
-        }
         try {
+            handleRequest(exchange, dat);
             handleResponse(exchange, dat);
         } catch (IOException e) {
             res.failure(new RTError(
@@ -129,6 +105,10 @@ public class JHandle implements HttpHandler {
 
         Obj response = res.register(handle.execute(Collections.singletonList(dat), new ArrayList<>(),
                 new Interpreter()));
+        if (res.error != null) {
+            logError(exchange, outputStream);
+            return;
+        }
         res.register(Library.checkType(response, "dictionary", Constants.JPType.Dict));
 
         if (res.error != null) {
@@ -194,7 +174,7 @@ public class JHandle implements HttpHandler {
         dat.set(new Str("body"), new Str(String.valueOf(body)));
     }
     
-    private void handlePostRequest(HttpExchange exchange, Dict dat) throws IOException {
+    private void handleRequest(HttpExchange exchange, Dict dat) throws IOException {
         dat.set(new Str("uri"), new Str(exchange.getRequestURI().toString()));
 
         InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
