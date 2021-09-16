@@ -1,7 +1,9 @@
 package lemon.jpizza.Libraries;
 
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
+import lemon.jpizza.Objects.Primitives.Bool;
 import lemon.jpizza.Objects.Primitives.Null;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.RTResult;
@@ -49,6 +51,23 @@ public class SysLib extends Library {
     public RTResult execute_enableOut(Context execCtx) {
         Shell.logger.enableLogging();
         return new RTResult().success(new Null());
+    }
+    public RTResult execute_envVarExists(Context execCtx) {
+        String envVar = System.getenv(execCtx.symbolTable.get("variableName").toString());
+        if (envVar == null){
+            return new RTResult().success(new Bool(false));
+        }else{
+            return new RTResult().success(new Bool(true));
+        }
+    }
+
+    public RTResult execute_getEnvVar(Context execCtx) {
+        String envVar = System.getenv(execCtx.symbolTable.get("variableName").toString());
+        if (envVar == null){
+            return new RTResult().failure(new RTError(pos_start, pos_end, "Variable Does Not Exist", context));
+        }else{
+            return new RTResult().success(new Str(envVar));
+        }
     }
 
 }

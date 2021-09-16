@@ -50,6 +50,8 @@ public class Shell {
             put("enableOut", new ArrayList<>());
             put("jpv", new ArrayList<>()); // <-- JPizza version command moved here
             put("execute", Collections.singletonList("cmd"));
+            put("getEnvVar", Collections.singletonList("variableName"));
+            put("envVarExists", Collections.singletonList("variableName"));
         }});
 
         GUIs.initialize("GUIs", GUIs.class, new HashMap<>(){{
