@@ -202,6 +202,7 @@ public class Shell {
                 a.a = null;
             }
         }
+        in.close();
     }
 
     public static Pair<List<Node>, Error> getAst(String fn, String text) {
