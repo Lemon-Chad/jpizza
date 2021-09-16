@@ -52,6 +52,7 @@ public class Shell {
             put("execute", Collections.singletonList("cmd"));
             put("getEnvVar", Collections.singletonList("variableName"));
             put("envVarExists", Collections.singletonList("variableName"));
+            put("home", new ArrayList<>());
         }});
 
         GUIs.initialize("GUIs", GUIs.class, new HashMap<>(){{
