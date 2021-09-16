@@ -14,6 +14,7 @@ import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Executables.ClassInstance;
 import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.Objects.Primitives.Bool;
 import lemon.jpizza.Objects.Primitives.PList;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.ParseResult;
@@ -237,7 +238,7 @@ public class Shell {
 
     @SuppressWarnings("DuplicatedCode")
     public static void main(String[] args) throws IOException {
-        root = System.getProperty("user.dir");
+        root = System.getenv("JPIZZA_DATA_DIR") == null ? System.getProperty("user.home") + "/.jpizza" : System.getenv("JPIZZA_DATA_DIR");
         Scanner in = new Scanner(System.in);
         initLibs();
 
@@ -400,6 +401,7 @@ public class Shell {
         return run(fn, text, true, log);
     }
     public static Pair<Obj, Error> run(String fn, String text, boolean main, boolean log) {
+        Shell.logger.outln(fn + text);
         Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         Context context = new Context(fn, null, null);

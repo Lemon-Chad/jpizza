@@ -29,10 +29,10 @@ public class ImportNode extends Node {
 
     public RTResult vis(Context context) throws IOException {
         String fn = (String) file_name_tok.value;
-        String file_name = System.getProperty("user.dir") + "\\" + fn + ".devp";
-        String modPath = Shell.root + "\\modules\\" + fn;
-        String modFilePath = modPath + "\\" + fn + ".devp";
-        var mkdirs = new File(Shell.root + "\\modules").mkdirs();
+        String file_name = System.getProperty("user.dir") + "/" + fn + ".devp";
+        String modPath = Shell.root + "/modules/" + fn;
+        String modFilePath = modPath + "/" + fn + ".devp";
+        var mkdirs = new File(Shell.root + "/modules").mkdirs();
         ClassInstance imp = null;
         RTResult res = new RTResult();
         if (Constants.LIBRARIES.containsKey(fn)) imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))
