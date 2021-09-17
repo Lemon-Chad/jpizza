@@ -32,8 +32,13 @@ public class SymbolTable implements Serializable {
 
     public Object get(String name) {
         VarNode value = symbols.get(name);
-        if (value == null && parent != null)
-            return parent.get(name);
+        if (value == null) {
+            if (attributes.containsKey(name)) {
+                return attributes.get(name).value_node;
+            } else if (parent != null) {
+                return parent.get(name);
+            }
+        }
         return value != null ? value.value_node : null;
     }
 
@@ -109,6 +114,10 @@ public class SymbolTable implements Serializable {
 
             VarNode vn = new VarNode(value, locked).setRange(curr.min, curr.max);
             symbols.replace(name, vn);
+            return null;
+        }
+        else if (attributes.containsKey(name)) {
+            setattr(name, value);
             return null;
         }
         else if (parent != null) {

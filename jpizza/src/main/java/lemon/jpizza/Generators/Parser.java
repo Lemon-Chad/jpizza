@@ -1910,23 +1910,6 @@ while (false) {
         )); res.registerAdvancement(); advance();
 
         List<Token> attributeDeclarations = new ArrayList<>();
-        if (currentToken.type.equals(TT.IDENTIFIER)) {
-            attributeDeclarations.add(currentToken);
-            advance(); res.registerAdvancement();
-            while (currentToken.type.equals(TT.COMMA)) {
-                res.registerAdvancement(); advance();
-                if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected identifier"
-                ));
-                attributeDeclarations.add(currentToken);
-                advance(); res.registerAdvancement();
-            }
-            if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Missing semicolon"
-            )); advance(); res.registerAdvancement();
-        }
 
         ArgData argTKs = new ArgData(
                 new ArrayList<>(),
@@ -1942,8 +1925,7 @@ while (false) {
                 classNameTok.pos_end.copy()
         );
         List<MethDefNode> methods = new ArrayList<>();
-        while (currentToken.type.equals(TT.KEYWORD) &&
-                (currentToken.value.equals("method") || currentToken.value.equals("ingredients"))) {
+        while (currentToken.type.equals(TT.KEYWORD) || currentToken.type.equals(TT.IDENTIFIER)) {
             if (currentToken.value.equals("ingredients")) {
                 advance(); res.registerAdvancement();
                 argTKs = (ArgData) res.register(gatherArgs());
@@ -1955,11 +1937,16 @@ while (false) {
             else if (currentToken.value.equals("method")) {
                 res.registerAdvancement(); advance();
 
-                boolean bin = false; boolean async = false;
-                while (currentToken.type.equals(TT.KEYWORD) &&
-                        (currentToken.value.equals("bin") || currentToken.value.equals("async"))) {
-                    if (currentToken.value.equals("bin")) bin = true;
-                    else async = true;
+                boolean async, bin, stat, priv;
+                async = bin = stat = priv = false;
+                while (currentToken.type.equals(TT.KEYWORD)) {
+                    switch (currentToken.value.toString()) {
+                        case "bin" -> bin = true;
+                        case "async" -> async = true;
+                        case "static" -> stat = true;
+                        case "prv" -> priv = true;
+                        case "pub" -> priv = false;
+                    }
                     advance(); res.registerAdvancement();
                 }
 
@@ -1983,6 +1970,11 @@ while (false) {
                         res.registerAdvancement(); advance();
                         nodeToReturn = (Node) res.register(this.statement());
                         if (res.error != null) return res;
+                        if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                                "Missing semicolon"
+                        ));
+                        res.registerAdvancement(); advance();
                         methods.add(new MethDefNode(
                                 varNameTok,
                                 args.argNameToks,
@@ -1994,7 +1986,9 @@ while (false) {
                                 retype,
                                 args.defaults,
                                 args.defaultCount,
-                                args.generics
+                                args.generics,
+                                stat,
+                                priv
                         ).setCatcher(isCatcher)); break;
                     case OPEN:
                          nodeToReturn = (Node) res.register(this.block(false));
@@ -2010,7 +2004,9 @@ while (false) {
                                  retype,
                                  args.defaults,
                                  args.defaultCount,
-                                 args.generics
+                                 args.generics,
+                                 stat,
+                                 priv
                          ).setCatcher(isCatcher)); break;
                     default:
                         return res.failure(Error.InvalidSyntax(
@@ -2020,6 +2016,27 @@ while (false) {
                 }
 
             }
+            else if (currentToken.type.equals(TT.IDENTIFIER)) {
+                attributeDeclarations.add(currentToken);
+                advance(); res.registerAdvancement();
+                while (currentToken.type.equals(TT.COMMA)) {
+                    res.registerAdvancement(); advance();
+                    if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected identifier"
+                    ));
+                    attributeDeclarations.add(currentToken);
+                    advance(); res.registerAdvancement();
+                }
+                if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Missing semicolon"
+                )); advance(); res.registerAdvancement();
+            }
+            else return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start, currentToken.pos_end,
+                        "Unexpected keyword"
+                ));
         }
         if (!currentToken.type.equals(TT.CLOSE)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),

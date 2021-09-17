@@ -71,7 +71,8 @@ public class ClassDefNode extends Node {
             if (res.error != null) return res;
 
             CMethod make = (CMethod) new CMethod("<make>", null, classContext, make_node, argNames,
-                    argTypes, false, false, false, "any", dfts.b, defaultCount, generic_toks)
+                    argTypes, false, false, false, "any", dfts.b, defaultCount,
+                    generic_toks, false, false)
                     .set_pos(pos_start, pos_end);
             size = methods.size();
             CMethod[] methods = new CMethod[size];

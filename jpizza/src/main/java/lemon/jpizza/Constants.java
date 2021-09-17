@@ -51,6 +51,9 @@ public class Constants {
             "enum",
             "default",
             "match",
+            "pub",
+            "prv",
+            "static"
     };
     @SuppressWarnings("unused") public static char BREAK = ';';
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};

@@ -3,6 +3,7 @@ package lemon.jpizza.Objects.Executables;
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Obj;
@@ -11,15 +12,13 @@ import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ClassPlate extends Value {
     String name;
     public CMethod make;
     CMethod[] methods;
+    Map<String, CMethod> staticMap;
     Token[] attributes;
     ClassPlate parent;
     List<String> methodNames;
@@ -32,9 +31,15 @@ public class ClassPlate extends Value {
         this.methods = methods;
         this.value = null;
 
+        staticMap = new HashMap<>();
         methodNames = new ArrayList<>();
-        for (int i = 0; i < methods.length; i++)
-            methodNames.add(methods[i].name);
+        CMethod meth;
+        for (int i = 0; i < methods.length; i++) {
+            meth = methods[i];
+            methodNames.add(meth.name);
+            if (meth.isstatic)
+                staticMap.put(meth.name, meth);
+        }
 
         set_pos(); set_context();
         jptype = Constants.JPType.ClassPlate;
@@ -88,6 +93,23 @@ public class ClassPlate extends Value {
     }
 
     // Methods
+
+    public RTResult access(Obj o) {
+        if (o.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                o.get_start(), o.get_end(),
+                "Expected string",
+                o.get_ctx()
+        ));
+        String other = ((Str) o).trueValue();
+        CMethod c = staticMap.get(other);
+        if (c != null)
+            return new RTResult().success(c);
+        else return new RTResult().failure(new RTError(
+                    o.get_start(), o.get_end(),
+                    "Static attribute does not exist",
+                    o.get_ctx()
+            ));
+    }
 
     public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
         RTResult res = new RTResult();
