@@ -488,6 +488,18 @@ public class Parser {
                     advance(); res.registerAdvancement();
                     return res.success(new ImportNode(file_name_tok));
 
+                case "extend":
+                    advance();
+                    res.registerAdvancement();
+                    Token  fileNameTok = currentToken;
+                    if (!fileNameTok.type.equals(TT.IDENTIFIER))
+                        return res.failure(Error.InvalidSyntax(
+                                fileNameTok.pos_start.copy(), fileNameTok.pos_end.copy(),
+                                "Expected module name"
+                        ));
+                    advance(); res.registerAdvancement();
+                    return res.success(new ExtendNode(fileNameTok));
+
                 case "attr":
                     advance(); res.registerAdvancement();
                     Token var_name_tok = currentToken;

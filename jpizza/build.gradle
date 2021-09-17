@@ -44,7 +44,6 @@ jar {
     manifest {
         attributes 'Main-Class': 'lemon.jpizza.Shell'
     }
-    configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
 
 }
 
