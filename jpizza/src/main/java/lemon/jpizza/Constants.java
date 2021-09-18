@@ -19,6 +19,7 @@ public class Constants {
     public static String hexDigits = "0123456789abcdef";
     public static String[] KEYWORDS = {
             "free",
+            "let",
             "throw",
             "struct",
             "do",

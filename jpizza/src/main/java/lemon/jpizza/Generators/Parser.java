@@ -261,6 +261,21 @@ public class Parser {
                     .setType(type)
                     .setRange(min, max));
         }
+        else if (currentToken.matches(TT.KEYWORD, "let")) {
+            Token ident = (Token) res.register(expectIdentifier());
+            if (res.error != null) return res;
+            res.registerAdvancement(); advance();
+            if (currentToken.type != TT.EQ) return res.failure(Error.InvalidSyntax(
+                    currentToken.pos_start, currentToken.pos_end,
+                    "Expected '=>'"
+            ));
+            res.registerAdvancement(); advance();
+
+            Node expr = (Node) res.register(this.expr());
+            if (res.error != null) return res;
+
+            return res.success(new LetNode(ident, expr));
+        }
         else if (currentToken.matches(TT.KEYWORD, "cal")) {
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
