@@ -24,7 +24,7 @@ public class HTTPretzel extends Library {
     static HttpServer server;
 
     public HTTPretzel(String name) {
-        super(name);
+        super(name, "pretzel");
     }
 
     public static void initialize() {

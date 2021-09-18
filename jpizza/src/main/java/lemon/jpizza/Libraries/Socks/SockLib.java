@@ -18,7 +18,7 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class SockLib extends Library {
 
-    public SockLib(String name) { super(name); }
+    public SockLib(String name) { super(name, "sockets"); }
 
     public static void initialize() {
         initialize("sockets", SockLib.class, new HashMap<>(){{

@@ -22,7 +22,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 @SuppressWarnings("unused")
 public class HTTPLIB extends Library {
 
-    public HTTPLIB(String name) { super(name); }
+    public HTTPLIB(String name) { super(name, "httpx"); }
 
     public static void initialize() {
         initialize("httpx", HTTPLIB.class, new HashMap<>(){{

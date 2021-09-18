@@ -18,7 +18,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused")
 public class Time extends Library {
 
-    public Time(String name) { super(name); }
+    public Time(String name) { super(name, "time"); }
 
     public static void initialize() {
         initialize("time", Time.class, new HashMap<>(){{

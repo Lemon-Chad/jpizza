@@ -148,7 +148,7 @@ public class JDraw extends Library {
     static ConcurrentHashMap<Point, Rect> pixels = new ConcurrentHashMap<>();
 
     public JDraw(String name) {
-        super(name);
+        super(name, "awt");
     }
 
     public static void initialize() {

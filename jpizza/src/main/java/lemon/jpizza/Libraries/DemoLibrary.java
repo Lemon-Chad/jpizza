@@ -13,7 +13,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused")
 public class DemoLibrary extends Library {
 
-    public DemoLibrary(String name) { super(name); }
+    public DemoLibrary(String name) { super(name, "demo"); }
 
     /*
     To initialize a library, you have to override the initialization method

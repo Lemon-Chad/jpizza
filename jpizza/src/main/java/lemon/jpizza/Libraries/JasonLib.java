@@ -32,7 +32,7 @@ public class JasonLib extends Library {
             TT.EOF
     );
 
-    public JasonLib(String name) { super(name); }
+    public JasonLib(String name) { super(name, "json"); }
 
     public static void initialize() {
         initialize("json", JasonLib.class, new HashMap<>(){{

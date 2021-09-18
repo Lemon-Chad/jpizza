@@ -143,7 +143,7 @@ public class BuiltInFunction extends Library {
             put(upper.get(k), k);
     }};
 
-    public BuiltInFunction(String name) { super(name); }
+    public BuiltInFunction(String name) { super(name, "compiled"); }
 
     public RTResult execute_preprocess(Context execCtx) {
         RTResult res = new RTResult();
