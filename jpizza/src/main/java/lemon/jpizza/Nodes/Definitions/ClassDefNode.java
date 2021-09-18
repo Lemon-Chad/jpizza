@@ -16,6 +16,7 @@ import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ClassDefNode extends Node {
@@ -78,7 +79,7 @@ public class ClassDefNode extends Node {
 
             CMethod make = (CMethod) new CMethod("<make>", null, classContext, make_node, argNames,
                     argTypes, false, false, false, "any", dfts.b, defaultCount,
-                    generic_toks, false, false)
+                    generic_toks, false, false, null, null)
                     .set_pos(pos_start, pos_end);
             size = methods.size();
             CMethod[] methods = new CMethod[size];

@@ -248,6 +248,7 @@ public class Function extends BaseFunction {
 
     public Obj copy() { return new Function(name, bodyNode, argNames, argTypes, async, autoreturn, returnType, defaults,
                                             defaultCount, generics).setCatch(catcher).processors(preprocessors, postprocessors)
+            .setIterative(argname).setKwargs(kwargname)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("function").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<function-"+name+">"; }
