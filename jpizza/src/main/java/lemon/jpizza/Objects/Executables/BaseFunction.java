@@ -13,6 +13,7 @@ import lemon.jpizza.Token;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BaseFunction extends Value {
     public String name;
@@ -115,5 +116,7 @@ public class BaseFunction extends Value {
     public Obj type() { return new Str("<base-function>").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<base-function>"; }
     public boolean isAsync() { return false; }
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) { return new RTResult().success(new Null()); }
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        return new RTResult().success(new Null());
+    }
 }

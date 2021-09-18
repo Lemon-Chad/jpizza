@@ -13,6 +13,7 @@ import lemon.jpizza.Results.RTResult;
 import static lemon.jpizza.Operations.*;
 
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("ALL")
 public class Value extends Obj {
@@ -101,8 +102,8 @@ public class Value extends Obj {
     // Function defaults
 
     //public RTResult execute(List<Obj> args) { return execute(args, new Interpreter()); }
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
-        return (RTResult) function().getattr(OP.EXECUTE, args, generics, parent);
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        return (RTResult) function().getattr(OP.EXECUTE, args, generics, kwargs, parent);
     }
 
     // Other
@@ -140,7 +141,8 @@ public class Value extends Obj {
             case EXTEND     -> extend    ((Obj) argx[0]);
             case POP        -> pop       ((Obj) argx[0]);
             case REMOVE     -> remove    ((Obj) argx[0]);
-            case EXECUTE    -> execute   ((List<Obj>) argx[0], (List<Token>) argx[1], (Interpreter) argx[2]);
+            case EXECUTE    -> execute   ((List<Obj>) argx[0], (List<Token>) argx[1], (Map<String, Obj>) argx[2],
+                    (Interpreter) argx[3]);
             case EQ         -> eq        ((Obj) argx[0]);
             case NE         -> ne        ((Obj) argx[0]);
             case TOSTRING   -> toString  ();

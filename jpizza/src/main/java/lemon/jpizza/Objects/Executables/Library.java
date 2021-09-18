@@ -147,7 +147,7 @@ public class Library extends BaseFunction {
     }
 
     @Override
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
         Context execCtx = newContext();
 

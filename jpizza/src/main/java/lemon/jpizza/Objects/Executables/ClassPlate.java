@@ -122,7 +122,7 @@ public class ClassPlate extends Value {
             ));
     }
 
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
 
         Context classContext = new Context(name, context, pos_start);
@@ -148,7 +148,7 @@ public class ClassPlate extends Value {
         CMethod make = (CMethod) getMake().copy();
         make.set_context(classContext).set_pos(pos_start, pos_end);
 
-        res.register(make.execute(args, generics, parent));
+        res.register(make.execute(args, generics, kwargs, parent));
         if (res.error != null) return res;
 
         CMethod[] methodCopies = copyMethods();

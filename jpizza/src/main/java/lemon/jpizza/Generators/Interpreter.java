@@ -68,7 +68,7 @@ public class Interpreter {
                     "Function must take 1 argument (CMD line arguments)",
                     context
             ));
-            res.register(fn.execute(Collections.singletonList(cmdArgs), new ArrayList<>(), this));
+            res.register(fn.execute(Collections.singletonList(cmdArgs), new ArrayList<>(), new HashMap<>(), this));
             if (res.error != null) return res;
         }
         else if (clFinish != null) {
@@ -86,7 +86,7 @@ public class Interpreter {
                     context
             ));
 
-            ClassInstance clsi = (ClassInstance) res.register(recipe.execute(new ArrayList<>(), new ArrayList<>(), this));
+            ClassInstance clsi = (ClassInstance) res.register(recipe.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), this));
             if (res.error != null) return res;
 
             Object func = clsi.getattr(OP.ACCESS, new Str("main").set_context(recipe.context));
@@ -103,7 +103,7 @@ public class Interpreter {
                     recipe.context
             ));
 
-            res.register(meth.execute(Collections.singletonList(cmdArgs), new ArrayList<>(), this));
+            res.register(meth.execute(Collections.singletonList(cmdArgs), new ArrayList<>(), new HashMap<>(), this));
             if (res.error != null) return res;
         }
 

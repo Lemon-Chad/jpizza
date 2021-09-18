@@ -11,6 +11,7 @@ import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.List;
+import java.util.Map;
 
 public class CMethod extends Function {
     boolean bin;
@@ -36,8 +37,8 @@ public class CMethod extends Function {
     // Methods
 
     @Override
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
-        return super.execute(args, generics, parent);
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        return super.execute(args, generics, kwargs, parent);
     }
 
 

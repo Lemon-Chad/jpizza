@@ -24,6 +24,8 @@ public class Function extends BaseFunction {
     List<Function> preprocessors;
     List<Function> postprocessors;
     List<Obj> defaults;
+    String argname;
+    String kwargname;
     int defaultCount;
     boolean async;
     boolean autoreturn;
@@ -104,12 +106,22 @@ public class Function extends BaseFunction {
         return this;
     }
 
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
-        return ifCatcher(args, generics, parent);
+    public Function setIterative(String it) {
+        argname = it;
+        return this;
     }
 
-    public RTResult ifCatcher(List<Obj> args, List<Token> generics, Interpreter parent) {
-        RTResult res = run(args, generics, parent);
+    public Function setKwargs(String kwargs) {
+        kwargname = kwargs;
+        return this;
+    }
+
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        return ifCatcher(args, generics, kwargs, parent);
+    }
+
+    public RTResult ifCatcher(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        RTResult res = run(args, generics, kwargs, parent);
         if (catcher) {
             if (res.error != null)
                 return res.success(new Result(res.error.details));
@@ -118,7 +130,7 @@ public class Function extends BaseFunction {
         } return res;
     }
 
-    public RTResult run(List<Obj> args, List<Token> generics, Interpreter parent) {
+    public RTResult run(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
         Interpreter interpreter = new Interpreter(parent.memo);
         Context execCtx = newContext();
@@ -142,6 +154,19 @@ public class Function extends BaseFunction {
         for (int i = 0; i < genericSize; i++)
             genericKey.put(this.generics.get(i).value.toString(), generics.get(i).value.toString());
 
+        if (argname != null && args.size() > argNames.size()) {
+            execCtx.symbolTable.define(argname, new PList(args.subList(argNames.size(), args.size())));
+            args = args.subList(0, argNames.size());
+        }
+
+        if (kwargname != null) {
+            Map<Obj, Obj> mp = new HashMap<>();
+            for (Map.Entry<String, Obj> entry : kwargs.entrySet()) {
+                mp.put(new Str(entry.getKey()), entry.getValue());
+            }
+            execCtx.symbolTable.define(kwargname, new Dict(mp));
+        }
+
         res.register(checkPopArgs(argNames, argTypes, args, execCtx, defaults,
                 argNames.size() - defaultCount, argNames.size(), genericKey));
         if (res.shouldReturn()) {
@@ -154,7 +179,7 @@ public class Function extends BaseFunction {
             execCtx.symbolTable.define(entry.getKey(), new Str(entry.getValue()));
 
         for (Function f: this.preprocessors) {
-            res.register(((Function) f.copy().set_context(execCtx)).execute(args, generics, interpreter));
+            res.register(((Function) f.copy().set_context(execCtx)).execute(args, generics, kwargs, interpreter));
             if (res.error != null) return res;
         }
 
@@ -188,7 +213,7 @@ public class Function extends BaseFunction {
         ArrayList<Obj> newArgs = new ArrayList<>(args);
         newArgs.add(retValue);
         for (Function f: this.postprocessors) {
-            retValue = res.register(((Function) f.copy().set_context(execCtx)).execute(newArgs, generics, interpreter));
+            retValue = res.register(((Function) f.copy().set_context(execCtx)).execute(newArgs, generics, kwargs, interpreter));
             if (res.error != null) return res;
         }
 
