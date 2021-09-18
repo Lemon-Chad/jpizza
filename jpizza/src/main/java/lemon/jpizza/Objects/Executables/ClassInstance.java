@@ -123,7 +123,7 @@ public class ClassInstance extends Obj {
             RTResult ret = bin.execute(args, new ArrayList<>(), new HashMap<>(), new Interpreter());
 
             boolean typeMatch = ret.value != null && Constants.methTypes.containsKey(name)
-                    && ret.value.jptype != Constants.methTypes.get(name);
+                    && ret.value.jptype == Constants.methTypes.get(name);
             if (typeMatch || !Constants.methTypes.containsKey(name))
                 return new Pair<>(ret.value, ret.error);
             else Shell.logger.warn(new RTError(
