@@ -23,12 +23,12 @@ public class Bool extends Value {
 
     public Pair<Obj, RTError> invert() { return new Pair<>(new Bool(!(boolean)value), null);}
     public Pair<Obj, RTError> also(Obj o) {
-        Value other = (Value) o.bool();
-        return new Pair<>(new Bool((boolean) this.value || (boolean) other.value), null);
+        if ((boolean) this.value) return new Pair<>(new Bool(true), null);
+        return new Pair<>(o.bool(), null);
     }
     public Pair<Obj, RTError> including(Obj o) {
-        Value other = (Value) o.bool();
-        return new Pair<>(new Bool((boolean) this.value && (boolean) other.value), null);
+        if (!(boolean) this.value) return new Pair<>(new Bool(false), null);
+        return new Pair<>(o.bool(), null);
     }
 
     public Pair<Obj, RTError> eq(Obj o) {

@@ -116,10 +116,22 @@ public class ClassInstance extends Obj {
         };
         if (bin != null) {
             List<Obj> args = new ArrayList<>();
+
             int length = argx.length;
             for (int i = 0; i < length; i++) args.add((Obj) argx[i]);
-            RTResult awesomePossum = bin.execute(args, new ArrayList<>(), new Interpreter());
-            return new Pair<>(awesomePossum.value, awesomePossum.error);
+
+            RTResult ret = bin.execute(args, new ArrayList<>(), new Interpreter());
+
+            boolean typeMatch = ret.value != null && Constants.methTypes.containsKey(name)
+                    && ret.value.jptype != Constants.methTypes.get(name);
+            if (typeMatch || !Constants.methTypes.containsKey(name))
+                return new Pair<>(ret.value, ret.error);
+            else Shell.logger.warn(new RTError(
+                    pos_start, pos_end,
+                    String.format("Bin method should have return type %s, got %s",
+                            Constants.methTypes.get(name), ret.value.jptype),
+                    context
+            ).asString());
         }
         return switch (name) {
             case ACCESS     ->    access((Obj) argx[0]);

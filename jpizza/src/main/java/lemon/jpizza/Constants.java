@@ -77,6 +77,16 @@ public class Constants {
         put(Tokens.TT.LSQUARE, Operations.OP.BRACKET);
     }};
 
+    public static Map<Operations.OP, JPType> methTypes = new HashMap<>(){{
+        put(Operations.OP.EQ, JPType.Boolean);
+        put(Operations.OP.LT, JPType.Boolean);
+        put(Operations.OP.LTE, JPType.Boolean);
+        put(Operations.OP.NE, JPType.Boolean);
+        put(Operations.OP.ALSO, JPType.Boolean);
+        put(Operations.OP.INCLUDING, JPType.Boolean);
+        put(Operations.OP.TYPE, JPType.String);
+    }};
+
     public enum JPType {
         Bytes,
         ClassInstance,
