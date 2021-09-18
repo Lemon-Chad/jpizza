@@ -1008,6 +1008,7 @@ match (a) {
                 res.registerAdvancement();
                 advance();
                 List<Node> arg_nodes = new ArrayList<>();
+                Map<String, Node> kwargs = new HashMap<>();
                 if (!currentToken.type.equals(TT.RPAREN)) {
                     arg_nodes.add((Node) res.register(this.expr()));
                     if (res.error != null)
@@ -1022,6 +1023,25 @@ match (a) {
                         arg_nodes.add((Node) res.register(this.expr()));
                         if (res.error != null)
                             return res;
+                    }
+
+                    if (currentToken.type == TT.BACK) {
+                        Token vk; Node val;
+                        do {
+                            vk = (Token) res.register(expectIdentifier());
+                            if (res.error != null) return res;
+                            res.registerAdvancement(); advance();
+
+                            if (currentToken.type != TT.BITE) return res.failure(Error.InvalidSyntax(
+                                    currentToken.pos_start, currentToken.pos_end,
+                                    "Expected ':'"
+                            )); res.registerAdvancement(); advance();
+
+                            val = (Node) res.register(this.expr());
+                            if (res.error != null) return res;
+
+                            kwargs.put(vk.value.toString(), val);
+                        } while (currentToken.type == TT.COMMA);
                     }
 
                     if (!currentToken.type.equals(TT.RPAREN))
@@ -1060,7 +1080,8 @@ match (a) {
                 node = new CallNode(
                         node,
                         arg_nodes,
-                        generics
+                        generics,
+                        kwargs
                 );
             }
             else {
@@ -1148,13 +1169,17 @@ match (a) {
         public List<Token> generics;
         public List<Node> defaults;
         public int defaultCount;
+        public String argname;
+        public String kwargname;
         public ArgData(List<Token> argNameToks, List<Token> argTypeToks, List<Node> defaults, int defaultCount,
-                       List<Token> generics) {
+                       List<Token> generics, String argname, String kwargname) {
             this.argNameToks = argNameToks;
             this.argTypeToks = argTypeToks;
             this.defaults = defaults;
             this.defaultCount = defaultCount;
             this.generics = generics;
+            this.argname = argname;
+            this.kwargname = kwargname;
         }
     }
 
@@ -1164,6 +1189,9 @@ match (a) {
 
         List<Token> argNameToks = new ArrayList<>();
         List<Token> argTypeToks = new ArrayList<>();
+
+        String argname = null;
+        String kwargname = null;
 
         List<Node> defaults = new ArrayList<>();
         int defaultCount = 0;
@@ -1187,13 +1215,27 @@ match (a) {
                 argTypeToks.add(typetok);
             } else argTypeToks.add(anyToken);
 
+            boolean args;
             while (currentToken.type.equals(TT.COMMA)) {
                 res.registerAdvancement(); advance();
+
+                args = currentToken.type == TT.SPREAD;
+                if (args) {
+                    res.registerAdvancement();
+                    advance();
+                }
 
                 if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected identifier"
                 ));
+
+                if (args) {
+                    argname = currentToken.value.toString();
+                    res.registerAdvancement(); advance();
+                    break;
+                }
+
                 argNameToks.add(currentToken);
                 res.registerAdvancement(); advance();
 
@@ -1221,6 +1263,12 @@ match (a) {
 
             }
 
+            if (currentToken.type == TT.BACK) {
+                Token kw = (Token) res.register(expectIdentifier());
+                if (res.error != null) return res;
+                res.registerAdvancement(); advance();
+                kwargname = kw.value.toString();
+            }
 
             if (!currentToken.type.equals(TT.GT)) return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -1255,7 +1303,9 @@ match (a) {
                 argTypeToks,
                 defaults,
                 defaultCount,
-                generics
+                generics,
+                argname,
+                kwargname
         ));
     }
 
@@ -1858,7 +1908,9 @@ while (false) {
                         retype,
                         argTKs.defaults,
                         argTKs.defaultCount,
-                        argTKs.generics
+                        argTKs.generics,
+                        argTKs.argname,
+                        argTKs.kwargname
                 ).setCatcher(isCatcher));
             }
             case OPEN -> {
@@ -1875,7 +1927,9 @@ while (false) {
                         retype,
                         argTKs.defaults,
                         argTKs.defaultCount,
-                        argTKs.generics
+                        argTKs.generics,
+                        argTKs.argname,
+                        argTKs.kwargname
                 ).setCatcher(isCatcher);
 
                 if (nodeToReturn.jptype == Constants.JPType.List && ((ListNode) nodeToReturn).elements.size() == 1) {
@@ -1956,7 +2010,9 @@ while (false) {
                 new ArrayList<>(),
                 new ArrayList<>(),
                 0,
-                new ArrayList<>()
+                new ArrayList<>(),
+                null,
+                null
         );
 
         TriFunction<Token, Boolean, Boolean, ParseResult> getComplexAttr = (valTok, isstatic, isprivate) -> {
@@ -2056,7 +2112,9 @@ while (false) {
                                 args.defaultCount,
                                 args.generics,
                                 stat,
-                                priv
+                                priv,
+                                argTKs.argname,
+                                argTKs.kwargname
                         ).setCatcher(isCatcher)); break;
                     case OPEN:
                          nodeToReturn = (Node) res.register(this.block(false));
@@ -2074,7 +2132,9 @@ while (false) {
                                  args.defaultCount,
                                  args.generics,
                                  stat,
-                                 priv
+                                 priv,
+                                 argTKs.argname,
+                                 argTKs.kwargname
                          ).setCatcher(isCatcher)); break;
                     default:
                         return res.failure(Error.InvalidSyntax(
