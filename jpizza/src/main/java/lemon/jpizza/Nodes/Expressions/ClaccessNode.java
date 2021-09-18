@@ -68,15 +68,9 @@ public class ClaccessNode extends Node {
                 return res.success(((Obj)val).set_context(((ClassInstance)var).value));
 
             case ClassPlate:
-                Obj meth = res.register(((ClassPlate) var).access(new Str(attr_name_tok.value.toString())));
+                Obj acval = res.register(((ClassPlate) var).access(new Str(attr_name_tok.value.toString())));
                 if (res.error != null) return res;
-                CMethod methd = (CMethod) meth;
-                if (methd.isprivate) return new RTResult().failure(new RTError(
-                        pos_start, pos_end,
-                        "Method is private",
-                        context
-                ));
-                return res.success(methd.set_context(context).set_pos(pos_start, pos_end));
+                return res.success(acval.set_context(context).set_pos(pos_start, pos_end));
 
             default:
                 return res.failure(new RTError(

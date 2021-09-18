@@ -16,6 +16,8 @@ import lemon.jpizza.Nodes.Variables.VarAccessNode;
 import lemon.jpizza.Results.ParseResult;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static lemon.jpizza.Tokens.*;
 
@@ -657,6 +659,7 @@ public class Parser {
                 "Expected 'struct'"
         ));
 
+        List<AttrDeclareNode> childrenDecls = new ArrayList<>();
         List<Token> children = new ArrayList<>();
         List<Token> types = new ArrayList<>();
         List<Node> assignment = new ArrayList<>();
@@ -686,6 +689,7 @@ public class Parser {
                 ));
 
                 children.add(currentToken);
+                childrenDecls.add(new AttrDeclareNode(currentToken));
                 types.add(new Token(TT.IDENTIFIER, "any", currentToken.pos_start, currentToken.pos_end));
                 assignment.add(new AttrAssignNode(
                         currentToken,
@@ -704,7 +708,7 @@ public class Parser {
 
         return res.success(new ClassDefNode(
                 identifier,
-                children,
+                childrenDecls,
                 children,
                 types,
                 new ListNode(assignment, start, end),
@@ -1909,7 +1913,12 @@ while (false) {
                 "Expected '{'"
         )); res.registerAdvancement(); advance();
 
-        List<Token> attributeDeclarations = new ArrayList<>();
+        List<AttrDeclareNode> attributeDeclarations = new ArrayList<>();
+        List<String> declKeywords = Arrays.asList(
+                "static",
+                "prv",
+                "pub"
+        );
 
         ArgData argTKs = new ArgData(
                 new ArrayList<>(),
@@ -1918,6 +1927,34 @@ while (false) {
                 0,
                 new ArrayList<>()
         );
+
+        TriFunction<Token, Boolean, Boolean, ParseResult> getComplexAttr = (valTok, isstatic, isprivate) -> {
+            ParseResult result = new ParseResult();
+
+            String type = "any";
+            if (currentToken.type == TT.BITE) {
+                Token t = (Token) result.register(expectIdentifier());
+                if (result.error != null) return result;
+                type = t.value.toString();
+                result.registerAdvancement(); advance();
+            }
+
+            Node expr = null;
+            if (currentToken.type == TT.EQ) {
+                result.registerAdvancement(); advance();
+                expr = (Node) result.register(this.expr());
+                if (result.error != null) return result;
+            }
+
+            attributeDeclarations.add(new AttrDeclareNode(valTok, type, isstatic, isprivate, expr));
+
+            if (!currentToken.type.equals(TT.NEWLINE)) return result.failure(Error.InvalidSyntax(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Missing semicolon"
+            )); advance(); result.registerAdvancement();
+
+            return result;
+        };
 
         Node ingredientNode = new ListNode(
                 new ArrayList<>(),
@@ -2017,21 +2054,53 @@ while (false) {
 
             }
             else if (currentToken.type.equals(TT.IDENTIFIER)) {
-                attributeDeclarations.add(currentToken);
-                advance(); res.registerAdvancement();
-                while (currentToken.type.equals(TT.COMMA)) {
-                    res.registerAdvancement(); advance();
-                    if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                Token valTok = currentToken;
+                res.registerAdvancement(); advance();
+                if (currentToken.type == TT.EQ || currentToken.type == TT.BITE) {
+                    res.register(getComplexAttr.apply(valTok, false, false));
+                    if (res.error != null) return res;
+                } else {
+                    attributeDeclarations.add(new AttrDeclareNode(valTok));
+                    while (currentToken.type.equals(TT.COMMA)) {
+                        res.registerAdvancement();
+                        advance();
+                        if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                                "Expected identifier"
+                        ));
+                        attributeDeclarations.add(new AttrDeclareNode(currentToken));
+                        advance();
+                        res.registerAdvancement();
+                    }
+
+                    if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
                             currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                            "Expected identifier"
-                    ));
-                    attributeDeclarations.add(currentToken);
-                    advance(); res.registerAdvancement();
+                            "Missing semicolon"
+                    )); advance(); res.registerAdvancement();
                 }
-                if (!currentToken.type.equals(TT.NEWLINE)) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Missing semicolon"
-                )); advance(); res.registerAdvancement();
+            }
+            else if (declKeywords.contains(currentToken.value.toString())) {
+                boolean isprivate, isstatic;
+                isprivate = isstatic = false;
+
+                while (declKeywords.contains(currentToken.value.toString())) {
+                    switch (currentToken.value.toString()) {
+                        case "prv" -> isprivate = true;
+                        case "static" -> isstatic = true;
+                        case "pub" -> isprivate = false;
+                    }
+                    res.registerAdvancement(); advance();
+                }
+
+                if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start, currentToken.pos_end,
+                        "Expected identifier"
+                ));
+
+                Token valTok = currentToken;
+                res.registerAdvancement(); advance();
+                res.register(getComplexAttr.apply(valTok, isstatic, isprivate));
+                if (res.error != null) return res;
             }
             else return res.failure(Error.InvalidSyntax(
                         currentToken.pos_start, currentToken.pos_end,

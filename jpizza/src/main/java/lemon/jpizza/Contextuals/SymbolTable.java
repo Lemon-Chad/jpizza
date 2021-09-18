@@ -12,12 +12,16 @@ import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Token;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SymbolTable implements Serializable {
-    public Map<String, VarNode> symbols = new HashMap<>();
-    public Map<String, String> types = new HashMap<>();
+    Map<String, VarNode> symbols = new HashMap<>();
+    Map<String, String> types = new HashMap<>();
+    Map<String, String> attrtypes = new HashMap<>();
+    List<String> privates = new ArrayList<>();
     Map<String, AttrNode> attributes = new HashMap<>();
     Map<String, CMethod> bins = new HashMap<>();
     Map<String, Node> dyns = new HashMap<>();
@@ -117,8 +121,7 @@ public class SymbolTable implements Serializable {
             return null;
         }
         else if (attributes.containsKey(name)) {
-            setattr(name, value);
-            return null;
+            return setattr(name, value);
         }
         else if (parent != null) {
             return parent.set(name, value, locked);
@@ -135,18 +138,46 @@ public class SymbolTable implements Serializable {
     }
 
     public void declareattr(Token name_tok, Context context) {
+        declareattr(name_tok, context, new Null());
+    }
+
+    public void makeprivate(String name) {
+        privates.add(name);
+    }
+    public boolean isprivate(String name) {
+        return privates.contains(name);
+    }
+
+    public void declareattr(Token name_tok, Context context, Obj value) {
         String tokenVal = name_tok.value.toString();
-        attributes.put(tokenVal, new AttrNode(new Null().set_pos(name_tok.pos_start).set_context(context)));
+        attributes.put(tokenVal, new AttrNode(value.set_pos(name_tok.pos_start, name_tok.pos_end).set_context(context)));
+        attrtypes.put(tokenVal, "any");
     }
     public Object getattr(String name) {
         if (attributes.containsKey(name)) { return attributes.get(name).value_node; }
         return parent != null ? parent.getattr(name) : null;
     }
-    public void setattr(String name, Object value) {
+    public String setattr(String name, Object value) {
         if (attributes.containsKey(name)) {
+            String type = attrtypes.get(name);
+            if (value instanceof Obj) {
+                String otype = ((Obj) value).type().toString();
+                if (!type.equals("any") && !otype.equals(type))
+                    return String.format("Expected %s, got %s", type, otype);
+            }
             attributes.replace(name, new AttrNode(value));
+            return null;
         } else if (parent != null) {
-            parent.setattr(name, value);
+            return parent.setattr(name, value);
+        } else {
+            return "Undefined attribute";
+        }
+    }
+    public void setattrtype(String name, String type) {
+        if (attributes.containsKey(name)) {
+            attrtypes.put(name, type);
+        } else if (parent != null) {
+            parent.setattrtype(name, type);
         }
     }
 

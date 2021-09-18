@@ -48,7 +48,15 @@ public class ClassInstance extends Obj {
         String other = ((Str) o).trueValue();
         Object c = value.symbolTable.get(other);
         Object x = value.symbolTable.getattr(other);
-        if (x != null) return x;
+        if (x != null) {
+            if (value.symbolTable.isprivate(other))
+                return new RTError(
+                        o.get_start(), o.get_end(),
+                        "Attribute is private",
+                        o.get_ctx()
+                );
+            return x;
+        }
         else if (c != null) return c;
         else return new RTError(
                     o.get_start(), o.get_end(),

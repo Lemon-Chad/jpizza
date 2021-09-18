@@ -2,6 +2,7 @@ package lemon.jpizza.Nodes.Definitions;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
 import lemon.jpizza.Objects.Obj;
@@ -27,7 +28,13 @@ public class AttrAssignNode extends Node {
         Obj value = res.register(value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        context.symbolTable.setattr(varName, value);
+        String v = context.symbolTable.setattr(varName, value);
+        if (v != null) return res.failure(new RTError(
+                pos_start, pos_end,
+                v,
+                context
+        ));
+
         return res.success(value);
 
     }
