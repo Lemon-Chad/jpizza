@@ -149,7 +149,7 @@ public class Value extends Obj {
             case BRACKET    -> bracket   ((Obj) argx[0]);
 
             default         -> {
-                Shell.logger.outln("Attribute " + name + " not found!");
+                Shell.logger.outln("Attribute " + name + " not found");
                 yield null;
             }
         };

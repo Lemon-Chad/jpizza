@@ -237,7 +237,7 @@ public class Shell {
         } catch (OutOfMemoryError e) {
             return new Pair<>(null, new RTError(
                     null, null,
-                    "Out of memory!",
+                    "Out of memory",
                     context
             ));
         }
