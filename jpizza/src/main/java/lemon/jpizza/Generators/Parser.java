@@ -16,8 +16,6 @@ import lemon.jpizza.Nodes.Variables.VarAccessNode;
 import lemon.jpizza.Results.ParseResult;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static lemon.jpizza.Tokens.*;
 
@@ -170,6 +168,33 @@ public class Parser {
 
     public ParseResult chainExpr() { return binOp(this::compExpr, Collections.singletonList(TT.BITE)); }
 
+    public ParseResult buildTypeTok() {
+        StringBuilder type = new StringBuilder();
+        ParseResult res = new ParseResult();
+
+        if (!Constants.TYPETOKS.contains(currentToken.type)) return res.failure(Error.InvalidSyntax(
+                currentToken.pos_start, currentToken.pos_end,
+                "Expected type"
+        ));
+
+        while (Constants.TYPETOKS.contains(currentToken.type)) {
+            type.append(switch (currentToken.type) {
+                case LSQUARE -> "[";
+                case RSQUARE -> "]";
+                case LPAREN -> "(";
+                case RPAREN -> ")";
+                case OPEN -> "{";
+                case CLOSE -> "}";
+                case LT -> "<";
+                case GT -> ">";
+                default -> currentToken.value.toString();
+            });
+            res.registerAdvancement(); advance();
+        }
+
+        return res.success(new Token(TT.IDENTIFIER, type.toString()));
+    }
+
     public ParseResult expr() {
         ParseResult res = new ParseResult();
         String type = "any";
@@ -234,12 +259,9 @@ public class Parser {
 
             if (currentToken.type.equals(TT.USE)) {
                 advance(); res.registerAdvancement();
-                if (!currentToken.type.equals(TT.IDENTIFIER) && !currentToken.type.equals(TT.KEYWORD)) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected type"
-                ));
-                type = (String) currentToken.value;
-                advance(); res.registerAdvancement();
+                Token typeTok = (Token) res.register(buildTypeTok());
+                if (res.error != null) return res;
+                type = typeTok.value.toString();
             }
 
             if (!currentToken.type.equals(TT.EQ))
@@ -1160,12 +1182,9 @@ match (a) {
             if (currentToken.type.equals(TT.USE)) {
                 res.registerAdvancement(); advance();
 
-                if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected identifier"
-                ));
-                argTypeToks.add(currentToken);
-                res.registerAdvancement(); advance();
+                Token typetok = (Token) res.register(buildTypeTok());
+                if (res.error != null) return res;
+                argTypeToks.add(typetok);
             } else argTypeToks.add(anyToken);
 
             while (currentToken.type.equals(TT.COMMA)) {
@@ -1181,12 +1200,9 @@ match (a) {
                 if (currentToken.type.equals(TT.USE)) {
                     res.registerAdvancement(); advance();
 
-                    if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
-                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                            "Expected identifier"
-                    ));
-                    argTypeToks.add(currentToken);
-                    res.registerAdvancement(); advance();
+                    Token typetok = (Token) res.register(buildTypeTok());
+                    if (res.error != null) return res;
+                    argTypeToks.add(typetok);
                 } else argTypeToks.add(anyToken);
                 if (currentToken.type.equals(TT.EQS)) {
                     res.registerAdvancement(); advance();

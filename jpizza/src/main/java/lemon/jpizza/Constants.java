@@ -17,6 +17,18 @@ public class Constants {
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
     public static String hexDigits = "0123456789abcdef";
+    public static List<Tokens.TT> TYPETOKS = Arrays.asList(
+            Tokens.TT.IDENTIFIER,
+            Tokens.TT.KEYWORD,
+            Tokens.TT.FLOAT,
+            Tokens.TT.INT,
+            Tokens.TT.LPAREN,
+            Tokens.TT.RPAREN,
+            Tokens.TT.LSQUARE,
+            Tokens.TT.RSQUARE,
+            Tokens.TT.OPEN,
+            Tokens.TT.CLOSE
+    );
     public static String[] KEYWORDS = {
             "free",
             "let",
