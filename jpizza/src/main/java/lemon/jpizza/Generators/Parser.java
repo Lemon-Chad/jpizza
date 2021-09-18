@@ -221,6 +221,24 @@ public class Parser {
             Integer min = null;
             Integer max = null;
 
+            if (currentToken.type == TT.COMMA) {
+                Node nll = new NullNode(new Token(
+                        TT.IDENTIFIER,
+                        "null",
+                        currentToken.pos_start.copy(),
+                        currentToken.pos_end.copy()
+                ));
+                List<Node> varNames = new ArrayList<>(Collections.singletonList(new VarAssignNode(var_name, nll).setType(type)));
+                do {
+                    var_name = (Token) res.register(expectIdentifier());
+                    if (res.error != null) return res;
+                    varNames.add(new VarAssignNode(var_name, nll).setType(type));
+                    res.registerAdvancement(); advance();
+                } while (currentToken.type == TT.COMMA);
+                return res.success(new ListNode(varNames, varNames.get(0).pos_start,
+                        varNames.get(varNames.size() - 1).pos_end));
+            }
+
             if (currentToken.type == TT.LSQUARE) {
                 res.registerAdvancement(); advance();
                 boolean neg = false;
