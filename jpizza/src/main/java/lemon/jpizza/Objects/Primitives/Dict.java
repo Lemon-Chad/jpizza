@@ -12,11 +12,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static lemon.jpizza.Operations.OP;
 
 public class Dict extends Value {
-    public Dict(Map<Obj, Obj> value) { super(value); jptype = Constants.JPType.Dict; }
+    public Dict(Map<Obj, Obj> value) { super(new ConcurrentHashMap<>(value)); jptype = Constants.JPType.Dict; }
     public Map<Obj, Obj> trueValue() { return (Map<Obj, Obj>) value; }
 
     // Functions
