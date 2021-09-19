@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Constants {
     public static char[] NUMBERS = "0123456789".toCharArray();
@@ -236,8 +237,8 @@ public class Constants {
     public static Object toObject(Obj obj) {
         if (obj instanceof Dict) {
             Dict dct = (Dict) obj;
-            Map<Object, Object> objMap = new HashMap<>();
-            Map<Obj, Obj> deMap = dct.trueValue();
+            Map<Object, Object> objMap = new ConcurrentHashMap<>();
+            ConcurrentHashMap<Obj, Obj> deMap = dct.trueValue();
 
             for (Obj k : deMap.keySet())
                 objMap.put(toObject(k), toObject(deMap.get(k)));
@@ -247,9 +248,10 @@ public class Constants {
         else if (obj instanceof PList) {
             PList lst = (PList) obj;
             List<Object> objLst = new ArrayList<>();
+            List<Obj> olst = new ArrayList<>(lst.trueValue());
 
-            for (Obj o : lst.trueValue())
-                objLst.add(toObject(o));
+            for (int i = 0; i < olst.size(); i++)
+                objLst.add(toObject(olst.get(i)));
 
             return objLst;
         }
