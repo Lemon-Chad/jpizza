@@ -16,8 +16,6 @@ import java.net.Socket;
 public class ServerConn extends GenConn {
     ServerSocket inner;
     Socket client;
-    DataOutputStream out;
-    DataInputStream in;
 
     double id;
 
