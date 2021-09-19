@@ -174,12 +174,13 @@ public class Constants {
             String grouping = "";
             if (colEnd - colStart == 1) {
                 grouping = "^";
-            } else if (colEnd - colStart >= 2) {
+            }
+            else if (colEnd - colStart >= 2) {
                 grouping = "╰" + "─".repeat(colEnd - colStart - 2) + "╯";
             }
 
             result.append(line).append("\n")
-                    .append(" ".repeat(colStart + offs)).append(grouping);
+                    .append(" ".repeat(Math.max(0, colStart + offs))).append(grouping);
 
             idxStart = idxEnd;
             idxEnd = text.indexOf(splitter, idxStart + 1);
