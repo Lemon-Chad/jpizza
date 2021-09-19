@@ -59,7 +59,6 @@ public class Shell {
 
     @SuppressWarnings("DuplicatedCode")
     public static void main(String[] args) throws IOException {
-        ClassLoader classLoader = Shell.class.getClassLoader();
         root = System.getenv("JPIZZA_DATA_DIR") == null ? System.getProperty("user.home") + "/.jpizza" : System.getenv("JPIZZA_DATA_DIR");
         Scanner in = new Scanner(System.in);
         initLibs();
