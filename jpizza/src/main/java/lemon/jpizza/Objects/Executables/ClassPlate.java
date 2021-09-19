@@ -3,28 +3,31 @@ package lemon.jpizza.Objects.Executables;
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
+import lemon.jpizza.Nodes.Definitions.AttrDeclareNode;
 import lemon.jpizza.Nodes.Values.ListNode;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Objects.Value;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
+import org.w3c.dom.Attr;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ClassPlate extends Value {
     String name;
     public CMethod make;
     CMethod[] methods;
-    Token[] attributes;
+    AttrDeclareNode[] attributes;
+    Map<String, CMethod> staticMap;
+    Map<String, AttrDeclareNode> staticAttrs;
+
     ClassPlate parent;
     List<String> methodNames;
 
-    public ClassPlate(String name, Token[] attributes, CMethod make, CMethod[] methods, ClassPlate parent) {
+    public ClassPlate(String name, AttrDeclareNode[] attributes, CMethod make, CMethod[] methods, ClassPlate parent) {
         this.name = name;
         this.parent = parent;
         this.make = make;
@@ -32,9 +35,19 @@ public class ClassPlate extends Value {
         this.methods = methods;
         this.value = null;
 
+        staticMap = new HashMap<>();
+        staticAttrs = new HashMap<>();
         methodNames = new ArrayList<>();
-        for (int i = 0; i < methods.length; i++)
-            methodNames.add(methods[i].name);
+        CMethod meth;
+        for (int i = 0; i < methods.length; i++) {
+            meth = methods[i];
+            methodNames.add(meth.name);
+            if (meth.isstatic)
+                staticMap.put(meth.name, meth);
+        }
+
+        for (int i = 0; i < attributes.length; i++)
+            if (attributes[i].isstatic) staticAttrs.put(attributes[i].name, attributes[i]);
 
         set_pos(); set_context();
         jptype = Constants.JPType.ClassPlate;
@@ -70,40 +83,72 @@ public class ClassPlate extends Value {
         return make;
     }
 
-    public Token[] getAttributes() {
+    public AttrDeclareNode[] getAttributes() {
         List<String> attrNames = new ArrayList<>();
-        List<Token> attributes = new ArrayList<>();
+        List<AttrDeclareNode> attributes = new ArrayList<>();
 
-        for (Token attr : this.attributes) {
+        for (AttrDeclareNode attr : this.attributes) {
             attributes.add(attr);
-            attrNames.add(attr.value.toString());
+            attrNames.add(attr.name);
         }
 
         if (parent != null)
-            for (Token attr : parent.getAttributes())
-                if (!attrNames.contains(attr.value.toString()))
+            for (AttrDeclareNode attr : parent.getAttributes())
+                if (!attrNames.contains(attr.name))
                     attributes.add(attr);
 
-        return attributes.toArray(new Token[0]);
+        return attributes.toArray(new AttrDeclareNode[0]);
     }
 
     // Methods
 
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
+    public RTResult access(Obj o) {
+        if (o.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+                o.get_start(), o.get_end(),
+                "Expected string",
+                o.get_ctx()
+        ));
+        String other = ((Str) o).trueValue();
+        CMethod c = staticMap.get(other);
+        AttrDeclareNode x = staticAttrs.get(other);
+        if (c != null && !c.isprivate)
+            return new RTResult().success(c);
+        else if (x != null && !x.isprivate)
+            return new RTResult().success(x.value);
+        else return new RTResult().failure(new RTError(
+                    o.get_start(), o.get_end(),
+                    "(Public) Static attribute does not exist",
+                    o.get_ctx()
+            ));
+    }
+
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
 
         Context classContext = new Context(name, context, pos_start);
         classContext.symbolTable = new SymbolTable(context.symbolTable);
 
-        Token[] attributes = getAttributes();
+        AttrDeclareNode[] attributes = getAttributes();
         int length = attributes.length;
-        for (int i = 0; i < length; i++)
-            classContext.symbolTable.declareattr(attributes[i], classContext);
+        AttrDeclareNode curr;
+        for (int i = 0; i < length; i++) {
+            curr = attributes[i];
+            if (curr.value != null)
+                classContext.symbolTable.declareattr(curr.attrToken, classContext, curr.value);
+            else
+                classContext.symbolTable.declareattr(curr.attrToken, classContext);
+
+            if (curr.isprivate)
+                classContext.symbolTable.makeprivate(curr.name);
+
+            if (curr.type != null)
+                classContext.symbolTable.setattrtype(curr.name, curr.type);
+        }
 
         CMethod make = (CMethod) getMake().copy();
         make.set_context(classContext).set_pos(pos_start, pos_end);
 
-        res.register(make.execute(args, generics, parent));
+        res.register(make.execute(args, generics, kwargs, parent));
         if (res.error != null) return res;
 
         CMethod[] methodCopies = copyMethods();
@@ -120,8 +165,7 @@ public class ClassPlate extends Value {
 
             if (method.bin) classContext.symbolTable.setbin(method.name, method);
             else {
-                classContext.symbolTable.declareattr(method.nameTok, classContext);
-                classContext.symbolTable.setattr((String) method.nameTok.value, method);
+                classContext.symbolTable.declareattr(method.nameTok, classContext, method);
             } method.set_context(classContext);
         }
     }

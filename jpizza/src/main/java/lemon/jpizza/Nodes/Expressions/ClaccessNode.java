@@ -5,7 +5,9 @@ import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Nodes.Node;
+import lemon.jpizza.Objects.Executables.CMethod;
 import lemon.jpizza.Objects.Executables.ClassInstance;
+import lemon.jpizza.Objects.Executables.ClassPlate;
 import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.EnumJ;
 import lemon.jpizza.Objects.Primitives.EnumJChild;
@@ -32,31 +34,51 @@ public class ClaccessNode extends Node {
         Obj var = res.register(class_tok.visit(inter, context));
 
         if (res.error != null) return res;
-        if (var.jptype != Constants.JPType.ClassInstance && var.jptype != Constants.JPType.Enum) return res.failure(new RTError(
+        if (var.jptype != Constants.JPType.ClassInstance && var.jptype != Constants.JPType.Enum &&
+                var.jptype != Constants.JPType.ClassPlate) return res.failure(new RTError(
                 pos_start, pos_end,
                 "Expected class instance or enum",
                 context
         ));
 
-        if (var.jptype == Constants.JPType.Enum) {
-            EnumJChild child = ((EnumJ) var).getChild((String) attr_name_tok.value);
-            if (child == null)
-                return res.failure(new RTError(
-                        pos_start.copy(), pos_end.copy(),
-                        "Enum child is undefined",
+        switch (var.jptype) {
+            case Enum:
+                EnumJChild child = ((EnumJ) var).getChild((String) attr_name_tok.value);
+                if (child == null)
+                    return res.failure(new RTError(
+                            pos_start.copy(), pos_end.copy(),
+                            "Enum child is undefined",
+                            context
+                    ));
+                return res.success(child.
+                        set_context(context).set_pos(pos_start, pos_end));
+
+            case ClassInstance:
+                Object val = var.getattr(Operations.OP.ACCESS, new Str((String) attr_name_tok.value)
+                        .set_pos(pos_start, pos_end)
+                        .set_context(context));
+                if (val instanceof String)
+                    return Interpreter.getThis(val, context, pos_start, pos_end);
+                else if (val instanceof CMethod && ((CMethod) val).isprivate) return new RTResult().failure(new RTError(
+                        pos_start, pos_end,
+                        "Method is private",
                         context
                 ));
-            return res.success(child.
-                    set_context(context).set_pos(pos_start, pos_end));
-        }
+                else if (val instanceof RTError) return new RTResult().failure((RTError) val);
+                return res.success(((Obj)val).set_context(((ClassInstance)var).value));
 
-        Object val = var.getattr(Operations.OP.ACCESS, new Str((String) attr_name_tok.value)
-                .set_pos(pos_start, pos_end)
-                .set_context(context));
-        if (val instanceof String)
-            return Interpreter.getThis(val, context, pos_start, pos_end);
-        else if (val instanceof RTError) return new RTResult().failure((RTError) val);
-        return res.success(((Obj)val).set_context(((ClassInstance)var).value));
+            case ClassPlate:
+                Obj acval = res.register(((ClassPlate) var).access(new Str(attr_name_tok.value.toString())));
+                if (res.error != null) return res;
+                return res.success(acval.set_context(context).set_pos(pos_start, pos_end));
+
+            default:
+                return res.failure(new RTError(
+                        pos_start, pos_end,
+                        "Type has no accessible traits",
+                        context
+                ));
+        }
     }
 
 }

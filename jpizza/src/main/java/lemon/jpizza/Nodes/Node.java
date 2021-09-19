@@ -18,7 +18,7 @@ public class Node implements Serializable {
     public RTResult visit(Interpreter inter, Context context) {
         return new RTResult().failure(new RTError(
                 pos_start.copy(), pos_end.copy(),
-                "No visit method for " + getClass().getSimpleName() + "!",
+                "No visit method for " + getClass().getSimpleName(),
                 context
         ));
     }

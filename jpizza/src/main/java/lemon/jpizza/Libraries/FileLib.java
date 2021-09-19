@@ -22,7 +22,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused DuplicatedCode")
 public class FileLib extends Library {
 
-    public FileLib(String name) { super(name); }
+    public FileLib(String name) { super(name, "iofile"); }
 
     public static void initialize() {
         initialize("iofile", FileLib.class, new HashMap<>(){{

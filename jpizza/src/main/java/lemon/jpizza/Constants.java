@@ -17,8 +17,21 @@ public class Constants {
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
     public static String hexDigits = "0123456789abcdef";
+    public static List<Tokens.TT> TYPETOKS = Arrays.asList(
+            Tokens.TT.IDENTIFIER,
+            Tokens.TT.KEYWORD,
+            Tokens.TT.FLOAT,
+            Tokens.TT.INT,
+            Tokens.TT.LPAREN,
+            Tokens.TT.RPAREN,
+            Tokens.TT.LSQUARE,
+            Tokens.TT.RSQUARE,
+            Tokens.TT.OPEN,
+            Tokens.TT.CLOSE
+    );
     public static String[] KEYWORDS = {
             "free",
+            "let",
             "throw",
             "struct",
             "do",
@@ -52,6 +65,9 @@ public class Constants {
             "enum",
             "default",
             "match",
+            "pub",
+            "prv",
+            "static"
     };
     @SuppressWarnings("unused") public static char BREAK = ';';
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};
@@ -73,6 +89,16 @@ public class Constants {
         put(Tokens.TT.MOD, Operations.OP.MOD);
         put(Tokens.TT.DOT, Operations.OP.GET);
         put(Tokens.TT.LSQUARE, Operations.OP.BRACKET);
+    }};
+
+    public static Map<Operations.OP, JPType> methTypes = new HashMap<>(){{
+        put(Operations.OP.EQ, JPType.Boolean);
+        put(Operations.OP.LT, JPType.Boolean);
+        put(Operations.OP.LTE, JPType.Boolean);
+        put(Operations.OP.NE, JPType.Boolean);
+        put(Operations.OP.ALSO, JPType.Boolean);
+        put(Operations.OP.INCLUDING, JPType.Boolean);
+        put(Operations.OP.TYPE, JPType.String);
     }};
 
     public enum JPType {

@@ -20,7 +20,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused")
 public class JGens extends Library {
     public JGens(String name) {
-        super(name);
+        super(name, "gens");
     }
 
     public static void initialize() {

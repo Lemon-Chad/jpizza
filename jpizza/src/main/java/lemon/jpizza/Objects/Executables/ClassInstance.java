@@ -34,7 +34,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("access");
         if (func == null)
             return _access(o);
-        Obj x = res.register(func.execute(Collections.singletonList(o), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(Collections.singletonList(o), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null) return res.error;
         return x;
     }
@@ -48,7 +48,15 @@ public class ClassInstance extends Obj {
         String other = ((Str) o).trueValue();
         Object c = value.symbolTable.get(other);
         Object x = value.symbolTable.getattr(other);
-        if (x != null) return x;
+        if (x != null) {
+            if (value.symbolTable.isprivate(other))
+                return new RTError(
+                        o.get_start(), o.get_end(),
+                        "Attribute is private",
+                        o.get_ctx()
+                );
+            return x;
+        }
         else if (c != null) return c;
         else return new RTError(
                     o.get_start(), o.get_end(),
@@ -108,10 +116,22 @@ public class ClassInstance extends Obj {
         };
         if (bin != null) {
             List<Obj> args = new ArrayList<>();
+
             int length = argx.length;
             for (int i = 0; i < length; i++) args.add((Obj) argx[i]);
-            RTResult awesomePossum = bin.execute(args, new ArrayList<>(), new Interpreter());
-            return new Pair<>(awesomePossum.value, awesomePossum.error);
+
+            RTResult ret = bin.execute(args, new ArrayList<>(), new HashMap<>(), new Interpreter());
+
+            boolean typeMatch = ret.value != null && Constants.methTypes.containsKey(name)
+                    && ret.value.jptype == Constants.methTypes.get(name);
+            if (typeMatch || !Constants.methTypes.containsKey(name))
+                return new Pair<>(ret.value, ret.error);
+            else Shell.logger.warn(new RTError(
+                    pos_start, pos_end,
+                    String.format("Bin method should have return type %s, got %s",
+                            Constants.methTypes.get(name), ret.value.jptype),
+                    context
+            ).asString());
         }
         return switch (name) {
             case ACCESS     ->    access((Obj) argx[0]);
@@ -134,7 +154,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("dictionary");
         if (func == null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -145,7 +165,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("list");
         if (func == null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         return x;
@@ -155,7 +175,7 @@ public class ClassInstance extends Obj {
         RTResult res = new RTResult();
         if (func == null)
             return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.String) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
@@ -181,7 +201,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("number");
         if (func == null)
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.Number) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
@@ -197,7 +217,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("bytes");
         if (func == null)
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.Bytes) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
@@ -213,7 +233,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("boolean");
         if (func == null)
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.Boolean) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
@@ -229,7 +249,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("null");
         if (func == null)
             return new Null().set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.Null) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
@@ -245,7 +265,7 @@ public class ClassInstance extends Obj {
         CMethod func = value.symbolTable.getbin("copy");
         if (func == null)
             return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.ClassInstance) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());

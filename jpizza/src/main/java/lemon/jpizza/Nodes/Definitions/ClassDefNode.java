@@ -16,11 +16,12 @@ import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ClassDefNode extends Node {
     public Token class_name_tok;
-    public List<Token> attribute_name_toks;
+    public List<AttrDeclareNode> attributes;
     public List<Token> arg_name_toks;
     public Node make_node;
     public List<MethDefNode> methods;
@@ -30,14 +31,14 @@ public class ClassDefNode extends Node {
     public int defaultCount;
     public Token parentToken;
 
-    public ClassDefNode(Token class_name_tok, List<Token> attribute_name_toks, List<Token> arg_name_toks,
+    public ClassDefNode(Token class_name_tok, List<AttrDeclareNode> attributes, List<Token> arg_name_toks,
                         List<Token> arg_type_toks, Node make_node, List<MethDefNode> methods, Position pos_end,
                         List<Node> defaults, int defaultCount, Token pTK, List<Token> generics) {
         this.class_name_tok = class_name_tok;
         this.defaultCount = defaultCount;
         this.generic_toks = generics;
         this.defaults = defaults;
-        this.attribute_name_toks = attribute_name_toks;
+        this.attributes = attributes;
         this.make_node = make_node;
         this.arg_name_toks = arg_name_toks;
         this.arg_type_toks = arg_type_toks;
@@ -56,8 +57,14 @@ public class ClassDefNode extends Node {
             String name = (String) class_name_tok.value;
             Context classContext = new Context("<"+name+"-context>", context, pos_start);
             classContext.symbolTable = new SymbolTable(context.symbolTable);
-            Token[] attributes = new Token[0];
-            attributes = attribute_name_toks.toArray(attributes);
+
+            AttrDeclareNode[] attributes = new AttrDeclareNode[this.attributes.size()];
+            for (int i = 0; i < this.attributes.size(); i++) {
+                res.register(this.attributes.get(i).visit(inter, context));
+                if (res.error != null) return res;
+                attributes[i] = this.attributes.get(i);
+            }
+
             List<String> argNames = new ArrayList<>();
             List<String> argTypes = new ArrayList<>();
             int size = arg_name_toks.size();
@@ -71,7 +78,8 @@ public class ClassDefNode extends Node {
             if (res.error != null) return res;
 
             CMethod make = (CMethod) new CMethod("<make>", null, classContext, make_node, argNames,
-                    argTypes, false, false, false, "any", dfts.b, defaultCount, generic_toks)
+                    argTypes, false, false, false, "any", dfts.b, defaultCount,
+                    generic_toks, false, false, null, null)
                     .set_pos(pos_start, pos_end);
             size = methods.size();
             CMethod[] methods = new CMethod[size];

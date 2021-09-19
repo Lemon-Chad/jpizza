@@ -2,6 +2,7 @@ package lemon.jpizza.Libraries.JDraw;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Contextuals.Context;
+import lemon.jpizza.Contextuals.SymbolTable;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Objects.Executables.Library;
@@ -14,6 +15,7 @@ import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -148,7 +150,7 @@ public class JDraw extends Library {
     static ConcurrentHashMap<Point, Rect> pixels = new ConcurrentHashMap<>();
 
     public JDraw(String name) {
-        super(name);
+        super(name, "awt");
     }
 
     public static void initialize() {
@@ -161,6 +163,7 @@ public class JDraw extends Library {
             put("drawPoly", Arrays.asList("points", "color"));
             put("tracePoly", Arrays.asList("points", "color"));
             put("setPixel", Arrays.asList("x", "y", "color"));
+            put("chooseFile", Arrays.asList("path", "extension", "mode"));
             put("drawImage", Arrays.asList("x", "y", "filename"));
             put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
             put("setSize", Arrays.asList("width", "height"));
@@ -187,6 +190,9 @@ public class JDraw extends Library {
             put("init", new ArrayList<>());
             put("clear", new ArrayList<>());
         }});
+        SymbolTable symb = Constants.LIBRARIES.get("awt").symbolTable;
+        symb.define("SAVE", new Num(32));
+        symb.define("OPEN", new Num(64));
     }
 
     public static Pair<Integer[], Error> getColor(Object col) {
@@ -791,6 +797,48 @@ public class JDraw extends Library {
         flush();
 
         return res.success(new Null());
+    }
+
+    public RTResult execute_chooseFile(Context execCtx) {
+        RTResult res = new RTResult();
+
+        JFileChooser chooser = new JFileChooser(execCtx.symbolTable.get("path").toString());
+
+        Obj fnef = (Obj) execCtx.symbolTable.get("extension");
+        if (!(fnef instanceof Null)) {
+            res.register(checkType(fnef, "list", Constants.JPType.List));
+            if (res.error != null) return res;
+            List<Obj> dat = ((PList) fnef).trueValue();
+
+            if (dat.size() != 2) return res.failure(new RTError(
+                    fnef.get_start(), fnef.get_end(),
+                    "Expected 2 elements",
+                    context
+            ));
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(dat.get(0).toString(), dat.get(1).toString());
+            chooser.addChoosableFileFilter(filter);
+            chooser.setFileFilter(filter);
+        }
+
+        Obj md = res.register(checkPosInt(execCtx.symbolTable.get("mode")));
+        if (res.error != null) return res;
+
+        int mode = (int) ((Num) md).trueValue();
+        Integer result = switch (mode) {
+            case 32 -> chooser.showSaveDialog(null);
+            case 64 -> chooser.showOpenDialog(null);
+            default -> null;
+        };
+
+        if (result == null) return res.failure(new RTError(
+                md.get_start(), md.get_end(),
+                "Expected mode",
+                context
+        ));
+        else if (result == JFileChooser.APPROVE_OPTION)
+            return res.success(new Str(chooser.getSelectedFile().getAbsolutePath()));
+        else
+            return res.success(new Null());
     }
 
     public RTResult execute_fps(Context execCtx) {

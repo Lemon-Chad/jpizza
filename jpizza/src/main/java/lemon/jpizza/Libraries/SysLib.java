@@ -20,7 +20,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused")
 public class SysLib extends Library {
 
-    public SysLib(String name) { super(name); }
+    public SysLib(String name) { super(name, "sys"); }
 
     public static void initialize() {
         initialize("sys", SysLib.class, new HashMap<>(){{

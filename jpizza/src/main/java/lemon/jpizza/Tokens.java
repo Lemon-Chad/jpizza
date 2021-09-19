@@ -62,10 +62,14 @@ public class Tokens {
         DOT,
         USE,
         ITER,
+        BACK,
+        SPREAD,
     }
     
     public static final Map<String, TT> TOKEY = new HashMap<>(){{
         put("[", TT.LSQUARE);
+        put("\\", TT.BACK);
+        put("..", TT.SPREAD);
         put("~~", TT.RIGHTSHIFT);
         put("~>", TT.SIGNRIGHTSHIFT);
         put("<~", TT.LEFTSHIFT);

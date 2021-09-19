@@ -12,7 +12,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused")
 public class GUIs extends Library {
 
-    public GUIs(String name) { super(name); }
+    public GUIs(String name) { super(name, "GUIs"); }
 
     public static void initialize() {
         initialize("GUIs", GUIs.class, new HashMap<>(){{

@@ -18,7 +18,7 @@ import java.util.HashMap;
 @SuppressWarnings("unused")
 public class Time extends Library {
 
-    public Time(String name) { super(name); }
+    public Time(String name) { super(name, "time"); }
 
     public static void initialize() {
         initialize("time", Time.class, new HashMap<>(){{
@@ -58,7 +58,7 @@ public class Time extends Library {
                 execCtx
         ));
         long start = System.currentTimeMillis();
-        res.register(((Function) value).execute(new ArrayList<>(), new ArrayList<>(), new Interpreter()));
+        res.register(((Function) value).execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null) return res;
         return res.success(new Num(System.currentTimeMillis() - start));
     }

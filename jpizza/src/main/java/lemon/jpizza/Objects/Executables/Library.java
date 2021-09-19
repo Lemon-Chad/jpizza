@@ -19,16 +19,18 @@ import java.util.List;
 import java.util.Map;
 
 public class Library extends BaseFunction {
-    public static Map<String, List<String>> atrs = new HashMap<>();
-    public Library(String name) {
+    public static Map< String, Map< String, List<String> > > atrs = new HashMap<>();
+    String libname;
+    public Library(String name, String libname) {
         super(name);
+        this.libname = libname;
         jptype = Constants.JPType.Library;
     }
 
     public List<Obj> valList() {
         String methodName = "execute_"+name;
         List<Obj> argVals = new ArrayList<>();
-        List<String> argNames = atrs.get(methodName);
+        List<String> argNames = atrs.get(libname).get(methodName);
         if (argNames != null) {
             int size = argNames.size();
             for (int i = 0; i < size; i++)
@@ -107,36 +109,39 @@ public class Library extends BaseFunction {
         return new RTResult().success(o);
     }
 
-    public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs) {
+    public static void initialize(String libName, Class<? extends Library> cls, Map<String, List<String>> funcs) {
         Context libContext = new Context(libName, null, null);
         libContext.symbolTable = new SymbolTable();
         initialize(libName, cls, funcs, libContext, true);
     }
 
-    public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs, SymbolTable table) {
+    public static void initialize(String libName, Class<? extends Library> cls, Map<String, List<String>> funcs, SymbolTable table) {
         Context libContext = new Context(libName, null, null);
         libContext.symbolTable = table;
         initialize(libName, cls, funcs, libContext, false);
     }
 
     @SuppressWarnings("DuplicatedCode")
-    public static void initialize(String libName, Class<?> cls, Map<String, List<String>> funcs, Context libContext,
+    public static void initialize(String libName, Class<? extends Library> cls, Map<String, List<String>> funcs, Context libContext,
                                   boolean adlib) {
         SymbolTable libTable = libContext.symbolTable;
 
-        Constructor<?> cons;
+        Constructor<? extends Library> cons;
         try {
             cons = cls.getConstructor(String.class);
         } catch (NoSuchMethodException e) {
             e.printStackTrace(); return;
         }
 
+        atrs.put(libName, new HashMap<>());
+        Map<String, List<String>> libAtrs = atrs.get(libName);
+
         funcs.forEach((k, v) -> {
             // Initialize here
-            atrs.put(k, v);
+            libAtrs.put(k, v);
             Library val;
             try {
-                val = (Library) cons.newInstance(k);
+                val = cons.newInstance(k);
             } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
                 e.printStackTrace();
                 return;
@@ -147,12 +152,12 @@ public class Library extends BaseFunction {
     }
 
     @Override
-    public RTResult execute(List<Obj> args, List<Token> generics, Interpreter parent) {
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
         Context execCtx = newContext();
 
         String methodName = "execute_" + name;
-        List<String> argNames = atrs.get(name);
+        List<String> argNames = atrs.get(libname).get(name);
         if (argNames == null)
             return res.failure(new RTError(
                     pos_start, pos_end,

@@ -143,7 +143,7 @@ public class BuiltInFunction extends Library {
             put(upper.get(k), k);
     }};
 
-    public BuiltInFunction(String name) { super(name); }
+    public BuiltInFunction(String name) { super(name, "compiled"); }
 
     public RTResult execute_preprocess(Context execCtx) {
         RTResult res = new RTResult();
@@ -407,7 +407,7 @@ public class BuiltInFunction extends Library {
         List<Obj> preList = (List<Obj>) list.value;
         int size = preList.size();
         for (int i = 0; i < size; i++) {
-            Obj after = res.register(func.execute(Collections.singletonList(preList.get(i)), new ArrayList<>(),
+            Obj after = res.register(func.execute(Collections.singletonList(preList.get(i)), new ArrayList<>(), new HashMap<>(),
                     new Interpreter()));
             if (res.error != null) return res;
             newList.add(after);

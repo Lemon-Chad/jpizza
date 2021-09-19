@@ -9,16 +9,16 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Token;
 
-public class AttrAssignNode extends Node {
+public class LetNode extends Node {
     public Token var_name_tok;
     public Node value_node;
 
-    public AttrAssignNode(Token var_name_tok, Node value_node) {
+    public LetNode(Token var_name_tok, Node value_node) {
         this.var_name_tok = var_name_tok;
         this.value_node = value_node;
 
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = Constants.JPType.AttrAssign;
+        jptype = Constants.JPType.VarAssign;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -28,15 +28,14 @@ public class AttrAssignNode extends Node {
         Obj value = res.register(value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        String v = context.symbolTable.setattr(varName, value);
-        if (v != null) return res.failure(new RTError(
+        String error = context.symbolTable.define(varName, value, false, value.type().toString(), null, null);
+        if (error != null) return res.failure(new RTError(
                 pos_start, pos_end,
-                v,
+                error,
                 context
         ));
 
         return res.success(value);
-
     }
 
 }

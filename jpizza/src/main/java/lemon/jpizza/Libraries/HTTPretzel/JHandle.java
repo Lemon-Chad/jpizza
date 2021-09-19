@@ -103,7 +103,7 @@ public class JHandle implements HttpHandler {
     private void handleResponse(HttpExchange exchange, Dict dat) throws IOException {
         OutputStream outputStream = exchange.getResponseBody();
 
-        Obj response = res.register(handle.execute(Collections.singletonList(dat), new ArrayList<>(),
+        Obj response = res.register(handle.execute(Collections.singletonList(dat), new ArrayList<>(), new HashMap<>(),
                 new Interpreter()));
         if (res.error != null) {
             logError(exchange, outputStream);
