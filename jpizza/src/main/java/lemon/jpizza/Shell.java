@@ -2,6 +2,7 @@ package lemon.jpizza;
 
 import lemon.jpizza.Contextuals.Context;
 import lemon.jpizza.Contextuals.SymbolTable;
+import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Errors.RTError;
 import lemon.jpizza.Generators.Interpreter;
 import lemon.jpizza.Generators.Lexer;
@@ -17,14 +18,12 @@ import lemon.jpizza.Objects.Obj;
 import lemon.jpizza.Objects.Primitives.PList;
 import lemon.jpizza.Objects.Primitives.Str;
 import lemon.jpizza.Results.ParseResult;
+import lemon.jpizza.Results.RTResult;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-
-import lemon.jpizza.Errors.Error;
-import lemon.jpizza.Results.RTResult;
 
 public class Shell {
 

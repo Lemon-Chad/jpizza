@@ -4,6 +4,7 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.Errors.Error;
 import lemon.jpizza.Position;
 import lemon.jpizza.Token;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 
@@ -139,7 +140,7 @@ public class Lexer {
                 if (escapeCharacters.containsKey(currentChar)) {
                     string.append(escapeCharacters.get(currentChar));
                 } else {
-                    string.append(currentChar);
+                    string.append("\\").append(currentChar);
                 } escaped = false;
             }
             else if (currentChar.equals("\\")) {
@@ -150,7 +151,7 @@ public class Lexer {
         }
 
         advance();
-        return new Token(TT.STRING, new Pair<>(string.toString(), q.equals("`")), pos_start, pos);
+        return new Token(TT.STRING, new Pair<>(StringEscapeUtils.unescapeJava(string.toString()), q.equals("`")), pos_start, pos);
     }
 
     public Pair<Token, Error> make_equals_expr() {
