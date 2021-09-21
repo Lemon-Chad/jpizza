@@ -10,14 +10,14 @@ import lemon.jpizza.Objects.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static lemon.jpizza.Operations.OP;
 
 public class Dict extends Value {
-    public Dict(Map<Obj, Obj> value) { super(value); jptype = Constants.JPType.Dict; }
-    public Map<Obj, Obj> trueValue() { return (Map<Obj, Obj>) value; }
+    public Dict(Map<Obj, Obj> value) { super(new ConcurrentHashMap<>(value)); jptype = Constants.JPType.Dict; }
+    public ConcurrentHashMap<Obj, Obj> trueValue() { return (ConcurrentHashMap<Obj, Obj>) value; }
 
     // Functions
 
@@ -34,14 +34,15 @@ public class Dict extends Value {
             }
         }
         if (key != null) {
-            Map<Obj, Obj> v = trueValue();
+            ConcurrentHashMap<Obj, Obj> v = trueValue();
             v.remove(key);
             value = v;
         }
         return new Null();
     }
     public Obj set(Obj a, Obj b) {
-        Map<Obj, Obj> v = trueValue();
+        delete(a);
+        ConcurrentHashMap<Obj, Obj> v = trueValue();
         v.put(a, b);
         value = v;
         return new Null();
@@ -51,7 +52,7 @@ public class Dict extends Value {
 
     public Pair<Obj, RTError> add(Obj o) {
         Dict other = (Dict) o.dictionary();
-        Map<Obj, Obj> combo = new HashMap<>(trueValue());
+        ConcurrentHashMap<Obj, Obj> combo = new ConcurrentHashMap<>(trueValue());
         other.trueValue().forEach(
                 (key, value) -> combo.merge(key, value, (v1, v2) -> v1)
         );

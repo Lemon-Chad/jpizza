@@ -10,6 +10,7 @@ import lemon.jpizza.Objects.Primitives.*;
 import lemon.jpizza.Results.RTResult;
 import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -155,8 +156,8 @@ public class Function extends BaseFunction {
             genericKey.put(this.generics.get(i).value.toString(), generics.get(i).value.toString());
 
         if (argname != null && args.size() > argNames.size()) {
-            execCtx.symbolTable.define(argname, new PList(args.subList(argNames.size(), args.size())));
-            args = args.subList(0, argNames.size());
+            execCtx.symbolTable.define(argname, new PList(new ArrayList<>(args.subList(argNames.size(), args.size()))));
+            args = new ArrayList<>(args.subList(0, argNames.size()));
         }
 
         if (kwargname != null) {

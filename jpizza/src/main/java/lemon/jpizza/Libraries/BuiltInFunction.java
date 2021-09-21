@@ -599,7 +599,7 @@ public class BuiltInFunction extends Library {
                 execCtx
         ));
 
-        return res.success(new PList(lst.subList(strt, nd)));
+        return res.success(new PList(new ArrayList<>(lst.subList(strt, nd))));
     }
 
     public RTResult execute_split(Context execCtx) {
