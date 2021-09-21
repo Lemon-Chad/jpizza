@@ -13,7 +13,6 @@ import lemon.jpizza.Nodes.Node;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.io.IOException;
 import java.net.URLClassLoader;
@@ -38,15 +37,14 @@ public class ExtendNode extends Node {
         String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
         String modPath = Shell.root + "/extensions/" + fn;
         String modFilePath = modPath + "/" + fn + ".jar";
-        var mkdirs = new File(Shell.root + "/extensions ").mkdirs();
-        ClassInstance imp = null;
+        var mkdirs = new File(Shell.root + "/extensions").mkdirs();
         RTResult res = new RTResult();
         String userDataDir = System.getProperty("user.dir");
             if (Files.exists(Paths.get(modFilePath))){
                 URL[] urls = new URL[]{new URL("file://" + modFilePath)};
                 URLClassLoader urlClassLoader = new URLClassLoader(urls);
                 try {
-                    Class<?> loadedClass = urlClassLoader.loadClass("jpizza.extension" + fn);
+                    Class<?> loadedClass = urlClassLoader.loadClass("jpext." + fn);
                     Constructor<?> constructor = loadedClass.getConstructor();
                     Object loadedObject = constructor.newInstance();
                     loadedClass.getMethod("initialize").invoke(loadedObject);
@@ -58,21 +56,20 @@ public class ExtendNode extends Node {
                 URL[] urls = new URL[]{new URL("file://" + file_name)};
                 URLClassLoader urlClassLoader = new URLClassLoader(urls);
                 try {
-                    Class<?> loadedClass = urlClassLoader.loadClass("jpizza.extension" + fn);
+                    Class<?> loadedClass = urlClassLoader.loadClass("jpext." + fn);
                     Constructor<?> constructor = loadedClass.getConstructor();
                     Object loadedObject = constructor.newInstance();
                     loadedClass.getMethod("initialize").invoke(loadedObject);
                 } catch(Exception e) {
                     return res.failure(new RTError(pos_start,pos_end, "Error", context));
                 }
-            }
+            }else {
+                return res.failure(new RTError(
+                        pos_start, pos_end,
+                        "Extension does not exist",
+                        context
+                ));}
             if (res.error != null) return res;
-        if (imp == null) return res.failure(new RTError(
-                pos_start, pos_end,
-                "Extension does not exist",
-                context
-        ));
-        context.symbolTable.define(fn, imp);
         return res.success(new Null());
     }
 
