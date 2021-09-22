@@ -39,37 +39,37 @@ public class ExtendNode extends Node {
         String modFilePath = modPath + "/" + fn + ".jar";
         var mkdirs = new File(Shell.root + "/extensions").mkdirs();
         RTResult res = new RTResult();
-        String userDataDir = System.getProperty("user.dir");
-            if (Files.exists(Paths.get(modFilePath))){
-                URL[] urls = new URL[]{new URL("file://" + modFilePath)};
-                URLClassLoader urlClassLoader = new URLClassLoader(urls);
-                try {
-                    Class<?> loadedClass = urlClassLoader.loadClass("jpext." + fn);
-                    Constructor<?> constructor = loadedClass.getConstructor();
-                    Object loadedObject = constructor.newInstance();
-                    loadedClass.getMethod("initialize").invoke(loadedObject);
-                } catch(Exception e) {
-                    return res.failure(new RTError(pos_start,pos_end, "Error", context));
-                }
+        if (Files.exists(Paths.get(modFilePath))) {
+            URL[] urls = new URL[]{new URL("file://" + modFilePath)};
+            URLClassLoader urlClassLoader = new URLClassLoader(urls);
+            try {
+                Class<?> loadedClass = urlClassLoader.loadClass("jpext." + fn);
+                Constructor<?> constructor = loadedClass.getConstructor();
+                Object loadedObject = constructor.newInstance();
+                loadedClass.getMethod("initialize").invoke(loadedObject);
+            } catch(Exception e) {
+                return res.failure(new RTError(pos_start,pos_end, "Error", context));
             }
-            else if (Files.exists(Paths.get(file_name))){
-                URL[] urls = new URL[]{new URL("file://" + file_name)};
-                URLClassLoader urlClassLoader = new URLClassLoader(urls);
-                try {
-                    Class<?> loadedClass = urlClassLoader.loadClass("jpext." + fn);
-                    Constructor<?> constructor = loadedClass.getConstructor();
-                    Object loadedObject = constructor.newInstance();
-                    loadedClass.getMethod("initialize").invoke(loadedObject);
-                } catch(Exception e) {
-                    return res.failure(new RTError(pos_start,pos_end, "Error", context));
-                }
-            }else {
-                return res.failure(new RTError(
-                        pos_start, pos_end,
-                        "Extension does not exist",
-                        context
-                ));}
-            if (res.error != null) return res;
+        }
+        else if (Files.exists(Paths.get(file_name))){
+            URL[] urls = new URL[]{new URL("file://" + file_name)};
+            URLClassLoader urlClassLoader = new URLClassLoader(urls);
+            try {
+                Class<?> loadedClass = urlClassLoader.loadClass("jpext." + fn);
+                Constructor<?> constructor = loadedClass.getConstructor();
+                Object loadedObject = constructor.newInstance();
+                loadedClass.getMethod("initialize").invoke(loadedObject);
+            } catch(Exception e) {
+                return res.failure(new RTError(pos_start,pos_end, "Error", context));
+            }
+        } else {
+            return res.failure(new RTError(
+                    pos_start, pos_end,
+                    "Extension does not exist",
+                    context
+            ));
+        }
+        if (res.error != null) return res;
         return res.success(new Null());
     }
 

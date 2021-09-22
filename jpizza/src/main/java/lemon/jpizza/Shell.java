@@ -71,13 +71,13 @@ public class Shell {
         if (args.length == 1) {
             if (args[0].equals("help")) {
                 Shell.logger.outln("""
-                        dp        ->   Open venv
-                        dp help   ->   List commands
-                        dp docs   ->   Link to documentation
+                        jpizza        ->   Open venv
+                        jpizza help   ->   List commands
+                        jpizza docs   ->   Link to documentation
                         
-                        dp <file> ->            Run file
-                        dp <file> --compile ->  Compile file
-                        dp <file> --refactor -> Run file with refactoring tips
+                        jpizza <file> ->            Run file
+                        jpizza <file> --compile ->  Compile file
+                        jpizza <file> --refactor -> Run file with refactoring tips
                         """);
             } else if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
@@ -178,6 +178,7 @@ public class Shell {
             }
             return;
         }
+
         Shell.logger.outln("Exit with 'quit'");
         Shell.logger.enableTips();
         while (true) {
