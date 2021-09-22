@@ -1,7 +1,7 @@
 package lemon.jpizza;
 
-import lemon.jpizza.Errors.Error;
-import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.errors.Error;
+import lemon.jpizza.objects.Obj;
 
 public class SpeedTest {
     public static void main(String[] args) {

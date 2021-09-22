@@ -1,8 +1,8 @@
 package lemon.jpizza;
 
-import lemon.jpizza.Errors.RTError;
-import lemon.jpizza.Objects.Obj;
-import lemon.jpizza.Objects.Primitives.Bool;
+import lemon.jpizza.errors.RTError;
+import lemon.jpizza.objects.Obj;
+import lemon.jpizza.objects.primitives.Bool;
 
 import java.util.ArrayList;
 import java.util.Arrays;

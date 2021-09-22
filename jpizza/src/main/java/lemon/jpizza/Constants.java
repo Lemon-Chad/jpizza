@@ -1,9 +1,9 @@
 package lemon.jpizza;
 
-import lemon.jpizza.Contextuals.Context;
-import lemon.jpizza.Objects.Obj;
-import lemon.jpizza.Objects.Primitives.*;
-import lemon.jpizza.Objects.Value;
+import lemon.jpizza.contextuals.Context;
+import lemon.jpizza.objects.Obj;
+import lemon.jpizza.objects.primitives.*;
+import lemon.jpizza.objects.Value;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -1,10 +1,10 @@
 package lemon.jpizza;
 
 import com.diogonunes.jcolor.Attribute;
-import lemon.jpizza.Objects.Obj;
-import lemon.jpizza.Objects.Primitives.Bytes;
-import lemon.jpizza.Objects.Primitives.Dict;
-import lemon.jpizza.Objects.Primitives.PList;
+import lemon.jpizza.objects.Obj;
+import lemon.jpizza.objects.primitives.Bytes;
+import lemon.jpizza.objects.primitives.Dict;
+import lemon.jpizza.objects.primitives.PList;
 
 import java.util.List;
 import java.util.Map;

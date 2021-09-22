@@ -1,6 +1,6 @@
 package lemon.jpizza;
 
-import lemon.jpizza.Objects.Obj;
+import lemon.jpizza.objects.Obj;
 
 public class Cache {
     public String funcName;
