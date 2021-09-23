@@ -190,7 +190,7 @@ public class Function extends BaseFunction {
             return res;
         }
 
-        Obj retValue = autoreturn ? value : (
+        Obj retValue = autoreturn ? (value != null ? value : new Null()) : (
                     res.funcReturn != null ? res.funcReturn : new Null()
                 );
 
