@@ -6,7 +6,7 @@ public class Position implements Serializable {
     public int idx;
     public int ln;
     public int col;
-    public int tcol;
+    public int tcol = -1;
     public int tidx;
     public String fn;
     public String ftext;

@@ -187,7 +187,9 @@ public class Shell {
             if (input.equals("quit;"))
                 break;
             Pair<Obj, Error> a = run("<shell>", input, true);
-            if (a.b != null) Shell.logger.fail(a.b.asString());
+            if (a.b != null) {
+                Shell.logger.fail(a.b.asString());
+            }
             else {
                 List<Obj> results = ((PList) a.a).trueValue();
                 if (results.size() > 0) {
