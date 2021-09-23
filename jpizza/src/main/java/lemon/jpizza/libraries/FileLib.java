@@ -282,7 +282,6 @@ public class FileLib extends Library {
         } catch (Exception e){
             return res.failure(new RTError(value.pos_start, value.pos_end,"Java runtime error", execCtx));
         }
-        for (String path: pathnames){Shell.logger.outln(pathnames);}
 
         PList paths = new PList(new ArrayList<>());
 
