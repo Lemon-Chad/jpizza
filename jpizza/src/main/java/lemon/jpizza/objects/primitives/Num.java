@@ -73,7 +73,7 @@ public class Num extends Value {
     // Methods
 
     public Pair<Obj, RTError> add(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -90,7 +90,7 @@ public class Num extends Value {
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> mod(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -106,7 +106,7 @@ public class Num extends Value {
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> sub(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -121,7 +121,7 @@ public class Num extends Value {
         return new Pair<>(new Num(v, other.floating || floating, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> mul(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -136,14 +136,14 @@ public class Num extends Value {
         return new Pair<>(new Num(v, other.floating || floating, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> div(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
         ));
         Num other = (Num) o;
         if (other.trueValue() == 0)
-            return new Pair<>(null, new RTError(
+            return new Pair<>(null, RTError.IllegalOperation(
                     pos_start, pos_end,
                     "Division by 0",
                     context
@@ -158,7 +158,7 @@ public class Num extends Value {
         return new Pair<>(new Num(v, true, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> fastpow(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -173,7 +173,7 @@ public class Num extends Value {
         return new Pair<>(new Num(v, other.floating || floating, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> lt(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -182,7 +182,7 @@ public class Num extends Value {
         return new Pair<>(new Bool(trueValue() < other.trueValue()).set_context(context), null);
     }
     public Pair<Obj, RTError> lte(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (o.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context

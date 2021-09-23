@@ -47,9 +47,9 @@ public class HTTPLIB extends Library {
     public Pair< Map<String, String>, RTError > getParams(Context execCtx) {
         Obj params = ((Obj) execCtx.symbolTable.get("params")).dictionary();
 
-        Pair< Map<String, String>, RTError > errX = new Pair<>(null, new RTError(
+        Pair< Map<String, String>, RTError > errX = new Pair<>(null, RTError.Type(
                 params.get_start(), params.get_end(),
-                "Expected dict<string, string>",
+                "Expected Dict<String, String>",
                 params.get_ctx()
         ));
 
@@ -75,7 +75,7 @@ public class HTTPLIB extends Library {
         try {
             uri = new URI(url);
         } catch (URISyntaxException e) {
-            return new Pair<>(null, new RTError(
+            return new Pair<>(null, RTError.Formatting(
                     urlObj.get_start(), urlObj.get_end(),
                     "URI Syntax Error",
                     urlObj.get_ctx()
@@ -103,7 +103,7 @@ public class HTTPLIB extends Library {
                     .send(request, HttpResponse.BodyHandlers.ofString());
         }
         catch (IOException | InterruptedException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context
@@ -138,7 +138,7 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
@@ -161,7 +161,7 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_deleteRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
@@ -184,14 +184,14 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_postRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
         ));
 
         Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
-        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected body string",
                 urlObj.get_ctx()
@@ -216,14 +216,14 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult otherRequest(String method, Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
         ));
 
         Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
-        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected body string",
                 urlObj.get_ctx()
@@ -268,14 +268,14 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_putRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
         ));
 
         Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
-        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected body string",
                 urlObj.get_ctx()

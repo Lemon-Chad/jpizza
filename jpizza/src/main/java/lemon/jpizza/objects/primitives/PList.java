@@ -51,14 +51,14 @@ public class PList extends Value {
     }
     public Pair<Obj, RTError> mul(Obj o) {
         Obj n = o.number();
-        if (n.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (n.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "List index must be a number",
                 context
         ));
         Num other = (Num) n;
         if (other.floating)
-            return new Pair<>(null, new RTError(
+            return new Pair<>(null, RTError.Type(
                     pos_start, pos_end,
                     "Multiplier must be long, not double",
                     context
@@ -87,19 +87,19 @@ public class PList extends Value {
     }
     public Pair<Num, RTError> inRange(Obj o) {
         Obj n = o.number();
-        if (n.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (n.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "List index must be a number",
                 context
         ));
         Num other = (Num) n;
         if (other.floating)
-            return new Pair<>(null, new RTError(
+            return new Pair<>(null, RTError.Type(
                     pos_start, pos_end,
                     "List index must be long, not double",
                     context
             ));
-        if (other.trueValue() + 1 > trueValue().size()) return new Pair<>(null, new RTError(
+        if (other.trueValue() + 1 > trueValue().size()) return new Pair<>(null, RTError.OutOfBounds(
                 pos_start, pos_end,
                 "List index out of range",
                 context

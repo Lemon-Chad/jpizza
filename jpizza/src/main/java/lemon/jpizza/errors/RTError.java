@@ -36,8 +36,28 @@ public class RTError extends Error {
         return new RTError("Unresolved", pos_start, pos_end, details, context);
     }
 
+    public static RTError Publicity(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Publicity", pos_start, pos_end, details, context);
+    }
+
+    public interface ErrorMethod {
+        RTError build(Position pos_start, Position pos_end, String details, Context context);
+    }
+
+    public interface ErrorDetails {
+        RTError build(Position pos_start, Position pos_end, Context context);
+    }
+
+    public static ErrorDetails makeDetails(ErrorMethod method, String details) {
+        return (Position pos_start, Position pos_end, Context context) -> method.build(pos_start, pos_end, details, context);
+    }
+
     public static RTError OutOfBounds(Position pos_start, Position pos_end, String details, Context context) {
         return new RTError("Out of Bounds", pos_start, pos_end, details, context);
+    }
+
+    public static RTError Range(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Range", pos_start, pos_end, details, context);
     }
 
     public static RTError Internal(Position pos_start, Position pos_end, String details, Context context) {
@@ -64,12 +84,36 @@ public class RTError extends Error {
         return new RTError("Scope", pos_start, pos_end, details, context);
     }
 
+    public static RTError GenericCount(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Generic Count", pos_start, pos_end, details, context);
+    }
+
+    public static RTError IllegalOperation(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Illegal Operation", pos_start, pos_end, details, context);
+    }
+
     public static RTError ArgumentCount(Position pos_start, Position pos_end, String details, Context context) {
         return new RTError("Argument Count", pos_start, pos_end, details, context);
     }
 
     public static RTError Conversion(Position pos_start, Position pos_end, String details, Context context) {
         return new RTError("Type Conversion", pos_start, pos_end, details, context);
+    }
+
+    public static RTError Interrupted(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Interrupted Process", pos_start, pos_end, details, context);
+    }
+
+    public static RTError Const(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Constant Reassignment", pos_start, pos_end, details, context);
+    }
+
+    public static RTError MalformedData(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Malformed Data", pos_start, pos_end, details, context);
+    }
+
+    public static RTError Formatting(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Formatting", pos_start, pos_end, details, context);
     }
 
     public String generateTraceback() {

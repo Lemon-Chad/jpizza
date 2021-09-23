@@ -28,10 +28,9 @@ public class LetNode extends Node {
         Obj value = res.register(value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        String error = context.symbolTable.define(varName, value, false, value.type().toString(), null, null);
-        if (error != null) return res.failure(new RTError(
+        RTError.ErrorDetails error = context.symbolTable.define(varName, value, false, value.type().toString(), null, null);
+        if (error != null) return res.failure(error.build(
                 pos_start, pos_end,
-                error,
                 context
         ));
 

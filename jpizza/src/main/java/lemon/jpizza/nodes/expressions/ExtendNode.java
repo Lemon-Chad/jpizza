@@ -29,8 +29,6 @@ public class ExtendNode extends Node {
         jptype = Constants.JPType.Import;
     }
 
-
-
     public RTResult vis(Context context) throws IOException {
         String fn = (String) file_name_tok.value;
         String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
@@ -47,7 +45,7 @@ public class ExtendNode extends Node {
                 Object loadedObject = constructor.newInstance();
                 loadedClass.getMethod("initialize").invoke(loadedObject);
             } catch(Exception e) {
-                return res.failure(new RTError(pos_start,pos_end, "Error", context));
+                return res.failure(RTError.Internal(pos_start,pos_end, e.toString(), context));
             }
         }
         else if (Files.exists(Paths.get(file_name))){
@@ -59,10 +57,10 @@ public class ExtendNode extends Node {
                 Object loadedObject = constructor.newInstance();
                 loadedClass.getMethod("initialize").invoke(loadedObject);
             } catch(Exception e) {
-                return res.failure(new RTError(pos_start,pos_end, "Error", context));
+                return res.failure(RTError.Internal(pos_start,pos_end, e.toString(), context));
             }
         } else {
-            return res.failure(new RTError(
+            return res.failure(RTError.FileNotFound(
                     pos_start, pos_end,
                     "Extension does not exist",
                     context
@@ -76,7 +74,7 @@ public class ExtendNode extends Node {
         try {
             return vis(context);
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context

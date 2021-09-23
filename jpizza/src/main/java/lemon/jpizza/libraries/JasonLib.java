@@ -43,27 +43,27 @@ public class JasonLib extends Library {
 
     public RTResult execute_loads(Context execCtx) {
         Obj value = ((Obj) execCtx.symbolTable.get("value")).astring();
-        if (value.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (value.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
-                "Expected string",
+                "Expected String",
                 execCtx
         ));
 
         String jdata = ((Str) value).trueValue();
-        if (!jdata.startsWith("[") && !jdata.startsWith("{")) return new RTResult().failure(new RTError(
+        if (!jdata.startsWith("[") && !jdata.startsWith("{")) return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
-                "Expected list or dict",
+                "Expected List or Dict",
                 execCtx
         ));
 
         var toks = new Lexer("json-loads", jdata).make_tokens();
-        if (toks.b != null) return new RTResult().failure(new RTError(
+        if (toks.b != null) return new RTResult().failure(RTError.MalformedData(
                 toks.b.pos_start, toks.b.pos_end,
                 "Malformed JSON",
                 execCtx
         ));
         for (Token tok: toks.a) {
-            if (!acceptableJason.contains(tok.type)) return new RTResult().failure(new RTError(
+            if (!acceptableJason.contains(tok.type)) return new RTResult().failure(RTError.MalformedData(
                     tok.pos_start, tok.pos_end,
                     "Malformed JSON",
                     execCtx
@@ -72,7 +72,7 @@ public class JasonLib extends Library {
 
         var d = Shell.run("json-loads", jdata + ";", true);
 
-        if (d.b != null) return new RTResult().failure(new RTError(
+        if (d.b != null) return new RTResult().failure(RTError.MalformedData(
                 d.b.pos_start, d.b.pos_end,
                 "Malformed JSON",
                 execCtx
@@ -110,9 +110,9 @@ public class JasonLib extends Library {
     public RTResult execute_dumps(Context execCtx) {
         Obj value = ((Obj) execCtx.symbolTable.get("value")).dictionary();
         if (value.jptype != Constants.JPType.Dict && value.jptype != Constants.JPType.List)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
-                "Expected dictionary or list",
+                "Expected Dict or List",
                 execCtx
         ));
         return new RTResult().success(new Str(toStr(value)));

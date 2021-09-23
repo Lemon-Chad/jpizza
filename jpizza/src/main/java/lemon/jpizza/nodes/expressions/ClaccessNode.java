@@ -35,7 +35,7 @@ public class ClaccessNode extends Node {
 
         if (res.error != null) return res;
         if (var.jptype != Constants.JPType.ClassInstance && var.jptype != Constants.JPType.Enum &&
-                var.jptype != Constants.JPType.ClassPlate) return res.failure(new RTError(
+                var.jptype != Constants.JPType.ClassPlate) return res.failure(RTError.Type(
                 pos_start, pos_end,
                 "Expected class instance or enum",
                 context
@@ -45,7 +45,7 @@ public class ClaccessNode extends Node {
             case Enum:
                 EnumJChild child = ((EnumJ) var).getChild((String) attr_name_tok.value);
                 if (child == null)
-                    return res.failure(new RTError(
+                    return res.failure(RTError.Scope(
                             pos_start.copy(), pos_end.copy(),
                             "Enum child is undefined",
                             context
@@ -59,7 +59,7 @@ public class ClaccessNode extends Node {
                         .set_context(context));
                 if (val instanceof String)
                     return Interpreter.getThis(val, context, pos_start, pos_end);
-                else if (val instanceof CMethod && ((CMethod) val).isprivate) return new RTResult().failure(new RTError(
+                else if (val instanceof CMethod && ((CMethod) val).isprivate) return new RTResult().failure(RTError.Publicity(
                         pos_start, pos_end,
                         "Method is private",
                         context
@@ -73,7 +73,7 @@ public class ClaccessNode extends Node {
                 return res.success(acval.set_context(context).set_pos(pos_start, pos_end));
 
             default:
-                return res.failure(new RTError(
+                return res.failure(RTError.Type(
                         pos_start, pos_end,
                         "Type has no accessible traits",
                         context

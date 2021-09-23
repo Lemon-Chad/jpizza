@@ -19,7 +19,7 @@ public class GenConn {
     Context context;
 
     public RTError sendBytes(Obj data) {
-        if (data.jptype != Constants.JPType.Bytes) return new RTError(
+        if (data.jptype != Constants.JPType.Bytes) return RTError.Type(
                 data.get_start(), data.get_end(),
                 "Expected bytearray",
                 data.get_ctx()
@@ -30,7 +30,7 @@ public class GenConn {
             out.writeInt(msg.length);
             out.write(msg);
         } catch (IOException e) {
-            return new RTError(
+            return RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context
@@ -54,7 +54,7 @@ public class GenConn {
             out.writeInt(msg.length);
             out.write(msg);
         } catch (IOException e) {
-            return new RTError(
+            return RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context
@@ -76,7 +76,7 @@ public class GenConn {
                 ObjectInputStream ois = new ObjectInputStream(bis);
 
                 Object obj = ois.readObject();
-                if (!(obj instanceof Obj)) return new RTResult().failure(new RTError(
+                if (!(obj instanceof Obj)) return new RTResult().failure(RTError.MalformedData(
                         pos_start, pos_end,
                         "Invalid data recieved..",
                         context
@@ -86,13 +86,13 @@ public class GenConn {
             }
             return new RTResult().success(res);
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context
             ));
         } catch (ClassNotFoundException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.MalformedData(
                     pos_start, pos_end,
                     "Invalid data recieved..",
                     context
@@ -104,7 +104,7 @@ public class GenConn {
         try {
             return receiveBytes(in.readInt());
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context
@@ -123,7 +123,7 @@ public class GenConn {
             }
             return new RTResult().success(res);
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context

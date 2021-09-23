@@ -31,7 +31,7 @@ public class UseNode extends Node {
             case "func" -> {
                 if (!inter.main) break;
 
-                if (args.size() < 1) return new RTResult().failure(new RTError(
+                if (args.size() < 1) return new RTResult().failure(RTError.ArgumentCount(
                         pos_start, pos_end,
                         "Expected function name",
                         context
@@ -42,7 +42,7 @@ public class UseNode extends Node {
             case "object" -> {
                 if (!inter.main) break;
 
-                if (args.size() < 1) return new RTResult().failure(new RTError(
+                if (args.size() < 1) return new RTResult().failure(RTError.ArgumentCount(
                         pos_start, pos_end,
                         "Expected object name",
                         context

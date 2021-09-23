@@ -72,14 +72,13 @@ public class VarAssignNode extends Node {
         Obj value = res.register(value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        String error;
+        RTError.ErrorDetails error;
         if (defining)
             error = context.symbolTable.define(varName, value, locked, type, min, max);
         else
             error = context.symbolTable.set(varName, value, locked);
-        if (error != null) return res.failure(new RTError(
+        if (error != null) return res.failure(error.build(
                 pos_start, pos_end,
-                error,
                 context
         ));
 

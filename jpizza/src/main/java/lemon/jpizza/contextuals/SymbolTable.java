@@ -1,6 +1,7 @@
 package lemon.jpizza.contextuals;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.variables.AttrNode;
 import lemon.jpizza.nodes.variables.VarNode;
@@ -66,23 +67,23 @@ public class SymbolTable implements Serializable {
         symbols.remove(name);
     }
 
-    public String define(String name, Object value, boolean locked, String type, Integer min, Integer max) {
+    public RTError.ErrorDetails define(String name, Object value, boolean locked, String type, Integer min, Integer max) {
         if (symbols.containsKey(name) && symbols.get(name).locked)
-            return "Baked variable already defined";
+            return RTError.makeDetails(RTError::Const, "Baked variable already defined");
         if (min != null || max != null)
             type = "num";
         if (!type.equals("any")) {
             Obj t = ((Obj) value).type().astring();
             String provided;
             if (t.jptype != Constants.JPType.String)
-                return "Type is not a string";
+                return RTError.makeDetails(RTError::Type, "Type is not a string");
             else if (!type.equals(provided = ((Str) t).trueValue()))
-                return "Got type " + provided + ", expected type " + type;
+                return RTError.makeDetails(RTError::Type, "Got type " + provided + ", expected type " + type);
         }
         if (min != null || max != null) {
             double v = ((Num) value).trueValue();
             if ((max != null && v > max) || (min != null && v < min))
-                return "Number not in range";
+                return RTError.makeDetails(RTError::Range, "Number not in range");
         }
         symbols.put(name, new VarNode(value, locked).setRange(min, max));
         types.put(name, type);
@@ -96,24 +97,24 @@ public class SymbolTable implements Serializable {
         define(name, value, "any");
     }
 
-    public String set(String name, Obj value, boolean locked) {
+    public RTError.ErrorDetails set(String name, Obj value, boolean locked) {
         VarNode curr = symbols.get(name);
         if (curr != null) {
             String expect = types.get(name);
             if (curr.locked)
-                return "Baked variable already defined";
+                return RTError.makeDetails(RTError::Const, "Baked variable already defined");
             else if (curr.min != null || curr.max != null) {
                 double v = ((Num) value).trueValue();
                 if ((curr.max != null && v > curr.max) || (curr.min != null && v < curr.min))
-                    return "Number not in range";
+                    return RTError.makeDetails(RTError::Range, "Number not in range");
             }
             else if (!expect.equals("any")) {
                 Obj type = value.type().astring();
                 String t;
                 if (type.jptype != Constants.JPType.String)
-                    return "Type is not a string";
+                    return RTError.makeDetails(RTError::Type, "Type is not a string");
                 else if (!expect.equals(t = ((Str) type).trueValue()))
-                    return "Got type " + t + ", expected type " + expect;
+                    return RTError.makeDetails(RTError::Type, "Got type " + t + ", expected type " + expect);
             }
 
             VarNode vn = new VarNode(value, locked).setRange(curr.min, curr.max);
@@ -126,7 +127,7 @@ public class SymbolTable implements Serializable {
         else if (parent != null) {
             return parent.set(name, value, locked);
         } else
-            return "Variable not defined";
+            return RTError.makeDetails(RTError::Scope, "Variable not defined");
     }
 
     public void setDyn(String name, Node value) {
@@ -157,20 +158,20 @@ public class SymbolTable implements Serializable {
         if (attributes.containsKey(name)) { return attributes.get(name).value_node; }
         return parent != null ? parent.getattr(name) : null;
     }
-    public String setattr(String name, Object value) {
+    public RTError.ErrorDetails setattr(String name, Object value) {
         if (attributes.containsKey(name)) {
             String type = attrtypes.get(name);
             if (value instanceof Obj) {
                 String otype = ((Obj) value).type().toString();
                 if (!type.equals("any") && !otype.equals(type))
-                    return String.format("Expected %s, got %s", type, otype);
+                    return RTError.makeDetails(RTError::Type, String.format("Expected %s, got %s", type, otype));
             }
             attributes.replace(name, new AttrNode(value));
             return null;
         } else if (parent != null) {
             return parent.setattr(name, value);
         } else {
-            return "Undefined attribute";
+            return RTError.makeDetails(RTError::Scope, "Undefined attribute");
         }
     }
     public void setattrtype(String name, String type) {

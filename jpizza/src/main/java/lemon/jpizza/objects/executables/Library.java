@@ -43,13 +43,13 @@ public class Library extends BaseFunction {
 
     public static RTResult checkType(Object obj, String expect, Constants.JPType type) {
         if (obj == null)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                     null, null,
                     "Expected " + expect,
                     null
             ));
         Obj o = (Obj) obj;
-        if (o.jptype != type) return new RTResult().failure(new RTError(
+        if (o.jptype != type) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected " + expect,
                 o.get_ctx()
@@ -59,14 +59,14 @@ public class Library extends BaseFunction {
 
     public static RTResult checkFunction(Object obj) {
         if (obj == null)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                     null, null,
                     "Expected function",
                     null
             ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Function && o.jptype != Constants.JPType.CMethod)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected function",
                 o.get_ctx()
@@ -76,13 +76,13 @@ public class Library extends BaseFunction {
 
     public static RTResult checkInt(Object obj) {
         if (obj == null)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                     null, null,
                     "Expected an integer",
                     null
             ));
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || ((Num) o).floating) return new RTResult().failure(new RTError(
+        if (o.jptype != Constants.JPType.Number || ((Num) o).floating) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected an integer",
                 o.get_ctx()
@@ -94,14 +94,14 @@ public class Library extends BaseFunction {
 
     public static RTResult checkPosInt(Object obj) {
         if (obj == null)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                     null, null,
                     "Expected a postive integer",
                     null
             ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Number || ((Num) o).floating || ((Num) o).trueValue() < 0)
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected a postiive integer",
                 o.get_ctx()
@@ -159,7 +159,7 @@ public class Library extends BaseFunction {
         String methodName = "execute_" + name;
         List<String> argNames = atrs.get(libname).get(name);
         if (argNames == null)
-            return res.failure(new RTError(
+            return res.failure(RTError.Scope(
                     pos_start, pos_end,
                     "Undefined method",
                     context
@@ -170,7 +170,7 @@ public class Library extends BaseFunction {
             method = this.getClass().getMethod(methodName, Context.class);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
-            return res.failure(new RTError(
+            return res.failure(RTError.Scope(
                     pos_start, pos_end,
                     "Undefined method",
                     context
@@ -184,10 +184,9 @@ public class Library extends BaseFunction {
         try {
             returnValue = res.register((RTResult) method.invoke(this, execCtx));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     pos_start, pos_end,
-                    "LibError",
+                    e.toString(),
                     context
             ));
         }

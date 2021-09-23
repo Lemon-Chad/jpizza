@@ -1,7 +1,6 @@
 package lemon.jpizza.libraries;
 
 import lemon.jpizza.Constants;
-import lemon.jpizza.Shell;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Library;
@@ -38,9 +37,9 @@ public class FileLib extends Library {
     }
 
     private RTResult getdirectory(Obj value, Context ctx) {
-        if (value.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (value.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 value.pos_start, value.pos_end,
-                "Expected str",
+                "Expected String",
                 ctx
         ));
 
@@ -59,7 +58,7 @@ public class FileLib extends Library {
         String dir = ((Str) d).trueValue();
 
         File file = new File(dir);
-        if (!file.exists()) return res.failure(new RTError(
+        if (!file.exists()) return res.failure(RTError.FileNotFound(
                 value.pos_start, value.pos_end,
                 "File does not exist",
                 execCtx
@@ -69,7 +68,7 @@ public class FileLib extends Library {
         try {
             out = Files.readString(Path.of(dir));
         } catch (IOException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
                     "IOException occurred while reading..",
                     execCtx
@@ -87,7 +86,7 @@ public class FileLib extends Library {
         String dir = ((Str) d).trueValue();
 
         File file = new File(dir);
-        if (!file.exists()) return res.failure(new RTError(
+        if (!file.exists()) return res.failure(RTError.FileNotFound(
                 value.pos_start, value.pos_end,
                 "File does not exist",
                 execCtx
@@ -107,7 +106,7 @@ public class FileLib extends Library {
             ois.close();
             fis.close();
         } catch (IOException | ClassNotFoundException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
                     "IOException occurred while reading..",
                     execCtx
@@ -125,7 +124,7 @@ public class FileLib extends Library {
         String dir = ((Str) d).trueValue();
 
         File file = new File(dir);
-        if (!file.exists()) return res.failure(new RTError(
+        if (!file.exists()) return res.failure(RTError.FileNotFound(
                 value.pos_start, value.pos_end,
                 "File does not exist",
                 execCtx
@@ -140,7 +139,7 @@ public class FileLib extends Library {
 
             fis.close();
         } catch (IOException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
                     "IOException occurred while reading..",
                     execCtx
@@ -180,7 +179,7 @@ public class FileLib extends Library {
         String dir = ((Str) d).trueValue();
         File file = new File(dir);
         
-        if (!file.exists() || !file.isDirectory()) return res.failure(new RTError(
+        if (!file.exists() || !file.isDirectory()) return res.failure(RTError.PathNotFound(
                 value.pos_start, value.pos_end,
                 "Directory does not exist",
                 execCtx
@@ -203,9 +202,9 @@ public class FileLib extends Library {
         String dir = ((Str) d).trueValue();
 
         Obj vtwo = ((Obj) execCtx.symbolTable.get("val")).astring();
-        if (vtwo.jptype != Constants.JPType.String) return res.failure(new RTError(
+        if (vtwo.jptype != Constants.JPType.String) return res.failure(RTError.Type(
                 vtwo.pos_start, vtwo.pos_end,
-                "Expected str",
+                "Expected String",
                 execCtx
         ));
 
@@ -220,7 +219,7 @@ public class FileLib extends Library {
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
                     "IOException occurred while writing..",
                     execCtx
@@ -253,7 +252,7 @@ public class FileLib extends Library {
             fout.close();
         } catch (IOException e) {
             e.printStackTrace();
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
                     "IOException occurred while writing..",
                     execCtx
@@ -271,7 +270,7 @@ public class FileLib extends Library {
         String dir = ((Str) d).trueValue();
 
         File file = new File(dir);
-        if (!file.exists()) return res.failure(new RTError(
+        if (!file.exists()) return res.failure(RTError.FileNotFound(
                 value.pos_start, value.pos_end,
                 "File does not exist",
                 execCtx
@@ -279,12 +278,13 @@ public class FileLib extends Library {
         String[] pathnames;
         try {
             pathnames = file.list();
-        } catch (Exception e){
-            return res.failure(new RTError(value.pos_start, value.pos_end,"Java runtime error", execCtx));
+        } catch (Exception e) {
+            return res.failure(RTError.Internal(value.pos_start, value.pos_end, e.toString(), execCtx));
         }
 
         PList paths = new PList(new ArrayList<>());
 
+        assert pathnames != null;
         for (String path: pathnames) {
             paths.append(new Str(path));
         }

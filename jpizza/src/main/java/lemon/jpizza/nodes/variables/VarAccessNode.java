@@ -32,7 +32,7 @@ public class VarAccessNode extends Node {
 
         Object value = context.symbolTable.get(varName);
 
-        if (value == null) return res.failure(new RTError(
+        if (value == null) return res.failure(RTError.Scope(
                 pos_start, pos_end,
                 "'" + varName + "' is not defined",
                 context

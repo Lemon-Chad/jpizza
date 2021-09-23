@@ -38,7 +38,7 @@ public class QueryNode extends Node {
             conditionValue = res.register(c.condition.visit(inter, context));
             if (res.shouldReturn()) return res;
             Obj bx = conditionValue.bool();
-            if (bx.jptype != Constants.JPType.Boolean) return res.failure(new RTError(
+            if (bx.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
                     pos_start, pos_end,
                     "Conditional must be a boolean",
                     context

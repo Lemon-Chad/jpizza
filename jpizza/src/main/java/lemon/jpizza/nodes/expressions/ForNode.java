@@ -43,7 +43,7 @@ public class ForNode extends Node {
 
         Obj startNode = res.register(start_value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
-        if (startNode.jptype != Constants.JPType.Number) return res.failure(new RTError(
+        if (startNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
                 startNode.pos_start, startNode.pos_end,
                 "Start must be an integer",
                 context
@@ -51,7 +51,7 @@ public class ForNode extends Node {
         double start = ((Num) startNode).trueValue();
         Obj endNode = res.register(end_value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
-        if (endNode.jptype != Constants.JPType.Number) return res.failure(new RTError(
+        if (endNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
                 endNode.pos_start, endNode.pos_end,
                 "End must be an integer",
                 context
@@ -63,7 +63,7 @@ public class ForNode extends Node {
         if (step_value_node != null) {
             Obj stepNode = res.register(step_value_node.visit(inter, context));
             if (res.shouldReturn()) return res;
-            if (stepNode.jptype != Constants.JPType.Number) return res.failure(new RTError(
+            if (stepNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
                     stepNode.pos_start, stepNode.pos_end,
                     "Step must be an integer",
                     context

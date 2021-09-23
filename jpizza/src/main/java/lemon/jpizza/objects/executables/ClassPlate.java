@@ -102,9 +102,9 @@ public class ClassPlate extends Value {
     // Methods
 
     public RTResult access(Obj o) {
-        if (o.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (o.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
-                "Expected string",
+                "Expected String",
                 o.get_ctx()
         ));
         String other = ((Str) o).trueValue();
@@ -114,7 +114,7 @@ public class ClassPlate extends Value {
             return new RTResult().success(c);
         else if (x != null && !x.isprivate)
             return new RTResult().success(x.value);
-        else return new RTResult().failure(new RTError(
+        else return new RTResult().failure(RTError.Scope(
                     o.get_start(), o.get_end(),
                     "(Public) Static attribute does not exist",
                     o.get_ctx()

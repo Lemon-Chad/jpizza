@@ -40,7 +40,7 @@ public class ClassInstance extends Obj {
     }
 
     public Object _access(Obj o) {
-        if (o.jptype != Constants.JPType.String) return new RTError(
+        if (o.jptype != Constants.JPType.String) return RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected string",
                 o.get_ctx()
@@ -50,7 +50,7 @@ public class ClassInstance extends Obj {
         Object x = value.symbolTable.getattr(other);
         if (x != null) {
             if (value.symbolTable.isprivate(other))
-                return new RTError(
+                return RTError.Publicity(
                         o.get_start(), o.get_end(),
                         "Attribute is private",
                         o.get_ctx()
@@ -58,7 +58,7 @@ public class ClassInstance extends Obj {
             return x;
         }
         else if (c != null) return c;
-        else return new RTError(
+        else return RTError.Scope(
                     o.get_start(), o.get_end(),
                     "Attribute does not exist",
                     o.get_ctx()
@@ -126,7 +126,7 @@ public class ClassInstance extends Obj {
                     && ret.value.jptype == Constants.methTypes.get(name);
             if (typeMatch || !Constants.methTypes.containsKey(name))
                 return new Pair<>(ret.value, ret.error);
-            else Shell.logger.warn(new RTError(
+            else Shell.logger.warn(RTError.Type(
                     pos_start, pos_end,
                     String.format("Bin method should have return type %s, got %s",
                             Constants.methTypes.get(name), ret.value.jptype),

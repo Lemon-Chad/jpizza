@@ -57,25 +57,15 @@ public class BinOpNode extends Node {
         Obj right = res.register(right_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        /* Pair3<Obj, Operations.OP, Obj> pair = new Pair3<>(
-                left.set_context().set_pos(),
-                op,
-                right.set_context().set_pos()
-        );
-
-        if (Interpreter.compCache.containsKey(pair))
-            return res.success(Interpreter.compCache.get(new Pair3<>(left, op, right)));
-         */
-
         if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
                 Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
                 .contains(op_tok.type)) {
-            if (left.jptype != Constants.JPType.Number || ((Num) left).floating) return res.failure(new RTError(
+            if (left.jptype != Constants.JPType.Number || ((Num) left).floating) return res.failure(RTError.Type(
                     left.get_start(), left.get_end(),
                     "Left operand must be an integer",
                     context
             ));
-            if (right.jptype != Constants.JPType.Number || ((Num) right).floating) return res.failure(new RTError(
+            if (right.jptype != Constants.JPType.Number || ((Num) right).floating) return res.failure(RTError.Type(
                     right.get_start(), right.get_end(),
                     "Right operand must be an integer",
                     context

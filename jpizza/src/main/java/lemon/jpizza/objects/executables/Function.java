@@ -124,7 +124,7 @@ public class Function extends BaseFunction {
         RTResult res = run(args, generics, kwargs, parent);
         if (catcher) {
             if (res.error != null)
-                return res.success(new Result(res.error.details));
+                return res.success(new Result(res.error.error_name, res.error.details));
             else
                 return res.success(new Result(res.value));
         } return res;
@@ -136,13 +136,13 @@ public class Function extends BaseFunction {
         Context execCtx = newContext();
 
         if (generics.size() > this.generics.size()) {
-            return res.failure(new RTError(
+            return res.failure(RTError.GenericCount(
                     generics.get(this.generics.size()).pos_start, generics.get(generics.size() - 1).pos_end,
                     String.format("Got %s too many generic types", generics.size() - this.generics.size()),
                     context
             ));
         } else if (generics.size() < this.generics.size()) {
-            return res.failure(new RTError(
+            return res.failure(RTError.GenericCount(
                     generics.get(0).pos_start, generics.get(generics.size() - 1).pos_end,
                     String.format("Got %s too few generic types", this.generics.size() - generics.size()),
                     context
@@ -196,14 +196,14 @@ public class Function extends BaseFunction {
 
         if (!returnType.equals("any")) {
             Obj type = retValue.type().astring();
-            if (type.jptype != Constants.JPType.String) return res.failure(new RTError(
+            if (type.jptype != Constants.JPType.String) return res.failure(RTError.Type(
                     pos_start, pos_end,
-                    "Return value type is not a string",
+                    "Return value type is not a String",
                     context
             ));
 
             String rtype = ((Str) type).trueValue();
-            if (!rtype.equals(returnType)) return res.failure(new RTError(
+            if (!rtype.equals(returnType)) return res.failure(RTError.Type(
                     pos_start, pos_end,
                     "Return value has mismatched type",
                     context

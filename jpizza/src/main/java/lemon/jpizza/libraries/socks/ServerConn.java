@@ -31,7 +31,7 @@ public class ServerConn extends GenConn {
             out = new DataOutputStream(client.getOutputStream());
             in = new DataInputStream(client.getInputStream());
         } catch (IOException e) {
-            return new RTError(
+            return RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context
@@ -44,7 +44,7 @@ public class ServerConn extends GenConn {
         try {
             client.close();
         } catch (IOException e) {
-            return new RTError(
+            return RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context

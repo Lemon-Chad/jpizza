@@ -25,7 +25,7 @@ public class AttrAccessNode extends Node {
         String varName = (String) var_name_tok.value;
         Obj value = (Obj) context.symbolTable.getattr(varName);
 
-        if (value == null) return res.failure(new RTError(
+        if (value == null) return res.failure(RTError.Scope(
                 pos_start, pos_end,
                 "'" + varName + "' is not defined",
                 context

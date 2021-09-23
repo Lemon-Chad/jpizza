@@ -36,7 +36,7 @@ public class UnaryOpNode extends Node {
         if (res.shouldReturn()) return res;
 
         if (op_tok.type == Tokens.TT.BITCOMPL) {
-            if (number.jptype != Constants.JPType.Number || ((Num) number).floating) return res.failure(new RTError(
+            if (number.jptype != Constants.JPType.Number || ((Num) number).floating) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be an integer",
                     context
@@ -46,7 +46,7 @@ public class UnaryOpNode extends Node {
 
             return res.success(new Num(~n));
         } else if (op_tok.type == Tokens.TT.QUEBACK) {
-            if (number.jptype != Constants.JPType.Bytes) return res.failure(new RTError(
+            if (number.jptype != Constants.JPType.Bytes) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be bytes",
                     context
@@ -59,7 +59,7 @@ public class UnaryOpNode extends Node {
                 Obj from = Constants.getFromValue(obj);
                 return res.success(from);
             } catch (IOException | ClassNotFoundException e) {
-                return res.failure(new RTError(
+                return res.failure(RTError.Internal(
                         number.get_start(), number.get_end(),
                         "Internal byte error: " + e.toString(),
                         context

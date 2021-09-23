@@ -36,7 +36,7 @@ public class HTTPretzel extends Library {
     }
 
     public RTResult inited() {
-        if (server == null) return new RTResult().failure(new RTError(
+        if (server == null) return new RTResult().failure(RTError.Init(
                 pos_start, pos_end,
                 "Server not initialized",
                 context
@@ -58,7 +58,7 @@ public class HTTPretzel extends Library {
         try {
             server = HttpServer.create(new InetSocketAddress(host, (int) addr), 0);
         } catch (IOException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     pos_start, pos_end,
                     String.format("An IOException occurred..\n%s", e.toString()),
                     execCtx

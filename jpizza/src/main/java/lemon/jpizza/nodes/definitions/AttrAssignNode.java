@@ -28,10 +28,9 @@ public class AttrAssignNode extends Node {
         Obj value = res.register(value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        String v = context.symbolTable.setattr(varName, value);
-        if (v != null) return res.failure(new RTError(
+        RTError.ErrorDetails v = context.symbolTable.setattr(varName, value);
+        if (v != null) return res.failure(v.build(
                 pos_start, pos_end,
-                v,
                 context
         ));
 

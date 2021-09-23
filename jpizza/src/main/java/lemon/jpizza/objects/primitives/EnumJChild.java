@@ -35,7 +35,7 @@ public class EnumJChild extends Value {
         Context ctx = new Context(this.parent.name, parent, pos_start);
         ctx.symbolTable = new SymbolTable();
 
-        if (args.size() != params.size()) return new RTResult().failure(new RTError(
+        if (args.size() != params.size()) return new RTResult().failure(RTError.ArgumentCount(
                 pos_start, pos_end,
                 String.format("Expected %s args, got %s", params.size(), args.size()),
                 parent
@@ -49,14 +49,14 @@ public class EnumJChild extends Value {
             Obj arg = args.get(i);
 
             Obj oType = arg.type().astring();
-            if (oType.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+            if (oType.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     "Type is not a string",
                     arg.get_ctx()
             ));
 
             String oT = ((Str) oType).trueValue();
-            if (!oT.equals(type)) return new RTResult().failure(new RTError(
+            if (!oT.equals(type)) return new RTResult().failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     String.format("Expected type %s, got %s", type, oT),
                     arg.get_ctx()

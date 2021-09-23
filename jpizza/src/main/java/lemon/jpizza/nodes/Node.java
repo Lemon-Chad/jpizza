@@ -16,7 +16,7 @@ public class Node implements Serializable {
     public boolean fluctuating = false;
 
     public RTResult visit(Interpreter inter, Context context) {
-        return new RTResult().failure(new RTError(
+        return new RTResult().failure(RTError.Internal(
                 pos_start.copy(), pos_end.copy(),
                 "No visit method for " + getClass().getSimpleName(),
                 context

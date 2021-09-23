@@ -31,7 +31,7 @@ public class Time extends Library {
     public RTResult execute_halt(Context execCtx) {
         Obj value = (Obj) execCtx.symbolTable.get("ms");
         value = value.number();
-        if (value.jptype != Constants.JPType.Number) return new RTResult().failure(new RTError(
+        if (value.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
                 pos_start.copy(), pos_end.copy(),
                 "Argument must be a number",
                 execCtx
@@ -39,7 +39,7 @@ public class Time extends Library {
         try {
             Thread.sleep(Math.round(((Num) value).trueValue()));
         } catch (InterruptedException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Interrupted(
                     pos_start.copy(), pos_end.copy(),
                     "Delay was interrupted",
                     execCtx
@@ -52,7 +52,7 @@ public class Time extends Library {
         Obj value = (Obj) execCtx.symbolTable.get("func");
         RTResult res = new RTResult();
         value = value.function();
-        if (value.jptype != Constants.JPType.Function) return new RTResult().failure(new RTError(
+        if (value.jptype != Constants.JPType.Function) return new RTResult().failure(RTError.Type(
                 pos_start.copy(), pos_end.copy(),
                 "Argument must be a function",
                 execCtx

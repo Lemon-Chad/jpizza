@@ -56,14 +56,14 @@ public class Interpreter {
 
         if (fnFinish != null) {
             Object func = context.symbolTable.get(fnFinish);
-            if (!(func instanceof Function)) return new RTResult().failure(new RTError(
+            if (!(func instanceof Function)) return new RTResult().failure(RTError.Scope(
                     null, null,
                     "Main function provided does not exist",
                     context
             ));
 
             Function fn = (Function) func;
-            if (fn.argNames.size() != 1) return new RTResult().failure(new RTError(
+            if (fn.argNames.size() != 1) return new RTResult().failure(RTError.ArgumentCount(
                     fn.pos_start, fn.pos_end,
                     "Function must take 1 argument (CMD line arguments)",
                     context
@@ -73,14 +73,14 @@ public class Interpreter {
         }
         else if (clFinish != null) {
             Object cls = context.symbolTable.get(clFinish);
-            if (!(cls instanceof ClassPlate)) return new RTResult().failure(new RTError(
+            if (!(cls instanceof ClassPlate)) return new RTResult().failure(RTError.Scope(
                     null, null,
                     "Main recipe provided does not exist",
                     context
             ));
 
             ClassPlate recipe = (ClassPlate) cls;
-            if (recipe.make.argNames.size() != 0) return new RTResult().failure(new RTError(
+            if (recipe.make.argNames.size() != 0) return new RTResult().failure(RTError.ArgumentCount(
                     recipe.get_start(), recipe.get_end(),
                     "Recipe shouldn't take any arguments",
                     context
@@ -90,14 +90,14 @@ public class Interpreter {
             if (res.error != null) return res;
 
             Object func = clsi.getattr(OP.ACCESS, new Str("main").set_context(recipe.context));
-            if (!(func instanceof CMethod)) return new RTResult().failure(new RTError(
+            if (!(func instanceof CMethod)) return new RTResult().failure(RTError.Scope(
                     recipe.get_start(), recipe.get_end(),
                     "Recipe has no main method",
                     recipe.context
             ));
 
             CMethod meth = (CMethod) func;
-            if (meth.argNames.size() != 1) return new RTResult().failure(new RTError(
+            if (meth.argNames.size() != 1) return new RTResult().failure(RTError.Scope(
                     recipe.get_start(), recipe.get_end(),
                     "Method does not take in 1 argument",
                     recipe.context
@@ -153,7 +153,7 @@ public class Interpreter {
 
     public static RTResult getThis(Object val, Context context, Position pos_start, Position pos_end) {
                 while (context.displayName.hashCode() != val.hashCode()) {
-                    if (context.parent == null) return new RTResult().failure(new RTError(
+                    if (context.parent == null) return new RTResult().failure(RTError.Scope(
                             pos_start, pos_end,
                             "Invalid 'this'",
                             context

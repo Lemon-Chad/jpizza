@@ -49,7 +49,7 @@ public class ImportNode extends Node {
                         pos_end));
             if (res.error != null) return res;
         }
-        if (imp == null) return res.failure(new RTError(
+        if (imp == null) return res.failure(RTError.FileNotFound(
                 pos_start, pos_end,
                 "Module does not exist",
                 context
@@ -62,7 +62,7 @@ public class ImportNode extends Node {
         try {
             return vis(context);
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),
                     context

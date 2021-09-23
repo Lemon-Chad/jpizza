@@ -13,6 +13,7 @@ import lemon.jpizza.nodes.operations.UnaryOpNode;
 import lemon.jpizza.nodes.values.*;
 import lemon.jpizza.nodes.variables.AttrAccessNode;
 import lemon.jpizza.nodes.variables.VarAccessNode;
+import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.ParseResult;
 
 import java.util.*;
@@ -712,11 +713,22 @@ public class Parser {
                 "Expected 'throw'"
         )); res.registerAdvancement(); advance();
 
-        Node expr = (Node) res.register(this.expr());
+        Node first = (Node) res.register(this.expr());
         if (res.error != null)
             return res;
 
-        return res.success(new ThrowNode(expr));
+        if (currentToken.type == TT.COMMA) {
+            res.registerAdvancement(); advance();
+
+            Node second = (Node) res.register(this.expr());
+            if (res.error != null)
+                return res;
+
+            return res.success(new ThrowNode(first, second));
+        }
+
+        return res.success(new ThrowNode(new StringNode(new Token(TT.STRING, "Thrown",
+                first.pos_start, first.pos_end)), first));
     }
 
     public ParseResult structDef() {

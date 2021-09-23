@@ -25,7 +25,7 @@ public class BytesNode extends Node {
         if (res.error != null) return res;
 
         Obj bytearrq = toBytes.bytes();
-        if (bytearrq.jptype != Constants.JPType.Bytes) return res.failure(new RTError(
+        if (bytearrq.jptype != Constants.JPType.Bytes) return res.failure(RTError.Conversion(
                 bytearrq.get_start(), bytearrq.get_end(),
                 "Object has no {BYTE-ARRAY} form",
                 context

@@ -35,7 +35,7 @@ public class Bytes extends Value {
             ObjectInputStream is = new ObjectInputStream(in);
             return new Pair<>(is.readObject(), null);
         } catch (IOException | ClassNotFoundException e) {
-            return new Pair<>(null, new RTError(
+            return new Pair<>(null, RTError.Internal(
                     pos_start, pos_end,
                     "Internal byte error: " + e.toString(),
                     context

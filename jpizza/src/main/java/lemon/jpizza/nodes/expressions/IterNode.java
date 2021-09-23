@@ -39,7 +39,7 @@ public class IterNode extends Node {
 
         Obj iterableNode = res.register(iterable_node.visit(inter, context));
         if (res.shouldReturn()) return res;
-        if (iterableNode.jptype != Constants.JPType.List) return res.failure(new RTError(
+        if (iterableNode.jptype != Constants.JPType.List) return res.failure(RTError.Type(
                 iterableNode.pos_start, iterableNode.pos_end,
                 "Value must be an iterable",
                 context

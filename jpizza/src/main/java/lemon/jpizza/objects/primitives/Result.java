@@ -6,15 +6,18 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.Value;
 import lemon.jpizza.Pair;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 public class Result extends Value {
     String failure = null;
+    String failtype = null;
     Obj success = new Null();
 
-    public Result(String failure) {
+    public Result(String failure, String failtype) {
         this.failure = failure;
+        this.failtype = failtype;
         this.jptype = Constants.JPType.Res;
     }
 
@@ -33,8 +36,11 @@ public class Result extends Value {
         return success;
     }
 
-    public Str fail() {
-        return failure != null ? new Str(failure) : new Str("");
+    public PList fail() {
+        return failure != null ? new PList(Arrays.asList(
+                new Str(failtype),
+                new Str(failure)
+        )) : new PList(new ArrayList<>());
     }
 
     // Methods
@@ -76,7 +82,7 @@ public class Result extends Value {
                         .set_context(this.context)
                         .set_pos(pos_start, pos_end);
         else
-            return new Result(failure)
+            return new Result(failure, failtype)
                         .set_context(this.context)
                         .set_pos(pos_start, pos_end);
     }
@@ -85,9 +91,9 @@ public class Result extends Value {
     }
     public String toString() {
         if (ok())
-            return success.toString();
+            return "("+success.toString()+")";
         else
-            return failure;
+            return String.format("(%s:%s)", failtype, failure);
     }
 
 }

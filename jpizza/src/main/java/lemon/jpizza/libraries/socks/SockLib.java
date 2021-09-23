@@ -55,13 +55,13 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newServer(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(new RTError(
+        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
         ));
         double port = ((Num) p).trueValue();
-        if (1000 > port || port > 9999) return new RTResult().failure(new RTError(
+        if (1000 > port || port > 9999) return new RTResult().failure(RTError.Range(
                 p.get_start(), p.get_end(),
                 "Expected number between 1000 and 9999",
                 p.get_ctx()
@@ -74,7 +74,7 @@ public class SockLib extends Library {
             servers.put(id, sock);
             serverSocks.put(sock, new ArrayList<>());
         } catch (IOException e) {
-            return new RTResult().failure(new RTError(
+            return new RTResult().failure(RTError.Type(
                     pos_start, pos_end,
                     e.toString(),
                     context
@@ -86,7 +86,7 @@ public class SockLib extends Library {
 
     public Pair< ServerSocket, RTError > getServer(Context execCtx) {
         Obj serv = (Obj) execCtx.symbolTable.get("server");
-        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 serv.get_start(), serv.get_end(),
                 "Expected a number",
                 serv.get_ctx()
@@ -95,7 +95,7 @@ public class SockLib extends Library {
         double id = ((Num) serv).trueValue();
         ServerSocket sock = servers.get(id);
 
-        if (sock == null) return new Pair<>(null, new RTError(
+        if (sock == null) return new Pair<>(null, RTError.InvalidArgument(
                 serv.get_start(), serv.get_end(),
                 "Invalid ID",
                 serv.get_ctx()
@@ -105,7 +105,7 @@ public class SockLib extends Library {
     }
     public Pair< ServerConn, RTError > getServerConn(Context execCtx) {
         Obj serv = (Obj) execCtx.symbolTable.get("client");
-        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 serv.get_start(), serv.get_end(),
                 "Expected a number",
                 serv.get_ctx()
@@ -114,7 +114,7 @@ public class SockLib extends Library {
         double id = ((Num) serv).trueValue();
         ServerConn conn = socks.get(id);
 
-        if (conn == null) return new Pair<>(null, new RTError(
+        if (conn == null) return new Pair<>(null, RTError.InvalidArgument(
                 serv.get_start(), serv.get_end(),
                 "Invalid ID",
                 serv.get_ctx()
@@ -221,7 +221,7 @@ public class SockLib extends Library {
         try {
             sock.close();
         } catch (IOException e) {
-                return new RTResult().failure(new RTError(
+                return new RTResult().failure(RTError.Internal(
                         pos_start, pos_end,
                         e.toString(),
                         context
@@ -238,22 +238,22 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newClient(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(new RTError(
+        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
         ));
         double port = ((Num) p).trueValue();
-        if (1000 > port || port > 9999) return new RTResult().failure(new RTError(
+        if (1000 > port || port > 9999) return new RTResult().failure(RTError.Range(
                 p.get_start(), p.get_end(),
                 "Expected number between 1000 and 9999",
                 p.get_ctx()
         ));
 
         Obj h = ((Obj) execCtx.symbolTable.get("host")).astring();
-        if (h.jptype != Constants.JPType.String) return new RTResult().failure(new RTError(
+        if (h.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
                 h.get_start(), h.get_end(),
-                "Expected string",
+                "Expected sString",
                 h.get_ctx()
         ));
         String host = ((Str) h).trueValue();
@@ -272,7 +272,7 @@ public class SockLib extends Library {
 
     public Pair< ClientConn, RTError > getConn(Context execCtx) {
         Obj serv = (Obj) execCtx.symbolTable.get("client");
-        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, new RTError(
+        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
                 serv.get_start(), serv.get_end(),
                 "Expected a number",
                 serv.get_ctx()
@@ -281,7 +281,7 @@ public class SockLib extends Library {
         double id = ((Num) serv).trueValue();
         ClientConn conn = clients.get(id);
 
-        if (conn == null) return new Pair<>(null, new RTError(
+        if (conn == null) return new Pair<>(null, RTError.InvalidArgument(
                 serv.get_start(), serv.get_end(),
                 "Invalid ID",
                 serv.get_ctx()

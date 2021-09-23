@@ -36,12 +36,12 @@ public class BaseFunction extends Value {
         RTResult res = new RTResult();
 
         int size = args.size();
-        if (size > maxArgs) return res.failure(new RTError(
+        if (size > maxArgs) return res.failure(RTError.ArgumentCount(
                 pos_start, pos_end,
                 String.format("%s too many args passed into '%s'", args.size() - maxArgs, name),
                 context
         ));
-        if (size < minArgs) return res.failure(new RTError(
+        if (size < minArgs) return res.failure(RTError.ArgumentCount(
                 pos_start, pos_end,
                 String.format("%s too few args passed into '%s'", minArgs - args.size(), name),
                 context
@@ -60,14 +60,14 @@ public class BaseFunction extends Value {
                 arg = args.get(i);
 
             Obj oType = arg.type().astring();
-            if (oType.jptype != Constants.JPType.String) return res.failure(new RTError(
+            if (oType.jptype != Constants.JPType.String) return res.failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     "Type is not a string",
                     arg.get_ctx()
             ));
 
             String oT = ((Str) oType).trueValue();
-            if (!oT.equals(type) && (generictype == null || !generictype.equals(oT))) return res.failure(new RTError(
+            if (!oT.equals(type) && (generictype == null || !generictype.equals(oT))) return res.failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     String.format("Expected type %s, got %s", generictype != null ? generictype: type, oT),
                     arg.get_ctx()

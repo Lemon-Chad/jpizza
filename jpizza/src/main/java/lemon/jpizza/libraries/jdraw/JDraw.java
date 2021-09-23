@@ -203,7 +203,7 @@ public class JDraw extends Library {
 
         List<Obj> list = ((PList) lis).trueValue();
         String errmsg = "Expected list composed of 3 0-255 integers";
-        if (list.size() != 3) return new Pair<>(null, new RTError(
+        if (list.size() != 3) return new Pair<>(null, RTError.Type(
                 lis.get_start(), lis.get_end(),
                 errmsg,
                 lis.get_ctx()
@@ -215,7 +215,7 @@ public class JDraw extends Library {
             res.register(checkInt(obj));
             if (res.error != null) return new Pair<>(null, res.error);
             int num = (int)((Num)obj).trueValue();
-            if (0 > num || num > 255) return new Pair<>(null, new RTError(
+            if (0 > num || num > 255) return new Pair<>(null, RTError.Type(
                     obj.get_start(), obj.get_end(),
                     errmsg,
                     obj.get_ctx()
@@ -227,7 +227,7 @@ public class JDraw extends Library {
     }
 
     public RTResult isInit() {
-        if (frame == null || canvas == null) return new RTResult().failure(new RTError(
+        if (frame == null || canvas == null) return new RTResult().failure(RTError.Init(
                 pos_start, pos_end,
                 "AWT not initialized",
                 context
@@ -457,7 +457,7 @@ public class JDraw extends Library {
             if (res.error != null) return res;
             List<Obj> pL = ((PList) p).trueValue();
 
-            if (pL.size() != 2) return res.failure(new RTError(
+            if (pL.size() != 2) return res.failure(RTError.Type(
                     p.get_start(), p.get_end(),
                     "Expected coordinates (list of 2 numbers)",
                     context
@@ -554,7 +554,7 @@ public class JDraw extends Library {
         if (res.error != null) return res;
 
         Obj value = ((Obj) execCtx.symbolTable.get("value")).bool();
-        if (value.jptype != Constants.JPType.Boolean) return res.failure(new RTError(
+        if (value.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected bool",
                 execCtx
@@ -568,7 +568,7 @@ public class JDraw extends Library {
         RTResult res = new RTResult();
 
         Obj value = ((Obj) execCtx.symbolTable.get("value")).bool();
-        if (value.jptype != Constants.JPType.Boolean) return res.failure(new RTError(
+        if (value.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected bool",
                 execCtx
@@ -663,7 +663,7 @@ public class JDraw extends Library {
         try {
             draw(new Img(pos.x, pos.y, filename));
         } catch (IOException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     pos_start, pos_end,
                     "Encountered IOException " + e.toString(),
                     execCtx
@@ -684,7 +684,7 @@ public class JDraw extends Library {
             Image img = ImageIO.read(new File(filename));
             frame.setIconImage(img);
         } catch (IOException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     pos_start, pos_end,
                     "Encountered IOException " + e.toString(),
                     execCtx
@@ -712,7 +712,7 @@ public class JDraw extends Library {
 
             new PlayThread(audioFormat, sourceDataLine, audioInputStream).start();
         } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     pos_start, pos_end,
                     "Encountered IOException " + e.toString(),
                     execCtx
@@ -810,7 +810,7 @@ public class JDraw extends Library {
             if (res.error != null) return res;
             List<Obj> dat = ((PList) fnef).trueValue();
 
-            if (dat.size() != 2) return res.failure(new RTError(
+            if (dat.size() != 2) return res.failure(RTError.Type(
                     fnef.get_start(), fnef.get_end(),
                     "Expected 2 elements",
                     context
@@ -830,7 +830,7 @@ public class JDraw extends Library {
             default -> null;
         };
 
-        if (result == null) return res.failure(new RTError(
+        if (result == null) return res.failure(RTError.Type(
                 md.get_start(), md.get_end(),
                 "Expected mode",
                 context
@@ -867,7 +867,7 @@ public class JDraw extends Library {
 
         String key = execCtx.symbolTable.get("key").toString().toLowerCase();
 
-        if (!keys.containsKey(key)) return res.failure(new RTError(
+        if (!keys.containsKey(key)) return res.failure(RTError.InvalidArgument(
                 pos_start, pos_end,
                 "Invalid key",
                 execCtx
@@ -885,7 +885,7 @@ public class JDraw extends Library {
 
         String key = execCtx.symbolTable.get("key").toString().toLowerCase();
 
-        if (!keys.containsKey(key)) return res.failure(new RTError(
+        if (!keys.containsKey(key)) return res.failure(RTError.InvalidArgument(
                 pos_start, pos_end,
                 "Invalid key",
                 execCtx
@@ -921,7 +921,7 @@ public class JDraw extends Library {
         if (res.error != null) return res;
         int index = (int)((Num) i).trueValue();
 
-        if (index > 2) return res.failure(new RTError(
+        if (index > 2) return res.failure(RTError.Range(
                 i.get_start(), i.get_end(),
                 "Expected number where 0 <= n <= 2",
                 execCtx
@@ -973,7 +973,7 @@ public class JDraw extends Library {
             fileCreated = imageFile.createNewFile();
             ImageIO.write(img, "jpeg", imageFile);
         } catch (IOException e) {
-            return res.failure(new RTError(
+            return res.failure(RTError.Internal(
                     fn.get_start(), fn.get_end(),
                     "Encountered IOException " + e.toString(),
                     execCtx
