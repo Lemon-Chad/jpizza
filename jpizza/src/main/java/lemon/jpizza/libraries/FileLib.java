@@ -1,14 +1,12 @@
 package lemon.jpizza.libraries;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Shell;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bool;
-import lemon.jpizza.objects.primitives.Bytes;
-import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.objects.primitives.Str;
+import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
 
 import java.io.*;
@@ -34,6 +32,7 @@ public class FileLib extends Library {
             put("fileExists", Arrays.asList("dir", "val"));
             put("makeDirs", Collections.singletonList("dir"));
             put("setCWD", Collections.singletonList("dir"));
+            put("listDirContents", Collections.singletonList("dir"));
             put("getCWD", new ArrayList<>());
         }});
     }
@@ -262,6 +261,34 @@ public class FileLib extends Library {
         }
 
         return res.success(new Bool(created));
+    }
+
+    public RTResult execute_listDirContents(Context execCtx){
+        RTResult res = new RTResult();
+        Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
+        Obj d = res.register(getdirectory(value, execCtx));
+        if (res.error != null) return res;
+        String dir = ((Str) d).trueValue();
+
+        File file = new File(dir);
+        if (!file.exists()) return res.failure(new RTError(
+                value.pos_start, value.pos_end,
+                "File does not exist",
+                execCtx
+        ));
+        String[] pathnames;
+        try {
+            pathnames = file.list();
+        } catch (Exception e){
+            return res.failure(new RTError(value.pos_start, value.pos_end,"Java runtime error", execCtx));
+        }
+
+        PList paths = new PList(new ArrayList<>());
+
+        for (String path: pathnames) {
+            paths.append(new Str(path));
+        }
+        return res.success(paths);
     }
 
 }
