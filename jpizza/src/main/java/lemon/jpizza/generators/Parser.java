@@ -727,7 +727,7 @@ public class Parser {
             return res.success(new ThrowNode(first, second));
         }
 
-        return res.success(new ThrowNode(new StringNode(new Token(TT.STRING, "Thrown",
+        return res.success(new ThrowNode(new StringNode(new Token(TT.STRING, new Pair<>("Thrown", false),
                 first.pos_start, first.pos_end)), first));
     }
 
