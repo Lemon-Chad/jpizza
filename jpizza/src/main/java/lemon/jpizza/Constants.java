@@ -166,7 +166,7 @@ public class Constants {
         if (idxEnd < 0) idxEnd = text.length();
 
         int line_count = pos_end.ln - pos_start.ln + 1;
-        int offs = line_count > 1 ? -1 : 0;
+        int offs = 0;
         for (int i = 0; i < line_count; i++) {
             String line = text.substring(idxStart, idxEnd);
 
