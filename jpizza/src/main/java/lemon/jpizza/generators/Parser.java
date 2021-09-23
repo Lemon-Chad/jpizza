@@ -1449,6 +1449,8 @@ if (false)
         cases.add(new Case(condition, statements, true));
 
         Pair<List<Case>, ElseCase> allCases = (Pair<List<Case>, ElseCase>) res.register(this.elifElse(parenthesis));
+        if (res.error != null)
+            return res;
         List<Case> newCases = allCases.a;
         ElseCase elseCase = allCases.b;
         cases.addAll(newCases);
