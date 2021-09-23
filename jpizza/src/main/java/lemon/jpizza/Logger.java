@@ -62,21 +62,28 @@ public class Logger {
         if (log) System.out.print(ots(text));
     }
 
+    public String safeColorize(String text, Attribute color) {
+        if (Shell.fileEncoding.equals("UTF-8"))
+            return colorize(text, color);
+        return text;
+    }
+
     public void warn(Object text) {
         if (log)
-            System.out.println(colorize(
+            System.out.println(safeColorize(
                     getTape("WARNING") + "\n" + ots(text),
                     Attribute.YELLOW_TEXT()
             ));
     }
 
     private String getTape(String message) {
-        return " ".repeat((tape - message.length()) / 2) + message + "\n" + "─".repeat(tape);
+        return " ".repeat((tape - message.length()) / 2) + message + "\n" +
+                (Shell.fileEncoding.equals("UTF-8") ? "─" : "_").repeat(tape);
     }
 
     public void fail(Object text) {
         if (log)
-            System.out.println(colorize(
+            System.out.println(safeColorize(
                     getTape("FAILURE") + "\n" + ots(text),
                     Attribute.RED_TEXT()
             ));
@@ -84,7 +91,7 @@ public class Logger {
 
     public void tip(Object text) {
         if (log && tips)
-            System.out.println(colorize(
+            System.out.println(safeColorize(
                     getTape("TIP") + "\n" + ots(text),
                     Attribute.CYAN_TEXT()
             ));
