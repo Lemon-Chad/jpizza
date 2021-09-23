@@ -7,6 +7,7 @@ import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.Pair;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class StringNode extends ValueNode {
     public String val;
@@ -17,7 +18,7 @@ public class StringNode extends ValueNode {
     }
 
     public RTResult visit(Interpreter inter, Context context) {
-        return new RTResult().success(new Str(val).set_context(context)
+        return new RTResult().success(new Str(StringEscapeUtils.unescapeJava(val)).set_context(context)
                 .set_pos(pos_start, pos_end));
     }
 

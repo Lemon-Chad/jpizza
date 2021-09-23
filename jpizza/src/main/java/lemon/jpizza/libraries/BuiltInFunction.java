@@ -14,6 +14,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +63,8 @@ public class BuiltInFunction extends Library {
             put("type", Collections.singletonList("value"));
             put("value", Collections.singletonList("value"));
             put("sim", Collections.singletonList("value"));
+            put("escape", Collections.singletonList("value"));
+            put("unescape", Collections.singletonList("value"));
             put("round", Collections.singletonList("value"));
             put("floor", Collections.singletonList("value"));
             put("ceil", Collections.singletonList("value"));
@@ -144,6 +147,18 @@ public class BuiltInFunction extends Library {
     }};
 
     public BuiltInFunction(String name) { super(name, "compiled"); }
+
+    public RTResult execute_escape(Context execCtx) {
+        return new RTResult().success(
+                new Str(StringEscapeUtils.unescapeJava(execCtx.symbolTable.get("value").toString()))
+        );
+    }
+
+    public RTResult execute_unescape(Context execCtx) {
+        return new RTResult().success(
+                new Str(StringEscapeUtils.escapeJava(execCtx.symbolTable.get("value").toString()))
+        );
+    }
 
     public RTResult execute_preprocess(Context execCtx) {
         RTResult res = new RTResult();

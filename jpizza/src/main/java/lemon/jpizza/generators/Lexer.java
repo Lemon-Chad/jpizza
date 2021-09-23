@@ -151,7 +151,7 @@ public class Lexer {
         }
 
         advance();
-        return new Token(TT.STRING, new Pair<>(StringEscapeUtils.unescapeJava(string.toString()), q.equals("`")), pos_start, pos);
+        return new Token(TT.STRING, new Pair<>(string.toString(), q.equals("`")), pos_start, pos);
     }
 
     public Pair<Token, Error> make_equals_expr() {
