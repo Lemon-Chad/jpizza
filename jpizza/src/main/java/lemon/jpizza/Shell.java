@@ -30,6 +30,7 @@ public class Shell {
     public static Logger logger = new Logger();
     public static SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
+    public static String fileEncoding = System.getProperty("file.encoding");
 
     public static String[] getFNDirs(String dir) {
         int ind = dir.lastIndexOf('\\');
@@ -235,7 +236,7 @@ public class Shell {
             if (result.error != null) return new Pair<>(result.value, result.error);
             result.register(inter.finish(context));
         } catch (OutOfMemoryError e) {
-            return new Pair<>(null, new RTError(
+            return new Pair<>(null, RTError.Internal(
                     null, null,
                     "Out of memory",
                     context
@@ -276,7 +277,7 @@ public class Shell {
         try {
             fis = new FileInputStream(inpath);
         } catch (FileNotFoundException e) {
-            return new Pair<>(null, new RTError(null, null,
+            return new Pair<>(null, RTError.FileNotFound(null, null,
                     "File does not exist!\n" + inpath, null));
         }
         try {
@@ -284,7 +285,7 @@ public class Shell {
             Object ost = ois.readObject();
             ois.close();
             fis.close();
-            if (!(ost instanceof PizzaBox)) return new Pair<>(null, new RTError(null, null,
+            if (!(ost instanceof PizzaBox)) return new Pair<>(null, RTError.FileNotFound(null, null,
                     "File is not a JPizza AST!", null));
             List<Node> ast = ((PizzaBox) ost).value;
             Context context = new Context(fn, null, null);

@@ -17,7 +17,6 @@ public class Constants {
     public static char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
-    public static String hexDigits = "0123456789abcdef";
     public static List<Tokens.TT> TYPETOKS = Arrays.asList(
             Tokens.TT.IDENTIFIER,
             Tokens.TT.KEYWORD,
@@ -179,7 +178,10 @@ public class Constants {
                 grouping = "^";
             }
             else if (colEnd - colStart >= 2) {
-                grouping = "╰" + "─".repeat(colEnd - colStart - 2) + "╯";
+                if (Shell.fileEncoding.equals("UTF-8"))
+                    grouping = "╰" + "─".repeat(colEnd - colStart - 2) + "╯";
+                else
+                    grouping = "\\" + "_".repeat(colEnd - colStart - 2) + "/";
             }
 
             result.append(line).append("\n")
