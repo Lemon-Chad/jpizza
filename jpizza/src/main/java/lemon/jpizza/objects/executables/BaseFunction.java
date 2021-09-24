@@ -54,10 +54,11 @@ public class BaseFunction extends Value {
             if (type.equals("any") || (generictype != null && generictype.equals("any"))) continue;
 
             Obj arg;
-            if (i >= size)
+            if (i >= size) {
                 arg = defaults.get(i - size);
-            else
+            } else {
                 arg = args.get(i);
+            }
 
             Obj oType = arg.type().astring();
             if (oType.jptype != Constants.JPType.String) return res.failure(RTError.Type(

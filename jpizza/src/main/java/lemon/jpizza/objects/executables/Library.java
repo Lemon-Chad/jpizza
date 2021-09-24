@@ -184,6 +184,7 @@ public class Library extends BaseFunction {
         try {
             returnValue = res.register((RTResult) method.invoke(this, execCtx));
         } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
             return res.failure(RTError.Internal(
                     pos_start, pos_end,
                     e.toString(),

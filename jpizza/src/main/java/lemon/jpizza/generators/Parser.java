@@ -1301,7 +1301,6 @@ match (a) {
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected default value"
                 ));
-                else defaults.add(null);
 
             }
 
