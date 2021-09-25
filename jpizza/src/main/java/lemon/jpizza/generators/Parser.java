@@ -1057,27 +1057,30 @@ match (a) {
         while (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.CLACCESS)) {
             if (currentToken.type.equals(TT.LPAREN)) {
                 List<Token> generics = new ArrayList<>();
-                res.registerAdvancement();
-                advance();
                 List<Node> arg_nodes = new ArrayList<>();
                 Map<String, Node> kwargs = new HashMap<>();
-                if (!currentToken.type.equals(TT.RPAREN)) {
-                    if (currentToken.type != TT.BACK) {
-                        arg_nodes.add((Node) res.register(this.expr()));
-                        if (res.error != null)
-                            return res.failure(Error.InvalidSyntax(
-                                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                                    "Expected argument"
-                            ));
-
-                        while (currentToken.type.equals(TT.COMMA)) {
+                if (peek(1) != null && !peek(1).type.equals(TT.RPAREN)) {
+                    if (peek(1).type != TT.BACK) {
+                        do {
                             res.registerAdvancement();
                             advance();
-                            arg_nodes.add((Node) res.register(this.expr()));
+
+                            if (currentToken.type == TT.SPREAD) {
+                                res.registerAdvancement(); advance();
+                                arg_nodes.add(new SpreadNode((Node) res.register(this.expr())));
+                            } else {
+                                arg_nodes.add((Node) res.register(this.expr()));
+                            }
+
                             if (res.error != null)
                                 return res;
-                        }
+                        } while (currentToken.type.equals(TT.COMMA));
                     }
+                    else {
+                        res.registerAdvancement();
+                        advance();
+                    }
+
                     if (currentToken.type == TT.BACK) {
                         Token vk; Node val;
                         do {
@@ -1102,6 +1105,8 @@ match (a) {
                                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                                 "Expected ',' or ')'"
                         ));
+                } else {
+                    res.registerAdvancement(); advance();
                 }
                 res.registerAdvancement();
                 advance();

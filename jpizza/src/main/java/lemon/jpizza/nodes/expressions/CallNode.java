@@ -10,6 +10,7 @@ import lemon.jpizza.objects.executables.ClassPlate;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.EnumJChild;
 import lemon.jpizza.objects.primitives.Null;
+import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
@@ -50,9 +51,17 @@ public class CallNode extends Node {
             valueToCall = valueToCall.copy().set_pos(pos_start, pos_end).set_context(context);
         int size = argNodes.size();
         for (int i = 0; i < size; i++) {
-            Obj obj = res.register(argNodes.get(i).visit(inter, context));
-            args.add(obj);
-            if (res.shouldReturn()) return res;
+            Node node = argNodes.get(i);
+            if (node.jptype == Constants.JPType.Spread) {
+                SpreadNode spread = (SpreadNode) node;
+                Obj obj = res.register(spread.internal.visit(inter, context));
+                if (res.shouldReturn()) return res;
+                args.addAll(((PList) obj.alist()).trueValue());
+            } else {
+                Obj obj = res.register(argNodes.get(i).visit(inter, context));
+                args.add(obj);
+                if (res.shouldReturn()) return res;
+            }
         }
 
         for (Map.Entry<String, Node> entry : this.kwargs.entrySet()) {

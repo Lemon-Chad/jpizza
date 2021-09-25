@@ -1,5 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
+import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -15,6 +16,7 @@ public class AssertNode extends Node {
         this.condition = condition;
         pos_start = condition.pos_start;
         pos_end = condition.pos_end;
+        jptype = Constants.JPType.Assert;
     }
 
     public RTResult visit(Interpreter inter, Context context) {

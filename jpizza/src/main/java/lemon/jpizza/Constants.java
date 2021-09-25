@@ -145,7 +145,10 @@ public class Constants {
         Generic,
         Switch,
         Enum,
-        EnumChild, Res,
+        EnumChild,
+        Res,
+        Assert,
+        Spread,
     }
 
     public static int nonWhitespace(String string){

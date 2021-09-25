@@ -317,7 +317,6 @@ printTen("This is also asynchronous!");
 time::halt(5000);
 println("ok!");
 
-it works ok??
 <<
 
 fn myCoolFunc<x> -> x + 1;
@@ -464,7 +463,7 @@ recipe Matrix {
     cols: num => -1;
 
     ingredients<..args> {
-        vector => ? (size(args) == 1 & type(args[0]) == "list"): args[0] $_: args;
+        vector => args;
         rows   => size(vector);
         assert rows > 0;
         cols   => size(vector[0]);
@@ -493,7 +492,7 @@ recipe Matrix {
         return st;
     }
 
-    method copy -> Matrix(for ( row <- vector ) => for ( col <- row ) => col);
+    method copy -> Matrix(..for ( row <- vector ) => for ( col <- row ) => col);
 
     method bin add<other> {
         assert type(other) == "Matrix";
@@ -501,7 +500,7 @@ recipe Matrix {
         assert cols == other::cols;
         assert rows == other::rows;
 
-        return Matrix(for ( r -> 0:rows ) => for ( c -> 0:cols ) => vector[r][c] + other::vector[r][c]);
+        return Matrix(..for ( r -> 0:rows ) => for ( c -> 0:cols ) => vector[r][c] + other::vector[r][c]);
     }
 
     method bin sub<other> {
@@ -529,7 +528,7 @@ recipe Matrix {
 
     method bin mul<other> {
         if (type(other) == "num")
-            return Matrix(for ( row <- vector ) => for ( x <- row ) => x * other);
+            return Matrix(..for ( row <- vector ) => for ( x <- row ) => x * other);
 
         assert type(other) == "Matrix";
         assert cols == other::rows;
@@ -545,7 +544,7 @@ recipe Matrix {
                 append(newVector[r], x);
             }
         }
-        return Matrix(newVector);
+        return Matrix(..newVector);
     }
 
 };
@@ -556,6 +555,7 @@ let C => Matrix([7, 8], [1, 12], [3, -12]);
 
 println(str(A) + "\n");
 println(str(B) + "\n");
+println(str(C) + "\n");
 println(str(A + B) + "\n");
 println(str(A - B) + "\n");
 println(str(C * A) + "\n");
