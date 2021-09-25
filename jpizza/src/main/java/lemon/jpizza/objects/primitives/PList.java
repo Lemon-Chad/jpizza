@@ -110,8 +110,9 @@ public class PList extends Value {
         Pair<Num, RTError> dble = inRange(o);
         if (dble.b != null) return new Pair<>(null, dble.b);
         Num other = dble.a;
-        ArrayList<Obj> x = new ArrayList<>(trueValue());
-        x.remove(x.get(Math.toIntExact(Math.round(other.trueValue()))));
+        List<Obj> x = trueValue();
+        x.remove(Math.toIntExact(Math.round(other.trueValue())));
+        value = x;
         return new Pair<>(
                 new PList(x).set_context(context).set_pos(pos_start, pos_end),
                 null
