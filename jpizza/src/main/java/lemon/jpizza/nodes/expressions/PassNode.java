@@ -5,6 +5,7 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.Position;
+import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
 public class PassNode extends Node {
@@ -13,6 +14,6 @@ public class PassNode extends Node {
         jptype = Constants.JPType.Pass;
     }
 
-    public RTResult visit(Interpreter inter, Context context) { return new RTResult(); }
+    public RTResult visit(Interpreter inter, Context context) { return new RTResult().success(new Null()); }
 
 }

@@ -2,6 +2,7 @@ package lemon.jpizza.results;
 
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.objects.Obj;
+import lemon.jpizza.objects.primitives.Null;
 
 public class RTResult {
     public Obj value;
@@ -39,7 +40,7 @@ public class RTResult {
     }
 
     public RTResult sreturn(Obj value) {
-        this.value = null;
+        this.value = new Null();
         error = null;
         continueLoop = false;
         breakLoop = false;
@@ -48,7 +49,7 @@ public class RTResult {
     }
 
     public RTResult scontinue() {
-        value = null;
+        value = new Null();
         error = null;
         funcReturn = null;
         breakLoop = false;
@@ -57,7 +58,7 @@ public class RTResult {
     }
 
     public RTResult sbreak() {
-        value = null;
+        value = new Null();
         error = null;
         funcReturn = null;
         continueLoop = false;

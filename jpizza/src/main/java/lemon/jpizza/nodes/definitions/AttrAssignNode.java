@@ -35,7 +35,6 @@ public class AttrAssignNode extends Node {
         ));
 
         return res.success(value);
-
     }
 
 }
