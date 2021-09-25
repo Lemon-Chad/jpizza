@@ -1,0 +1,562 @@
+
+<<
+Multiline Comment test
+Does it work?
+Yes!
+<<
+
+<> Single line comment test
+<> Very cool!
+
+bake tapeSize => 45;
+fn tape<statement#String> = String {
+    return " " * round((tapeSize - size(statement)) / 2) + statement + "\n" + "-" * tapeSize;
+}
+
+fn printTape<statement#String> ->
+    println("\n" + tape(statement));
+
+"Statement 1";
+2 + 2;
+
+printTape("BINARY OPERATIONS");
+println(`3 + 5 = ${3 + 5}`);
+println(`3 - 5 = ${3 - 5}`);
+println(`3 * 5 = ${3 * 5}`);
+println(`3 / 5 = ${3 / 5}`);
+println(`3 % 5 = ${3 % 5}`);
+println(`3 ^ 5 = ${3 ^ 5}`);
+println(`"A" + "B" is ${"A" + "B"}`);
+println(`[1, 2] + [3, 4] is ${[1, 2] + [3, 4]}`);
+println(`null : invalid : 5 = ${null : invalid : 5}`);
+
+printTape("UNARY OPERATIONS");
+var x => 5;
+println(`x++ = ${x} -> ${x++}`);
+println(`x-- = ${x} -> ${x--}`);
+println(`++5 = ${++5}`);
+println(`--3 = ${--3}`);
+
+printTape("CONDITIONALS");
+println(`true & false => ${true & false}`);
+println(`true | false => ${true | false}`);
+println(`5 > 3 => ${5 > 3}`);
+println(`5 < 3 => ${5 < 3}`);
+println(`5 >= 3 => ${5 >= 3}`);
+println(`5 <= 3 => ${5 <= 3}`);
+println(`A == B => ${"A" == "B"}`);
+println(`A == A => ${"A" == "A"}`);
+println(`A != B => ${"A" == "B"}`);
+
+printTape("BITWISE OPERATIONS");
+println(`3 ~> 2 = ${3 ~> 2}`);
+println(`3 <~ 2 = ${3 <~ 2}`);
+println(`3 ~~ 5 = ${3 ~~ 5}`);
+println(`3 ~& 5 = ${3 ~& 5}`);
+println(`3 ~| 5 = ${3 ~| 5}`);
+println(`3 ~^ 5 = ${3 ~^ 5}`);
+
+printTape("HEXADECIMAL");
+println(`0xABC123 -> ${0 + 0xABC123}`);
+
+printTape("ALGEBRA");
+println(`4x where x -> ${x} = ${4x}`);
+free x;
+
+printTape("VARIABLES");
+
+fn varFail[] {
+    var x => 3;
+    bake y => "Hello";
+    x => 4;
+    y => "Goodbye!";
+}
+println(catch(varFail()));
+
+fn multipleAssignment {
+    var x, y, z;
+    x => 1; y => 3.14; z => 3;
+}
+
+multipleAssignment();
+
+fn freeVariables[] {
+    var x => 2;
+    println(x);
+    free x;
+    println(x);
+}
+
+println(catch(freeVariables()));
+
+fn callbacks {
+    var x => 4;
+    cal y -> x ^ 2;
+
+    println(y);
+
+    x => 8;
+    println(y);
+}
+
+callbacks();
+
+fn staticTyping[] {
+    var x#num => 4;
+
+    x => 8;
+    x => "Hello!";
+}
+
+println(catch(staticTyping()));
+
+fn letStatements[] {
+    let x => 4;
+
+    x => 8;
+    x => "Hello!";
+}
+
+println(catch(letStatements()));
+
+fn range[] {
+    var sbyte[-127 | 127] => 56;
+    var usbyte[255] => 12;
+
+    usbyte => -1;
+}
+
+println(catch(range()));
+
+printTape("FORMAT STRINGS");
+
+var x => 4;
+println(`The value of x is ${x}`);
+println(`To write ${x} you can do !${x}`);
+free x;
+
+printTape("LISTS");
+
+var lst => [1, 2];
+
+println( lst[0] );
+<> Prints the first element of the lst, which is 1 in this case.
+
+lst += [3, 4];
+<> Extends the lst with the elements 3 and 4.
+println( lst );
+<> Prints [1, 2, 3, 4]
+
+lst /= 3;
+<> Removes 3 from the lst.
+append(lst, 6);
+<> Adds 6 to the lst.
+println(lst);
+
+free lst;
+
+printTape("DICTIONARIES");
+
+var coolDict => {
+    "abc": 123,
+    "Hello": "world."
+};
+
+set(coolDict, "Hello", "world!");
+<> Sets the value of the key "Hello" from "world." to "world!".
+
+delete(coolDict, "abc");
+<> Removes the key value pair "abc": 123 from the dictionary.
+
+println(coolDict);
+println("Hello" + " " + coolDict["Hello"]);
+<> Prints "Hello world!".
+
+free coolDict;
+
+printTape("CONDITIONALS");
+if (true) {
+    println("This will always run!");
+} elif (false) {
+    println("This will never run. :(");
+} else {
+    println("If this ever runs, seek shelter immediately,
+             the world is ending.");
+}
+
+var input => randint(0, 15);
+
+var query => ? input > 10 : "Number is awesome!"
+             $ input <  5 : "Number is cool."
+             $_           : "Number is meh...";
+println(`${input}:${query}`);
+
+switch (input) {
+    case 1: pass;
+    case 3: pass;
+    case 5: pass;
+    case 7: pass;
+    case 9:
+        println("Odd number!");
+        break;
+    <> Fall through makes it so that all the cases up until case 9 execute this code.
+
+    case 2: pass;
+    case 4: pass;
+    case 6: pass;
+    case 8:
+        println("Even number!");
+        break;
+
+    default:
+        println("Unhandled number...");
+    <> This will execute if the number is not in any of the above cases.
+};
+
+println(match (input) {
+    case 2 -> 4
+    case 4 -> 8
+    case 8 -> 12
+
+    default -> 0
+});
+
+free input;
+
+printTape("LOOPS");
+
+var index => 0;
+var lp => loop => if (index > 5) break;
+                    else index++;
+println(lp);
+
+var r;
+loop {
+  if ((r => random()) > 0.5)
+    break;
+  println(r);
+}
+
+var lp => for (n -> 0:3) => 2 ^ n;
+println(lp);
+
+for (i -> 3:5 >> 0.5) {
+    println(i);
+    <> Prints i for each iteration.
+}
+
+var lp => for (n <- [1, 2, 3]) => n + 2;
+println(lp);
+
+for (i <- ["Hello", "world!"]) {
+    println(i);
+    <> Prints i for each iteration.
+}
+
+var a => 1;
+var lp => while (a < 10) => a => -(a + abs(a) / a);
+println(lp);
+
+while (true) {
+    var r => random();
+    if (r > 0.5) { break; }
+    println(r);
+}
+
+do {
+  println("This condition is false!");
+} while (1 == 2);
+
+free a;
+free lp;
+free r;
+free index;
+
+printTape("FUNCTIONS");
+
+fn addOne<x> -> x + 1;
+println(addOne(5));
+
+fn add<x#num, y#num = 1> = num {
+    return x + y;
+}
+println(add(3, 4));
+println(add(5));
+
+fn myGeneric<x #T>(T) -> println(`${x} has a generic type of ${T}`);
+myGeneric(2)<num>;
+
+fn iterativePrint<..messages> {
+  <> Iterates through each argument and prints it
+  for (i <- messages) {
+    print(i);
+  } println("");
+}
+iterativePrint("a", "b", "c");
+
+fn printNamed<\ dict> {
+  <> Iterates through every pair and prints it
+  for (key <- list(dict)) {
+    println(`${key}: ${dict[key]}`);
+  }
+}
+printNamed(\ a: "b", c: 4, hello: "world");
+
+<<
+import time;
+
+fn async printTen<msg> {
+  for (i -> 0:10) {
+    println(msg);
+    time::halt(500); <> Pauses for 500ms.
+  }
+}
+
+printTen("This is asynchronous!");
+printTen("This is also asynchronous!");
+time::halt(5000);
+println("ok!");
+
+it works ok??
+<<
+
+fn myCoolFunc<x> -> x + 1;
+
+preprocess(myCoolFunc, !<x> -> println(x)); <> Assigns a preprocessor that prints the argument passed into it.
+postprocess(myCoolFunc, !<_, r> {
+  println(r);
+  return r;
+}); <> Assigns a postprocessor that prints the parent's return value before returning it.
+
+<> Even though processors can be chained, I chose not to for readability in this example.
+
+myCoolFunc(5);
+
+printTape("ENUMERATORS");
+
+enum PizzaToppings {
+  sausage,
+  pineapple,
+  pepperoni,
+};
+
+var favorite => PizzaToppings::sausage;
+if (favorite == PizzaToppings::pineapple) {
+  println("You are mentally unstable.");
+} else println(str(favorite) + " is alright.");
+
+enum Message {
+    Quit,
+    Move { x: num, y: num },
+    Write { text: any },
+    ChangeColor { r: num, g: num, b: num },
+};
+
+var write => Message::Write("mytext");
+println(write::text); <> Prints "mytext"
+
+printTape("STRUCTURES");
+
+struct Vector3 {
+  x,
+  y,
+  z
+};
+
+<> Creates a new struct Vector3 with the attributes
+<> x, y, and z.
+
+struct Message {
+  username,
+  contents
+};
+
+var msg => Message("John Doe", "Hello world!");
+<> Creates a new message instance.
+
+println(msg::contents);
+<> Gets the contents of the message and
+<> prints them out.
+
+printTape("OBJECTS");
+
+recipe Pizza {
+      topping, breading;
+      <> Declares the attributes topping and breading.
+
+      ingredients<t, b> {
+        attr topping => t;
+        attr breading => b;
+
+        <> Creates a constructor that takes in t and b,
+        <> then assigns toppings to t and breading to b.
+      }
+
+    method details {
+      println("I am a pizza with " + this::breading
+                + " breading and " + this::topping + ".");
+    }
+
+};
+
+var piz => Pizza("sausage", "pretzel");
+piz::details();
+
+recipe MyCoolMethods {
+  method pub publicMethod {
+    println("I am public!");
+  }
+
+  method prv privateMethod {
+    println("I am private! Wait, how did you call me??");
+  }
+
+  method static staticMethod {
+    println("You can call me anywhere!");
+  }
+};
+
+var instance => MyCoolMethods();
+instance::publicMethod();
+println(catch(fn[]{
+    instance::privateMethod();
+}()));
+MyCoolMethods::staticMethod();
+
+recipe Parent {
+  inheritedAttribute;
+  ingredients<x> {
+    attr inheritedAttribute => x;
+  }
+
+  method inheritedFunction<y> -> this::inheritedAttribute + y;
+
+};
+
+recipe Child -> Parent {
+  ingredients<x> {
+    attr inheritedAttribute => x + 2;
+    <> Overrides the default constructor and replaces it with this one, which adds 2 to x before assigning it to v.
+  }
+};
+
+println(Parent(5)::inheritedFunction(2));
+<> Prints 7.
+
+println(Child(5)::inheritedFunction(2));
+<> Prints 9, since 2 is added to x in the overridden constructor.
+
+printTape("HEADERS");
+
+fn fib<x> {
+    #memoize;
+    if (x <= 2) return x;
+    return fib(x - 1) + fib(x - 2);
+}
+println(fib(76));
+
+printTape("FINAL TEST: MATRICES TYPE");
+
+bake SPACING => 3;
+recipe Matrix {
+    rows: num => -1;
+    vector: list => [];
+    cols: num => -1;
+
+    ingredients<..args> {
+        vector => ? (size(args) == 1 & type(args[0]) == "list"): args[0] $_: args;
+        rows   => size(vector);
+        assert rows > 0;
+        cols   => size(vector[0]);
+    }
+
+    method bin string {
+        let colPad => for (_ -> 0:cols) => 0;
+        for (row <- vector) {
+            for (i -> 0:cols) {
+                setIndex(colPad, max(size(str(row[i])), colPad[i]), i);
+            }
+        }
+
+        let totalPad => 0;
+        for (item <- colPad) { totalPad += item; }
+
+        let st => "/ " + " " * totalPad + " " * --cols * SPACING + " \\\n";
+        for (r -> 0:rows) {
+            let row => vector[r];
+            st += "| ";
+            for (i -> 0:cols) {
+                let col => row[i];
+                st += " " * (colPad[i] - size(str(col))) + str(col) + " " * SPACING;
+            } st => substr(st, 0, size(st) - SPACING) + " |\n";
+        } st += "\\ " + " " * totalPad + " " * --cols * SPACING + " /";
+        return st;
+    }
+
+    method copy -> Matrix(for ( row <- vector ) => for ( col <- row ) => col);
+
+    method bin add<other> {
+        assert type(other) == "Matrix";
+
+        assert cols == other::cols;
+        assert rows == other::rows;
+
+        return Matrix(for ( r -> 0:rows ) => for ( c -> 0:cols ) => vector[r][c] + other::vector[r][c]);
+    }
+
+    method bin sub<other> {
+        return this + (-other);
+    }
+
+    method det<vector=null> {
+        if (vector == null) vector => this::vector;
+        assert size(vector) > 0;
+        assert size(vector) == size(vector[0]);
+
+        if (size(vector) == 2)
+            return vector[0][0] * vector[1][1] - vector[0][1] * vector[1][0];
+
+        let d => 0;
+        for (i -> 0:size(vector)) {
+            let copy => for (row <- sublist(vector, 1, size(vector))) => for (col <- row) => col;
+            for (row <- copy) {
+                pop(row, i);
+            }
+            d += ((-1) ^ i) * vector[0][i] * det(copy);
+        }
+        return d;
+    }
+
+    method bin mul<other> {
+        if (type(other) == "num")
+            return Matrix(for ( row <- vector ) => for ( x <- row ) => x * other);
+
+        assert type(other) == "Matrix";
+        assert cols == other::rows;
+
+        let newVector => [];
+        for (r -> 0:rows) {
+            append(newVector, []);
+            for (c -> 0:other::cols) {
+                let x => 0;
+                for (k -> 0:cols) {
+                    x += vector[r][k] * other::vector[k][c];
+                }
+                append(newVector[r], x);
+            }
+        }
+        return Matrix(newVector);
+    }
+
+};
+
+let A => Matrix([1, 2, 3], [4, 5, 6]);
+let B => Matrix([7, 8, 9], [1, 2, 3]);
+let C => Matrix([7, 8], [1, 12], [3, -12]);
+
+println(str(A) + "\n");
+println(str(B) + "\n");
+println(str(A + B) + "\n");
+println(str(A - B) + "\n");
+println(str(C * A) + "\n");
+println("The determinant of the above matrix is: " + str((C * A)::det()) + "\n");
