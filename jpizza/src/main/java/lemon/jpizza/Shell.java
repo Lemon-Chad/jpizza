@@ -196,7 +196,7 @@ public class Shell {
                     StringBuilder out = new StringBuilder();
                     int size = results.size();
                     for (int i = 0; i < size; i++) {
-                        if (results.get(i).jptype != Constants.JPType.Null)
+                        if (results.get(i) != null && results.get(i).jptype != Constants.JPType.Null)
                             out.append(Shell.logger.ots(results.get(i))).append(", ");
                     }
                     if (out.length() > 0) out.setLength(out.length() - 2);
