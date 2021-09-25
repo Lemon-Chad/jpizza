@@ -32,7 +32,7 @@ public class RTResult {
 
     public RTResult success(Obj value) {
         error = null;
-        funcReturn = new Null();
+        funcReturn = null;
         continueLoop = false;
         breakLoop = false;
         this.value = value;
@@ -40,7 +40,7 @@ public class RTResult {
     }
 
     public RTResult sreturn(Obj value) {
-        this.value = new Null();
+        this.value = null;
         error = null;
         continueLoop = false;
         breakLoop = false;
@@ -49,18 +49,18 @@ public class RTResult {
     }
 
     public RTResult scontinue() {
-        value = new Null();
+        value = null;
         error = null;
-        funcReturn = new Null();
+        funcReturn = null;
         breakLoop = false;
         continueLoop = true;
         return this;
     }
 
     public RTResult sbreak() {
-        value = new Null();
+        value = null;
         error = null;
-        funcReturn = new Null();
+        funcReturn = null;
         continueLoop = false;
         breakLoop = true;
         return this;
