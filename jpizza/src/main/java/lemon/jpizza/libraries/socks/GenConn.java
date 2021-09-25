@@ -24,7 +24,7 @@ public class GenConn {
                 "Expected bytearray",
                 data.get_ctx()
         );
-        byte[] msg = ((Bytes) data).arr;
+        byte[] msg = data.arr;
 
         try {
             out.writeInt(msg.length);

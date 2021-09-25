@@ -10,7 +10,8 @@ public class SpeedTest {
 
         Pair<Obj, Error> out;
         String demoCode = """
-for (i -> 1:1000001) => i;
+import time;
+println(time::stopwatch(! -> println(for (i -> 1:1000000) => i)));
 println("Why is camel so bad???");
         """;
 

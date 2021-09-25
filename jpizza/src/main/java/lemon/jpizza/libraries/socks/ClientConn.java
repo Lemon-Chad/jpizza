@@ -10,7 +10,7 @@ import java.net.Socket;
 public class ClientConn extends GenConn {
     Socket client;
 
-    double id;
+    final double id;
 
     public ClientConn(double iydee, Position ps, Position pe, Context ctx) {
         id = iydee;

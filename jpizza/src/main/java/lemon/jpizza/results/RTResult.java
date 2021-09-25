@@ -2,7 +2,6 @@ package lemon.jpizza.results;
 
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Null;
 
 public class RTResult {
     public Obj value;

@@ -3,10 +3,10 @@ package lemon.jpizza.libraries.jdraw;
 import java.awt.*;
 
 public class Polygon implements DrawSlice {
-    int[] x;
-    int[] y;
-    Color color;
-    boolean outline;
+    final int[] x;
+    final int[] y;
+    final Color color;
+    final boolean outline;
 
     public Polygon(Point[] points, Color color, boolean outline) {
         int s = points.length;

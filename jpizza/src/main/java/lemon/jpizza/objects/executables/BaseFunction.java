@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class BaseFunction extends Value {
-    public String name;
+    public final String name;
     public BaseFunction(String name) {
         super();
         this.name = name != null ? name : "<anonymous>";
@@ -67,7 +67,7 @@ public class BaseFunction extends Value {
                     arg.get_ctx()
             ));
 
-            String oT = ((Str) oType).trueValue();
+            String oT = oType.string;
             if (!oT.equals(type) && (generictype == null || !generictype.equals(oT))) return res.failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     String.format("Expected type %s, got %s", generictype != null ? generictype: type, oT),

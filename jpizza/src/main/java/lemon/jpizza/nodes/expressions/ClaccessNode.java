@@ -12,13 +12,12 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.EnumJ;
 import lemon.jpizza.objects.primitives.EnumJChild;
 import lemon.jpizza.objects.primitives.Str;
-import lemon.jpizza.Operations;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class ClaccessNode extends Node {
-    public Node class_tok;
-    public Token attr_name_tok;
+    public final Node class_tok;
+    public final Token attr_name_tok;
     public boolean fluctuating = true;
 
     public ClaccessNode(Node cls, Token atr) {
@@ -54,7 +53,7 @@ public class ClaccessNode extends Node {
                         set_context(context).set_pos(pos_start, pos_end));
 
             case ClassInstance:
-                Object val = var.getattr(Operations.OP.ACCESS, new Str((String) attr_name_tok.value)
+                Object val = var.access(new Str((String) attr_name_tok.value)
                         .set_pos(pos_start, pos_end)
                         .set_context(context));
                 if (val instanceof String)

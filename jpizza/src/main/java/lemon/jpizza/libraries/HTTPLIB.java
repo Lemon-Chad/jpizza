@@ -55,7 +55,7 @@ public class HTTPLIB extends Library {
 
         if (params.jptype != Constants.JPType.Dict) return errX;
 
-        Map<Obj, Obj> mp = ((Dict) params).trueValue();
+        Map<Obj, Obj> mp = params.map;
         Map<String, String> args = new HashMap<>();
         Obj v;
         for (Obj k : mp.keySet()) {
@@ -64,7 +64,7 @@ public class HTTPLIB extends Library {
 
             if (k.jptype != Constants.JPType.String || v.jptype != Constants.JPType.String) return errX;
 
-            args.put(((Str) k).trueValue(), ((Str) v).trueValue());
+            args.put(k.string, v.string);
         }
 
         return new Pair<>(args, null);
@@ -144,7 +144,7 @@ public class HTTPLIB extends Library {
                 urlObj.get_ctx()
         ));
 
-        String url = ((Str) urlObj).trueValue();
+        String url = urlObj.string;
         var buildData = getBuilder(execCtx, url, urlObj);
         if (buildData.b != null) return new RTResult().failure(buildData.b);
 
@@ -167,7 +167,7 @@ public class HTTPLIB extends Library {
                 urlObj.get_ctx()
         ));
 
-        String url = ((Str) urlObj).trueValue();
+        String url = urlObj.string;
         var buildData = getBuilder(execCtx, url, urlObj);
         if (buildData.b != null) return new RTResult().failure(buildData.b);
 
@@ -197,8 +197,8 @@ public class HTTPLIB extends Library {
                 urlObj.get_ctx()
         ));
 
-        String url = ((Str) urlObj).trueValue();
-        String body = ((Str) bodyObj).trueValue();
+        String url = urlObj.string;
+        String body = bodyObj.string;
 
         var buildData = getBuilder(execCtx, url, urlObj);
         if (buildData.b != null) return new RTResult().failure(buildData.b);
@@ -229,8 +229,8 @@ public class HTTPLIB extends Library {
                 urlObj.get_ctx()
         ));
 
-        String url = ((Str) urlObj).trueValue();
-        String body = ((Str) bodyObj).trueValue();
+        String url = urlObj.string;
+        String body = bodyObj.string;
 
         var buildData = getBuilder(execCtx, url, urlObj);
         if (buildData.b != null) return new RTResult().failure(buildData.b);
@@ -281,8 +281,8 @@ public class HTTPLIB extends Library {
                 urlObj.get_ctx()
         ));
 
-        String url = ((Str) urlObj).trueValue();
-        String body = ((Str) bodyObj).trueValue();
+        String url = urlObj.string;
+        String body = bodyObj.string;
 
         var buildData = getBuilder(execCtx, url, urlObj);
         if (buildData.b != null) return new RTResult().failure(buildData.b);

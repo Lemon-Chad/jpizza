@@ -8,8 +8,8 @@ public class Position implements Serializable {
     public int col;
     public int tcol = -1;
     public int tidx;
-    public String fn;
-    public String ftext;
+    public final String fn;
+    public final String ftext;
 
     public Position(int idx, int ln, int col, String fn, String ftext) {
         this.idx = idx;

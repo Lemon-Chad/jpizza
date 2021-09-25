@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Library extends BaseFunction {
-    public static Map< String, Map< String, List<String> > > atrs = new HashMap<>();
-    String libname;
+    public static final Map< String, Map< String, List<String> > > atrs = new HashMap<>();
+    final String libname;
     public Library(String name, String libname) {
         super(name);
         this.libname = libname;
@@ -82,7 +82,7 @@ public class Library extends BaseFunction {
                     null
             ));
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || ((Num) o).floating) return new RTResult().failure(RTError.Type(
+        if (o.jptype != Constants.JPType.Number || o.floating) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected an integer",
                 o.get_ctx()
@@ -100,10 +100,10 @@ public class Library extends BaseFunction {
                     null
             ));
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || ((Num) o).floating || ((Num) o).trueValue() < 0)
+        if (o.jptype != Constants.JPType.Number || o.floating || o.number < 0)
             return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
-                "Expected a postiive integer",
+                "Expected a postive integer",
                 o.get_ctx()
         ));
         return new RTResult().success(o);
@@ -121,7 +121,6 @@ public class Library extends BaseFunction {
         initialize(libName, cls, funcs, libContext, false);
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public static void initialize(String libName, Class<? extends Library> cls, Map<String, List<String>> funcs, Context libContext,
                                   boolean adlib) {
         SymbolTable libTable = libContext.symbolTable;

@@ -10,7 +10,7 @@ import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 
 public class ReturnNode extends Node {
-    public Node nodeToReturn;
+    public final Node nodeToReturn;
     public boolean fluctuating = true;
 
     public ReturnNode(Node nodeToReturn, Position pos_start, Position pos_end) {

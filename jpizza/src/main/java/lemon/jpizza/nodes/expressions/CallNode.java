@@ -10,7 +10,6 @@ import lemon.jpizza.objects.executables.ClassPlate;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.EnumJChild;
 import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
@@ -20,10 +19,10 @@ import java.util.List;
 import java.util.Map;
 
 public class CallNode extends Node {
-    public Node nodeToCall;
-    public List<Node> argNodes;
-    public Map<String, Node> kwargs;
-    public List<Token> generics;
+    public final Node nodeToCall;
+    public final List<Node> argNodes;
+    public final Map<String, Node> kwargs;
+    public final List<Token> generics;
     public boolean fluctuating = true;
 
     public CallNode(Node nodeToCall, List<Node> argNodes, List<Token> generics, Map<String, Node> kwargs) {
@@ -56,7 +55,7 @@ public class CallNode extends Node {
                 SpreadNode spread = (SpreadNode) node;
                 Obj obj = res.register(spread.internal.visit(inter, context));
                 if (res.shouldReturn()) return res;
-                args.addAll(((PList) obj.alist()).trueValue());
+                args.addAll(obj.alist().list);
             } else {
                 Obj obj = res.register(argNodes.get(i).visit(inter, context));
                 args.add(obj);

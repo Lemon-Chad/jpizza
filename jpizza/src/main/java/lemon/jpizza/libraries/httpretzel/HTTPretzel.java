@@ -8,8 +8,6 @@ import lemon.jpizza.objects.executables.Function;
 import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.objects.primitives.Num;
-import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.RTResult;
 
 import java.io.IOException;
@@ -52,8 +50,8 @@ public class HTTPretzel extends Library {
 
         if (res.error != null) return res;
 
-        double addr = ((Num) adr).trueValue();
-        String host = ((Str) hst).trueValue();
+        double addr = adr.number;
+        String host = hst.string;
 
         try {
             server = HttpServer.create(new InetSocketAddress(host, (int) addr), 0);
@@ -77,7 +75,7 @@ public class HTTPretzel extends Library {
         Obj fnc = res.register(checkFunction(execCtx.symbolTable.get("func")));
         if (res.error != null) return res;
 
-        server.createContext(((Str) rte).trueValue(), new JHandle((Function) fnc));
+        server.createContext(rte.string, new JHandle((Function) fnc));
 
         return res.success(new Null());
     }

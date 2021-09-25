@@ -3,8 +3,11 @@ package lemon.jpizza.libraries.jdraw;
 import java.awt.*;
 
 public class Ovl implements DrawSlice {
-    public int x, y, width, height;
-    public Color color;
+    public final int x;
+    public final int y;
+    public final int width;
+    public final int height;
+    public final Color color;
 
     public Ovl(int x, int y, int width, int height, Color color) {
         this.x = x;

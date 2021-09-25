@@ -3,10 +3,11 @@ package lemon.jpizza.libraries.jdraw;
 import java.awt.*;
 
 public class Txt implements DrawSlice {
-    String msg;
-    int x, y;
-    Color color;
-    Fnt fnt;
+    final String msg;
+    final int x;
+    final int y;
+    final Color color;
+    final Fnt fnt;
 
     public Txt(int x, int y, String msg, Color color, Fnt fnt) {
         this.msg = msg;

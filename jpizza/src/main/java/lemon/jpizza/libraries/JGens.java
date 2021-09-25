@@ -37,9 +37,9 @@ public class JGens extends Library {
 
         if (res.error != null) return new Pair<>(null, res.error);
 
-        double start = ((Num) s).trueValue();
-        double stop = ((Num) e).trueValue();
-        double step = ((Num) sp).trueValue();
+        double start = s.number;
+        double stop = e.number;
+        double step = sp.number;
 
         Num[] l = new Num[(int) Math.ceil((stop - start) / step) + 1];
         return new Pair<>(new Pair<>(new Point3(start, stop, step), l), null);
@@ -66,8 +66,8 @@ public class JGens extends Library {
         Obj s = res.register(checkType(execCtx.symbolTable.get("slope"), "number", Constants.JPType.Number));
         Obj y = res.register(checkType(execCtx.symbolTable.get("y-inter"), "number", Constants.JPType.Number));
         if (res.error != null) return res;
-        double m = ((Num) s).trueValue();
-        double b = ((Num) y).trueValue();
+        double m = s.number;
+        double b = y.number;
 
         int index = 0;
         Num[] l = r.a.b;
@@ -87,9 +87,9 @@ public class JGens extends Library {
         Obj B = res.register(checkType(execCtx.symbolTable.get("b"), "number", Constants.JPType.Number));
         Obj C = res.register(checkType(execCtx.symbolTable.get("c"), "number", Constants.JPType.Number));
         if (res.error != null) return res;
-        double a = ((Num) A).trueValue();
-        double b = ((Num) B).trueValue();
-        double c = ((Num) C).trueValue();
+        double a = A.number;
+        double b = B.number;
+        double c = C.number;
 
         int index = 0;
         Num[] l = r.a.b;

@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ForNode extends Node {
-    public Token var_name_tok;
-    public Node start_value_node;
-    public Node end_value_node;
-    public Node step_value_node;
-    public Node body_node;
-    public boolean retnull;
+    public final Token var_name_tok;
+    public final Node start_value_node;
+    public final Node end_value_node;
+    public final Node step_value_node;
+    public final Node body_node;
+    public final boolean retnull;
     public boolean fluctuating = true;
 
     public ForNode(Token var_name_tok, Node start_value_node, Node end_value_node, Node step_value_node, Node body_node,
@@ -37,7 +37,6 @@ public class ForNode extends Node {
         jptype = Constants.JPType.For;
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
@@ -48,7 +47,7 @@ public class ForNode extends Node {
                 "Start must be an integer",
                 context
         ));
-        double start = ((Num) startNode).trueValue();
+        double start = startNode.number;
         Obj endNode = res.register(end_value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
         if (endNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
@@ -56,7 +55,7 @@ public class ForNode extends Node {
                 "End must be an integer",
                 context
         ));
-        double end = ((Num) endNode).trueValue();
+        double end = endNode.number;
         if (res.shouldReturn()) return res;
 
         double step;
@@ -68,7 +67,7 @@ public class ForNode extends Node {
                     "Step must be an integer",
                     context
             ));
-            step = ((Num) stepNode).trueValue();
+            step = stepNode.number;
         } else {
             step = 1;
         }

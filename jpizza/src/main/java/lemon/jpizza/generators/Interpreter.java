@@ -2,7 +2,6 @@ package lemon.jpizza.generators;
 
 import lemon.jpizza.*;
 import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.Pair;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.Node;
@@ -52,7 +51,7 @@ public class Interpreter {
         if (!main) return res.success(new Null());
 
         Object cargs = context.symbolTable.get("CMDARGS");
-        Obj cmdArgs = cargs != null ? (PList) cargs : new PList(new ArrayList<>());
+        Obj cmdArgs = cargs != null ? (Obj) cargs : new PList(new ArrayList<>());
 
         if (fnFinish != null) {
             Object func = context.symbolTable.get(fnFinish);
@@ -89,7 +88,7 @@ public class Interpreter {
             ClassInstance clsi = (ClassInstance) res.register(recipe.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), this));
             if (res.error != null) return res;
 
-            Object func = clsi.getattr(OP.ACCESS, new Str("main").set_context(recipe.context));
+            Object func = clsi.access(new Str("main").set_context(recipe.context));
             if (!(func instanceof CMethod)) return new RTResult().failure(RTError.Scope(
                     recipe.get_start(), recipe.get_end(),
                     "Recipe has no main method",

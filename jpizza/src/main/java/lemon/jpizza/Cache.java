@@ -3,9 +3,9 @@ package lemon.jpizza;
 import lemon.jpizza.objects.Obj;
 
 public class Cache {
-    public String funcName;
-    public Obj[] args;
-    public Object result;
+    public final String funcName;
+    public final Obj[] args;
+    public final Object result;
 
     public Cache(String funcName, Obj[] args, Object result) {
         this.funcName = funcName;

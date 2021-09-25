@@ -3,7 +3,6 @@ package lemon.jpizza;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
-import lemon.jpizza.objects.Value;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,12 +11,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Constants {
-    public static char[] NUMBERS = "0123456789".toCharArray();
-    public static char[] NUMDOT = "0123456789.".toCharArray();
-    public static char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
-    public static char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    public static final char[] NUMBERS = "0123456789".toCharArray();
+    public static final char[] NUMDOT = "0123456789.".toCharArray();
+    public static final char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    public static final char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
-    public static List<Tokens.TT> TYPETOKS = Arrays.asList(
+    public static final List<Tokens.TT> TYPETOKS = Arrays.asList(
             Tokens.TT.IDENTIFIER,
             Tokens.TT.KEYWORD,
             Tokens.TT.FLOAT,
@@ -29,7 +28,7 @@ public class Constants {
             Tokens.TT.OPEN,
             Tokens.TT.CLOSE
     );
-    public static String[] KEYWORDS = {
+    public static final String[] KEYWORDS = {
             "free",
             "assert",
             "let",
@@ -72,10 +71,10 @@ public class Constants {
     };
     @SuppressWarnings("unused") public static char BREAK = ';';
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};
-    public static Map<String, Context> LIBRARIES = new HashMap<>();
-    public static char splitter = '\n';
+    public static final Map<String, Context> LIBRARIES = new HashMap<>();
+    public static final char splitter = '\n';
     
-    public static Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
+    public static final Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
         put(Tokens.TT.PLUS, Operations.OP.ADD);
         put(Tokens.TT.MINUS, Operations.OP.SUB);
         put(Tokens.TT.MUL, Operations.OP.MUL);
@@ -92,14 +91,15 @@ public class Constants {
         put(Tokens.TT.LSQUARE, Operations.OP.BRACKET);
     }};
 
-    public static Map<Operations.OP, JPType> methTypes = new HashMap<>(){{
-        put(Operations.OP.EQ, JPType.Boolean);
-        put(Operations.OP.LT, JPType.Boolean);
-        put(Operations.OP.LTE, JPType.Boolean);
-        put(Operations.OP.NE, JPType.Boolean);
-        put(Operations.OP.ALSO, JPType.Boolean);
-        put(Operations.OP.INCLUDING, JPType.Boolean);
-        put(Operations.OP.TYPE, JPType.String);
+    public static final Map<String, JPType> methTypes = new HashMap<>(){{
+        put("eq", JPType.Boolean);
+        put("lt", JPType.Boolean);
+        put("lte", JPType.Boolean);
+        put("ne", JPType.Boolean);
+        put("also", JPType.Boolean);
+        put("including", JPType.Boolean);
+
+        put("type", JPType.String);
     }};
 
     public enum JPType {
@@ -243,28 +243,26 @@ public class Constants {
     }
 
     public static Object toObject(Obj obj) {
-        if (obj instanceof Dict) {
-            Dict dct = (Dict) obj;
+        if (obj.jptype == JPType.Dict) {
             Map<Object, Object> objMap = new ConcurrentHashMap<>();
-            ConcurrentHashMap<Obj, Obj> deMap = dct.trueValue();
+            ConcurrentHashMap<Obj, Obj> deMap = obj.map;
 
             for (Obj k : deMap.keySet())
                 objMap.put(toObject(k), toObject(deMap.get(k)));
 
             return objMap;
         }
-        else if (obj instanceof PList) {
-            PList lst = (PList) obj;
+        else if (obj.jptype == JPType.List) {
             List<Object> objLst = new ArrayList<>();
-            List<Obj> olst = new ArrayList<>(lst.trueValue());
+            List<Obj> olst = new ArrayList<>(obj.list);
 
             for (int i = 0; i < olst.size(); i++)
                 objLst.add(toObject(olst.get(i)));
 
             return objLst;
         }
-        else if (obj instanceof Value) {
-            return ((Value) obj).value;
+        else if (obj.jptype == JPType.Generic) {
+            return obj.value;
         }
         return null;
     }

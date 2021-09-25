@@ -9,8 +9,8 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class DynAssignNode extends Node {
-    public Token var_name_tok;
-    public Node value_node;
+    public final Token var_name_tok;
+    public final Node value_node;
 
     public DynAssignNode(Token var_name_tok, Node value_node) {
         this.var_name_tok = var_name_tok;

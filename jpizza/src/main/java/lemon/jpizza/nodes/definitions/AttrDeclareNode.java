@@ -9,13 +9,13 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class AttrDeclareNode extends Node {
-    public Token attrToken;
-    public String type;
-    public boolean isstatic;
-    public boolean isprivate;
-    public Node nValue;
+    public final Token attrToken;
+    public final String type;
+    public final boolean isstatic;
+    public final boolean isprivate;
+    public final Node nValue;
     public Obj value;
-    public String name;
+    public final String name;
 
     public AttrDeclareNode(Token attrToken) {
         this.attrToken = attrToken;

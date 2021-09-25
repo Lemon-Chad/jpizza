@@ -11,21 +11,22 @@ import lemon.jpizza.Token;
 import java.util.List;
 
 public class MethDefNode extends Node {
-    public Token var_name_tok;
-    public List<Token> arg_name_toks;
-    public Node body_node;
-    public boolean autoreturn;
-    public boolean async;
-    public boolean bin;
-    public List<Token> arg_type_toks;
-    public List<Token> generic_toks;
-    public String returnType;
-    public List<Node> defaults;
-    public int defaultCount;
+    public final Token var_name_tok;
+    public final List<Token> arg_name_toks;
+    public final Node body_node;
+    public final boolean autoreturn;
+    public final boolean async;
+    public final boolean bin;
+    public final List<Token> arg_type_toks;
+    public final List<Token> generic_toks;
+    public final String returnType;
+    public final List<Node> defaults;
+    public final int defaultCount;
     public boolean catcher = false;
-    boolean stat;
-    boolean priv;
-    String argname, kwargname;
+    final boolean stat;
+    final boolean priv;
+    final String argname;
+    final String kwargname;
 
     public MethDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean bin, boolean async, String returnType, List<Node> defaults,
@@ -61,15 +62,13 @@ public class MethDefNode extends Node {
         RTResult res = new RTResult();
 
         String funcName = (String) var_name_tok.value;
-        Token nameTok = var_name_tok;
-        Node bodyNode = body_node;
         var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks);
 
         var dfts = inter.getDefaults(defaults, context);
         res.register(dfts.a);
         if (res.error != null) return res;
 
-        CMethod methValue = new CMethod(funcName, nameTok, context, bodyNode, argNT.a, argNT.b, bin, async,
+        CMethod methValue = new CMethod(funcName, var_name_tok, context, body_node, argNT.a, argNT.b, bin, async,
                 autoreturn, returnType, dfts.b, defaultCount, generic_toks, stat, priv, argname, kwargname);
 
         context.symbolTable.define(funcName, methValue);

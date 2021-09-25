@@ -1,7 +1,8 @@
 package lemon.jpizza;
 
 public class Point {
-    public int x, y;
+    public final int x;
+    public final int y;
 
     public Point(int x, int y) {
         this.x = x;

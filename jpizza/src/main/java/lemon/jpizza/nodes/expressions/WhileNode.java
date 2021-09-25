@@ -5,7 +5,6 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.results.RTResult;
@@ -14,10 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WhileNode extends Node {
-    public Node condition_node;
-    public Node body_node;
-    public boolean retnull;
-    public boolean conLast;
+    public final Node condition_node;
+    public final Node body_node;
+    public final boolean retnull;
+    public final boolean conLast;
     public boolean fluctuating = true;
 
     public WhileNode(Node condition_node, Node body_node, boolean retnull, boolean conLast) {
@@ -41,7 +40,7 @@ public class WhileNode extends Node {
                 condition = res.register(conditionNode.visit(inter, context));
                 if (res.shouldReturn()) return res;
 
-                if (!((Bool) condition.bool()).trueValue()) break;
+                if (!condition.bool().boolval) break;
             }
 
             value = res.register(body_node.visit(inter, context));
@@ -57,7 +56,7 @@ public class WhileNode extends Node {
                 condition = res.register(conditionNode.visit(inter, context));
                 if (res.shouldReturn()) return res;
 
-                if (!((Bool) condition.bool()).trueValue()) break;
+                if (!condition.bool().boolval) break;
             }
         }
 

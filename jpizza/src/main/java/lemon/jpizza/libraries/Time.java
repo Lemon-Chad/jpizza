@@ -4,7 +4,6 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
-import lemon.jpizza.objects.executables.Function;
 import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
@@ -37,7 +36,7 @@ public class Time extends Library {
                 execCtx
         ));
         try {
-            Thread.sleep(Math.round(((Num) value).trueValue()));
+            Thread.sleep(Math.round(value.number));
         } catch (InterruptedException e) {
             return new RTResult().failure(RTError.Interrupted(
                     pos_start.copy(), pos_end.copy(),
@@ -58,7 +57,7 @@ public class Time extends Library {
                 execCtx
         ));
         long start = System.currentTimeMillis();
-        res.register(((Function) value).execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
+        res.register(value.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null) return res;
         return res.success(new Num(System.currentTimeMillis() - start));
     }

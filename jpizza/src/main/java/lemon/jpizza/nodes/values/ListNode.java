@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListNode extends Node {
-    public List<Node> elements;
+    public final List<Node> elements;
 
     public ListNode(List<Node> element_nodes, Position pos_start, Position pos_end) {
         elements = element_nodes;

@@ -10,7 +10,7 @@ import lemon.jpizza.results.RTResult;
 
 
 public class BytesNode extends Node {
-    public Node toBytes;
+    public final Node toBytes;
 
     public BytesNode(Node toBytes) {
         this.toBytes = toBytes;

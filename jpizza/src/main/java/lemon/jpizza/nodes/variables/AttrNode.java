@@ -4,7 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.nodes.Node;
 
 public class AttrNode extends Node {
-    public Object value_node;
+    public final Object value_node;
     public boolean fluctuating = true;
 
     public AttrNode(Object value_node) {

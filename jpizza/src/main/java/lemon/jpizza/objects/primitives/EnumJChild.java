@@ -16,9 +16,9 @@ import java.util.List;
 
 public class EnumJChild extends Value {
     public EnumJ parent;
-    public int val;
-    List<String> params;
-    List<String> types;
+    public final int val;
+    final List<String> params;
+    final List<String> types;
 
 
     public EnumJChild(int val, List<String> params, List<String> types) {
@@ -55,7 +55,7 @@ public class EnumJChild extends Value {
                     arg.get_ctx()
             ));
 
-            String oT = ((Str) oType).trueValue();
+            String oT = oType.string;
             if (!oT.equals(type)) return new RTResult().failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     String.format("Expected type %s, got %s", type, oT),
@@ -83,7 +83,7 @@ public class EnumJChild extends Value {
     public Pair<Obj, RTError> eq(Obj o) {
         if (o.jptype != Constants.JPType.EnumChild) return new Pair<>(new Bool(false), null);
         EnumJChild other = (EnumJChild) o;
-        if (!((Bool)other.parent.eq(parent).a).trueValue()) return new Pair<>(new Bool(false), null);
+        if (other.parent != parent) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(other.val == val), null);
     }
 

@@ -8,7 +8,6 @@ import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.objects.primitives.Num;
-import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.RTResult;
 
 import java.io.*;
@@ -48,19 +47,19 @@ public class SockLib extends Library {
 
     // Server Side
 
-    static Map< Double, ServerSocket       > servers = new HashMap<>();
-    static Map< ServerSocket,     List< ServerConn > > serverSocks = new HashMap<>();
-    static Map< Double, ServerConn         > socks = new HashMap<>();
+    static final Map< Double, ServerSocket       > servers = new HashMap<>();
+    static final Map< ServerSocket,     List< ServerConn > > serverSocks = new HashMap<>();
+    static final Map< Double, ServerConn         > socks = new HashMap<>();
 
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newServer(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(RTError.Type(
+        if (p.jptype != Constants.JPType.Number || p.floating) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
         ));
-        double port = ((Num) p).trueValue();
+        double port = p.number;
         if (1000 > port || port > 9999) return new RTResult().failure(RTError.Range(
                 p.get_start(), p.get_end(),
                 "Expected number between 1000 and 9999",
@@ -92,7 +91,7 @@ public class SockLib extends Library {
                 serv.get_ctx()
         ));
 
-        double id = ((Num) serv).trueValue();
+        double id = serv.number;
         ServerSocket sock = servers.get(id);
 
         if (sock == null) return new Pair<>(null, RTError.InvalidArgument(
@@ -111,7 +110,7 @@ public class SockLib extends Library {
                 serv.get_ctx()
         ));
 
-        double id = ((Num) serv).trueValue();
+        double id = serv.number;
         ServerConn conn = socks.get(id);
 
         if (conn == null) return new Pair<>(null, RTError.InvalidArgument(
@@ -193,7 +192,7 @@ public class SockLib extends Library {
         Obj length = res.register(checkPosInt(execCtx.symbolTable.get("length")));
         if (res.error != null) return res;
 
-        return conn.receiveBytes((int) ((Num) length).trueValue());
+        return conn.receiveBytes(length.number.intValue());
     }
 
     public RTResult execute_closeServerConnection(Context execCtx) {
@@ -233,17 +232,17 @@ public class SockLib extends Library {
 
     // Client Side
 
-    static Map< Double, ClientConn > clients = new HashMap<>();
+    static final Map< Double, ClientConn > clients = new HashMap<>();
 
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newClient(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || ((Num) p).floating) return new RTResult().failure(RTError.Type(
+        if (p.jptype != Constants.JPType.Number || p.floating) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
         ));
-        double port = ((Num) p).trueValue();
+        double port = p.number;
         if (1000 > port || port > 9999) return new RTResult().failure(RTError.Range(
                 p.get_start(), p.get_end(),
                 "Expected number between 1000 and 9999",
@@ -256,7 +255,7 @@ public class SockLib extends Library {
                 "Expected sString",
                 h.get_ctx()
         ));
-        String host = ((Str) h).trueValue();
+        String host = h.string;
 
         double id = Math.random();
 
@@ -278,7 +277,7 @@ public class SockLib extends Library {
                 serv.get_ctx()
         ));
 
-        double id = ((Num) serv).trueValue();
+        double id = serv.number;
         ClientConn conn = clients.get(id);
 
         if (conn == null) return new Pair<>(null, RTError.InvalidArgument(
@@ -341,7 +340,7 @@ public class SockLib extends Library {
         Obj length = res.register(checkPosInt(execCtx.symbolTable.get("length")));
         if (res.error != null) return res;
 
-        return conn.receiveBytes((int) ((Num) length).trueValue());
+        return conn.receiveBytes(length.number.intValue());
     }
 
     public RTResult execute_clientClose(Context execCtx) {

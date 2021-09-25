@@ -5,9 +5,9 @@ import lemon.jpizza.nodes.Node;
 import java.io.Serializable;
 
 public class Case implements Serializable {
-    public boolean x;
-    public Node condition;
-    public Node statements;
+    public final boolean x;
+    public final Node condition;
+    public final Node statements;
 
     public Case(Node condition, Node statements, boolean x) {
         this.condition = condition;

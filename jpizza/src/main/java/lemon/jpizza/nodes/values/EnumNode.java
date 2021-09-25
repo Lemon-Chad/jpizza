@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EnumNode extends ValueNode {
-    public List<Token> children;
-    public List< List<String> > childrenParams;
-    public List< List<String> > childrenTypes;
+    public final List<Token> children;
+    public final List< List<String> > childrenParams;
+    public final List< List<String> > childrenTypes;
 
     public EnumNode(Token tok, List<Token> children, List< List<String> > childrenParams,
                     List< List<String> > childrenTypes) {

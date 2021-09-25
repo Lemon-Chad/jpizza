@@ -5,7 +5,7 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.Token;
 
 public class ValueNode extends Node {
-    public Token tok;
+    public final Token tok;
 
     public ValueNode(Token tok) {
         this.tok = tok;

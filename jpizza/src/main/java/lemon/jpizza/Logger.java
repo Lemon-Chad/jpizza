@@ -14,13 +14,13 @@ import static com.diogonunes.jcolor.Ansi.colorize;
 public class Logger {
     boolean log = true;
     boolean tips = false;
-    int omitt = 5;
-    int tape = 40;
+    final int omitt = 5;
+    final int tape = 40;
 
     public String ots(Object text) {
         if (text instanceof PList) {
             StringBuilder sb = new StringBuilder();
-            List<Obj> l = ((PList) text).trueValue();
+            List<Obj> l = ((Obj) text).list;
 
             for (int i = 0; i < l.size(); i++)
                 if (i >= omitt && i < l.size() - omitt) {
@@ -31,7 +31,7 @@ public class Logger {
         }
         else if (text instanceof Dict) {
             StringBuilder sb = new StringBuilder();
-            Map<Obj, Obj> d = ((Dict) text).trueValue();
+            Map<Obj, Obj> d = ((Obj) text).map;
 
             Obj[] keys = d.keySet().toArray(new Obj[0]);
             for (int i = 0; i < keys.length; i++)
@@ -44,7 +44,7 @@ public class Logger {
         }
         else if (text instanceof Bytes) {
             StringBuilder sb = new StringBuilder();
-            Bytes b = (Bytes) text;
+            Obj b = (Obj) text;
 
             for (int i = 0; i < b.arr.length; i++)
                 if (i >= omitt && i < b.arr.length - omitt) {
@@ -53,7 +53,7 @@ public class Logger {
 
             return "{ " + sb.toString() + "len=" + b.arr.length + " }";
         } else if (text instanceof Obj) {
-            return ((Obj) text).astring().toString();
+            return text.toString();
         }
         return text.toString();
     }

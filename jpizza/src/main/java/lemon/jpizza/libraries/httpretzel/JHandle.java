@@ -9,7 +9,6 @@ import lemon.jpizza.objects.executables.Function;
 import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Dict;
-import lemon.jpizza.objects.primitives.Num;
 import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.Pair;
@@ -25,8 +24,8 @@ import java.util.*;
 
 public class JHandle implements HttpHandler {
 
-    Function handle;
-    RTResult res = new RTResult();
+    final Function handle;
+    final RTResult res = new RTResult();
 
     public JHandle(Function handle) {
         this.handle = handle;
@@ -114,17 +113,15 @@ public class JHandle implements HttpHandler {
             return;
         }
 
-        Dict data = (Dict) response;
-
         Pair<Obj, RTError> pr;
-        pr = data.get(new Str("code"));
+        pr = response.get(new Str("code"));
         if (pr.b != null) {
             res.failure(pr.b);
             logError(exchange, outputStream);
             return;
         }
         Obj code = pr.a;
-        pr = data.get(new Str("header"));
+        pr = response.get(new Str("header"));
         if (pr.b != null) {
             res.failure(pr.b);
             logError(exchange, outputStream);
@@ -151,8 +148,8 @@ public class JHandle implements HttpHandler {
             return;
         }
 
-        double cd = ((Num) code).trueValue();
-        String hdr = ((Str) header).trueValue();
+        double cd = code.number;
+        String hdr = header.string;
 
         exchange.sendResponseHeaders((int) cd, hdr.length());
         outputStream.write(hdr.getBytes());

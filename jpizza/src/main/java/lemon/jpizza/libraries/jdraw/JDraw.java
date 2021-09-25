@@ -42,10 +42,10 @@ public class JDraw extends Library {
     static int frames = 0;
     static double start = 1;
 
-    static boolean[] mouseButtons = { false, false, false };
+    static final boolean[] mouseButtons = { false, false, false };
     static Point mousePos = new Point(0, 0);
 
-    static HashMap<String, Integer> keys = new HashMap<>(){{
+    static final HashMap<String, Integer> keys = new HashMap<>(){{
         put("a", VK_A);
         put("b", VK_B);
         put("c", VK_C);
@@ -130,17 +130,17 @@ public class JDraw extends Library {
         put(" ", VK_SPACE);
     }};
 
-    static HashMap<Integer, String> keycode = new HashMap<>(){{
+    static final HashMap<Integer, String> keycode = new HashMap<>(){{
         for (String key : keys.keySet())
             put(keys.get(key), key);
     }};
 
-    static HashMap<Integer, Boolean> keypressed = new HashMap<>(){{
+    static final HashMap<Integer, Boolean> keypressed = new HashMap<>(){{
         for (Integer key : keys.values())
             put(key, false);
     }};
 
-    static HashMap<Integer, Boolean> keytyped = new HashMap<>(){{
+    static final HashMap<Integer, Boolean> keytyped = new HashMap<>(){{
         for (Integer key : keys.values())
             put(key, false);
     }};
@@ -201,7 +201,7 @@ public class JDraw extends Library {
         Obj lis = res.register(checkType(col, "list", Constants.JPType.List));
         if (res.error != null) return new Pair<>(null, res.error);
 
-        List<Obj> list = ((PList) lis).trueValue();
+        List<Obj> list = lis.list;
         String errmsg = "Expected list composed of 3 0-255 integers";
         if (list.size() != 3) return new Pair<>(null, RTError.Type(
                 lis.get_start(), lis.get_end(),
@@ -214,7 +214,7 @@ public class JDraw extends Library {
             Obj obj = list.get(i);
             res.register(checkInt(obj));
             if (res.error != null) return new Pair<>(null, res.error);
-            int num = (int)((Num)obj).trueValue();
+            int num = obj.number.intValue();
             if (0 > num || num > 255) return new Pair<>(null, RTError.Type(
                     obj.get_start(), obj.get_end(),
                     errmsg,
@@ -243,8 +243,8 @@ public class JDraw extends Library {
 
         if (res.error != null) return new Pair<>(null, res.error);
 
-        int x = (int)((Num) cx).trueValue();
-        int y = (int)((Num) cy).trueValue();
+        int x = cx.number.intValue();
+        int y = cy.number.intValue();
         return new Pair<>(new Point(x, y), null);
     }
 
@@ -256,8 +256,8 @@ public class JDraw extends Library {
 
         if (res.error != null) return new Pair<>(null, res.error);
 
-        int w = (int)((Num) width).trueValue();
-        int h = (int)((Num) height).trueValue();
+        int w = width.number.intValue();
+        int h = height.number.intValue();
         return new Pair<>(new Point(w, h), null);
     }
 
@@ -374,7 +374,7 @@ public class JDraw extends Library {
         Obj rad = res.register(checkPosInt(execCtx.symbolTable.get("radius")));
         if (res.error != null) return res;
 
-        int radius = (int)((Num) rad).trueValue();
+        int radius = rad.number.intValue();
 
         Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
@@ -398,7 +398,7 @@ public class JDraw extends Library {
         Obj rad = res.register(checkPosInt(execCtx.symbolTable.get("radius")));
         if (res.error != null) return res;
 
-        int radius = (int)((Num) rad).trueValue();
+        int radius = rad.number.intValue();
 
         Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
@@ -447,7 +447,7 @@ public class JDraw extends Library {
 
         Obj lx = res.register(checkType(execCtx.symbolTable.get("points"), "list", Constants.JPType.List));
         if (res.error != null) return res;
-        List<Obj> lst = ((PList) lx).trueValue();
+        List<Obj> lst = lx.list;
 
         Point[] points = new Point[lst.size()];
         for (int i = 0; i < lst.size(); i++) {
@@ -455,7 +455,7 @@ public class JDraw extends Library {
 
             res.register(checkType(p, "list", Constants.JPType.List));
             if (res.error != null) return res;
-            List<Obj> pL = ((PList) p).trueValue();
+            List<Obj> pL = p.list;
 
             if (pL.size() != 2) return res.failure(RTError.Type(
                     p.get_start(), p.get_end(),
@@ -467,8 +467,8 @@ public class JDraw extends Library {
             res.register(checkInt(pL.get(1)));
             if (res.error != null) return res;
 
-            int x = (int)((Num) pL.get(0)).trueValue();
-            int y = (int)((Num) pL.get(1)).trueValue();
+            int x = pL.get(0).number.intValue();
+            int y = pL.get(1).number.intValue();
 
             points[i] = new Point(x, y);
         }
@@ -559,7 +559,7 @@ public class JDraw extends Library {
                 "Expected bool",
                 execCtx
         ));
-        frame.setResizable(!((Bool) value).trueValue());
+        frame.setResizable(!value.boolval);
 
         return res.success(new Null());
     }
@@ -573,7 +573,7 @@ public class JDraw extends Library {
                 "Expected bool",
                 execCtx
         ));
-        System.setProperty("sun.java2d.opengl", ((Bool) value).trueValue() ? "true" : "false");
+        System.setProperty("sun.java2d.opengl", value.boolval ? "true" : "false");
 
         return res.success(new Null());
     }
@@ -595,7 +595,7 @@ public class JDraw extends Library {
 
         Obj s = res.register(checkPosInt(execCtx.symbolTable.get("fontSize")));
         if (res.error != null) return res;
-        int fontSize = (int)((Num)s).trueValue();
+        int fontSize = s.number.intValue();
 
         font = new Fnt(name, fontType, fontSize);
 
@@ -609,14 +609,12 @@ public class JDraw extends Library {
         res.register(isInit());
         if (res.error != null) return res;
 
-        Obj na = res.register(checkPosInt(execCtx.symbolTable.get("width")));
-        Obj nb = res.register(checkPosInt(execCtx.symbolTable.get("height")));
+        Obj width = res.register(checkPosInt(execCtx.symbolTable.get("width")));
+        Obj height = res.register(checkPosInt(execCtx.symbolTable.get("height")));
 
         if (res.error != null) return res;
 
-        Num width = (Num) na; Num height = (Num) nb;
-
-        Dimension dim = new Dimension((int) width.trueValue(), (int) height.trueValue());
+        Dimension dim = new Dimension(width.number.intValue(), height.number.intValue());
 
         canvas.setPreferredSize(dim);
         changed = true;
@@ -636,12 +634,12 @@ public class JDraw extends Library {
         Point pos = p.a;
 
         Pair<Integer[], Error> col = getColor(execCtx.symbolTable.get("color"));
-        if (p.b != null) return res.failure(p.b);
+        if (col.b != null) return res.failure(col.b);
         Color color = new Color(col.a[0], col.a[1], col.a[2]);
 
         Obj txt = res.register(checkType(execCtx.symbolTable.get("txt"), "String", Constants.JPType.String));
         if (res.error != null) return res;
-        String msg = ((Str)txt).trueValue();
+        String msg = txt.string;
 
         draw(new Txt(pos.x, pos.y, msg, color, font));
         return res.success(new Null());
@@ -808,7 +806,7 @@ public class JDraw extends Library {
         if (!(fnef instanceof Null)) {
             res.register(checkType(fnef, "list", Constants.JPType.List));
             if (res.error != null) return res;
-            List<Obj> dat = ((PList) fnef).trueValue();
+            List<Obj> dat = fnef.list;
 
             if (dat.size() != 2) return res.failure(RTError.Type(
                     fnef.get_start(), fnef.get_end(),
@@ -823,7 +821,7 @@ public class JDraw extends Library {
         Obj md = res.register(checkPosInt(execCtx.symbolTable.get("mode")));
         if (res.error != null) return res;
 
-        int mode = (int) ((Num) md).trueValue();
+        int mode = md.number.intValue();
         Integer result = switch (mode) {
             case 32 -> chooser.showSaveDialog(null);
             case 64 -> chooser.showOpenDialog(null);
@@ -919,7 +917,7 @@ public class JDraw extends Library {
 
         Obj i = res.register(checkPosInt(execCtx.symbolTable.get("button")));
         if (res.error != null) return res;
-        int index = (int)((Num) i).trueValue();
+        int index = i.number.intValue();
 
         if (index > 2) return res.failure(RTError.Range(
                 i.get_start(), i.get_end(),

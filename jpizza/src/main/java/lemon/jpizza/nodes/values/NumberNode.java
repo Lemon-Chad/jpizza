@@ -10,9 +10,9 @@ import lemon.jpizza.Token;
 import lemon.jpizza.Tokens;
 
 public class NumberNode extends ValueNode {
-    public double val;
-    public boolean flt;
-    public boolean hex;
+    public final double val;
+    public final boolean flt;
+    public final boolean hex;
 
     public NumberNode(Token tok) {
         super(tok);

@@ -6,7 +6,7 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.Position;
 
 public class RTError extends Error {
-    Context context;
+    final Context context;
 
     public RTError(String name, Position pos_start, Position pos_end, String details, Context context) {
         super(pos_start, pos_end, name, details);

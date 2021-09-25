@@ -13,9 +13,9 @@ import lemon.jpizza.results.RTResult;
 import java.util.Arrays;
 
 public class BinOpNode extends Node {
-    public Node left_node;
-    public Token op_tok;
-    public Node right_node;
+    public final Node left_node;
+    public final Token op_tok;
+    public final Node right_node;
     public boolean fluctuating = true;
 
     public BinOpNode(Node left_node, Token op_tok, Node right_node) {
@@ -60,19 +60,19 @@ public class BinOpNode extends Node {
         if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
                 Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
                 .contains(op_tok.type)) {
-            if (left.jptype != Constants.JPType.Number || ((Num) left).floating) return res.failure(RTError.Type(
+            if (left.jptype != Constants.JPType.Number || left.floating) return res.failure(RTError.Type(
                     left.get_start(), left.get_end(),
                     "Left operand must be an integer",
                     context
             ));
-            if (right.jptype != Constants.JPType.Number || ((Num) right).floating) return res.failure(RTError.Type(
+            if (right.jptype != Constants.JPType.Number || right.floating) return res.failure(RTError.Type(
                     right.get_start(), right.get_end(),
                     "Right operand must be an integer",
                     context
             ));
 
-            long a = Double.valueOf(((Num) left).trueValue()).longValue();
-            long b = Double.valueOf(((Num) right).trueValue()).longValue();
+            long a = left.number.longValue();
+            long b = right.number.longValue();
 
             return res.success(new Num(switch (op_tok.type) {
                 case BITAND -> a & b;
@@ -85,11 +85,37 @@ public class BinOpNode extends Node {
             }));
         }
 
-        if (op_tok.type == Tokens.TT.GT || op_tok.type == Tokens.TT.GTE) {
-            ret = (Pair<Obj, RTError>) right.getattr(op_tok.type == Tokens.TT.GT ? Operations.OP.LT : Operations.OP.LTE,
-                    left);
+        if (op_tok.type == Tokens.TT.GT) {
+            ret = right.lt(left);
         }
-        else ret = (Pair<Obj, RTError>) left.getattr(op, right);
+        else if (op_tok.type == Tokens.TT.GTE) {
+            ret = right.lte(left);
+        }
+        else ret = switch (op) {
+            case ADD -> left.add(right);
+            case SUB -> left.sub(right);
+            case MUL -> left.mul(right);
+            case DIV -> left.div(right);
+            case FASTPOW -> left.fastpow(right);
+            case MOD -> left.mod(right);
+
+            case EQ -> left.eq(right);
+            case NE -> left.ne(right);
+            case LT -> left.lt(right);
+            case LTE -> left.lte(right);
+            case ALSO -> left.also(right);
+            case INCLUDING -> left.including(right);
+
+            case APPEND -> left.append(right);
+            case EXTEND -> left.extend(right);
+            case POP -> left.pop(right);
+            case REMOVE -> left.remove(right);
+            case BRACKET -> left.bracket(right);
+
+            case GET -> left.get(right);
+
+            default -> new Pair<>(new Null(), null);
+        };
         if (ret.b != null) return res.failure(ret.b);
         return res.success(ret.a != null ? ret.a.set_pos(pos_start, pos_end).set_context(context) : new Null());
     }

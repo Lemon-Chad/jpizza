@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class Pair<T, X> implements Serializable {
     public T a;
-    public X b;
+    public final X b;
     public Pair(T a, X b) {
         this.a = a;
         this.b = b;

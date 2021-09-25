@@ -4,8 +4,8 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.nodes.Node;
 
 public class VarNode extends Node {
-    public Object value_node;
-    public boolean locked;
+    public final Object value_node;
+    public final boolean locked;
     public Integer min = null;
     public Integer max = null;
     public boolean fluctuating = true;

@@ -6,8 +6,6 @@ import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Lexer;
 import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Dict;
-import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
@@ -19,7 +17,7 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class JasonLib extends Library {
 
-    static List<TT> acceptableJason = Arrays.asList(
+    static final List<TT> acceptableJason = Arrays.asList(
             TT.STRING,
             TT.FLOAT,
             TT.INT,
@@ -49,7 +47,7 @@ public class JasonLib extends Library {
                 execCtx
         ));
 
-        String jdata = ((Str) value).trueValue();
+        String jdata = value.string;
         if (!jdata.startsWith("[") && !jdata.startsWith("{")) return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected List or Dict",
@@ -78,29 +76,29 @@ public class JasonLib extends Library {
                 execCtx
         ));
 
-        return new RTResult().success(((PList) d.a).trueValue().get(0));
+        return new RTResult().success(d.a.list.get(0));
     }
 
     public String toStr(Obj o) {
         if (o.jptype == Constants.JPType.String) return "\"" + o.toString() + "\"";
-        else if (o.jptype == Constants.JPType.Dict) return visitDictionary((Dict) o);
-        else if (o.jptype == Constants.JPType.List) return visitList((PList) o);
+        else if (o.jptype == Constants.JPType.Dict) return visitDictionary(o);
+        else if (o.jptype == Constants.JPType.List) return visitList(o);
         else return o.toString();
     }
 
-    public String visitList(PList l) {
+    public String visitList(Obj l) {
         StringBuilder sb = new StringBuilder();
 
-        List<Obj> lst = l.trueValue();
+        List<Obj> lst = l.list;
         for (Obj item : lst)
             sb.append(toStr(item)).append(",");
         return "[" + sb.substring(0, sb.length() - 1) + "]";
     }
 
-    public String visitDictionary(Dict d) {
+    public String visitDictionary(Obj d) {
         StringBuilder sb = new StringBuilder();
 
-        Map<Obj, Obj> mp = d.trueValue();
+        Map<Obj, Obj> mp = d.map;
         for (Obj key : mp.keySet())
             sb.append(toStr(key)).append(":").append(toStr(mp.get(key))).append(",");
 

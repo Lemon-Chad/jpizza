@@ -12,19 +12,19 @@ import lemon.jpizza.Token;
 import java.util.List;
 
 public class FuncDefNode extends Node {
-    Token var_name_tok;
-    List<Token> arg_name_toks;
-    Node body_node;
-    boolean autoreturn;
-    boolean async;
-    List<Token> arg_type_toks;
-    List<Token> generic_toks;
-    String returnType;
-    List<Node> defaults;
-    int defaultCount;
+    final Token var_name_tok;
+    final List<Token> arg_name_toks;
+    final Node body_node;
+    final boolean autoreturn;
+    final boolean async;
+    final List<Token> arg_type_toks;
+    final List<Token> generic_toks;
+    final String returnType;
+    final List<Node> defaults;
+    final int defaultCount;
     boolean catcher = false;
-    String argname;
-    String kwargname;
+    final String argname;
+    final String kwargname;
 
     public FuncDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean async, String returnType, List<Node> defaults, int defaultCount,
@@ -58,14 +58,13 @@ public class FuncDefNode extends Node {
         RTResult res = new RTResult();
 
         String funcName = var_name_tok != null ? (String) var_name_tok.value : null;
-        Node bodyNode = body_node;
         var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks);
 
         var dfts = inter.getDefaults(defaults, context);
         res.register(dfts.a);
         if (res.error != null) return res;
 
-        Obj funcValue = new Function(funcName, bodyNode, argNT.a, argNT.b, async, autoreturn, returnType,
+        Obj funcValue = new Function(funcName, body_node, argNT.a, argNT.b, async, autoreturn, returnType,
                 dfts.b, defaultCount, generic_toks).setCatch(catcher).setIterative(argname).setKwargs(kwargname)
                 .set_context(context).set_pos(pos_start, pos_end);
 

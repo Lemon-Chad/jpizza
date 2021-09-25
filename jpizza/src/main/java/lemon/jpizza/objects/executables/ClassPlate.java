@@ -16,15 +16,15 @@ import lemon.jpizza.Token;
 import java.util.*;
 
 public class ClassPlate extends Value {
-    String name;
-    public CMethod make;
-    CMethod[] methods;
-    AttrDeclareNode[] attributes;
-    Map<String, CMethod> staticMap;
-    Map<String, AttrDeclareNode> staticAttrs;
+    final String name;
+    public final CMethod make;
+    final CMethod[] methods;
+    final AttrDeclareNode[] attributes;
+    final Map<String, CMethod> staticMap;
+    final Map<String, AttrDeclareNode> staticAttrs;
 
-    ClassPlate parent;
-    List<String> methodNames;
+    final ClassPlate parent;
+    final List<String> methodNames;
 
     public ClassPlate(String name, AttrDeclareNode[] attributes, CMethod make, CMethod[] methods, ClassPlate parent) {
         this.name = name;
@@ -107,7 +107,7 @@ public class ClassPlate extends Value {
                 "Expected String",
                 o.get_ctx()
         ));
-        String other = ((Str) o).trueValue();
+        String other = o.string;
         CMethod c = staticMap.get(other);
         AttrDeclareNode x = staticAttrs.get(other);
         if (c != null && !c.isprivate)

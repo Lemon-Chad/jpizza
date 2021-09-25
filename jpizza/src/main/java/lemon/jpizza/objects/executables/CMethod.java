@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 public class CMethod extends Function {
-    boolean bin;
-    boolean isstatic;
-    public boolean isprivate;
-    Token nameTok;
+    final boolean bin;
+    final boolean isstatic;
+    public final boolean isprivate;
+    final Token nameTok;
 
     public CMethod(String name, Token nameTok, Context context, Node bodyNode, List<String> argNames,
                    List<String> argTypes, boolean bin, boolean async, boolean autoreturn, String returnType,

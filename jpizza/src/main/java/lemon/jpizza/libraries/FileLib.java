@@ -43,7 +43,7 @@ public class FileLib extends Library {
                 ctx
         ));
 
-        String dir = ((Str) value).trueValue();
+        String dir = value.string;
         //noinspection RegExpRedundantEscape
         if (!dir.matches("^([A-Z]:|\\.|\\/|\\\\).*"))
             dir = System.getProperty("user.dir") + "/" + dir;
@@ -55,7 +55,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(
@@ -83,7 +83,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(
@@ -121,7 +121,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(
@@ -154,7 +154,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         return res.success(new Bool(Files.exists(Path.of(dir))));
     }
@@ -164,7 +164,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         File file = new File(dir);
 
@@ -176,7 +176,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
         File file = new File(dir);
         
         if (!file.exists() || !file.isDirectory()) return res.failure(RTError.PathNotFound(
@@ -199,7 +199,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         Obj vtwo = ((Obj) execCtx.symbolTable.get("val")).astring();
         if (vtwo.jptype != Constants.JPType.String) return res.failure(RTError.Type(
@@ -208,7 +208,7 @@ public class FileLib extends Library {
                 execCtx
         ));
 
-        String val = ((Str) vtwo).trueValue();
+        String val = vtwo.string;
 
         File file = new File(dir);
         boolean created;
@@ -234,7 +234,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         Obj val = (Obj) execCtx.symbolTable.get("val");
 
@@ -248,7 +248,7 @@ public class FileLib extends Library {
                 oos.writeObject(val);
                 oos.close();
             } else
-                fout.write(((Bytes) val).arr);
+                fout.write(val.arr);
             fout.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -267,7 +267,7 @@ public class FileLib extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("dir")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
-        String dir = ((Str) d).trueValue();
+        String dir = d.string;
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(

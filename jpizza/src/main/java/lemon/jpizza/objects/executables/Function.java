@@ -17,19 +17,19 @@ import java.util.List;
 import java.util.Map;
 
 public class Function extends BaseFunction {
-    Node bodyNode;
-    public List<String> argNames;
-    List<String> argTypes;
-    List<Token> generics;
+    final Node bodyNode;
+    public final List<String> argNames;
+    final List<String> argTypes;
+    final List<Token> generics;
     List<Function> preprocessors;
     List<Function> postprocessors;
     List<Obj> defaults;
     String argname;
     String kwargname;
-    int defaultCount;
-    boolean async;
-    boolean autoreturn;
-    String returnType;
+    final int defaultCount;
+    final boolean async;
+    final boolean autoreturn;
+    final String returnType;
     boolean catcher = false;
 
     public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes,
@@ -179,7 +179,7 @@ public class Function extends BaseFunction {
             execCtx.symbolTable.define(entry.getKey(), new Str(entry.getValue()));
 
         for (Function f: this.preprocessors) {
-            res.register(((Function) f.copy().set_context(execCtx)).execute(args, generics, kwargs, interpreter));
+            res.register((f.copy().set_context(execCtx)).execute(args, generics, kwargs, interpreter));
             if (res.error != null) return res;
         }
 
@@ -202,7 +202,7 @@ public class Function extends BaseFunction {
                     context
             ));
 
-            String rtype = ((Str) type).trueValue();
+            String rtype = type.string;
             if (!rtype.equals(returnType)) return res.failure(RTError.Type(
                     pos_start, pos_end,
                     "Return value has mismatched type",
@@ -213,7 +213,7 @@ public class Function extends BaseFunction {
         ArrayList<Obj> newArgs = new ArrayList<>(args);
         newArgs.add(retValue);
         for (Function f: this.postprocessors) {
-            retValue = res.register(((Function) f.copy().set_context(execCtx)).execute(newArgs, generics, kwargs, interpreter));
+            retValue = res.register((f.copy().set_context(execCtx)).execute(newArgs, generics, kwargs, interpreter));
             if (res.error != null) return res;
         }
 

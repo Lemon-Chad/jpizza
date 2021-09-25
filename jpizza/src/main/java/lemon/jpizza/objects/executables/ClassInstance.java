@@ -1,25 +1,20 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.*;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.objects.Value;
-import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
-import lemon.jpizza.Pair;
-import lemon.jpizza.Shell;
 
 import java.util.*;
-
-import static lemon.jpizza.Operations.*;
 
 public class ClassInstance extends Value {
     Position pos_start; Position pos_end;
     Context context;
-    public Context value;
+    public final Context value;
 
     public ClassInstance(Context value) {
         this.value = value;
@@ -45,7 +40,7 @@ public class ClassInstance extends Value {
                 "Expected string",
                 o.get_ctx()
         );
-        String other = ((Str) o).trueValue();
+        String other = o.string;
         Object c = value.symbolTable.get(other);
         Object x = value.symbolTable.getattr(other);
         if (x != null) {
@@ -79,75 +74,86 @@ public class ClassInstance extends Value {
     public ClassInstance set_context(Context context) { this.context = context; return this; }
     public ClassInstance set_context() { return set_context(null); }
 
-    public Object getattr(OP name, Object... argx) {
-        CMethod bin = switch (name) {
-            case NUMBER     -> value.symbolTable.getbin("number"    );
-            case DICTIONARY -> value.symbolTable.getbin("dictionary");
-            case ALIST      -> value.symbolTable.getbin("alist"     );
-            case BOOL       -> value.symbolTable.getbin("bool"      );
-            case ANULL      -> value.symbolTable.getbin("anull"     );
-            case ASTRING    -> value.symbolTable.getbin("astring"   );
-            case FUNCTION   -> value.symbolTable.getbin("function"  );
-            case DELETE     -> value.symbolTable.getbin("delete"    );
-            case GET        -> value.symbolTable.getbin("get"       );
-            case ADD        -> value.symbolTable.getbin("add"       );
-            case SUB        -> value.symbolTable.getbin("sub"       );
-            case MUL        -> value.symbolTable.getbin("mul"       );
-            case DIV        -> value.symbolTable.getbin("div"       );
-            case MOD        -> value.symbolTable.getbin("mod"       );
-            case FASTPOW    -> value.symbolTable.getbin("fastpow"   );
-            case LTE        -> value.symbolTable.getbin("lte"       );
-            case LT         -> value.symbolTable.getbin("lt"        );
-            case ALSO       -> value.symbolTable.getbin("also"      );
-            case INCLUDING  -> value.symbolTable.getbin("including" );
-            case INVERT     -> value.symbolTable.getbin("invert"    );
-            case APPEND     -> value.symbolTable.getbin("append"    );
-            case EXTEND     -> value.symbolTable.getbin("extend"    );
-            case POP        -> value.symbolTable.getbin("pop"       );
-            case REMOVE     -> value.symbolTable.getbin("remove"    );
-            case EXECUTE    -> value.symbolTable.getbin("execute"   );
-            case EQ         -> value.symbolTable.getbin("eq"        );
-            case NE         -> value.symbolTable.getbin("ne"        );
-            case TOSTRING   -> value.symbolTable.getbin("toString"  );
-            case COPY       -> value.symbolTable.getbin("copy"      );
-            case TYPE       -> value.symbolTable.getbin("type"      );
-            case BRACKET    -> value.symbolTable.getbin("bracket"   );
-            default         -> null;
-        };
-        if (bin != null) {
-            List<Obj> args = new ArrayList<>();
-
-            int length = argx.length;
-            for (int i = 0; i < length; i++) args.add((Obj) argx[i]);
-
-            RTResult ret = bin.execute(args, new ArrayList<>(), new HashMap<>(), new Interpreter());
-
-            boolean typeMatch = ret.value != null && Constants.methTypes.containsKey(name)
-                    && ret.value.jptype == Constants.methTypes.get(name);
-            if (typeMatch || !Constants.methTypes.containsKey(name))
-                return new Pair<>(ret.value, ret.error);
-            else Shell.logger.warn(RTError.Type(
-                    pos_start, pos_end,
-                    String.format("Bin method should have return type %s, got %s",
-                            Constants.methTypes.get(name), ret.value.jptype),
-                    context
-            ).asString());
-        }
-        return switch (name) {
-            case ACCESS     ->    access((Obj) argx[0]);
-            case DICTIONARY ->    dictionary();
-            case ALIST      ->    alist();
-            case TYPE       ->    type();
-            case ASTRING    ->    astring();
-            case NUMBER     ->    number();
-            case BOOL       ->    bool();
-            case ANULL      ->    anull();
-            case COPY       ->    copy();
-            case FUNCTION   ->    function();
-            case TOSTRING   ->    toString();
-            default -> super.getattr(name, argx);
-        };
+    interface SuperBin {
+        Pair<Obj, RTError> run(Obj other);
     }
+
+    interface SuperUn {
+        Pair<Obj, RTError> run();
+    }
+
+    public Pair<Obj, RTError> binOp(Obj other, String methodName, SuperBin superMethod) {
+        RTResult res = new RTResult();
+        CMethod method = value.symbolTable.getbin(methodName);
+        if (method == null)
+            return superMethod.run(other);
+        res.register(method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
+                new Interpreter()));
+        if (checkType(methodName, res)) return new Pair<>(res.value, (RTError) res.error);
+        return superMethod.run(other);
+    }
+
+    private boolean checkType(String methodName, RTResult res) {
+        boolean typeMatch = res.value != null && Constants.methTypes.containsKey(methodName)
+                && res.value.jptype == Constants.methTypes.get(methodName);
+        if (typeMatch || !Constants.methTypes.containsKey(methodName))
+            return true;
+        else Shell.logger.warn(RTError.Type(
+                pos_start, pos_end,
+                String.format("Bin method should have return type %s, got %s",
+                        Constants.methTypes.get(methodName), res.value.jptype),
+                context
+        ).asString());
+        return false;
+    }
+
+    public Pair<Obj, RTError> unOp(String methodName, SuperUn superMethod) {
+        RTResult res = new RTResult();
+        CMethod method = value.symbolTable.getbin(methodName);
+        if (method == null)
+            return superMethod.run();
+        res.register(method.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(),
+                new Interpreter()));
+        if (checkType(methodName, res)) return new Pair<>(res.value, (RTError) res.error);
+        return superMethod.run();
+    }
+
+    public Pair<Obj, RTError> eq(Obj other) { return binOp(other, "eq", super::eq); }
+    public Pair<Obj, RTError> ne(Obj other) { return binOp(other, "ne", super::ne); }
+    public Pair<Obj, RTError> lt(Obj other) { return binOp(other, "lt", super::lt); }
+    public Pair<Obj, RTError> lte(Obj other) { return binOp(other, "lte", super::lte); }
+    public Pair<Obj, RTError> also(Obj other) { return binOp(other, "also", super::also); }
+    public Pair<Obj, RTError> including(Obj other) { return binOp(other, "including", super::including); }
+    public Pair<Obj, RTError> invert() { return unOp("invert", super::invert); }
+
+    public Pair<Obj, RTError> append(Obj other) { return binOp(other, "append", super::append); }
+    public Pair<Obj, RTError> extend(Obj other) { return binOp(other, "extend", super::extend); }
+    public Pair<Obj, RTError> pop(Obj other) { return binOp(other, "pop", super::pop); }
+    public Pair<Obj, RTError> remove(Obj other) { return binOp(other, "remove", super::remove); }
+    public Pair<Obj, RTError> bracket(Obj other) { return binOp(other, "bracket", super::bracket); }
+
+    public Pair<Obj, RTError> add(Obj other) { return binOp(other, "add", super::add); }
+    public Pair<Obj, RTError> sub(Obj other) { return binOp(other, "sub", super::sub); }
+    public Pair<Obj, RTError> mul(Obj other) { return binOp(other, "mul", super::mul); }
+    public Pair<Obj, RTError> div(Obj other) { return binOp(other, "div", super::div); }
+    public Pair<Obj, RTError> fastpow(Obj other) { return binOp(other, "fastpow", super::fastpow); }
+    public Pair<Obj, RTError> mod(Obj other) { return binOp(other, "mod", super::mod); }
+
+    public Obj delete(Obj other) {
+        RTResult res = new RTResult();
+        CMethod method = value.symbolTable.getbin("delete");
+        if (method == null)
+            return super.delete(other);
+        res.register(method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
+                new Interpreter()));
+        if (checkType("delete", res)) {
+            if (res.error == null)
+                return res.value;
+            else Shell.logger.warn(res.error.asString());
+        }
+        return super.delete(other);
+    }
+    public Pair<Obj, RTError> get(Obj other) { return binOp(other, "get", super::get); }
 
     public Obj dictionary() {
         RTResult res = new RTResult();
@@ -155,47 +161,34 @@ public class ClassInstance extends Value {
         if (func == null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null)
+        if (res.error != null || x.jptype != Constants.JPType.Dict) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected dict (" + value.displayName + "-" + func.name + ")");
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
+        }
         return x;
     }
-
     public Obj alist() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("list");
         if (func == null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null)
-            return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
-        return x;
-    }
-
-    public Obj tstr(CMethod func) {
-        RTResult res = new RTResult();
-        if (func == null)
-            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.String) {
+        if (res.error != null || x.jptype != Constants.JPType.List) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected String (" + value.displayName + "-" + func.name + ")");
-            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
+                Shell.logger.warn("Mismatched type, expected list (" + value.displayName + "-" + func.name + ")");
+            return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
-
-    public Obj type() {
-        CMethod func = value.symbolTable.getbin("type");
-        return tstr(func);
-    }
-
     public Obj astring() {
         CMethod func = value.symbolTable.getbin("string");
         return tstr(func);
     }
-
     public Obj number() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("number");
@@ -211,7 +204,6 @@ public class ClassInstance extends Value {
         }
         return x;
     }
-
     public Obj bytes() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("bytes");
@@ -227,7 +219,6 @@ public class ClassInstance extends Value {
         }
         return x;
     }
-
     public Obj bool() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("boolean");
@@ -243,7 +234,6 @@ public class ClassInstance extends Value {
         }
         return x;
     }
-
     public Obj anull() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("null");
@@ -259,7 +249,32 @@ public class ClassInstance extends Value {
         }
         return x;
     }
+    public Obj function() {
+        return this;
+    }
+    public Obj tstr(CMethod func) {
+        RTResult res = new RTResult();
+        if (func == null)
+            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
+        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
+        if (res.error != null || x.jptype != Constants.JPType.String) {
+            if (res.error != null)
+                Shell.logger.warn(res.error.asString());
+            else
+                Shell.logger.warn("Mismatched type, expected String (" + value.displayName + "-" + func.name + ")");
+            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
+        }
+        return x;
+    }
 
+    public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        return super.execute(args, generics, kwargs, parent);
+    }
+
+    public Obj type() {
+        CMethod func = value.symbolTable.getbin("type");
+        return tstr(func);
+    }
     public Obj copy() {
         RTResult res = new RTResult();
         CMethod func = value.symbolTable.getbin("copy");
@@ -275,11 +290,6 @@ public class ClassInstance extends Value {
         }
         return x;
     }
-
-    public Obj function() {
-        return this;
-    }
-
     public String toString() { return (String) (astring().value); }
 
 }

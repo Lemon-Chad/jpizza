@@ -17,17 +17,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassDefNode extends Node {
-    public Token class_name_tok;
-    public List<AttrDeclareNode> attributes;
-    public List<Token> arg_name_toks;
-    public Node make_node;
-    public List<MethDefNode> methods;
-    public List<Token> arg_type_toks;
-    public List<Token> generic_toks;
-    public List<Node> defaults;
-    public int defaultCount;
-    public Token parentToken;
-    public String argname, kwargname;
+    public final Token class_name_tok;
+    public final List<AttrDeclareNode> attributes;
+    public final List<Token> arg_name_toks;
+    public final Node make_node;
+    public final List<MethDefNode> methods;
+    public final List<Token> arg_type_toks;
+    public final List<Token> generic_toks;
+    public final List<Node> defaults;
+    public final int defaultCount;
+    public final Token parentToken;
+    public final String argname;
+    public final String kwargname;
 
     public ClassDefNode(Token class_name_tok, List<AttrDeclareNode> attributes, List<Token> arg_name_toks,
                         List<Token> arg_type_toks, Node make_node, List<MethDefNode> methods, Position pos_end,
@@ -92,6 +93,7 @@ public class ClassDefNode extends Node {
 
             ClassPlate parent = null;
             if (parentToken != null) {
+                assert parentToken.value != null;
                 Obj p = (Obj) context.symbolTable.get(parentToken.value.toString());
                 if (p == null || p.jptype != Constants.JPType.ClassPlate) return res.failure(RTError.Scope(
                         parentToken.pos_start, parentToken.pos_end,

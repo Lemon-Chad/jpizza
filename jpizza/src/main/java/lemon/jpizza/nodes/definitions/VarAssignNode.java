@@ -10,9 +10,9 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class VarAssignNode extends Node {
-    public Token var_name_tok;
-    public Node value_node;
-    public boolean locked;
+    public final Token var_name_tok;
+    public final Node value_node;
+    public final boolean locked;
     public boolean defining;
     public Integer min = null;
     public Integer max = null;

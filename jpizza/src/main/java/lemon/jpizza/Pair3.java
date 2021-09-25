@@ -1,9 +1,9 @@
 package lemon.jpizza;
 
 public class Pair3<T, U, V> {
-    public T first;
-    public U second;
-    public V third;
+    public final T first;
+    public final U second;
+    public final V third;
     public Pair3(T a, U b, V c) {
         first = a;
         second = b;

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class StringHash implements Serializable {
-    HashMap<String, Object> set = new HashMap<>();
+    final HashMap<String, Object> set = new HashMap<>();
     public StringHash() {}
     public StringHash(StringHash parent) {
         addAll(parent);

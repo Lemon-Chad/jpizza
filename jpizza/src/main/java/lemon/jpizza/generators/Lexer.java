@@ -4,7 +4,6 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.Position;
 import lemon.jpizza.Token;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 
@@ -13,8 +12,8 @@ import static lemon.jpizza.Tokens.*;
 import static lemon.jpizza.Constants.*;
 
 public class Lexer {
-    String text;
-    Position pos;
+    final String text;
+    final Position pos;
     String currentChar;
 
     public Lexer(String fn, String text) {
@@ -89,7 +88,7 @@ public class Lexer {
                     tokens.add(new Token(TT.KEYWORD, "fn", pos.copy(), pos.copy().advance()));
                     advance();
                 } else if (currentChar.equals("!")){
-                    @SuppressWarnings("DuplicatedCode") Pair<Token, Error> d = make_equals_expr();
+                    Pair<Token, Error> d = make_equals_expr();
                     Token tok = d.a; Error error = d.b;
                     if (error != null) {
                         return new Pair<>(

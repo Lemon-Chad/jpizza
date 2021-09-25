@@ -12,7 +12,7 @@ public class ServerConn extends GenConn {
     ServerSocket inner;
     Socket client;
 
-    double id;
+    final double id;
 
     public ServerConn(double iydee, Position ps, Position pe, Context ctx) {
         id = iydee;

@@ -15,39 +15,42 @@ import static lemon.jpizza.Tokens.TT;
 import lemon.jpizza.objects.executables.Function;
 
 public class Str extends Value {
-    public Str(String value) { super(value); jptype = Constants.JPType.String; }
-    public String trueValue() { return value.toString(); }
+    public Str(String value) {
+        super(value);
+        string = value;
+        jptype = Constants.JPType.String;
+    }
 
     // Functions
 
     // Methods
 
     public Pair<Obj, RTError> mul(Obj o) {
-        Num other = (Num) o.number();
+        Obj other = o.number();
         if (other.floating)
             return new Pair<>(null, RTError.Type(
                     pos_start, pos_end,
                     "Expected long",
                     context
             ));
-        int repeatCount = Math.toIntExact(Math.round(other.trueValue()));
+        int repeatCount = Math.toIntExact(Math.round(other.number));
         if (repeatCount < 0) return new Pair<>(null, RTError.IllegalOperation(
                 pos_start, o.pos_end,
                 "Repeating by negative amount",
                 context
         ));
-        return new Pair<>(new Str(trueValue().repeat(repeatCount)).set_context(context), null);
+        return new Pair<>(new Str(string.repeat(repeatCount)).set_context(context), null);
     }
     public Pair<Obj, RTError> add(Obj o) {
-        Str other = (Str) o.astring();
+        Obj other = o.astring();
         return new Pair<>(
-                new Str(String.format("%s%s", trueValue(), other.trueValue())).set_context(context), null
+                new Str(string + other.string).set_context(context), null
         );
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
         if (o.jptype != Constants.JPType.String) return new Pair<>(new Bool(false), null);
-        return new Pair<>(new Bool(this.trueValue().equals(((Str) o).trueValue())), null);
+        return new Pair<>(new Bool(this.string.equals(o.string)), null);
     }
 
     // Conversions
@@ -58,16 +61,16 @@ public class Str extends Value {
             put(thisaround, thisaround);
         }}).set_context(context).set_pos(pos_start, pos_end);
     }
-    public Obj number() { return new Num(trueValue().length())
+    public Obj number() { return new Num(string.length())
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj function() { return new Function(null, new StringNode(
-            new Token(TT.STRING, trueValue(), pos_start, pos_end)), null)
+            new Token(TT.STRING, string, pos_start, pos_end)), null)
             .set_context(context).set_pos(pos_start, pos_end); }
-    public Obj bool() { return new Bool(trueValue().length() > 0)
+    public Obj bool() { return new Bool(string.length() > 0)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj alist() {
         ArrayList<Obj> chars = new ArrayList<>();
-        char[] charArray = trueValue().toCharArray();
+        char[] charArray = string.toCharArray();
         int length = charArray.length;
         for (int i = 0; i < length; i++) {
             chars.add(new Str(String.valueOf(charArray[i])).set_context(context).set_pos(pos_start, pos_end));
@@ -76,7 +79,7 @@ public class Str extends Value {
 
     // Defaults
 
-    public Obj copy() { return new Str(trueValue()).set_context(context).set_pos(pos_start, pos_end); }
+    public Obj copy() { return new Str(string).set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("String").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return value.toString(); }
 

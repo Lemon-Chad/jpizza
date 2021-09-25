@@ -6,7 +6,6 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
-import lemon.jpizza.objects.executables.BaseFunction;
 import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.executables.Function;
 import lemon.jpizza.objects.executables.Library;
@@ -113,7 +112,7 @@ public class BuiltInFunction extends Library {
                 Shell.globalSymbolTable);
     }
 
-    static HashMap<String, String> upper = new HashMap<>(){{
+    static final HashMap<String, String> upper = new HashMap<>(){{
         put("1", "!");
         put("2", "@");
         put("3", "#");
@@ -141,7 +140,7 @@ public class BuiltInFunction extends Library {
         put("-", "_");
         put("=", "+");
     }};
-    static HashMap<String, String> lower = new HashMap<>(){{
+    static final HashMap<String, String> lower = new HashMap<>(){{
         for (String k : upper.keySet())
             put(upper.get(k), k);
     }};
@@ -211,8 +210,8 @@ public class BuiltInFunction extends Library {
         Obj b = res.register(checkType(execCtx.symbolTable.get("base"), "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double value = ((Num) v).trueValue();
-        double base = ((Num) b).trueValue();
+        double value = v.number;
+        double base = b.number;
 
         return res.success(new Num(Math.log(value) / Math.log(base)));
     }
@@ -305,7 +304,7 @@ public class BuiltInFunction extends Library {
                 "Expected list",
                 execCtx
         ));
-        List<Obj> prelst = ((PList) bytelist).trueValue();
+        List<Obj> prelst = bytelist.list;
         byte[] bytes = new byte[prelst.size()];
         for (int i = 0; i < prelst.size(); i++) {
             Obj n = prelst.get(i).number();
@@ -314,7 +313,7 @@ public class BuiltInFunction extends Library {
                     "Expected byte",
                     execCtx
             ));
-            double val = ((Num) n).trueValue();
+            double val = n.number;
             if ((byte) val != val) return new RTResult().failure(RTError.Type(
                     bytelist.get_start(), bytelist.get_end(),
                     "Byte out of range",
@@ -384,7 +383,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        return new RTResult().success(new Bool(((Num) num).floating));
+        return new RTResult().success(new Bool(num.floating));
     }
 
     public RTResult execute_random(Context _execCtx) {
@@ -410,14 +409,14 @@ public class BuiltInFunction extends Library {
                 execCtx
         ));
         return new RTResult().success(new Num(Math.round(
-                ((Num) num).trueValue()
+                num.number
         )));
     }
 
     public RTResult execute_foreach(Context execCtx) {
         RTResult res = new RTResult();
-        PList list = (PList)((Obj) execCtx.symbolTable.get("list")).alist();
-        BaseFunction func = (BaseFunction) ((Obj) execCtx.symbolTable.get("func")).function();
+        Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
+        Obj func = ((Obj) execCtx.symbolTable.get("func")).function();
         List<Obj> newList = new ArrayList<>();
         List<Obj> preList = (List<Obj>) list.value;
         int size = preList.size();
@@ -438,7 +437,7 @@ public class BuiltInFunction extends Library {
                 execCtx
         ));
         return new RTResult().success(new Num(Math.floor(
-                ((Num) num).trueValue()
+                num.number
         )));
     }
 
@@ -450,7 +449,7 @@ public class BuiltInFunction extends Library {
                 execCtx
         ));
         return new RTResult().success(new Num(Math.ceil(
-                ((Num) num).trueValue()
+                num.number
         )));
     }
 
@@ -462,7 +461,7 @@ public class BuiltInFunction extends Library {
                 execCtx
         ));
         return new RTResult().success(new Num(Math.abs(
-                ((Num) num).trueValue()
+                num.number
         )));
     }
 
@@ -475,7 +474,7 @@ public class BuiltInFunction extends Library {
                 execCtx
         ));
 
-        String fn = ((Str) fln).trueValue();
+        String fn = fln.string;
         Path path = Path.of(fn);
         File s = new File(String.valueOf(path));
         if (!s.exists()) return res.failure(RTError.FileNotFound(
@@ -510,7 +509,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        return new RTResult().success(((PList) list).len());
+        return new RTResult().success(new Num(list.list.size()));
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -525,15 +524,13 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        Num idx = (Num) index;
-        PList lst = (PList) list;
-        if (idx.trueValue() > lst.trueValue().size() || idx.trueValue() < 0) return new RTResult().failure(RTError.OutOfBounds(
+        if (index.number > list.list.size() || index.number < 0) return new RTResult().failure(RTError.OutOfBounds(
                 pos_start, pos_end,
                 "Index is out of bounds",
                 execCtx
         ));
-        lst.trueValue().add(Math.toIntExact(Math.round(idx.trueValue())), item);
-        return new RTResult().success(lst);
+        list.list.add(Math.toIntExact(Math.round(index.number)), item);
+        return new RTResult().success(list);
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -548,31 +545,29 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        Num idx = (Num) index;
-        PList lst = (PList) list;
-        if (idx.trueValue() >= lst.trueValue().size() || idx.trueValue() < 0) return new RTResult().failure(RTError.OutOfBounds(
+        if (index.number >= list.list.size() || index.number < 0) return new RTResult().failure(RTError.OutOfBounds(
                 pos_start, pos_end,
                 "Index is out of bounds",
                 execCtx
         ));
-        lst.trueValue().set((int) idx.trueValue(), item);
-        return new RTResult().success(lst);
+        list.list.set(index.number.intValue(), item);
+        return new RTResult().success(list);
     }
 
     public RTResult execute_substr(Context execCtx) {
         RTResult res = new RTResult();
         String val = execCtx.symbolTable.get("str").toString();
 
-        Object start = execCtx.symbolTable.get("start");
-        Object end = execCtx.symbolTable.get("end");
+        Object _start = execCtx.symbolTable.get("start");
+        Object _end = execCtx.symbolTable.get("end");
 
-        res.register(checkPosInt(start));
-        res.register(checkPosInt(end));
+        Obj start = res.register(checkPosInt(_start));
+        Obj end = res.register(checkPosInt(_end));
 
         if (res.error != null) return res;
 
-        int strt = (int)((Num) start).trueValue();
-        int nd = (int)((Num) end).trueValue();
+        int strt = start.number.intValue();
+        int nd = end.number.intValue();
 
         if (strt > val.length() || strt < 0) return new RTResult().failure(RTError.OutOfBounds(
                 pos_start, pos_end,
@@ -590,19 +585,19 @@ public class BuiltInFunction extends Library {
     public RTResult execute_sublist(Context execCtx) {
         RTResult res = new RTResult();
 
-        Object start = execCtx.symbolTable.get("start");
-        Object end = execCtx.symbolTable.get("end");
-        Object val = execCtx.symbolTable.get("list");
+        Object _start = execCtx.symbolTable.get("start");
+        Object _end = execCtx.symbolTable.get("end");
+        Object _val = execCtx.symbolTable.get("list");
 
-        res.register(checkPosInt(start));
-        res.register(checkPosInt(end));
-        res.register(checkType(val, "list", Constants.JPType.List));
+        Obj start = res.register(checkPosInt(_start));
+        Obj end = res.register(checkPosInt(_end));
+        Obj val = res.register(checkType(_val, "list", Constants.JPType.List));
 
         if (res.error != null) return res;
 
-        int strt = (int)((Num) start).trueValue();
-        int nd = (int)((Num) end).trueValue();
-        List<Obj> lst = ((PList) val).trueValue();
+        int strt = start.number.intValue();
+        int nd = end.number.intValue();
+        List<Obj> lst = val.list;
 
         if (strt > lst.size() || strt < 0) return new RTResult().failure(RTError.OutOfBounds(
                 pos_start, pos_end,
@@ -626,8 +621,8 @@ public class BuiltInFunction extends Library {
                 "Argument must be a string",
                 execCtx
         ));
-        String str = ((Str) string).trueValue();
-        String split = ((Str) splitter).trueValue();
+        String str = string.string;
+        String split = splitter.string;
         String[] pieces = str.split(split);
         List<Obj> fragments = new ArrayList<>();
         int length = pieces.length;
@@ -673,10 +668,9 @@ public class BuiltInFunction extends Library {
         StringBuilder sb = new StringBuilder();
         String string = execCtx.symbolTable.get("string").toString();
 
-        Object val = execCtx.symbolTable.get("list");
-        res.register(checkType(val, "list", Constants.JPType.List));
+        Obj val = res.register(checkType(execCtx.symbolTable.get("list"), "list", Constants.JPType.List));
         if (res.error != null) return res;
-        List<Obj> it = ((PList) val).trueValue();
+        List<Obj> it = val.list;
 
         if (it.size() > 0) {
             sb.append(it.get(0));
@@ -747,7 +741,7 @@ public class BuiltInFunction extends Library {
                 "Expected string input",
                 execCtx
         ));
-        var out = Shell.run("<sim>", ((Str) in).trueValue(), false);
+        var out = Shell.run("<sim>", in.string, false);
         if (out.b != null) return new RTResult().failure(out.b);
         return new RTResult().success(out.a);
     }
@@ -768,7 +762,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 context
         ));
-        List<Obj> value = ((PList) list).trueValue();
+        List<Obj> value = list.list;
         if (value.size() == 0) return new RTResult().success(new Null());
         return new RTResult().success(value.get(random.nextInt(value.size())));
     }
@@ -779,7 +773,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        if (((Num) num).floating) return new RTResult().failure(RTError.Type(
+        if (num.floating) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a long",
                 execCtx
@@ -795,8 +789,8 @@ public class BuiltInFunction extends Library {
         if (res.error != null) return res;
         res.register(isInt(max, execCtx));
         if (res.error != null) return res;
-        int iMin = Math.toIntExact(Math.round(((Num) min).trueValue()));
-        int iMax = Math.toIntExact(Math.round(((Num) max).trueValue()));
+        int iMin = Math.toIntExact(Math.round(min.number));
+        int iMax = Math.toIntExact(Math.round(max.number));
         double num = random.nextInt(iMax - iMin + 1) + iMin;
         return new RTResult().success(new Num(num));
     }
@@ -812,8 +806,8 @@ public class BuiltInFunction extends Library {
         res.register(checkType(b, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
-        double y = ((Num) b).trueValue();
+        double x = a.number;
+        double y = b.number;
 
         double num = Math.min(x, y);
         return new RTResult().success(new Num(num));
@@ -830,8 +824,8 @@ public class BuiltInFunction extends Library {
         res.register(checkType(b, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
-        double y = ((Num) b).trueValue();
+        double x = a.number;
+        double y = b.number;
 
         double num = Math.max(x, y);
         return new RTResult().success(new Num(num));
@@ -846,7 +840,7 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
+        double x = a.number;
 
         double num = Math.sin(x);
         return new RTResult().success(new Num(num));
@@ -861,7 +855,7 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
+        double x = a.number;
 
         double num = Math.cos(x);
         return new RTResult().success(new Num(num));
@@ -876,7 +870,7 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
+        double x = a.number;
 
         double num = Math.tan(x);
         return new RTResult().success(new Num(num));
@@ -891,7 +885,7 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
+        double x = a.number;
 
         double num = Math.asin(x);
         return new RTResult().success(new Num(num));
@@ -906,7 +900,7 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
+        double x = a.number;
 
         double num = Math.acos(x);
         return new RTResult().success(new Num(num));
@@ -921,13 +915,12 @@ public class BuiltInFunction extends Library {
         res.register(checkType(a, "number", Constants.JPType.Number));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
+        double x = a.number;
 
         double num = Math.atan(x);
         return new RTResult().success(new Num(num));
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_arctan2(Context execCtx) {
         RTResult res = new RTResult();
 
@@ -938,8 +931,8 @@ public class BuiltInFunction extends Library {
         res.register(isInt(b, execCtx));
         if (res.error != null) return res;
 
-        double x = ((Num) a).trueValue();
-        double y = ((Num) b).trueValue();
+        double x = a.number;
+        double y = b.number;
 
         double num = Math.atan2(y, x);
         return new RTResult().success(new Num(num));
@@ -953,7 +946,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        Pair<Obj, RTError> result = ((PList) list).append(value);
+        Pair<Obj, RTError> result = list.append(value);
         if (result.b != null) return new RTResult().failure(result.b);
         return new RTResult().success(result.a);
     }
@@ -966,7 +959,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        Pair<Obj, RTError> result = ((PList) list).remove(value);
+        Pair<Obj, RTError> result = list.remove(value);
         if (result.b != null) return new RTResult().failure(result.b);
         return new RTResult().success(result.a);
     }
@@ -979,7 +972,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        return new RTResult().success(((PList) list).contains(value));
+        return new RTResult().success(new Bool(list.list.contains(value)));
     }
 
     public RTResult execute_pop(Context execCtx) {
@@ -992,7 +985,7 @@ public class BuiltInFunction extends Library {
         ));
         RTResult e = isInt(value, execCtx);
         if (e.error != null) return e;
-        Pair<Obj, RTError> result = ((PList) list).pop(value);
+        Pair<Obj, RTError> result = list.pop(value);
         if (result.b != null) return new RTResult().failure(result.b);
         return new RTResult().success(result.a);
     }
@@ -1005,8 +998,8 @@ public class BuiltInFunction extends Library {
                 "Argument must be a list",
                 execCtx
         ));
-        List<Obj> listAval = ((PList) listA).trueValue();
-        listAval.addAll(((PList) listB).trueValue());
+        List<Obj> listAval = listA.list;
+        listAval.addAll(listB.list);
         return new RTResult().success(new PList(listAval));
     }
 
@@ -1014,11 +1007,10 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (dict.jptype != Constants.JPType.Dict) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
-                "Argument must be a list",
+                "Argument must be a dict",
                 execCtx
         ));
-        Dict x = (Dict) dict;
-        if (!x.contains(value)) return new RTResult().failure(RTError.Type(
+        if (!dict.map.containsKey(value)) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Key not in dict",
                 execCtx
@@ -1031,18 +1023,15 @@ public class BuiltInFunction extends Library {
         Obj dict = ((Obj) execCtx.symbolTable.get("dict")).dictionary();
         Obj value = res.register(keyInDict(execCtx, dict));
         if (res.error != null) return res;
-        Dict x = (Dict) dict;
-        var dble = x.get(value);
-        if (dble.b != null) return res.failure(dble.b);
-        return res.success(dble.a);
+        Obj v = dict.map.getOrDefault(value, new Null());
+        return res.success(v);
     }
 
     public RTResult execute_delete(Context execCtx) {
         RTResult res = new RTResult();
         Obj dict = ((Obj) execCtx.symbolTable.get("dict")).dictionary();
         Obj value = res.register(keyInDict(execCtx, dict));
-        Dict x = (Dict) dict;
-        return res.success(x.delete(value));
+        return res.success(dict.map.remove(value));
     }
 
     public RTResult execute_set(Context execCtx) {
@@ -1054,8 +1043,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a dictionary",
                 execCtx
         ));
-        Dict x = (Dict) dict;
-        return new RTResult().success(x.set(key, value));
+        return new RTResult().success(dict.map.put(key, value));
     }
 
 }

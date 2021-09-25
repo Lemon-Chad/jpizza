@@ -9,10 +9,10 @@ import javax.sound.sampled.SourceDataLine;
 import java.io.IOException;
 
 public class PlayThread extends Thread {
-    byte[] tempBuffer = new byte[10000];
-    AudioFormat audioFormat;
-    SourceDataLine sourceDataLine;
-    AudioInputStream audioInputStream;
+    final byte[] tempBuffer = new byte[10000];
+    final AudioFormat audioFormat;
+    final SourceDataLine sourceDataLine;
+    final AudioInputStream audioInputStream;
 
     public PlayThread(AudioFormat audioFormat, SourceDataLine sourceDataLine, AudioInputStream audioInputStream) {
         this.sourceDataLine = sourceDataLine;

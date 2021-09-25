@@ -4,23 +4,19 @@ import lemon.jpizza.cases.Case;
 import lemon.jpizza.cases.ElseCase;
 import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.Operations;
-import lemon.jpizza.Pair;
 import lemon.jpizza.results.RTResult;
 
 import java.util.List;
 
 public class SwitchNode extends Node {
-    public boolean autoreturn;
-    public List<Case> cases;
-    public ElseCase elseCase;
-    public Node reference;
+    public final boolean autoreturn;
+    public final List<Case> cases;
+    public final ElseCase elseCase;
+    public final Node reference;
     public boolean fluctuating = true;
 
     public SwitchNode(Node ref, List<Case> css, ElseCase else_case, boolean autoret) {
@@ -52,7 +48,7 @@ public class SwitchNode extends Node {
             compare = res.register(cs.condition.visit(inter, context));
             if (res.error != null) return res;
 
-            if (((Bool)((Pair<Obj, RTError>) ref.getattr(Operations.OP.EQ, compare)).a).trueValue()) {
+            if (ref == compare) {
                 entry = i;
                 break;
             }

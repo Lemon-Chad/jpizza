@@ -12,8 +12,8 @@ import lemon.jpizza.Token;
 import java.util.List;
 
 public class UseNode extends Node {
-    public Token useToken;
-    public List<Token> args;
+    public final Token useToken;
+    public final List<Token> args;
     public boolean fluctuating = true;
 
     public UseNode(Token useToken, List<Token> args) {

@@ -6,12 +6,11 @@ import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
 public class AssertNode extends Node {
-    Node condition;
+    final Node condition;
     public AssertNode(Node condition) {
         this.condition = condition;
         pos_start = condition.pos_start;
@@ -24,7 +23,7 @@ public class AssertNode extends Node {
 
         Obj conditional = res.register(condition.visit(inter, context));
         if (res.error != null) return res;
-        boolean value = ((Bool) conditional.bool()).trueValue();
+        boolean value = conditional.bool().boolval;
         if (value)
             return res.success(new Null());
         return res.failure(RTError.Assertion(pos_start, pos_end, "Assertion failed",

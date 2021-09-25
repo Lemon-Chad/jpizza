@@ -8,7 +8,7 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class DropNode extends Node {
-    Token varTok;
+    final Token varTok;
 
     public DropNode(Token varTok) {
         pos_start = varTok.pos_start; pos_end = varTok.pos_end;
@@ -16,6 +16,7 @@ public class DropNode extends Node {
     }
 
     public RTResult visit(Interpreter inter, Context context) {
+        assert varTok.value != null;
         context.symbolTable.remove(varTok.value.toString());
         return new RTResult().success(new Null());
     }

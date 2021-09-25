@@ -6,7 +6,6 @@ import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bytes;
 import lemon.jpizza.objects.primitives.Num;
 import lemon.jpizza.results.RTResult;
 
@@ -15,8 +14,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 public class UnaryOpNode extends Node {
-    public Token op_tok;
-    public Node node;
+    public final Token op_tok;
+    public final Node node;
     public boolean fluctuating = true;
 
     public UnaryOpNode(Token op_tok, Node node) {
@@ -36,13 +35,13 @@ public class UnaryOpNode extends Node {
         if (res.shouldReturn()) return res;
 
         if (op_tok.type == Tokens.TT.BITCOMPL) {
-            if (number.jptype != Constants.JPType.Number || ((Num) number).floating) return res.failure(RTError.Type(
+            if (number.jptype != Constants.JPType.Number || number.floating) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be an integer",
                     context
             ));
 
-            long n = Double.valueOf(((Num) number).trueValue()).longValue();
+            long n = number.number.longValue();
 
             return res.success(new Num(~n));
         } else if (op_tok.type == Tokens.TT.QUEBACK) {
@@ -51,7 +50,7 @@ public class UnaryOpNode extends Node {
                     "Operand must be bytes",
                     context
             ));
-            byte[] bytes = ((Bytes) number).arr;
+            byte[] bytes = number.arr;
             ByteArrayInputStream in = new ByteArrayInputStream(bytes);
             try {
                 ObjectInputStream is = new ObjectInputStream(in);
@@ -70,10 +69,9 @@ public class UnaryOpNode extends Node {
 
         Tokens.TT opTokType = op_tok.type;
         Pair<Obj, RTError> ret = switch (opTokType) {
-            case MINUS -> (Pair<Obj, RTError>) number.getattr(Operations.OP.MUL, new Num(-1.0));
-            case INCR, DECR -> (Pair<Obj, RTError>) number.getattr(Operations.OP.ADD,
-                    new Num(opTokType.hashCode() == Tokens.TT.INCR.hashCode() ? 1.0 : -1.0));
-            case NOT -> (Pair<Obj, RTError>) number.getattr(Operations.OP.INVERT);
+            case MINUS -> number.mul(new Num(-1.0));
+            case INCR, DECR -> number.add(new Num(opTokType.hashCode() == Tokens.TT.INCR.hashCode() ? 1.0 : -1.0));
+            case NOT -> number.invert();
             default -> new Pair<>(number, null);
         };
         if (ret.b != null)

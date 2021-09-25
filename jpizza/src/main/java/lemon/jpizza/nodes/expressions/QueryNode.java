@@ -8,15 +8,14 @@ import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
 import java.util.List;
 
 public class QueryNode extends Node {
-    public List<Case> cases;
-    public ElseCase else_case;
+    public final List<Case> cases;
+    public final ElseCase else_case;
     public boolean fluctuating = true;
 
     public QueryNode(List<Case> cases, ElseCase else_case) {
@@ -43,8 +42,7 @@ public class QueryNode extends Node {
                     "Conditional must be a boolean",
                     context
             ));
-            Bool b = (Bool) bx;
-            if (b.trueValue()) {
+            if (bx.boolval) {
                 exprValue = res.register(c.statements.visit(inter, context));
                 if (res.shouldReturn()) return res;
                 return res.success(c.x ? new Null() : exprValue);

@@ -8,8 +8,6 @@ import lemon.jpizza.nodes.variables.VarNode;
 import lemon.jpizza.objects.executables.CMethod;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.objects.primitives.Num;
-import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.Token;
 
 import java.io.Serializable;
@@ -19,14 +17,14 @@ import java.util.List;
 import java.util.Map;
 
 public class SymbolTable implements Serializable {
-    Map<String, VarNode> symbols = new HashMap<>();
-    Map<String, String> types = new HashMap<>();
-    Map<String, String> attrtypes = new HashMap<>();
-    List<String> privates = new ArrayList<>();
-    Map<String, AttrNode> attributes = new HashMap<>();
-    Map<String, CMethod> bins = new HashMap<>();
-    Map<String, Node> dyns = new HashMap<>();
-    SymbolTable parent;
+    final Map<String, VarNode> symbols = new HashMap<>();
+    final Map<String, String> types = new HashMap<>();
+    final Map<String, String> attrtypes = new HashMap<>();
+    final List<String> privates = new ArrayList<>();
+    final Map<String, AttrNode> attributes = new HashMap<>();
+    final Map<String, CMethod> bins = new HashMap<>();
+    final Map<String, Node> dyns = new HashMap<>();
+    final SymbolTable parent;
 
     public SymbolTable() {
         parent = null;
@@ -77,11 +75,11 @@ public class SymbolTable implements Serializable {
             String provided;
             if (t.jptype != Constants.JPType.String)
                 return RTError.makeDetails(RTError::Type, "Type is not a string");
-            else if (!type.equals(provided = ((Str) t).trueValue()))
+            else if (!type.equals(provided = t.string))
                 return RTError.makeDetails(RTError::Type, "Got type " + provided + ", expected type " + type);
         }
         if (min != null || max != null) {
-            double v = ((Num) value).trueValue();
+            double v = ((Obj) value).number;
             if ((max != null && v > max) || (min != null && v < min))
                 return RTError.makeDetails(RTError::Range, "Number not in range");
         }
@@ -104,7 +102,7 @@ public class SymbolTable implements Serializable {
             if (curr.locked)
                 return RTError.makeDetails(RTError::Const, "Baked variable already defined");
             else if (curr.min != null || curr.max != null) {
-                double v = ((Num) value).trueValue();
+                double v = value.number;
                 if ((curr.max != null && v > curr.max) || (curr.min != null && v < curr.min))
                     return RTError.makeDetails(RTError::Range, "Number not in range");
             }
@@ -113,7 +111,7 @@ public class SymbolTable implements Serializable {
                 String t;
                 if (type.jptype != Constants.JPType.String)
                     return RTError.makeDetails(RTError::Type, "Type is not a string");
-                else if (!expect.equals(t = ((Str) type).trueValue()))
+                else if (!expect.equals(t = type.string))
                     return RTError.makeDetails(RTError::Type, "Got type " + t + ", expected type " + expect);
             }
 
@@ -150,6 +148,7 @@ public class SymbolTable implements Serializable {
     }
 
     public void declareattr(Token name_tok, Context context, Obj value) {
+        assert name_tok.value != null;
         String tokenVal = name_tok.value.toString();
         attributes.put(tokenVal, new AttrNode(value.set_pos(name_tok.pos_start, name_tok.pos_end).set_context(context)));
         attrtypes.put(tokenVal, "any");

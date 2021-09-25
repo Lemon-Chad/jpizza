@@ -8,7 +8,7 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class BooleanNode extends ValueNode {
-    public boolean val;
+    public final boolean val;
     public BooleanNode(Token tok) {
         super(tok);
         val = (boolean) tok.value;

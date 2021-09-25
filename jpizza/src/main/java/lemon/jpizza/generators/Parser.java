@@ -21,7 +21,7 @@ import static lemon.jpizza.Tokens.*;
 
 public class Parser {
     Token currentToken;
-    List<Token> tokens;
+    final List<Token> tokens;
     int tokIdx = -1;
     int tokount;
 
@@ -1222,13 +1222,13 @@ match (a) {
     }
 
     static class ArgData {
-        public List<Token> argNameToks;
-        public List<Token> argTypeToks;
-        public List<Token> generics;
-        public List<Node> defaults;
-        public int defaultCount;
-        public String argname;
-        public String kwargname;
+        public final List<Token> argNameToks;
+        public final List<Token> argTypeToks;
+        public final List<Token> generics;
+        public final List<Node> defaults;
+        public final int defaultCount;
+        public final String argname;
+        public final String kwargname;
         public ArgData(List<Token> argNameToks, List<Token> argTypeToks, List<Node> defaults, int defaultCount,
                        List<Token> generics, String argname, String kwargname) {
             this.argNameToks = argNameToks;
@@ -1241,7 +1241,6 @@ match (a) {
         }
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public ParseResult gatherArgs() {
         ParseResult res = new ParseResult();
 

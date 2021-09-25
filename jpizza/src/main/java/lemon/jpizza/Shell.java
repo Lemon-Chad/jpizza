@@ -27,10 +27,10 @@ import java.util.*;
 
 public class Shell {
 
-    public static Logger logger = new Logger();
-    public static SymbolTable globalSymbolTable = new SymbolTable();
+    public static final Logger logger = new Logger();
+    public static final SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
-    public static String fileEncoding = System.getProperty("file.encoding");
+    public static final String fileEncoding = System.getProperty("file.encoding");
 
     public static String[] getFNDirs(String dir) {
         int ind = dir.lastIndexOf('\\');
@@ -191,7 +191,7 @@ public class Shell {
                 Shell.logger.fail(a.b.asString());
             }
             else {
-                List<Obj> results = ((PList) a.a).trueValue();
+                List<Obj> results = a.a.list;
                 if (results.size() > 0) {
                     StringBuilder out = new StringBuilder();
                     int size = results.size();

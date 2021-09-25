@@ -18,8 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Bytes extends Value {
-    public byte[] arr;
-
     public Bytes(byte[] arr) {
         super(null);
         this.arr = arr;

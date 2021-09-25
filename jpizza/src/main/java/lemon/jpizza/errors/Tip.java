@@ -4,7 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Position;
 
 public class Tip extends Error {
-    String refactor;
+    final String refactor;
 
     public Tip(Position pos_start, Position pos_end, String details, String refactor) {
         super(pos_start, pos_end, "Tip", details);

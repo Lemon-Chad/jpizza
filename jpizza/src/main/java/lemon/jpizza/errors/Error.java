@@ -6,10 +6,10 @@ import lemon.jpizza.Position;
 import java.io.Serializable;
 
 public class Error implements Serializable {
-    public Position pos_start;
-    public Position pos_end;
-    public String error_name;
-    public String details;
+    public final Position pos_start;
+    public final Position pos_end;
+    public final String error_name;
+    public final String details;
 
     public Error(Position pos_start, Position pos_end, String error_name, String details) {
         this.pos_start = pos_start != null ? pos_start.copy() : null;

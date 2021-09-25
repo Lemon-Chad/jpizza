@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IterNode extends Node {
-    public Token var_name_tok;
-    public Node iterable_node;
-    public Node body_node;
-    public boolean retnull;
+    public final Token var_name_tok;
+    public final Node iterable_node;
+    public final Node body_node;
+    public final boolean retnull;
     public boolean fluctuating = true;
 
     public IterNode(Token var_name_tok, Node iterable_node, Node body_node,
@@ -32,7 +32,6 @@ public class IterNode extends Node {
         jptype = Constants.JPType.Iter;
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
         List<Obj> elements = new ArrayList<>();
@@ -44,7 +43,7 @@ public class IterNode extends Node {
                 "Value must be an iterable",
                 context
         ));
-        List<Obj> iterable = ((PList) iterableNode).trueValue();
+        List<Obj> iterable = iterableNode.list;
 
         double size = iterable.size();
 

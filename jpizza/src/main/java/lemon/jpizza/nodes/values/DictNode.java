@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DictNode extends Node {
-    public Map<Node, Node> dict;
+    public final Map<Node, Node> dict;
 
     public DictNode(Map<Node, Node> dict, Position pos_start, Position pos_end) {
         this.dict = dict;

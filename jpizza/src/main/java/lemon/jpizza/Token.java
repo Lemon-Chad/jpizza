@@ -3,8 +3,8 @@ package lemon.jpizza;
 import java.io.Serializable;
 
 public class Token implements Serializable {
-    public Tokens.TT type;
-    public Object value;
+    public final Tokens.TT type;
+    public final Object value;
     public Position pos_start;
     public Position pos_end;
 

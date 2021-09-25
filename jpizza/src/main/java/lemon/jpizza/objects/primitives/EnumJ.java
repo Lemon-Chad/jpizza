@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class EnumJ extends Value {
-    public String name;
-    Map<String, EnumJChild> children;
+    public final String name;
+    final Map<String, EnumJChild> children;
     public EnumJ(String name, Map<String, EnumJChild> children) {
         this.name = name;
         this.children = children;
