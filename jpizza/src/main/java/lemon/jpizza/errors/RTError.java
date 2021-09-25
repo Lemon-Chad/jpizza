@@ -92,6 +92,10 @@ public class RTError extends Error {
         return new RTError("Illegal Operation", pos_start, pos_end, details, context);
     }
 
+    public static RTError Assertion(Position pos_start, Position pos_end, String details, Context context) {
+        return new RTError("Assertion", pos_start, pos_end, details, context);
+    }
+
     public static RTError ArgumentCount(Position pos_start, Position pos_end, String details, Context context) {
         return new RTError("Argument Count", pos_start, pos_end, details, context);
     }
