@@ -13,7 +13,6 @@ import lemon.jpizza.nodes.operations.UnaryOpNode;
 import lemon.jpizza.nodes.values.*;
 import lemon.jpizza.nodes.variables.AttrAccessNode;
 import lemon.jpizza.nodes.variables.VarAccessNode;
-import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.ParseResult;
 
 import java.util.*;
@@ -44,6 +43,10 @@ public class Parser {
     public void updateTok() {
         if (0 <= tokIdx && tokIdx < tokount)
             currentToken = tokens.get(tokIdx);
+    }
+
+    public Token peek(int i) {
+        return 0 <= tokIdx + i && tokIdx + i < tokount ? tokens.get(tokIdx + i) : null;
     }
 
     public void reverse(int amount) {
@@ -456,6 +459,11 @@ public class Parser {
 
         if (tok.type.equals(TT.KEYWORD))
             switch ((String) tok.value) {
+                case "assert":
+                    res.registerAdvancement(); advance();
+                    Node condition = (Node) res.register(expr());
+                    if (res.error != null) return res;
+                    return res.success(new AssertNode(condition));
                 case "free":
                     Token varTok = (Token) res.register(expectIdentifier());
                     if (res.error != null) return res;
@@ -796,7 +804,9 @@ public class Parser {
                 new ArrayList<>(),
                 0,
                 null,
-                new ArrayList<>()
+                new ArrayList<>(),
+                null,
+                null
         ));
 
     }
@@ -1052,21 +1062,22 @@ match (a) {
                 List<Node> arg_nodes = new ArrayList<>();
                 Map<String, Node> kwargs = new HashMap<>();
                 if (!currentToken.type.equals(TT.RPAREN)) {
-                    arg_nodes.add((Node) res.register(this.expr()));
-                    if (res.error != null)
-                        return res.failure(Error.InvalidSyntax(
-                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                                "Expected argument"
-                        ));
-
-                    while (currentToken.type.equals(TT.COMMA)) {
-                        res.registerAdvancement();
-                        advance();
+                    if (currentToken.type != TT.BACK) {
                         arg_nodes.add((Node) res.register(this.expr()));
                         if (res.error != null)
-                            return res;
-                    }
+                            return res.failure(Error.InvalidSyntax(
+                                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                                    "Expected argument"
+                            ));
 
+                        while (currentToken.type.equals(TT.COMMA)) {
+                            res.registerAdvancement();
+                            advance();
+                            arg_nodes.add((Node) res.register(this.expr()));
+                            if (res.error != null)
+                                return res;
+                        }
+                    }
                     if (currentToken.type == TT.BACK) {
                         Token vk; Node val;
                         do {
@@ -1241,67 +1252,61 @@ match (a) {
 
         Token anyToken = new Token(TT.IDENTIFIER, "any");
         if (currentToken.type.equals(TT.LT)) {
-            advance(); res.registerAdvancement();
-
-            if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected identifier or ommited <>"
-            ));
-            argNameToks.add(currentToken);
-            res.registerAdvancement(); advance();
-            if (currentToken.type.equals(TT.USE)) {
-                res.registerAdvancement(); advance();
-
-                Token typetok = (Token) res.register(buildTypeTok());
-                if (res.error != null) return res;
-                argTypeToks.add(typetok);
-            } else argTypeToks.add(anyToken);
-
-            boolean args;
-            while (currentToken.type.equals(TT.COMMA)) {
-                res.registerAdvancement(); advance();
-
-                args = currentToken.type == TT.SPREAD;
-                if (args) {
+            if (peek(1) != null && peek(1).type != TT.BACK) {
+                boolean args;
+                do {
                     res.registerAdvancement();
                     advance();
-                }
 
-                if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected identifier"
-                ));
+                    args = currentToken.type == TT.SPREAD;
+                    if (args) {
+                        res.registerAdvancement();
+                        advance();
+                    }
 
-                if (args) {
-                    argname = currentToken.value.toString();
-                    res.registerAdvancement(); advance();
-                    break;
-                }
+                    if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected identifier"
+                    ));
 
-                argNameToks.add(currentToken);
-                res.registerAdvancement(); advance();
+                    if (args) {
+                        argname = currentToken.value.toString();
+                        res.registerAdvancement();
+                        advance();
+                        break;
+                    }
 
-                if (currentToken.type.equals(TT.USE)) {
-                    res.registerAdvancement(); advance();
+                    argNameToks.add(currentToken);
+                    res.registerAdvancement();
+                    advance();
 
-                    Token typetok = (Token) res.register(buildTypeTok());
-                    if (res.error != null) return res;
-                    argTypeToks.add(typetok);
-                } else argTypeToks.add(anyToken);
-                if (currentToken.type.equals(TT.EQS)) {
-                    res.registerAdvancement(); advance();
+                    if (currentToken.type.equals(TT.USE)) {
+                        res.registerAdvancement();
+                        advance();
 
-                    Node val = (Node) res.register(arithExpr());
-                    if (res.error != null) return res;
+                        Token typetok = (Token) res.register(buildTypeTok());
+                        if (res.error != null) return res;
+                        argTypeToks.add(typetok);
+                    } else argTypeToks.add(anyToken);
+                    if (currentToken.type.equals(TT.EQS)) {
+                        res.registerAdvancement();
+                        advance();
 
-                    defaults.add(val);
-                    defaultCount++;
-                    optionals = true;
-                } else if (optionals) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected default value"
-                ));
+                        Node val = (Node) res.register(arithExpr());
+                        if (res.error != null) return res;
 
+                        defaults.add(val);
+                        defaultCount++;
+                        optionals = true;
+                    } else if (optionals) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected default value"
+                    ));
+
+                } while (currentToken.type.equals(TT.COMMA));
+            } else {
+                res.registerAdvancement();
+                advance();
             }
 
             if (currentToken.type == TT.BACK) {
@@ -2257,7 +2262,9 @@ while (false) {
                 argTKs.defaults,
                 argTKs.defaultCount,
                 ptk,
-                argTKs.generics
+                argTKs.generics,
+                argTKs.argname,
+                argTKs.kwargname
         );
 
         if (argTKs.argNameToks.size() == attributeDeclarations.size() && methods.size() == 0) {

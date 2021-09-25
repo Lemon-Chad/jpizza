@@ -31,6 +31,7 @@ public class Constants {
     );
     public static String[] KEYWORDS = {
             "free",
+            "assert",
             "let",
             "throw",
             "struct",

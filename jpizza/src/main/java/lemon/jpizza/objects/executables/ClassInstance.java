@@ -16,7 +16,7 @@ import java.util.*;
 
 import static lemon.jpizza.Operations.*;
 
-public class ClassInstance extends Obj {
+public class ClassInstance extends Value {
     Position pos_start; Position pos_end;
     Context context;
     public Context value;
@@ -145,7 +145,7 @@ public class ClassInstance extends Obj {
             case COPY       ->    copy();
             case FUNCTION   ->    function();
             case TOSTRING   ->    toString();
-            default -> new Value(value).getattr(name, argx);
+            default -> super.getattr(name, argx);
         };
     }
 

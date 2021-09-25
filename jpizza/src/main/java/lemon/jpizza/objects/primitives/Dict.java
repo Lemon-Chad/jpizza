@@ -2,6 +2,7 @@ package lemon.jpizza.objects.primitives;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Pair;
+import lemon.jpizza.Shell;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.DictNode;
 import lemon.jpizza.objects.executables.Function;
@@ -17,6 +18,7 @@ import static lemon.jpizza.Operations.OP;
 
 public class Dict extends Value {
     public Dict(Map<Obj, Obj> value) { super(new ConcurrentHashMap<>(value)); jptype = Constants.JPType.Dict; }
+    public Dict(ConcurrentHashMap<Obj, Obj> value) { super(value); jptype = Constants.JPType.Dict; }
     public ConcurrentHashMap<Obj, Obj> trueValue() { return (ConcurrentHashMap<Obj, Obj>) value; }
 
     // Functions

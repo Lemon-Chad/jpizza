@@ -30,7 +30,13 @@ public class Str extends Value {
                     "Expected long",
                     context
             ));
-        return new Pair<>(new Str(trueValue().repeat(Math.toIntExact(Math.round(other.trueValue())))).set_context(context), null);
+        int repeatCount = Math.toIntExact(Math.round(other.trueValue()));
+        if (repeatCount < 0) return new Pair<>(null, RTError.IllegalOperation(
+                pos_start, o.pos_end,
+                "Repeating by negative amount",
+                context
+        ));
+        return new Pair<>(new Str(trueValue().repeat(repeatCount)).set_context(context), null);
     }
     public Pair<Obj, RTError> add(Obj o) {
         Str other = (Str) o.astring();

@@ -27,10 +27,12 @@ public class ClassDefNode extends Node {
     public List<Node> defaults;
     public int defaultCount;
     public Token parentToken;
+    public String argname, kwargname;
 
     public ClassDefNode(Token class_name_tok, List<AttrDeclareNode> attributes, List<Token> arg_name_toks,
                         List<Token> arg_type_toks, Node make_node, List<MethDefNode> methods, Position pos_end,
-                        List<Node> defaults, int defaultCount, Token pTK, List<Token> generics) {
+                        List<Node> defaults, int defaultCount, Token pTK, List<Token> generics, String argname,
+                        String kwargname) {
         this.class_name_tok = class_name_tok;
         this.defaultCount = defaultCount;
         this.generic_toks = generics;
@@ -42,6 +44,8 @@ public class ClassDefNode extends Node {
         this.methods = methods;
         this.pos_end = pos_end;
         this.pos_start = class_name_tok.pos_start;
+        this.argname = argname;
+        this.kwargname = kwargname;
 
         parentToken = pTK;
         jptype = Constants.JPType.ClassDef;
@@ -75,8 +79,8 @@ public class ClassDefNode extends Node {
             if (res.error != null) return res;
 
             CMethod make = (CMethod) new CMethod("<make>", null, classContext, make_node, argNames,
-                    argTypes, false, false, false, "any", dfts.b, defaultCount,
-                    generic_toks, false, false, null, null)
+                    argTypes, false, false, false, "null", dfts.b, defaultCount,
+                    generic_toks, false, false, argname, kwargname)
                     .set_pos(pos_start, pos_end);
             size = methods.size();
             CMethod[] methods = new CMethod[size];

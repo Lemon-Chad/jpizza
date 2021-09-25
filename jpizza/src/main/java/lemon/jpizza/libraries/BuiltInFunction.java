@@ -550,7 +550,7 @@ public class BuiltInFunction extends Library {
         ));
         Num idx = (Num) index;
         PList lst = (PList) list;
-        if (idx.trueValue() > lst.trueValue().size() || idx.trueValue() < 0) return new RTResult().failure(RTError.OutOfBounds(
+        if (idx.trueValue() >= lst.trueValue().size() || idx.trueValue() < 0) return new RTResult().failure(RTError.OutOfBounds(
                 pos_start, pos_end,
                 "Index is out of bounds",
                 execCtx
@@ -1051,7 +1051,7 @@ public class BuiltInFunction extends Library {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
         if (dict.jptype != Constants.JPType.Dict) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
-                "Argument must be a list",
+                "Argument must be a dictionary",
                 execCtx
         ));
         Dict x = (Dict) dict;
