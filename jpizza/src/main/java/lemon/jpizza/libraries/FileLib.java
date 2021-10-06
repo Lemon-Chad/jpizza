@@ -11,6 +11,7 @@ import lemon.jpizza.results.RTResult;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -269,15 +270,15 @@ public class FileLib extends Library {
         if (res.error != null) return res;
         String dir = d.string;
 
-        File file = new File(dir);
-        if (!file.exists()) return res.failure(RTError.FileNotFound(
+        Path path = Paths.get(dir);
+        if (!Files.exists(path)) return res.failure(RTError.PathNotFound(
                 value.pos_start, value.pos_end,
-                "File does not exist",
+                "Path does not exist",
                 execCtx
         ));
         String[] pathnames;
         try {
-            pathnames = file.list();
+            pathnames = path.toFile().list();
         } catch (Exception e) {
             return res.failure(RTError.Internal(value.pos_start, value.pos_end, e.toString(), execCtx));
         }
@@ -285,8 +286,8 @@ public class FileLib extends Library {
         PList paths = new PList(new ArrayList<>());
 
         assert pathnames != null;
-        for (String path: pathnames) {
-            paths.append(new Str(path));
+        for (String pth: pathnames) {
+            paths.append(new Str(pth));
         }
         return res.success(paths);
     }
