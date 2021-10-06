@@ -271,7 +271,7 @@ public class FileLib extends Library {
         String dir = d.string;
 
         Path path = Paths.get(dir);
-        if (!Files.exists(path)) return res.failure(RTError.PathNotFound(
+        if (!Files.exists(path) || !Files.isDirectory(path)) return res.failure(RTError.PathNotFound(
                 value.pos_start, value.pos_end,
                 "Path does not exist",
                 execCtx
