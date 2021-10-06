@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Dict extends Value {
     public Dict(Map<Obj, Obj> value) {
         super(new ConcurrentHashMap<>(value));
-        map = (ConcurrentHashMap<Obj, Obj>) value;
+        map = (ConcurrentHashMap<Obj, Obj>) this.value;
         jptype = Constants.JPType.Dict;
     }
     public Dict(ConcurrentHashMap<Obj, Obj> value) {
