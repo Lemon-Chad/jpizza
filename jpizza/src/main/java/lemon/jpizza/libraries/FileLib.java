@@ -28,7 +28,7 @@ public class FileLib extends Library {
             put("readBytes", Collections.singletonList("dir"));
             put("writeFile", Arrays.asList("dir", "val"));
             put("writeSerial", Arrays.asList("dir", "val"));
-            put("fileExists", Arrays.asList("dir", "val"));
+            put("fileExists", Collections.singletonList("dir"));
             put("makeDirs", Collections.singletonList("dir"));
             put("setCWD", Collections.singletonList("dir"));
             put("listDirContents", Collections.singletonList("dir"));
