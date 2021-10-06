@@ -137,13 +137,13 @@ public class Function extends BaseFunction {
 
         if (generics.size() > this.generics.size()) {
             return res.failure(RTError.GenericCount(
-                    generics.get(this.generics.size()).pos_start, generics.get(generics.size() - 1).pos_end,
+                    pos_start, pos_end,
                     String.format("Got %s too many generic types", generics.size() - this.generics.size()),
                     context
             ));
         } else if (generics.size() < this.generics.size()) {
             return res.failure(RTError.GenericCount(
-                    generics.get(0).pos_start, generics.get(generics.size() - 1).pos_end,
+                    pos_start, pos_end,
                     String.format("Got %s too few generic types", this.generics.size() - generics.size()),
                     context
             ));
