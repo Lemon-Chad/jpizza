@@ -1043,7 +1043,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a dictionary",
                 execCtx
         ));
-        return new RTResult().success(dict.map.put(key, value));
+        return new RTResult().success(((Dict) dict).set(key, value));
     }
 
 }

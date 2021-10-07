@@ -28,17 +28,24 @@ public class Dict extends Value {
     // Functions
 
     public boolean contains(Obj other) {
-        return map.containsKey(other);
+        return map.containsKey(getKey(other));
     }
     public Obj delete(Obj other) {
         if (other != null)
-            map.remove(other);
+            map.remove(getKey(other));
         return new Null();
     }
-    public void set(Obj a, Obj b) {
+    public Obj set(Obj a, Obj b) {
         delete(a);
-        map.put(a, b);
-        new Null();
+        map.put(getKey(a), b);
+        return new Null();
+    }
+
+    public Obj getKey(Obj key) {
+        for (Obj k : map.keySet()) {
+            if (k.equals(key)) return k;
+        }
+        return key;
     }
 
     // Methods
@@ -52,7 +59,7 @@ public class Dict extends Value {
         return new Pair<>(new Dict(combo).set_context(context).set_pos(pos_start, pos_end), null);
     }
     public Pair<Obj, RTError> get(Obj o) {
-        return new Pair<>(map.getOrDefault(o, new Null()), null);
+        return new Pair<>(map.getOrDefault(getKey(o), new Null()), null);
     }
 
     public Pair<Obj, RTError> bracket(Obj o) {

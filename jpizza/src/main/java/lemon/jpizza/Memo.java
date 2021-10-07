@@ -16,7 +16,7 @@ public class Memo {
                 if (args.length != element.args.length) continue;
                 int length = args.length;
                 for (int j = 0; j < length; j++) {
-                    if (args[j] == element.args[j]) {
+                    if (args[j].equals(element.args[j])) {
                         eq = false;
                         break;
                     }
