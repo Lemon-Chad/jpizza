@@ -34,6 +34,7 @@ public class SysLib extends Library {
             put("getProp", Collections.singletonList("prop"));
             put("setProp", Arrays.asList("prop", "propVal"));
             put("home", new ArrayList<>());
+            put("exit", Collections.singletonList("exitCode"));
         }});
     }
 
@@ -104,6 +105,13 @@ public class SysLib extends Library {
     public RTResult execute_setProp(Context execCtx) {
         System.setProperty(execCtx.symbolTable.get("prop").toString(), execCtx.symbolTable.get("propVal").toString());
         return new RTResult().success(new Null());
+    }
+    public RTResult execute_exit(Context execCtx) {
+        try{
+        String exitCode = (execCtx.symbolTable.get("exitCode").toString());
+        System.exit(Integer.parseInt(exitCode));}
+        catch (Exception e){return new RTResult().failure(RTError.Scope(pos_start, pos_end, "Invalid exit code.", context));}
+        return new RTResult().success(new Str("What the heck"));
     }
 
 }
