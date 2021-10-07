@@ -12,6 +12,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.CollationElementIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +35,7 @@ public class FileLib extends Library {
             put("setCWD", Collections.singletonList("dir"));
             put("listDirContents", Collections.singletonList("dir"));
             put("getCWD", new ArrayList<>());
+            put("isFileDirectory", Collections.singletonList("file"));
         }});
     }
 
@@ -290,6 +292,15 @@ public class FileLib extends Library {
             paths.append(new Str(pth));
         }
         return res.success(paths);
+    }
+
+    public  RTResult execute_isFileDirectory(Context execCtx){
+        RTResult res = new RTResult();
+        Obj value = ((Obj) execCtx.symbolTable.get("file")).astring();
+        Obj d = res.register(getdirectory(value, execCtx));
+        if (res.error != null) return res;
+        String dir = d.string;
+        return res.success(new Bool(Files.isDirectory(Path.of(dir))));
     }
 
 }
