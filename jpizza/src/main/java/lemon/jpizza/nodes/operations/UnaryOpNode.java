@@ -66,7 +66,6 @@ public class UnaryOpNode extends Node {
             }
         }
 
-
         Tokens.TT opTokType = op_tok.type;
         Pair<Obj, RTError> ret = switch (opTokType) {
             case MINUS -> number.mul(new Num(-1.0));

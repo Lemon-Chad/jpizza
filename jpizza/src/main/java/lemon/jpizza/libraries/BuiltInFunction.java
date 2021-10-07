@@ -1031,7 +1031,7 @@ public class BuiltInFunction extends Library {
         RTResult res = new RTResult();
         Obj dict = ((Obj) execCtx.symbolTable.get("dict")).dictionary();
         Obj value = res.register(keyInDict(execCtx, dict));
-        return res.success(dict.map.remove(value));
+        return res.success(dict.delete(value));
     }
 
     public RTResult execute_set(Context execCtx) {

@@ -26,6 +26,7 @@ public class RTResult {
         funcReturn = res.funcReturn;
         continueLoop = res.continueLoop;
         breakLoop = res.breakLoop;
+        value = res.value;
         return res.value;
     }
 
