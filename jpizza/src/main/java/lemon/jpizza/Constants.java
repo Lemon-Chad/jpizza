@@ -177,21 +177,22 @@ public class Constants {
 
         int line_count = pos_end.ln - pos_start.ln + 1;
         int offs = 0;
+        int colStart, colEnd, dist;
         for (int i = 0; i < line_count; i++) {
             String line = text.substring(idxStart, idxEnd);
 
-            int colStart = i == 0 ? pos_start.tcol : nonWhitespace(line);
-            int colEnd = i == line_count - 1 ? pos_end.tcol : line.length() - 1;
+            colStart = i == 0 ? pos_start.tcol : nonWhitespace(line);
+            colEnd = i == line_count - 1 ? pos_end.tcol : line.length() - 1;
+            dist = colEnd - colStart;
 
-            String grouping = "";
-            if (colEnd - colStart == 1) {
-                grouping = "^";
-            }
-            else if (colEnd - colStart >= 2) {
+            String grouping;
+            if (dist >= 2) {
                 if (Shell.fileEncoding.equals("UTF-8"))
                     grouping = "╰" + "─".repeat(colEnd - colStart - 2) + "╯";
                 else
                     grouping = "\\" + "_".repeat(colEnd - colStart - 2) + "/";
+            } else {
+                grouping = "^";
             }
 
             result.append(line).append("\n")
