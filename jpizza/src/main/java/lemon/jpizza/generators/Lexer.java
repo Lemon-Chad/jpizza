@@ -38,7 +38,7 @@ public class Lexer {
     public void skip_comment() {
         advance();
 
-        while (currentChar != null && !currentChar.equals(";") && currentChar.matches(".")) {
+        while (currentChar != null && currentChar.matches(".")) {
             advance();
         }
 

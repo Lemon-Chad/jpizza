@@ -23,6 +23,7 @@ public class Parser {
     Token currentToken;
     final List<Token> tokens;
     int tokIdx = -1;
+    int displayTokIdx = -1;
     int tokount;
     static final List<String> declKeywords = Arrays.asList(
             "static",
@@ -62,6 +63,8 @@ public class Parser {
 
     public void advance() {
         tokIdx++;
+        if (currentToken != null && currentToken.type != TT.INVISILINE)
+            displayTokIdx++;
         updateTok();
     }
 
@@ -98,7 +101,7 @@ public class Parser {
         Position pos_start = currentToken.pos_start.copy();
 
         int newlineCount;
-        while (currentToken.type.equals(TT.NEWLINE)) {
+        while (currentToken.type.equals(TT.NEWLINE) || currentToken.type.equals(TT.INVISILINE)) {
             res.registerAdvancement();
             advance();
         }
@@ -111,7 +114,7 @@ public class Parser {
 
         while (true) {
             newlineCount = 0;
-            while (currentToken.type.equals(TT.NEWLINE)) {
+            while (currentToken.type.equals(TT.NEWLINE) || currentToken.type.equals(TT.INVISILINE)) {
                 res.registerAdvancement();
                 advance();
                 newlineCount++;
@@ -131,10 +134,10 @@ public class Parser {
         }
         reverse();
 
-        if (!currentToken.type.equals(TT.NEWLINE)) {
+        if (!currentToken.type.equals(TT.NEWLINE) && !currentToken.type.equals(TT.INVISILINE)) {
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    String.format("Missing semicolon, found %s", currentToken.value)
+                    String.format("Missing semicolon, found %s", currentToken)
             ));
         } advance();
         return res.success(new ListNode(
@@ -1388,7 +1391,14 @@ match (a) {
     }
 
     public void endLine(int offset) {
-        tokens.add(tokIdx + offset, new Token(TT.NEWLINE, currentToken.pos_start.copy(), currentToken.pos_start.copy()));
+        tokens.add(
+                tokIdx + offset,
+                new Token(
+                        TT.INVISILINE,
+                        currentToken.pos_start.copy(),
+                        currentToken.pos_start.copy()
+                )
+        );
         tokount++;
     }
 
@@ -2277,7 +2287,9 @@ while (false) {
         if (!currentToken.type.equals(TT.CLOSE)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected '}'"
-        )); advance(); res.registerAdvancement();
+        ));
+        endLine(1);
+        advance(); res.registerAdvancement();
 
         Node classDef = new ClassDefNode(
                 classNameTok,
