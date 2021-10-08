@@ -57,7 +57,7 @@ public class FileLib extends Library {
                 return new RTResult().success(new Bool(true));
             }
             catch(IOException e) {
-                return new RTResult().failure(RTError.FileNotFound(value.pos_start, value.pos_end, "Java IOException " + e, execCtx));
+                return new RTResult().failure(RTError.Internal(value.pos_start, value.pos_end, "Java IOException " + e.toString(), execCtx));
             }
             }
         else{
@@ -66,7 +66,7 @@ public class FileLib extends Library {
                 return new RTResult().success(new Bool(true));
             }
             catch(IOException e) {
-                return new RTResult().failure(RTError.FileNotFound(value.pos_start, value.pos_end, "Java IOException " + e, execCtx));
+                return new RTResult().failure(RTError.Internal(value.pos_start, value.pos_end, "Java IOException " + e.toString(), execCtx));
             }
         }
     }
@@ -105,7 +105,7 @@ public class FileLib extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while reading..",
+                    "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
         }
@@ -143,7 +143,7 @@ public class FileLib extends Library {
         } catch (IOException | ClassNotFoundException e) {
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while reading..",
+                    "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
         }
@@ -176,7 +176,7 @@ public class FileLib extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while reading..",
+                    "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
         }
@@ -256,7 +256,7 @@ public class FileLib extends Library {
             e.printStackTrace();
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while writing..",
+                    "IOException occurred while writing.. " + e.toString(),
                     execCtx
             ));
         }
@@ -289,7 +289,7 @@ public class FileLib extends Library {
             e.printStackTrace();
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while writing..",
+                    "IOException occurred while writing.. " + e.toString(),
                     execCtx
             ));
         }
