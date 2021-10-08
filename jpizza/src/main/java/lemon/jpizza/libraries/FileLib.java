@@ -1,6 +1,7 @@
 package lemon.jpizza.libraries;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Shell;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Library;
@@ -12,11 +13,11 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.CollationElementIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import org.apache.commons.io.FileUtils;
 
 @SuppressWarnings("unused DuplicatedCode")
 public class FileLib extends Library {
@@ -36,7 +37,38 @@ public class FileLib extends Library {
             put("listDirContents", Collections.singletonList("dir"));
             put("getCWD", new ArrayList<>());
             put("isFileDirectory", Collections.singletonList("file"));
+            put("deleteFile", Collections.singletonList("file"));
         }});
+    }
+
+    public RTResult execute_deleteFile(Context execCtx){
+        RTResult res = new RTResult();
+        Obj value = ((Obj) execCtx.symbolTable.get("file")).astring();
+        Obj d = res.register(getdirectory(value, execCtx));
+        if (res.error != null) return res;
+        String dir = d.string;
+        if(!Files.exists(Path.of(dir))){
+            return new RTResult().failure(RTError.FileNotFound(value.pos_start, value.pos_end, "File not found", execCtx));
+        }
+        Boolean isDirectory = Files.isDirectory(Path.of(dir));
+        if(isDirectory){
+            try {
+                FileUtils.deleteDirectory(new File(dir));
+                return new RTResult().success(new Bool(true));
+            }
+            catch(IOException e) {
+                return new RTResult().failure(RTError.Internal(value.pos_start, value.pos_end, "Java IOException " + e.toString(), execCtx));
+            }
+            }
+        else{
+            try{
+                FileUtils.delete(new File(dir));
+                return new RTResult().success(new Bool(true));
+            }
+            catch(IOException e) {
+                return new RTResult().failure(RTError.Internal(value.pos_start, value.pos_end, "Java IOException " + e.toString(), execCtx));
+            }
+        }
     }
 
     private RTResult getdirectory(Obj value, Context ctx) {
@@ -73,7 +105,7 @@ public class FileLib extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while reading..",
+                    "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
         }
@@ -111,7 +143,7 @@ public class FileLib extends Library {
         } catch (IOException | ClassNotFoundException e) {
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while reading..",
+                    "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
         }
@@ -144,7 +176,7 @@ public class FileLib extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while reading..",
+                    "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
         }
@@ -224,7 +256,7 @@ public class FileLib extends Library {
             e.printStackTrace();
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while writing..",
+                    "IOException occurred while writing.. " + e.toString(),
                     execCtx
             ));
         }
@@ -257,7 +289,7 @@ public class FileLib extends Library {
             e.printStackTrace();
             return res.failure(RTError.Internal(
                     value.pos_start, value.pos_end,
-                    "IOException occurred while writing..",
+                    "IOException occurred while writing.. " + e.toString(),
                     execCtx
             ));
         }
