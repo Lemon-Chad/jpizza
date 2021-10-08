@@ -83,12 +83,12 @@ public class ClassInstance extends Value {
     }
 
     public Pair<Obj, RTError> binOp(Obj other, String methodName, SuperBin superMethod) {
-        RTResult res = new RTResult();
+        RTResult res;
         CMethod method = value.symbolTable.getbin(methodName);
         if (method == null)
             return superMethod.run(other);
-        res.register(method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
-                new Interpreter()));
+        res = method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
+                new Interpreter());
         if (checkType(methodName, res)) return new Pair<>(res.value, (RTError) res.error);
         return superMethod.run(other);
     }
@@ -140,12 +140,12 @@ public class ClassInstance extends Value {
     public Pair<Obj, RTError> mod(Obj other) { return binOp(other, "mod", super::mod); }
 
     public Obj delete(Obj other) {
-        RTResult res = new RTResult();
+        RTResult res;
         CMethod method = value.symbolTable.getbin("delete");
         if (method == null)
             return super.delete(other);
-        res.register(method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
-                new Interpreter()));
+        res = method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
+                new Interpreter());
         if (checkType("delete", res)) {
             if (res.error == null)
                 return res.value;
