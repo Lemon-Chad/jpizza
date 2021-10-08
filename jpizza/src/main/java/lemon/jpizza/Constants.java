@@ -57,6 +57,8 @@ public class Constants {
             "continue",
             "break",
             "method",
+            "mthd",
+            "md",
             "ingredients",
             "recipe",
             "switch",
@@ -67,7 +69,8 @@ public class Constants {
             "match",
             "pub",
             "prv",
-            "static"
+            "static",
+            "stc"
     };
     @SuppressWarnings("unused") public static char BREAK = ';';
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};

@@ -24,6 +24,17 @@ public class Parser {
     final List<Token> tokens;
     int tokIdx = -1;
     int tokount;
+    static final List<String> declKeywords = Arrays.asList(
+            "static",
+            "stc",
+            "prv",
+            "pub"
+    );
+    static final List<String> methKeywords = Arrays.asList(
+            "method",
+            "mthd",
+            "md"
+    );
 
     public interface L {
         ParseResult execute();
@@ -2051,11 +2062,6 @@ while (false) {
         )); res.registerAdvancement(); advance();
 
         List<AttrDeclareNode> attributeDeclarations = new ArrayList<>();
-        List<String> declKeywords = Arrays.asList(
-                "static",
-                "prv",
-                "pub"
-        );
 
         ArgData argTKs = new ArgData(
                 new ArrayList<>(),
@@ -2110,7 +2116,7 @@ while (false) {
                 ingredientNode = (Node) res.register(this.block(false));
                 if (res.error != null) return res;
             }
-            else if (currentToken.value.equals("method")) {
+            else if (methKeywords.contains(currentToken.value.toString())) {
                 res.registerAdvancement(); advance();
 
                 boolean async, bin, stat, priv;
@@ -2119,7 +2125,7 @@ while (false) {
                     switch (currentToken.value.toString()) {
                         case "bin" -> bin = true;
                         case "async" -> async = true;
-                        case "static" -> stat = true;
+                        case "static", "stc" -> stat = true;
                         case "prv" -> priv = true;
                         case "pub" -> priv = false;
                     }
@@ -2229,7 +2235,7 @@ while (false) {
                 while (declKeywords.contains(currentToken.value.toString())) {
                     switch (currentToken.value.toString()) {
                         case "prv" -> isprivate = true;
-                        case "static" -> isstatic = true;
+                        case "static", "stc" -> isstatic = true;
                         case "pub" -> isprivate = false;
                     }
                     res.registerAdvancement(); advance();

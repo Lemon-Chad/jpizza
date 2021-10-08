@@ -391,7 +391,7 @@ recipe Pizza {
         <> then assigns toppings to t and breading to b.
       }
 
-    method details {
+    md details {
       println("I am a pizza with " + this::breading
                 + " breading and " + this::topping + ".");
     }
@@ -402,15 +402,15 @@ var piz => Pizza("sausage", "pretzel");
 piz::details();
 
 recipe MyCoolMethods {
-  method pub publicMethod {
+  mthd pub publicMethod {
     println("I am public!");
   }
 
-  method prv privateMethod {
+  md prv privateMethod {
     println("I am private! Wait, how did you call me??");
   }
 
-  method static staticMethod {
+  method stc staticMethod {
     println("You can call me anywhere!");
   }
 };
@@ -428,7 +428,7 @@ recipe Parent {
     attr inheritedAttribute => x;
   }
 
-  method inheritedFunction<y> -> this::inheritedAttribute + y;
+  md inheritedFunction<y> -> this::inheritedAttribute + y;
 
 };
 
@@ -469,7 +469,7 @@ recipe Matrix {
         cols   => size(vector[0]);
     }
 
-    method bin string {
+    md bin string {
         let colPad => for (_ -> 0:cols) => 0;
         for (row <- vector) {
             for (i -> 0:cols) {
@@ -492,9 +492,9 @@ recipe Matrix {
         return st;
     }
 
-    method copy -> Matrix(..for ( row <- vector ) => for ( col <- row ) => col);
+    mthd copy -> Matrix(..for ( row <- vector ) => for ( col <- row ) => col);
 
-    method bin add<other> {
+    mthd bin add<other> {
         assert type(other) == "Matrix";
 
         assert cols == other::cols;
@@ -503,11 +503,11 @@ recipe Matrix {
         return Matrix(..for ( r -> 0:rows ) => for ( c -> 0:cols ) => vector[r][c] + other::vector[r][c]);
     }
 
-    method bin sub<other> {
+    mthd bin sub<other> {
         return this + (-other);
     }
 
-    method det<vector=null> {
+    mthd det<vector=null> {
         if (vector == null) vector => this::vector;
         assert size(vector) > 0;
         assert size(vector) == size(vector[0]);
@@ -526,7 +526,7 @@ recipe Matrix {
         return d;
     }
 
-    method bin mul<other> {
+    mthd bin mul<other> {
         if (type(other) == "num")
             return Matrix(..for ( row <- vector ) => for ( x <- row ) => x * other);
 
