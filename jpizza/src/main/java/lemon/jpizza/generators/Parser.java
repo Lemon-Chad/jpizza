@@ -30,10 +30,24 @@ public class Parser {
             "prv",
             "pub"
     );
+    static final List<String> classWords = Arrays.asList(
+            "class",
+            "recipe",
+            "obj"
+    );
     static final List<String> methKeywords = Arrays.asList(
             "method",
             "mthd",
             "md"
+    );
+    static final List<String> constWords = Arrays.asList(
+            "bake",
+            "const"
+    );
+    static final List<String> varWords = Arrays.asList(
+            "bake",
+            "const",
+            "var"
     );
 
     public interface L {
@@ -228,8 +242,8 @@ public class Parser {
                 return res;
             return res.success(new AttrAssignNode(var_name, expr));
         }
-        else if (currentToken.matches(TT.KEYWORD, "var") || currentToken.matches(TT.KEYWORD, "bake")) {
-            boolean locked = currentToken.value.equals("bake");
+        else if (currentToken.type == TT.KEYWORD && varWords.contains(currentToken.value.toString())) {
+            boolean locked = constWords.contains(currentToken.value.toString());
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
 
@@ -475,15 +489,20 @@ public class Parser {
                     Node condition = (Node) res.register(expr());
                     if (res.error != null) return res;
                     return res.success(new AssertNode(condition));
+
                 case "free":
                     Token varTok = (Token) res.register(expectIdentifier());
                     if (res.error != null) return res;
                     res.registerAdvancement(); advance();
                     return res.success(new DropNode(varTok));
+
                 case "throw":
                     Node throwNode = (Node) res.register(this.throwExpr());
                     if (res.error != null) return res;
                     return res.success(throwNode);
+
+                case "class":
+                case "obj":
                 case "recipe":
                     Node classDef = (Node) res.register(this.classDef());
                     if (res.error != null)
@@ -525,9 +544,7 @@ public class Parser {
                     return res.success(forExpr);
 
                 case "function":
-
                 case "yourmom":
-
                 case "fn":
                     Node funcDef = (Node) res.register(this.funcDef());
                     if (res.error != null)
@@ -2033,9 +2050,10 @@ while (false) {
     public ParseResult classDef() {
         ParseResult res = new ParseResult();
 
-        if (!currentToken.matches(TT.KEYWORD, "recipe")) return res.failure(Error.InvalidSyntax(
+        if (currentToken.type != TT.KEYWORD || !classWords.contains(currentToken.value.toString()))
+            return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected 'recipe'"
+                "Expected 'recipe', 'class', or 'obj'"
         )); advance(); res.registerAdvancement();
         if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
