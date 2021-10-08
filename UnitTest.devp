@@ -553,10 +553,10 @@ let A => Matrix([1, 2, 3], [4, 5, 6]);
 let B => Matrix([7, 8, 9], [1, 2, 3]);
 let C => Matrix([7, 8], [1, 12], [3, -12]);
 
-println(str(A) + "\n");
-println(str(B) + "\n");
-println(str(C) + "\n");
-println(str(A + B) + "\n");
-println(str(A - B) + "\n");
-println(str(C * A) + "\n");
-println("The determinant of the above matrix is: " + str((C * A)::det()) + "\n");
+println("A: \n" + str(A) + "\n");
+println("B: \n" + str(B) + "\n");
+println("C: \n" + str(C) + "\n");
+println("A + B: \n" + str(A + B) + "\n");
+println("A - B: \n" + str(A - B) + "\n");
+println("C * A: \n" + str(C * A) + "\n");
+println("The determinant of C * A: " + str((C * A)::det()) + "\n");
