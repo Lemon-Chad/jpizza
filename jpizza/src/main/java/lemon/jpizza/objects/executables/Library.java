@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Tokens;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -145,7 +146,7 @@ public class Library extends BaseFunction {
                 e.printStackTrace();
                 return;
             }
-            libTable.define(k, val);
+            libTable.declareattr(new Token(Tokens.TT.IDENTIFIER, k), null, val);
         });
         if (adlib) Constants.LIBRARIES.put(libName, libContext);
     }

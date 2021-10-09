@@ -183,8 +183,6 @@ public class Parser {
 
     public ParseResult extractVarTok() {
         ParseResult res = new ParseResult();
-        res.registerAdvancement();
-        advance();
 
         if (!currentToken.type.equals(TT.IDENTIFIER))
             return res.failure(Error.InvalidSyntax(
@@ -231,6 +229,7 @@ public class Parser {
         ParseResult res = new ParseResult();
         String type = "any";
         if (currentToken.matches(TT.KEYWORD, "attr")) {
+            res.registerAdvancement(); advance();
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
 
@@ -247,6 +246,49 @@ public class Parser {
         }
         else if (currentToken.type == TT.KEYWORD && varWords.contains(currentToken.value.toString())) {
             boolean locked = constWords.contains(currentToken.value.toString());
+
+            res.registerAdvancement(); advance();
+            if (currentToken.type == TT.OPEN) {
+                // Destructure
+                boolean glob = false;
+                List<Token> destructs = new ArrayList<>();
+
+                res.registerAdvancement(); advance();
+
+                if (currentToken.type == TT.MUL) {
+                    glob = true;
+                    res.registerAdvancement(); advance();
+                }
+                else do {
+                    if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected identifier"
+                    ));
+                    destructs.add(currentToken);
+                    res.registerAdvancement();
+                    advance();
+                } while (currentToken.type != TT.CLOSE);
+
+                if (currentToken.type != TT.CLOSE) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected '}'"
+                ));
+                res.registerAdvancement(); advance();
+
+                if (currentToken.type != TT.EQ) return res.failure(Error.InvalidSyntax(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected '=>'"
+                ));
+                res.registerAdvancement(); advance();
+
+                Node destructed = (Node) res.register(expr());
+                if (res.error != null) return res;
+
+                if (glob)
+                    return res.success(new DestructNode(destructed));
+                else
+                    return res.success(new DestructNode(destructed, destructs));
+            }
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
 
@@ -349,6 +391,7 @@ public class Parser {
             return res.success(new LetNode(ident, expr));
         }
         else if (currentToken.matches(TT.KEYWORD, "cal")) {
+            res.registerAdvancement(); advance();
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
 

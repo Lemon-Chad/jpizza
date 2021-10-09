@@ -33,6 +33,10 @@ public class SymbolTable implements Serializable {
         this.parent = parent;
     }
 
+    public Map<String, AttrNode> attributes() {
+        return attributes;
+    }
+
     public Object get(String name) {
         VarNode value = symbols.get(name);
         if (value == null) {
