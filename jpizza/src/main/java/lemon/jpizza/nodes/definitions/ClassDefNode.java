@@ -80,7 +80,7 @@ public class ClassDefNode extends Node {
             if (res.error != null) return res;
 
             CMethod make = (CMethod) new CMethod("<make>", null, classContext, make_node, argNames,
-                    argTypes, false, false, false, "null", dfts.b, defaultCount,
+                    argTypes, false, false, false, "void", dfts.b, defaultCount,
                     generic_toks, false, false, argname, kwargname)
                     .set_pos(pos_start, pos_end);
             size = methods.size();
