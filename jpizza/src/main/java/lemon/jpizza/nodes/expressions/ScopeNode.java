@@ -4,6 +4,7 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
+import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
 public class ScopeNode extends Node {
@@ -25,6 +26,12 @@ public class ScopeNode extends Node {
                 statements.pos_start
         );
         scopeContext.symbolTable = new SymbolTable(context.symbolTable);
-        return statements.visit(inter, scopeContext);
+
+        RTResult res = new RTResult();
+        res.register(statements.visit(inter, scopeContext));
+        if (res.shouldReturn() && res.funcReturn == null) {
+            return res;
+        }
+        return res.success(res.funcReturn != null ? res.funcReturn : new Null());
     }
 }
