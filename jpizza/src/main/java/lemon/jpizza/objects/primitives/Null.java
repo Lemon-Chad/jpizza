@@ -39,7 +39,7 @@ public class Null extends Value {
     // Defaults
 
     public Obj copy() { return new Null().set_context(context).set_pos(pos_start, pos_end); }
-    public Obj type() { return new Str("null").set_context(context).set_pos(pos_start, pos_end); }
+    public Obj type() { return new Str("void").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "null"; }
 
 }
