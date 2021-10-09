@@ -78,9 +78,15 @@ public class HTTPLIB extends Library {
             return new Pair<>(null, RTError.Formatting(
                     urlObj.get_start(), urlObj.get_end(),
                     "URI Syntax Error",
-                    urlObj.get_ctx()
+                    execCtx
             ));
         }
+
+        if (uri.getScheme() == null) return new Pair<>(null, RTError.Formatting(
+                urlObj.get_start(), urlObj.get_end(),
+                "URI missing scheme",
+                execCtx
+        ));
 
         HttpRequest.Builder builder = HttpRequest.newBuilder().uri(uri);
 
