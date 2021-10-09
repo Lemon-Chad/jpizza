@@ -41,6 +41,7 @@ public class Constants {
             "yourmom",
             "async",
             "import",
+            "scope",
             "as",
             "extend",
             "bin",

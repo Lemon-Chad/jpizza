@@ -1,0 +1,30 @@
+package lemon.jpizza.nodes.expressions;
+
+import lemon.jpizza.contextuals.Context;
+import lemon.jpizza.contextuals.SymbolTable;
+import lemon.jpizza.generators.Interpreter;
+import lemon.jpizza.nodes.Node;
+import lemon.jpizza.results.RTResult;
+
+public class ScopeNode extends Node {
+    Node statements;
+    String scopeName;
+
+    public ScopeNode(String name, Node states) {
+        statements = states;
+        scopeName = name;
+
+        pos_start = states.pos_start;
+        pos_end = states.pos_end;
+    }
+
+    public RTResult visit(Interpreter inter, Context context) {
+        Context scopeContext = new Context(
+                scopeName == null ? context.displayName : scopeName,
+                context,
+                statements.pos_start
+        );
+        scopeContext.symbolTable = new SymbolTable(context.symbolTable);
+        return statements.visit(inter, scopeContext);
+    }
+}

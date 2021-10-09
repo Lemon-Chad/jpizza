@@ -616,6 +616,26 @@ public class Parser {
                         return res;
                     return res.success(doExpr);
 
+                case "scope":
+                    res.registerAdvancement(); advance();
+                    String name = null;
+                    if (currentToken.type == TT.LSQUARE) {
+                        Token n = (Token) res.register(expectIdentifier());
+                        if (res.error != null) return res;
+
+                        name = n.value.toString();
+
+                        res.registerAdvancement(); advance();
+                        if (currentToken.type != TT.RSQUARE) return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                                "Expected ']'"
+                        ));
+                        res.registerAdvancement(); advance();
+                    }
+                    Node statements = (Node) res.register(block());
+                    if (res.error != null) return res;
+                    return res.success(new ScopeNode(name, statements));
+
                 case "import":
                     advance();
                     res.registerAdvancement();
