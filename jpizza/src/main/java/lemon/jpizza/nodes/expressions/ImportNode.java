@@ -18,12 +18,22 @@ import java.nio.file.Paths;
 
 public class ImportNode extends Node {
     public final Token file_name_tok;
+    public final Token as_tok;
     public boolean fluctuating = true;
 
     public ImportNode(Token file_name_tok) {
         this.file_name_tok = file_name_tok;
+        this.as_tok = null;
 
         pos_start = file_name_tok.pos_start.copy(); pos_end = file_name_tok.pos_end.copy();
+        jptype = Constants.JPType.Import;
+    }
+
+    public ImportNode(Token file_name_tok, Token as_tok) {
+        this.file_name_tok = file_name_tok;
+        this.as_tok = as_tok;
+
+        pos_start = file_name_tok.pos_start.copy(); pos_end = as_tok.pos_end.copy();
         jptype = Constants.JPType.Import;
     }
 
@@ -36,7 +46,8 @@ public class ImportNode extends Node {
         ClassInstance imp = null;
         RTResult res = new RTResult();
         String userDataDir = System.getProperty("user.dir");
-        if (Constants.LIBRARIES.containsKey(fn)) imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))
+        if (Constants.LIBRARIES.containsKey(fn))
+            imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))
                 .set_pos(pos_start, pos_end).set_context(context);
         else {
             if (Files.exists(Paths.get(modFilePath))){
@@ -54,8 +65,13 @@ public class ImportNode extends Node {
                 "Module does not exist",
                 context
         ));
-        context.symbolTable.define(fn, imp);
-        return res.success(new Null());
+
+        String as = fn;
+        if (as_tok != null)
+            as = as_tok.value.toString();
+
+        context.symbolTable.define(as, imp);
+        return res.success(imp);
     }
 
     public RTResult visit(Interpreter inter, Context context) {

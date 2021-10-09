@@ -583,12 +583,19 @@ public class Parser {
                                 "Expected module name"
                         ));
                     advance(); res.registerAdvancement();
+                    if (currentToken.matches(TT.KEYWORD, "as")) {
+                        Token ident = (Token) res.register(expectIdentifier());
+                        if (res.error != null)
+                            return res;
+                        res.registerAdvancement(); advance();
+                        return res.success(new ImportNode(file_name_tok, ident));
+                    }
                     return res.success(new ImportNode(file_name_tok));
 
                 case "extend":
                     advance();
                     res.registerAdvancement();
-                    Token  fileNameTok = currentToken;
+                    Token fileNameTok = currentToken;
                     if (!fileNameTok.type.equals(TT.IDENTIFIER))
                         return res.failure(Error.InvalidSyntax(
                                 fileNameTok.pos_start.copy(), fileNameTok.pos_end.copy(),
