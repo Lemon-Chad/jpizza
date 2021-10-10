@@ -65,12 +65,11 @@ public class EnumJChild extends Value {
         }
 
         ctx.symbolTable.define("$child", val);
-        ctx.symbolTable.define("$parent", this.parent.name);
 
         for (int i = 0; i < args.size(); i++)
             ctx.symbolTable.define(params.get(i), args.get(i));
 
-        return new RTResult().success(new ClassInstance(ctx));
+        return new RTResult().success(new ClassInstance(ctx, this.parent.name));
     }
 
     public EnumJChild setParent(EnumJ parent) {

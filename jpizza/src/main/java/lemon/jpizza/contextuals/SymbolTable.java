@@ -37,6 +37,10 @@ public class SymbolTable implements Serializable {
         return attributes;
     }
 
+    public Map<String, VarNode> symbols() {
+        return symbols;
+    }
+
     public Object get(String name) {
         VarNode value = symbols.get(name);
         if (value == null) {

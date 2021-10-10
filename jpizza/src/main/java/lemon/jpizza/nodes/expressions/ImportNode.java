@@ -4,6 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
+import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
@@ -43,21 +44,18 @@ public class ImportNode extends Node {
         String modPath = Shell.root + "/modules/" + fn;
         String modFilePath = modPath + "/" + fn + ".devp";
         var mkdirs = new File(Shell.root + "/modules").mkdirs();
-        ClassInstance imp = null;
+        Obj imp = null;
         RTResult res = new RTResult();
         String userDataDir = System.getProperty("user.dir");
         if (Constants.LIBRARIES.containsKey(fn))
-            imp = (ClassInstance) new ClassInstance(Constants.LIBRARIES.get(fn))
-                .set_pos(pos_start, pos_end).set_context(context);
+            imp = new ClassInstance(Constants.LIBRARIES.get(fn), fn).set_pos(pos_start, pos_end).set_context(context);
         else {
             if (Files.exists(Paths.get(modFilePath))){
                 System.setProperty("user.dir", modPath);
-                imp = (ClassInstance) res.register(Interpreter.getImprt(modFilePath, fn, context, pos_start,
-                        pos_end));
+                imp = res.register(Interpreter.getImprt(modFilePath, fn, context, pos_start, pos_end));
                 System.setProperty("user.dir", userDataDir);}
             else if (Files.exists(Paths.get(file_name)))
-                imp = (ClassInstance) res.register(Interpreter.getImprt(file_name, fn, context, pos_start,
-                        pos_end));
+                imp = res.register(Interpreter.getImprt(file_name, fn, context, pos_start, pos_end));
             if (res.error != null) return res;
         }
         if (imp == null) return res.failure(RTError.FileNotFound(

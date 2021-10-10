@@ -276,7 +276,7 @@ public class BuiltInFunction extends Library {
         if (val instanceof String)
             return Interpreter.getThis(val, execCtx, o.pos_start, acc.pos_end);
         else if (val instanceof RTError) return new RTResult().failure((RTError) val);
-        return new RTResult().success(((Obj)val).set_context(((ClassInstance)o).value));
+        return new RTResult().success(((Obj)val).set_context(((ClassInstance)o).ctx));
     }
 
     @SuppressWarnings("DuplicatedCode")

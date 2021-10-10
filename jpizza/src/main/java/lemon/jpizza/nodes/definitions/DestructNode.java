@@ -54,14 +54,14 @@ public class DestructNode extends Node {
     }
 
     public RTResult glob(ClassInstance tar, Interpreter inter, Context context) {
-        Set<Map.Entry<String, AttrNode>> attrs = tar.value.symbolTable.attributes().entrySet();
+        Set<Map.Entry<String, AttrNode>> attrs = tar.ctx.symbolTable.attributes().entrySet();
         for (Map.Entry<String, AttrNode> entry : attrs)
             context.symbolTable.define(entry.getKey(), entry.getValue().value_node);
         return new RTResult().success(new Null());
     }
 
     public RTResult spread(ClassInstance tar, Interpreter inter, Context context) {
-        Map<String, AttrNode> attrs = tar.value.symbolTable.attributes();
+        Map<String, AttrNode> attrs = tar.ctx.symbolTable.attributes();
         for (Token struct : subs) {
             String sub = struct.value.toString();
             if (!attrs.containsKey(sub)) return new RTResult().failure(RTError.Scope(

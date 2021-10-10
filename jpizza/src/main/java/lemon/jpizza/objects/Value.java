@@ -106,7 +106,11 @@ public class Value extends Obj {
 
     // Other
 
-    public Pair<Obj, RTError> eq(Obj obj) { return new Pair<>(new Bool(this.value.equals(obj.value)), null); }
+    public Pair<Obj, RTError> eq(Obj obj) {
+        if (this.value == null)
+            return new Pair<>(new Bool(this.value == obj.value), null);
+        return new Pair<>(new Bool(this.value.equals(obj.value)), null);
+    }
     public Pair<Obj, RTError> ne(Obj obj) { return new Pair<>(new Bool(!equals(obj)), null); }
 
     public String toString() { return value.toString(); }

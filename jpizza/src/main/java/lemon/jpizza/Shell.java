@@ -311,7 +311,7 @@ public class Shell {
         Context context = new Context(fn, parent, entry_pos);
         context.symbolTable = globalSymbolTable;
         RTResult result = new Interpreter().interpret(ast.a, context, false);
-        return new Pair<>(new ClassInstance(context), result.error);
+        return new Pair<>(new ClassInstance(context, fn), result.error);
     }
 
 }

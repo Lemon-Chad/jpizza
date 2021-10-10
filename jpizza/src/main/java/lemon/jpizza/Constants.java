@@ -111,6 +111,7 @@ public class Constants {
     }};
 
     public enum JPType {
+        Pattern,
         Bytes,
         ClassInstance,
         ClassPlate,

@@ -6,6 +6,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
+import lemon.jpizza.nodes.values.PatternNode;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
@@ -45,6 +46,17 @@ public class SwitchNode extends Node {
         Case cs;
         for (int i = 0; i < size; i++) {
             cs = cases.get(i);
+            if (cs.condition.jptype == Constants.JPType.Pattern) {
+                // Pattern matching
+                PatternNode pattern = (PatternNode) cs.condition;
+                Obj matches = res.register(pattern.compare(inter, context, ref));
+                if (res.error != null) return res;
+                if (matches.boolval) {
+                    entry = i;
+                    break;
+                }
+                continue;
+            }
             compare = res.register(cs.condition.visit(inter, context));
             if (res.error != null) return res;
 

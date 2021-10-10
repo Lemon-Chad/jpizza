@@ -16,7 +16,7 @@ import lemon.jpizza.Token;
 import java.util.*;
 
 public class ClassPlate extends Value {
-    final String name;
+    public final String name;
     public final CMethod make;
     final CMethod[] methods;
     final AttrDeclareNode[] attributes;
@@ -153,7 +153,7 @@ public class ClassPlate extends Value {
         CMethod[] methodCopies = copyMethods();
         methodIterate(classContext, methodCopies);
 
-        return res.success(new ClassInstance(classContext).set_context(context).set_pos(pos_start, pos_end));
+        return res.success(new ClassInstance(classContext, name).set_context(context).set_pos(pos_start, pos_end));
     }
 
     private void methodIterate(Context classContext, CMethod[] methodCopies) {

@@ -64,7 +64,7 @@ public class ClaccessNode extends Node {
                         context
                 ));
                 else if (val instanceof RTError) return new RTResult().failure((RTError) val);
-                return res.success(((Obj)val).set_context(((ClassInstance)var).value));
+                return res.success(((Obj)val).set_context(((ClassInstance)var).ctx));
 
             case ClassPlate:
                 Obj acval = res.register(((ClassPlate) var).access(new Str(attr_name_tok.value.toString())));

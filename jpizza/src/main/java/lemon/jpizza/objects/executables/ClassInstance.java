@@ -14,11 +14,18 @@ import java.util.*;
 public class ClassInstance extends Value {
     Position pos_start; Position pos_end;
     Context context;
-    public final Context value;
+    public final String parent;
+    public final Context ctx;
 
     public ClassInstance(Context value) {
-        this.value = value;
+        this(value, "<anon>");
+    }
+
+    public ClassInstance(Context value, String parentName) {
+        this.ctx = value;
         value.symbolTable.define("this", this);
+        value.symbolTable.define("$parent", parentName);
+        parent = parentName;
 
         set_pos(); set_context();
         jptype = Constants.JPType.ClassInstance;
@@ -26,7 +33,7 @@ public class ClassInstance extends Value {
 
     public Object access(Obj o) {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("access");
+        CMethod func = ctx.symbolTable.getbin("access");
         if (func == null)
             return _access(o);
         Obj x = res.register(func.execute(Collections.singletonList(o), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -41,10 +48,10 @@ public class ClassInstance extends Value {
                 o.get_ctx()
         );
         String other = o.string;
-        Object c = value.symbolTable.get(other);
-        Object x = value.symbolTable.getattr(other);
+        Object c = ctx.symbolTable.get(other);
+        Object x = ctx.symbolTable.getattr(other);
         if (x != null) {
-            if (value.symbolTable.isprivate(other))
+            if (ctx.symbolTable.isprivate(other))
                 return RTError.Publicity(
                         o.get_start(), o.get_end(),
                         "Attribute is private",
@@ -84,7 +91,7 @@ public class ClassInstance extends Value {
 
     public Pair<Obj, RTError> binOp(Obj other, String methodName, SuperBin superMethod) {
         RTResult res;
-        CMethod method = value.symbolTable.getbin(methodName);
+        CMethod method = ctx.symbolTable.getbin(methodName);
         if (method == null)
             return superMethod.run(other);
         res = method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
@@ -109,7 +116,7 @@ public class ClassInstance extends Value {
 
     public Pair<Obj, RTError> unOp(String methodName, SuperUn superMethod) {
         RTResult res = new RTResult();
-        CMethod method = value.symbolTable.getbin(methodName);
+        CMethod method = ctx.symbolTable.getbin(methodName);
         if (method == null)
             return superMethod.run();
         res.register(method.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(),
@@ -141,7 +148,7 @@ public class ClassInstance extends Value {
 
     public Obj delete(Obj other) {
         RTResult res;
-        CMethod method = value.symbolTable.getbin("delete");
+        CMethod method = ctx.symbolTable.getbin("delete");
         if (method == null)
             return super.delete(other);
         res = method.execute(Collections.singletonList(other), new ArrayList<>(), new HashMap<>(),
@@ -157,7 +164,7 @@ public class ClassInstance extends Value {
 
     public Obj dictionary() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("dictionary");
+        CMethod func = ctx.symbolTable.getbin("dictionary");
         if (func == null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -165,14 +172,14 @@ public class ClassInstance extends Value {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected dict (" + value.displayName + "-" + func.name + ")");
+                Shell.logger.warn("Mismatched type, expected dict (" + ctx.displayName + "-" + func.name + ")");
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
     public Obj alist() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("list");
+        CMethod func = ctx.symbolTable.getbin("list");
         if (func == null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -180,18 +187,18 @@ public class ClassInstance extends Value {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected list (" + value.displayName + "-" + func.name + ")");
+                Shell.logger.warn("Mismatched type, expected list (" + ctx.displayName + "-" + func.name + ")");
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
     public Obj astring() {
-        CMethod func = value.symbolTable.getbin("string");
+        CMethod func = ctx.symbolTable.getbin("string");
         return tstr(func);
     }
     public Obj number() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("number");
+        CMethod func = ctx.symbolTable.getbin("number");
         if (func == null)
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -199,14 +206,14 @@ public class ClassInstance extends Value {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected num (" + value.displayName + "-" + func.name + ")");
+                Shell.logger.warn("Mismatched type, expected num (" + ctx.displayName + "-" + func.name + ")");
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
     public Obj bytes() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("bytes");
+        CMethod func = ctx.symbolTable.getbin("bytes");
         if (func == null)
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -214,14 +221,14 @@ public class ClassInstance extends Value {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected bytes (" + value.displayName + "-" + func.name + ")");
+                Shell.logger.warn("Mismatched type, expected bytes (" + ctx.displayName + "-" + func.name + ")");
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
     public Obj bool() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("boolean");
+        CMethod func = ctx.symbolTable.getbin("boolean");
         if (func == null)
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -229,14 +236,14 @@ public class ClassInstance extends Value {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected bool (" + value.displayName + "-" + func.name + ")");
+                Shell.logger.warn("Mismatched type, expected bool (" + ctx.displayName + "-" + func.name + ")");
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
     public Obj anull() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("null");
+        CMethod func = ctx.symbolTable.getbin("null");
         if (func == null)
             return new Null().set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
@@ -244,7 +251,7 @@ public class ClassInstance extends Value {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected null (" + value.displayName + "-" + func.name + ")");
+                Shell.logger.warn("Mismatched type, expected null (" + ctx.displayName + "-" + func.name + ")");
             return new Null().set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
@@ -255,14 +262,14 @@ public class ClassInstance extends Value {
     public Obj tstr(CMethod func) {
         RTResult res = new RTResult();
         if (func == null)
-            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
+            return new Str(ctx.displayName).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.String) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected String (" + value.displayName + "-" + func.name + ")");
-            return new Str(value.displayName).set_context(context).set_pos(pos_start, pos_end);
+                Shell.logger.warn("Mismatched type, expected String (" + ctx.displayName + "-" + func.name + ")");
+            return new Str(ctx.displayName).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
@@ -272,21 +279,21 @@ public class ClassInstance extends Value {
     }
 
     public Obj type() {
-        CMethod func = value.symbolTable.getbin("type");
+        CMethod func = ctx.symbolTable.getbin("type");
         return tstr(func);
     }
     public Obj copy() {
         RTResult res = new RTResult();
-        CMethod func = value.symbolTable.getbin("copy");
+        CMethod func = ctx.symbolTable.getbin("copy");
         if (func == null)
-            return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
+            return new ClassInstance(ctx, parent).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
         if (res.error != null || x.jptype != Constants.JPType.ClassInstance) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
-                Shell.logger.warn("Mismatched type, expected Instance (" + value.displayName + "-" + func.name + ")");
-            return new ClassInstance(value).set_context(context).set_pos(pos_start, pos_end);
+                Shell.logger.warn("Mismatched type, expected Instance (" + ctx.displayName + "-" + func.name + ")");
+            return new ClassInstance(ctx, parent).set_context(context).set_pos(pos_start, pos_end);
         }
         return x;
     }
