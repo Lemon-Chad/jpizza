@@ -33,6 +33,10 @@ public class JDraw extends Library {
     static JFrame frame;
     static PizzaCanvas canvas;
 
+    static GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
+    static boolean fullscreen = false;
+
     static Timer refreshLoop;
 
     static boolean changed = false;
@@ -177,6 +181,7 @@ public class JDraw extends Library {
             put("keyTyped", Collections.singletonList("key"));
             put("screenshot", Collections.singletonList("filename"));
             put("playSound", Collections.singletonList("filename"));
+            put("exit", new ArrayList<>());
             put("start", new ArrayList<>());
             put("keyString", new ArrayList<>());
             put("mousePos", new ArrayList<>());
@@ -232,7 +237,7 @@ public class JDraw extends Library {
                 "AWT not initialized",
                 context
         ));
-        return new RTResult().success(null);
+        return new RTResult();
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -642,6 +647,15 @@ public class JDraw extends Library {
         String msg = txt.string;
 
         draw(new Txt(pos.x, pos.y, msg, color, font));
+        return res.success(new Null());
+    }
+
+    public RTResult execute_exit(Context execCtx) {
+        RTResult res = isInit();
+        if (res.error != null) return res;
+
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+
         return res.success(new Null());
     }
 
