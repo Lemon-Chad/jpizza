@@ -55,14 +55,14 @@ public class Interpreter {
 
         if (fnFinish != null) {
             Object func = context.symbolTable.get(fnFinish);
-            if (!(func instanceof Function)) return new RTResult().failure(RTError.Scope(
+            if (!(func instanceof Function)) return res.failure(RTError.Scope(
                     null, null,
                     "Main function provided does not exist",
                     context
             ));
 
             Function fn = (Function) func;
-            if (fn.argNames.size() != 1) return new RTResult().failure(RTError.ArgumentCount(
+            if (fn.argNames.size() != 1) return res.failure(RTError.ArgumentCount(
                     fn.pos_start, fn.pos_end,
                     "Function must take 1 argument (CMD line arguments)",
                     context
@@ -72,28 +72,21 @@ public class Interpreter {
         }
         else if (clFinish != null) {
             Object cls = context.symbolTable.get(clFinish);
-            if (!(cls instanceof ClassPlate)) return new RTResult().failure(RTError.Scope(
+            if (!(cls instanceof ClassPlate)) return res.failure(RTError.Scope(
                     null, null,
-                    "Main recipe provided does not exist",
+                    "Main class provided does not exist",
                     context
             ));
 
             ClassPlate recipe = (ClassPlate) cls;
-            if (recipe.make.argNames.size() != 0) return new RTResult().failure(RTError.ArgumentCount(
-                    recipe.get_start(), recipe.get_end(),
-                    "Recipe shouldn't take any arguments",
-                    context
-            ));
 
-            ClassInstance clsi = (ClassInstance) res.register(recipe.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), this));
-            if (res.error != null) return res;
-
-            Object func = clsi.access(new Str("main").set_context(recipe.context));
-            if (!(func instanceof CMethod)) return new RTResult().failure(RTError.Scope(
+            Obj func = res.register(recipe.access(new Str("main").set_context(recipe.context)));
+            if (res.error != null && res.error.error_name.equals("Scope") || !(func instanceof CMethod)) return res.failure(RTError.Scope(
                     recipe.get_start(), recipe.get_end(),
-                    "Recipe has no main method",
+                    "Class has no main method",
                     recipe.context
             ));
+            if (res.error != null) return res;
 
             CMethod meth = (CMethod) func;
             if (meth.argNames.size() != 1) return new RTResult().failure(RTError.Scope(
