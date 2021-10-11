@@ -33,8 +33,6 @@ public class JDraw extends Library {
     static JFrame frame;
     static PizzaCanvas canvas;
 
-    static GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-
     static boolean fullscreen = false;
 
     static Timer refreshLoop;
@@ -284,6 +282,7 @@ public class JDraw extends Library {
     }
 
     public RTResult execute_init(Context execCtx) {
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         frame = new JFrame("JPizzAwt");
         frame.setFocusTraversalKeysEnabled(false); 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
