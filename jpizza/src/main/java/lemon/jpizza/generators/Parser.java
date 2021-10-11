@@ -929,6 +929,11 @@ public class Parser {
         ));
         res.registerAdvancement(); advance();
 
+        boolean pub = currentToken.matches(TT.KEYWORD, "pub");
+        if (pub) {
+            res.registerAdvancement(); advance();
+        }
+
         if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected identifier"
@@ -993,7 +998,7 @@ public class Parser {
         endLine(1);
         res.registerAdvancement(); advance();
 
-        return res.success(new EnumNode(name, children, childrenParam, childrenTypes));
+        return res.success(new EnumNode(name, children, childrenParam, childrenTypes, pub));
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -1081,9 +1086,9 @@ public class Parser {
         ParseResult res = new ParseResult();
         HashMap<Token, Node> patterns = new HashMap<>();
 
-        if (currentToken.type != TT.OPEN) return res.failure(Error.ExpectedCharError(
+        if (currentToken.type != TT.LPAREN) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '{'"
+                "Expected '('"
         ));
 
         if (peek(1).type == TT.IDENTIFIER) do {
@@ -1106,9 +1111,9 @@ public class Parser {
             res.registerAdvancement(); advance();
         }
 
-        if (currentToken.type != TT.CLOSE) return res.failure(Error.ExpectedCharError(
+        if (currentToken.type != TT.RPAREN) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'"
+                "Expected ')'"
         ));
         res.registerAdvancement(); advance();
 
@@ -1160,7 +1165,7 @@ public class Parser {
             if (!def) {
                 condition = (Node) res.register(expr());
                 if (res.error != null) return res;
-                if (currentToken.type == TT.OPEN) {
+                if (currentToken.type == TT.LPAREN) {
                     condition = (Node) res.register(patternExpr(condition));
                     if (res.error != null) return res;
                 }
