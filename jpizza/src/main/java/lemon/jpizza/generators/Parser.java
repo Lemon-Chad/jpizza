@@ -139,7 +139,7 @@ public class Parser {
         if (!currentToken.type.equals(TT.NEWLINE) && !currentToken.type.equals(TT.INVISILINE)) {
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    String.format("Missing semicolon, found %s", currentToken)
+                    String.format("Missing semicolon, found %s", tokenFound())
             ));
         } advance();
         return res.success(new ListNode(
@@ -147,6 +147,12 @@ public class Parser {
                 pos_start,
                 currentToken.pos_end.copy()
         ));
+    }
+
+    private String tokenFound() {
+        if (currentToken.value != null)
+            return String.valueOf(currentToken.value);
+        return String.valueOf(currentToken.type);
     }
 
     public ParseResult statement() {
@@ -766,7 +772,7 @@ public class Parser {
         }
         return res.failure(Error.InvalidSyntax(
                 tok.pos_start.copy(), tok.pos_end != null ? tok.pos_end.copy() : tok.pos_start.copy(),
-                String.format("Expected long, double, identifier, '+', '-', or '('. Found %s", tok)
+                String.format("Expected long, double, identifier, '+', '-', or '('. Found %s", tokenFound())
         ));
     }
 
@@ -1120,6 +1126,10 @@ public class Parser {
         return res.success(new PatternNode(expr, patterns));
     }
 
+    interface Branch {
+        RTResult run();
+    }
+
     @SuppressWarnings("DuplicatedCode")
     public ParseResult matchExpr() {
         ParseResult res = new ParseResult();
@@ -1156,20 +1166,35 @@ public class Parser {
             ));
         res.registerAdvancement(); advance();
 
-        boolean def;
-        Node condition, body;
-        while (currentToken.matches(TT.KEYWORD, "case") || currentToken.matches(TT.KEYWORD, "default")) {
+        Node body;
+        boolean pat, def;
+        while (currentToken.type != TT.CLOSE) {
+            pat = !currentToken.matches(TT.KEYWORD, "case") && !currentToken.matches(TT.KEYWORD, "default");
             def = currentToken.matches(TT.KEYWORD, "default");
-            res.registerAdvancement(); advance();
 
-            if (!def) {
-                condition = (Node) res.register(expr());
-                if (res.error != null) return res;
-                if (currentToken.type == TT.LPAREN) {
-                    condition = (Node) res.register(patternExpr(condition));
+            List<Node> conditions = new ArrayList<>();
+            reverse();
+            do {
+                res.registerAdvancement(); advance();
+                Node condition;
+                if (pat) {
+                    condition = (Node) res.register(atom());
                     if (res.error != null) return res;
+                    if (currentToken.type == TT.LPAREN) {
+                        condition = (Node) res.register(patternExpr(condition));
+                        if (res.error != null) return res;
+                    }
+                } else {
+                    res.registerAdvancement();
+                    advance();
+                    if (!def) {
+                        condition = (Node) res.register(expr());
+                        if (res.error != null) return res;
+                    } else condition = null;
                 }
-            } else condition = null;
+                if (condition != null)
+                    conditions.add(condition);
+            } while (currentToken.type == TT.COMMA);
 
             if (currentToken.type != TT.LAMBDA) return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -1182,18 +1207,13 @@ public class Parser {
 
             if (def)
                 elseCase = new ElseCase(body, false);
-            else
+            else for (Node condition: conditions)
                 cases.add(new Case(condition, body, false));
             res.register(expectSemicolon());
             if (res.error != null) return res;
             res.registerAdvancement(); advance();
         }
 
-        if (!currentToken.type.equals(TT.CLOSE))
-            return res.failure(Error.ExpectedCharError(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'"
-            ));
         res.registerAdvancement(); advance();
 
         Node swtch = new SwitchNode(ref, cases, elseCase, true);

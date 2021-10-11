@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Tokens;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -26,8 +27,12 @@ public class ClassPlate extends Value {
     final ClassPlate parent;
     final List<String> methodNames;
 
-    public ClassPlate(String name, AttrDeclareNode[] attributes, CMethod make, CMethod[] methods, ClassPlate parent) {
+    final List<Token> generics;
+
+    public ClassPlate(String name, AttrDeclareNode[] attributes, CMethod make, CMethod[] methods, ClassPlate parent,
+                      List<Token> generics) {
         this.name = name;
+        this.generics = generics;
         this.parent = parent;
         this.make = make;
         this.attributes = attributes;
@@ -150,6 +155,11 @@ public class ClassPlate extends Value {
         res.register(make.execute(args, generics, kwargs, parent));
         if (res.error != null) return res;
 
+        for (int i = 0; i < generics.size(); i++) {
+            classContext.symbolTable.declareattr(this.generics.get(i), context,
+                    new Str(generics.get(i).value.toString()));
+        }
+
         CMethod[] methodCopies = copyMethods();
         methodIterate(classContext, methodCopies);
 
@@ -181,7 +191,7 @@ public class ClassPlate extends Value {
     // Defaults
 
     public boolean isAsync() { return false; }
-    public Obj copy() { return new ClassPlate(name, attributes, (CMethod) make.copy(), copyMethods(), parent)
+    public Obj copy() { return new ClassPlate(name, attributes, (CMethod) make.copy(), copyMethods(), parent, generics)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj type() { return new Str("recipe").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() { return "<recipe-"+name+">"; }

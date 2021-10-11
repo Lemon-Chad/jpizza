@@ -116,6 +116,7 @@ public class PatternNode extends Node {
                 ));
             context.symbolTable.define(entry.getValue(), v);
         }
+
         return res.success(new Bool(true));
     }
 }

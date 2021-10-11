@@ -94,6 +94,8 @@ public abstract class Obj implements Serializable {
         if (o == this) return true;
         if (!(o instanceof Obj)) return false;
 
+        if (jptype != ((Obj) o).jptype) return false;
+
         Pair<Obj, RTError> val = this.eq((Obj) o);
         if (val.b != null) return false;
         return val.a.boolval;

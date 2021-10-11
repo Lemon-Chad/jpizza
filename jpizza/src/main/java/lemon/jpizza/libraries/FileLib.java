@@ -38,6 +38,7 @@ public class FileLib extends Library {
             put("getCWD", new ArrayList<>());
             put("isFileDirectory", Collections.singletonList("file"));
             put("deleteFile", Collections.singletonList("file"));
+            put("deleteDir", Collections.singletonList("directory"));
         }});
     }
 
@@ -50,7 +51,7 @@ public class FileLib extends Library {
         if(!Files.exists(Path.of(dir))){
             return new RTResult().failure(RTError.FileNotFound(value.pos_start, value.pos_end, "File not found", execCtx));
         }
-        Boolean isDirectory = Files.isDirectory(Path.of(dir));
+        boolean isDirectory = Files.isDirectory(Path.of(dir));
         if(isDirectory){
             try {
                 FileUtils.deleteDirectory(new File(dir));

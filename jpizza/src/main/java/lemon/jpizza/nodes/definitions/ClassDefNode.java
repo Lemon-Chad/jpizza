@@ -103,7 +103,7 @@ public class ClassDefNode extends Node {
                 parent = (ClassPlate) p;
             }
 
-            Obj classValue = new ClassPlate(name, attributes, make, methods, parent)
+            Obj classValue = new ClassPlate(name, attributes, make, methods, parent, generic_toks)
                     .set_context(classContext).set_pos(pos_start, pos_end);
             context.symbolTable.define(name, classValue);
 

@@ -25,8 +25,9 @@ public class SwitchNode extends Node {
         autoreturn = autoret;
         cases = css;
         reference = ref;
-        pos_start = cases.get(0).condition.pos_start.copy(); pos_end = (
-                else_case != null ? else_case.statements : cases.get(cases.size() - 1).condition
+        pos_start = (cases.size() > 0 ? cases.get(0).condition : ref).pos_start.copy();
+        pos_end = (else_case != null ? else_case.statements :
+                (cases.size() > 0 ? cases.get(cases.size() - 1).condition : ref)
         ).pos_end.copy();
         jptype = Constants.JPType.Switch;
     }
@@ -59,6 +60,8 @@ public class SwitchNode extends Node {
             }
             compare = res.register(cs.condition.visit(inter, context));
             if (res.error != null) return res;
+
+            System.out.println(ref.jptype);
 
             if (ref.equals(compare)) {
                 entry = i;
