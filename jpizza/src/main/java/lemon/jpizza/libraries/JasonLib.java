@@ -27,7 +27,8 @@ public class JasonLib extends Library {
             TT.BITE,
             TT.OPEN,
             TT.CLOSE,
-            TT.EOF
+            TT.EOF,
+            TT.BOOL
     );
 
     public JasonLib(String name) { super(name, "json"); }
