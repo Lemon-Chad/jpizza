@@ -1,7 +1,6 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
-import lemon.jpizza.Tokens;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -132,6 +131,13 @@ public class ClassPlate extends Value {
         Context classContext = new Context(name, context, pos_start);
         classContext.symbolTable = new SymbolTable(context.symbolTable);
 
+        for (int i = 0; i < generics.size(); i++) {
+            Token key = this.generics.get(i);
+            String value = generics.get(i).value.toString();
+            classContext.symbolTable.declareattr(key, context, new Str(value));
+            classContext.symbolTable.addGeneric(key.value.toString(), value);
+        }
+
         AttrDeclareNode[] attributes = getAttributes();
         int length = attributes.length;
         AttrDeclareNode curr;
@@ -154,11 +160,6 @@ public class ClassPlate extends Value {
 
         res.register(make.execute(args, generics, kwargs, parent));
         if (res.error != null) return res;
-
-        for (int i = 0; i < generics.size(); i++) {
-            classContext.symbolTable.declareattr(this.generics.get(i), context,
-                    new Str(generics.get(i).value.toString()));
-        }
 
         CMethod[] methodCopies = copyMethods();
         methodIterate(classContext, methodCopies);

@@ -25,6 +25,7 @@ public class SymbolTable implements Serializable {
     final Map<String, CMethod> bins = new HashMap<>();
     final Map<String, Node> dyns = new HashMap<>();
     final SymbolTable parent;
+    final Map<String, String> generics = new HashMap<>();
 
     public SymbolTable() {
         parent = null;
@@ -37,8 +38,16 @@ public class SymbolTable implements Serializable {
         return attributes;
     }
 
-    public Map<String, VarNode> symbols() {
-        return symbols;
+    public void addGeneric(String key, String value) {
+        generics.put(key, value);
+    }
+
+    public String getType(String key) {
+        if (generics.containsKey(key))
+            return generics.get(key);
+        else if (parent != null)
+            return parent.getType(key);
+        return key;
     }
 
     public Object get(String name) {
@@ -74,6 +83,7 @@ public class SymbolTable implements Serializable {
     }
 
     public RTError.ErrorDetails define(String name, Object value, boolean locked, String type, Integer min, Integer max) {
+        type = getType(type);
         if (symbols.containsKey(name) && symbols.get(name).locked)
             return RTError.makeDetails(RTError::Const, "Baked variable already defined");
         if (min != null || max != null)
@@ -182,6 +192,7 @@ public class SymbolTable implements Serializable {
         }
     }
     public void setattrtype(String name, String type) {
+        type = getType(type);
         if (attributes.containsKey(name)) {
             attrtypes.put(name, type);
         } else if (parent != null) {

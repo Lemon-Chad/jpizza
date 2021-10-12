@@ -151,8 +151,12 @@ public class Function extends BaseFunction {
 
         HashMap<String, String> genericKey = new HashMap<>();
         int genericSize = generics.size();
-        for (int i = 0; i < genericSize; i++)
-            genericKey.put(this.generics.get(i).value.toString(), generics.get(i).value.toString());
+        for (int i = 0; i < genericSize; i++) {
+            String key = this.generics.get(i).value.toString();
+            String value = generics.get(i).value.toString();
+            genericKey.put(key, value);
+            execCtx.symbolTable.addGeneric(key, value);
+        }
 
         if (argname != null && args.size() > argNames.size()) {
             execCtx.symbolTable.define(argname, new PList(new ArrayList<>(args.subList(argNames.size(), args.size()))));
@@ -194,6 +198,7 @@ public class Function extends BaseFunction {
                     res.funcReturn != null ? res.funcReturn : new Null()
                 );
 
+        String returnType = execCtx.symbolTable.getType(this.returnType);
         if (!returnType.equals("any")) {
             Obj type = retValue.type().astring();
             if (type.jptype != Constants.JPType.String) return res.failure(RTError.Type(
