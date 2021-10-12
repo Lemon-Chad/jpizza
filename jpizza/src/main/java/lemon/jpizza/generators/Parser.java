@@ -241,6 +241,10 @@ public class Parser {
             Token var_name = (Token) res.register(extractVarTok());
             if (res.error != null) return res;
 
+            if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Should be '=>'"
+            ));
             if (!currentToken.type.equals(TT.EQ))
                 return res.success(new AttrAccessNode(var_name));
 
@@ -364,6 +368,10 @@ public class Parser {
                 type = typeTok.value.toString();
             }
 
+            if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Should be '=>'"
+            ));
             if (!currentToken.type.equals(TT.EQ))
                 return res.success(new VarAssignNode(
                         var_name, new NullNode(new Token(
@@ -726,6 +734,10 @@ public class Parser {
         }
         else if (tok.type.equals(TT.IDENTIFIER)) {
             res.registerAdvancement(); advance();
+            if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Should be '=>'"
+            ));
             if (currentToken.type.equals(TT.EQ)) {
                 res.registerAdvancement(); advance();
                 Node value = (Node) res.register(expr());
@@ -2264,6 +2276,10 @@ while (false) {
             }
 
             Node expr = null;
+            if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Should be '=>'"
+            ));
             if (currentToken.type == TT.EQ) {
                 result.registerAdvancement(); advance();
                 expr = (Node) result.register(this.expr());
@@ -2381,6 +2397,10 @@ while (false) {
             else if (currentToken.type.equals(TT.IDENTIFIER)) {
                 Token valTok = currentToken;
                 res.registerAdvancement(); advance();
+                if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Should be '=>'"
+                ));
                 if (currentToken.type == TT.EQ || currentToken.type == TT.BITE) {
                     res.register(getComplexAttr.apply(valTok, false, false));
                     if (res.error != null) return res;
