@@ -47,6 +47,7 @@ public class BuiltInFunction extends Library {
             put("foreach", Arrays.asList("list", "func"));
             put("append", Arrays.asList("list", "value"));
             put("remove", Arrays.asList("list", "value"));
+            put("indexOf", Arrays.asList("value", "item"));
             put("pop", Arrays.asList("list", "value"));
             put("extend", Arrays.asList("listA", "listB"));
             put("contains", Arrays.asList("list", "value"));
@@ -102,6 +103,7 @@ public class BuiltInFunction extends Library {
             put("arcsin", Collections.singletonList("a"));
             put("arccos", Collections.singletonList("a"));
             put("arctan", Collections.singletonList("a"));
+            put("parseNum", Collections.singletonList("str"));
             put("random", new ArrayList<>());
             put("clear", new ArrayList<>());
             put("createDennis", new ArrayList<>());
@@ -258,23 +260,46 @@ public class BuiltInFunction extends Library {
         return new RTResult().success(res.resolve());
     }
 
+    public RTResult execute_indexOf(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj lst = res.register(checkType(execCtx.symbolTable.get("value"), "list", Constants.JPType.List));
+        if (res.error != null) return res;
+        Obj item = (Obj) execCtx.symbolTable.get("item");
+        return res.success(new Num(lst.list.indexOf(item)));
+    }
+
+    public RTResult execute_parseNum(Context execCtx) {
+        RTResult res = new RTResult();
+        Obj str = res.register(checkType(execCtx.symbolTable.get("str"), "String", Constants.JPType.String));
+        if (res.error != null) return res;
+        try {
+            return res.success(new Num(Double.parseDouble(str.string)));
+        } catch (NumberFormatException e) {
+            return res.failure(RTError.Formatting(
+                    str.get_start(), str.get_end(),
+                    "Invalid number format",
+                    execCtx
+            ));
+        }
+    }
+
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));
         if (o.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(RTError.Type(
-                o.pos_start, o.pos_end,
+                o.get_start(), o.get_end(),
                 "Expected class instance",
-                context
+                execCtx
         ));
         Obj acc = ((Obj) execCtx.symbolTable.get("value"));
         if (acc.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
-                acc.pos_start, acc.pos_end,
+                acc.get_start(), acc.get_end(),
                 "Expected String",
-                context
+                execCtx
         ));
         var val = ((ClassInstance) o)._access(acc);
         if (val instanceof String)
-            return Interpreter.getThis(val, execCtx, o.pos_start, acc.pos_end);
+            return Interpreter.getThis(val, execCtx, o.get_start(), acc.get_end());
         else if (val instanceof RTError) return new RTResult().failure((RTError) val);
         return new RTResult().success(((Obj)val).set_context(((ClassInstance)o).ctx));
     }
@@ -283,15 +308,15 @@ public class BuiltInFunction extends Library {
     public RTResult execute_hasattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));
         if (o.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(RTError.Type(
-                o.pos_start, o.pos_end,
+                o.get_start(), o.get_end(),
                 "Expected class instance",
-                context
+                execCtx
         ));
         Obj acc = ((Obj) execCtx.symbolTable.get("value"));
         if (acc.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
-                acc.pos_start, acc.pos_end,
+                acc.get_start(), acc.get_end(),
                 "Expected String",
-                context
+                execCtx
         ));
         var val = ((ClassInstance) o)._access(acc);
         return new RTResult().success(new Bool(!(val instanceof RTError)));
@@ -737,7 +762,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_sim(Context execCtx) {
         Obj in = ((Obj) execCtx.symbolTable.get("value")).astring();
         if (in.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
-                in.pos_start, in.pos_end,
+                in.get_start(), in.get_end(),
                 "Expected string input",
                 execCtx
         ));
@@ -760,7 +785,7 @@ public class BuiltInFunction extends Library {
         if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
-                context
+                execCtx
         ));
         List<Obj> value = list.list;
         if (value.size() == 0) return new RTResult().success(new Null());
