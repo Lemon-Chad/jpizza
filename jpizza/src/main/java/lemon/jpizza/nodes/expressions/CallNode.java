@@ -70,7 +70,7 @@ public class CallNode extends Node {
         }
 
         if (valueToCall.jptype == Constants.JPType.EnumChild) {
-            Obj ret = res.register(((EnumJChild) valueToCall).instance(context, args));
+            Obj ret = res.register(((EnumJChild) valueToCall).instance(context, args, generics));
             if (res.error != null) return res;
             return res.success(ret);
         }

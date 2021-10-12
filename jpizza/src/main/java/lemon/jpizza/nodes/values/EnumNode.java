@@ -3,6 +3,7 @@ package lemon.jpizza.nodes.values;
 import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
+import lemon.jpizza.generators.Parser.EnumChild;
 import lemon.jpizza.objects.primitives.EnumJ;
 import lemon.jpizza.objects.primitives.EnumJChild;
 import lemon.jpizza.results.RTResult;
@@ -13,18 +14,13 @@ import java.util.List;
 import java.util.Map;
 
 public class EnumNode extends ValueNode {
-    final List<Token> children;
-    final List< List<String> > childrenParams;
-    final List< List<String> > childrenTypes;
+    final List<EnumChild> children;
     final boolean pub;
 
-    public EnumNode(Token tok, List<Token> children, List< List<String> > childrenParams,
-                    List< List<String> > childrenTypes, boolean pub) {
+    public EnumNode(Token tok, List<EnumChild> children, boolean pub) {
         super(tok);
-        this.pub = pub;
-        this.childrenParams = childrenParams;
-        this.childrenTypes = childrenTypes;
         this.children = children;
+        this.pub = pub;
         jptype = Constants.JPType.Enum;
     }
 
@@ -34,8 +30,10 @@ public class EnumNode extends ValueNode {
         int size = this.children.size();
 
         for (int i = 0; i < size; i++) {
-            String key = this.children.get(i).value.toString();
-            EnumJChild child = new EnumJChild(i, this.childrenParams.get(i), this.childrenTypes.get(i));
+            EnumChild c = this.children.get(i);
+            assert c.token.value != null;
+            String key = c.token.value.toString();
+            EnumJChild child = new EnumJChild(i, c.params, c.types, c.generics);
 
             children.put(key, child);
 

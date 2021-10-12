@@ -4,7 +4,6 @@ import lemon.jpizza.*;
 import lemon.jpizza.cases.Case;
 import lemon.jpizza.cases.ElseCase;
 import lemon.jpizza.errors.Error;
-import lemon.jpizza.errors.RTError;
 import lemon.jpizza.errors.Tip;
 import lemon.jpizza.nodes.definitions.*;
 import lemon.jpizza.nodes.expressions.*;
@@ -933,12 +932,23 @@ public class Parser {
 
     }
 
+    public static class EnumChild {
+        public final List<String> params;
+        public final List<String> types;
+        public final List<String> generics;
+        public final Token token;
+        public EnumChild(Token token, List<String> params, List<String> types, List<String> generics) {
+            this.params = params;
+            this.types = types;
+            this.generics = generics;
+            this.token = token;
+        }
+    }
+
     public ParseResult enumExpr() {
         ParseResult res = new ParseResult();
 
-        List<Token> children = new ArrayList<>();
-        List< List<String> > childrenParam = new ArrayList<>();
-        List< List<String> > childrenTypes = new ArrayList<>();
+        List<EnumChild> children = new ArrayList<>();
         Token name;
 
         if (!currentToken.matches(TT.KEYWORD, "enum")) return res.failure(Error.InvalidSyntax(
@@ -947,8 +957,8 @@ public class Parser {
         ));
         res.registerAdvancement(); advance();
 
-        boolean pub = currentToken.matches(TT.KEYWORD, "pub");
-        if (pub) {
+        boolean pub;
+        if (pub = currentToken.matches(TT.KEYWORD, "pub")) {
             res.registerAdvancement(); advance();
         }
 
@@ -967,12 +977,28 @@ public class Parser {
         res.registerAdvancement(); advance();
 
         while (currentToken.type == TT.IDENTIFIER) {
-            children.add(currentToken);
+            Token token = currentToken;
             res.registerAdvancement(); advance();
 
+            List<String> generics = new ArrayList<>();
+            if (currentToken.type == TT.LPAREN) {
+                do {
+                    Token ident = (Token) res.register(expectIdentifier());
+                    if (res.error != null) return res;
+                    res.registerAdvancement(); advance();
+                    generics.add(ident.value.toString());
+                } while (currentToken.type == TT.COMMA);
+
+                if (currentToken.type != TT.RPAREN) return res.failure(Error.ExpectedCharError(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected ')'"
+                ));
+                res.registerAdvancement(); advance();
+            }
+
+            List<String> params = new ArrayList<>();
+            List<String> types = new ArrayList<>();
             if (currentToken.type == TT.OPEN) {
-                List<String> params = new ArrayList<>();
-                List<String> types = new ArrayList<>();
                 do {
                     Token tok = (Token) res.register(expectIdentifier());
                     if (res.error != null) return res;
@@ -994,11 +1020,6 @@ public class Parser {
                         "Expected '}'"
                 ));
                 res.registerAdvancement(); advance();
-                childrenParam.add(params);
-                childrenTypes.add(types);
-            } else {
-                childrenParam.add(new ArrayList<>());
-                childrenTypes.add(new ArrayList<>());
             }
 
             if (currentToken.type != TT.COMMA) return res.failure(Error.ExpectedCharError(
@@ -1006,6 +1027,7 @@ public class Parser {
                     "Expected comma"
             ));
             res.registerAdvancement(); advance();
+            children.add(new EnumChild(token, params, types, generics));
         }
 
         if (!currentToken.type.equals(TT.CLOSE))
@@ -1016,7 +1038,7 @@ public class Parser {
         endLine(1);
         res.registerAdvancement(); advance();
 
-        return res.success(new EnumNode(name, children, childrenParam, childrenTypes, pub));
+        return res.success(new EnumNode(name, children, pub));
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -1136,10 +1158,6 @@ public class Parser {
         res.registerAdvancement(); advance();
 
         return res.success(new PatternNode(expr, patterns));
-    }
-
-    interface Branch {
-        RTResult run();
     }
 
     @SuppressWarnings("DuplicatedCode")

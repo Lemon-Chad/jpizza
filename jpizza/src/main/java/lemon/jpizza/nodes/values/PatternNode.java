@@ -83,7 +83,7 @@ public class PatternNode extends Node {
                 break;
             }
             default: return res.failure(RTError.Type(
-                    cls.pos_start, cls.pos_end,
+                    cls.get_start(), cls.get_end(),
                     "Expected data type",
                     context
             ));

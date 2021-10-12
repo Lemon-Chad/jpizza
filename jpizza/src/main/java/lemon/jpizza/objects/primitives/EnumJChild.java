@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.primitives;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Token;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.objects.executables.ClassInstance;
@@ -19,19 +20,20 @@ public class EnumJChild extends Value {
     public final int val;
     final List<String> params;
     final List<String> types;
+    final List<String> generics;
 
-
-    public EnumJChild(int val, List<String> params, List<String> types) {
+    public EnumJChild(int val, List<String> params, List<String> types, List<String> generics) {
         this.val = val;
         this.params = params;
         this.types = types;
+        this.generics = generics;
 
         jptype = Constants.JPType.EnumChild;
     }
 
     // Functions
 
-    public RTResult instance(Context parent, List<Obj> args) {
+    public RTResult instance(Context parent, List<Obj> args, List<Token> gens) {
         Context ctx = new Context(this.parent.name, parent, pos_start);
         ctx.symbolTable = new SymbolTable();
 
@@ -41,9 +43,21 @@ public class EnumJChild extends Value {
                 parent
         ));
 
+        if (gens.size() != generics.size()) return new RTResult().failure(RTError.ArgumentCount(
+                pos_start, pos_end,
+                String.format("Expected %s generics, got %s", generics.size(), gens.size()),
+                parent
+        ));
+
+        HashMap<String, String> genericKey = new HashMap<>();
+        for (int i = 0; i < generics.size(); i++)
+            genericKey.put(generics.get(i), gens.get(i).value.toString());
+
         int tSize = types.size();
         for (int i = 0; i < tSize; i++) {
             String type = types.get(i);
+            if (genericKey.containsKey(type))
+                type = genericKey.get(type);
             if (type.equals("any")) continue;
 
             Obj arg = args.get(i);
@@ -110,7 +124,7 @@ public class EnumJChild extends Value {
 
     public String toString() { return parent.name + "::" + val; }
     public Obj type() { return new Str(parent.name).set_context(context).set_pos(pos_start, pos_end); }
-    public Obj copy() { return new EnumJChild(val, params, types).setParent(parent)
+    public Obj copy() { return new EnumJChild(val, params, types, generics).setParent(parent)
                                     .set_context(context).set_pos(pos_start, pos_end); }
 
 }
