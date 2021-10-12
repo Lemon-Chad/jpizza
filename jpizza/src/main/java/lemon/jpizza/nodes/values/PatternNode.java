@@ -12,7 +12,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.executables.ClassPlate;
 import lemon.jpizza.objects.primitives.Bool;
-import lemon.jpizza.objects.primitives.EnumJChild;
+import lemon.jpizza.objects.executables.EnumJChild;
 import lemon.jpizza.results.RTResult;
 
 import java.util.HashMap;

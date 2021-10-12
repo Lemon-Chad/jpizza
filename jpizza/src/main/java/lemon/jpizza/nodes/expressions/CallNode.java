@@ -8,7 +8,7 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.executables.BaseFunction;
 import lemon.jpizza.objects.executables.ClassPlate;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.EnumJChild;
+import lemon.jpizza.objects.executables.EnumJChild;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;

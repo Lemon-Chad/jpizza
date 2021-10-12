@@ -1,19 +1,20 @@
-package lemon.jpizza.objects.primitives;
+package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Token;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
-import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.Value;
+import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EnumJChild extends Value {
     public EnumJ parent;
@@ -37,20 +38,23 @@ public class EnumJChild extends Value {
         Context ctx = new Context(this.parent.name, parent, pos_start);
         ctx.symbolTable = new SymbolTable();
 
+        HashMap<String, String> genericKey = new HashMap<>();
+        BaseFunction.inferGenerics(args, types, generics, genericKey, pos_start, pos_end, context);
+
         if (args.size() != params.size()) return new RTResult().failure(RTError.ArgumentCount(
                 pos_start, pos_end,
                 String.format("Expected %s args, got %s", params.size(), args.size()),
                 parent
         ));
 
-        if (gens.size() != generics.size()) return new RTResult().failure(RTError.ArgumentCount(
+        if (gens.size() + genericKey.size() < generics.size() || gens.size() > generics.size())
+            return new RTResult().failure(RTError.ArgumentCount(
                 pos_start, pos_end,
                 String.format("Expected %s generics, got %s", generics.size(), gens.size()),
                 parent
         ));
 
-        HashMap<String, String> genericKey = new HashMap<>();
-        for (int i = 0; i < generics.size(); i++)
+        for (int i = genericKey.size(); i < generics.size(); i++)
             genericKey.put(generics.get(i), gens.get(i).value.toString());
 
         int tSize = types.size();

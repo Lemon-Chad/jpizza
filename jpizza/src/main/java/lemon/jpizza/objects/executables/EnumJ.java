@@ -1,14 +1,14 @@
-package lemon.jpizza.objects.primitives;
+package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.NullNode;
-import lemon.jpizza.objects.executables.Function;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.Value;
 import lemon.jpizza.Token;
 import lemon.jpizza.Tokens;
+import lemon.jpizza.objects.primitives.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Position;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -76,6 +77,27 @@ public class BaseFunction extends Value {
 
         }
 
+        return res.success(null);
+    }
+
+    public static RTResult inferGenerics(List<Obj> args, List<String> types, List<String> generics, HashMap<String, String> genericKey,
+                                         Position pos_start, Position pos_end, Context ctx) {
+        RTResult res = new RTResult();
+
+        int len = Math.min(args.size(), types.size());
+        for (int i = 0; i < len; i++) {
+            String expect = types.get(i);
+            if (generics.contains(expect) && !genericKey.containsKey(expect)) {
+                String actual = args.get(i).type().toString();
+                genericKey.put(expect, actual);
+            }
+        }
+
+        if (genericKey.size() < generics.size()) return res.failure(RTError.GenericCount(
+                pos_start, pos_end,
+                String.format("Got %s too few generics", generics.size() - genericKey.size()),
+                ctx
+        ));
         return res.success(null);
     }
 

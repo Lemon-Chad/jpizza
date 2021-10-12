@@ -4,8 +4,8 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.generators.Parser.EnumChild;
-import lemon.jpizza.objects.primitives.EnumJ;
-import lemon.jpizza.objects.primitives.EnumJChild;
+import lemon.jpizza.objects.executables.EnumJ;
+import lemon.jpizza.objects.executables.EnumJChild;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 

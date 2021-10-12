@@ -10,11 +10,13 @@ import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Function extends BaseFunction {
     final Node bodyNode;
@@ -135,13 +137,22 @@ public class Function extends BaseFunction {
         Interpreter interpreter = new Interpreter(parent.memo);
         Context execCtx = newContext();
 
+        HashMap<String, String> genericKey = new HashMap<>();
+
+        List<String> stringerics = new ArrayList<>();
+        for (Token g : this.generics)
+            stringerics.add(g.value.toString());
+
+        res.register(inferGenerics(args, argTypes, stringerics, genericKey, pos_start, pos_end, context));
+        if (res.error != null) return res;
+
         if (generics.size() > this.generics.size()) {
             return res.failure(RTError.GenericCount(
                     pos_start, pos_end,
                     String.format("Got %s too many generic types", generics.size() - this.generics.size()),
                     context
             ));
-        } else if (generics.size() < this.generics.size()) {
+        } else if (generics.size() + genericKey.size() < this.generics.size()) {
             return res.failure(RTError.GenericCount(
                     pos_start, pos_end,
                     String.format("Got %s too few generic types", this.generics.size() - generics.size()),
@@ -149,14 +160,15 @@ public class Function extends BaseFunction {
             ));
         }
 
-        HashMap<String, String> genericKey = new HashMap<>();
         int genericSize = generics.size();
-        for (int i = 0; i < genericSize; i++) {
-            String key = this.generics.get(i).value.toString();
+        for (int i = genericKey.size(); i < genericSize; i++) {
+            String key = stringerics.get(i);
             String value = generics.get(i).value.toString();
             genericKey.put(key, value);
-            execCtx.symbolTable.addGeneric(key, value);
         }
+
+        for (Map.Entry<String, String> entry : genericKey.entrySet())
+            execCtx.symbolTable.addGeneric(entry.getKey(), entry.getValue());
 
         if (argname != null && args.size() > argNames.size()) {
             execCtx.symbolTable.define(argname, new PList(new ArrayList<>(args.subList(argNames.size(), args.size()))));
