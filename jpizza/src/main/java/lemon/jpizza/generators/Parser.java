@@ -1324,7 +1324,8 @@ match (a) {
                 }
                 res.registerAdvancement();
                 advance();
-                if (currentToken.type == TT.LT) {
+                if (currentToken.type == TT.LT && peek(1).type == TT.IDENTIFIER) {
+                    int advancements = 1;
                     res.registerAdvancement();
                     advance();
                     if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
@@ -1333,21 +1334,26 @@ match (a) {
                     ));
                     generics.add(currentToken);
                     res.registerAdvancement(); advance();
+                    advancements++;
                     while (currentToken.type == TT.COMMA) {
                         res.registerAdvancement();
                         advance();
+                        advancements++;
                         if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
                                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                                 "Expected type"
                         ));
                         generics.add(currentToken);
                         res.registerAdvancement(); advance();
+                        advancements++;
                     }
-                    if (currentToken.type != TT.GT) return res.failure(Error.ExpectedCharError(
-                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                            "Expected '>'"
-                    ));
-                    res.registerAdvancement(); advance();
+                    if (currentToken.type != TT.GT) {
+                        generics = new ArrayList<>();
+                        reverse(advancements);
+                    } else {
+                        res.registerAdvancement();
+                        advance();
+                    }
                 }
                 node = new CallNode(
                         node,
