@@ -5,7 +5,7 @@ import lemon.jpizza.Position;
 import java.io.Serializable;
 
 public class Context implements Serializable {
-    public final String displayName;
+    public String displayName;
     public final Context parent;
     public final Position parentEntryPos;
     public SymbolTable symbolTable;

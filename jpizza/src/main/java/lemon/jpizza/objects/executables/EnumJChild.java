@@ -14,6 +14,7 @@ import lemon.jpizza.results.RTResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class EnumJChild extends Value {
@@ -87,6 +88,17 @@ public class EnumJChild extends Value {
         for (int i = 0; i < args.size(); i++)
             ctx.symbolTable.define(params.get(i), args.get(i));
 
+        StringBuilder genericAddition = new StringBuilder();
+        if (genericKey.size() > 0) {
+            genericAddition.append("(");
+            for (String key : generics) {
+                genericAddition.append(genericKey.get(key)).append(",");
+            }
+            genericAddition.setLength(genericAddition.length() - 1);
+            genericAddition.append(")");
+        }
+
+        ctx.displayName = this.parent.name + genericAddition.toString();
         return new RTResult().success(new ClassInstance(ctx, this.parent.name));
     }
 
