@@ -72,7 +72,9 @@ public class ForNode extends Node {
             step = 1;
         }
         long round = Math.round((end - start) / step);
-        Obj[] elements = new Obj[(int) round];
+        Obj[] elements = new Obj[0];
+        if (!retnull)
+            elements = new Obj[(int) round];
 
         double i = start;
         int index = 0;

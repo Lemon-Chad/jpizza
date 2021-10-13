@@ -61,7 +61,8 @@ public class IterNode extends Node {
             if (res.continueLoop) continue;
             if (res.breakLoop) break;
 
-            elements.add(value);
+            if (!retnull)
+                elements.add(value);
         }
 
         context.symbolTable.remove(vtk);
