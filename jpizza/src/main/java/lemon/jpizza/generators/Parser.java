@@ -140,7 +140,8 @@ public class Parser {
             statements.set(statements.size() - 1, new ReturnNode(
                     prevStatement,
                     prevStatement.pos_start,
-                    prevStatement.pos_end
+                    prevStatement.pos_end,
+                    true
             ));
         } advance();
         return res.success(new ListNode(

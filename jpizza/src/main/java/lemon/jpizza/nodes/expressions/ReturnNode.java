@@ -10,12 +10,17 @@ import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 
 public class ReturnNode extends Node {
-    public final Node nodeToReturn;
-    public boolean fluctuating = true;
+    final Node nodeToReturn;
+    final boolean newline;
 
-    public ReturnNode(Node nodeToReturn, Position pos_start, Position pos_end) {
+    public ReturnNode(Node n, Position ps, Position pe) {
+        this(n, ps, pe, false);
+    }
+
+    public ReturnNode(Node nodeToReturn, Position pos_start, Position pos_end, boolean newline) {
         this.nodeToReturn = nodeToReturn;
         this.pos_start = pos_start.copy(); this.pos_end = pos_end.copy();
+        this.newline = newline;
         jptype = Constants.JPType.Return;
     }
 
