@@ -136,9 +136,11 @@ public class Parser {
         reverse();
 
         if (!currentToken.type.equals(TT.NEWLINE) && !currentToken.type.equals(TT.INVISILINE)) {
-            return res.failure(Error.InvalidSyntax(
-                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    String.format("Missing semicolon, found %s", tokenFound())
+            Node prevStatement = statements.get(statements.size() - 1);
+            statements.set(statements.size() - 1, new ReturnNode(
+                    prevStatement,
+                    prevStatement.pos_start,
+                    prevStatement.pos_end
             ));
         } advance();
         return res.success(new ListNode(
