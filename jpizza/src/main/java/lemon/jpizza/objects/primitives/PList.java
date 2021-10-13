@@ -88,12 +88,12 @@ public class PList extends Value {
                     "List index must be long, not double",
                     context
             ));
-        if (other.number + 1 > list.size()) return new Pair<>(null, RTError.OutOfBounds(
+        if (other.number >= list.size() || other.number < -list.size()) return new Pair<>(null, RTError.OutOfBounds(
                 pos_start, pos_end,
                 "List index out of range",
                 context
         ));
-        return new Pair<>(other, null);
+        return new Pair<>(new Num((other.number + list.size()) % list.size()), null);
     }
     public Pair<Obj, RTError> pop(Obj o) {
         Pair<Obj, RTError> dble = inRange(o);
