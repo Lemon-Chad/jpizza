@@ -95,8 +95,8 @@ public class Parser {
         } return res;
     }
 
-    public ParseResult statements(TT end) { return statements(end, null); }
-    public ParseResult statements(TT end, Object value) {
+    public ParseResult statements(TT end) { return statements(end, Collections.singletonList(null)); }
+    public ParseResult statements(TT end, List<Object> value) {
         ParseResult res = new ParseResult();
         List<Node> statements = new ArrayList<>();
         Position pos_start = currentToken.pos_start.copy();
@@ -123,7 +123,7 @@ public class Parser {
             if (newlineCount == 0) {
                 moreStatements = false;
             }
-            if (!moreStatements || currentToken.matches(end, value))
+            if (!moreStatements || (currentToken.type == end && value.contains(currentToken.value)))
                 break;
             statement = (Node) res.try_register(this.statement());
             if (statement == null) {
@@ -186,7 +186,6 @@ public class Parser {
         }
 
         Node expr = (Node) res.register(this.expr());
-        System.out.println(res.error != null ? res.error.asString() : null);
         if (res.error != null)
             return res;
         return res.success(expr);
@@ -462,7 +461,6 @@ public class Parser {
             } reverse();
         }
         Node node = (Node) res.register(binOp(this::getExpr, Collections.singletonList(TT.DOT)));
-        System.out.println(res.error != null ? res.error.asString() : null);
 
         if (res.error != null)
             return res;
@@ -1099,7 +1097,7 @@ public class Parser {
             ));
             res.registerAdvancement(); advance();
 
-            body = (Node) res.register(statements(TT.KEYWORD, "case"));
+            body = (Node) res.register(statements(TT.KEYWORD, Arrays.asList("case", "default")));
             if (res.error != null) return res;
 
             if (def)
@@ -1422,8 +1420,6 @@ match (a) {
             right_func = left_func;
         Node right; Node left;
         left = (Node) res.register(left_func.execute());
-        System.out.println(ops);
-        System.out.println(res.error != null ? res.error.asString() : null);
         if (res.error != null)
             return res;
         boolean instantSimplify = left == null || left.fluctuating;
