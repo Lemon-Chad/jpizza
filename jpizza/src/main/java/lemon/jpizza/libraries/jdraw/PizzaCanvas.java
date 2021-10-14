@@ -47,6 +47,7 @@ public class PizzaCanvas extends JPanel {
     }
 
     public void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
         pixels = _pixels;
         slices = _slices;
         super.paintComponent(g);

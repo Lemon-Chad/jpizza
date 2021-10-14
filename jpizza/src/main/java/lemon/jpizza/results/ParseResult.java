@@ -19,6 +19,7 @@ public class ParseResult {
 
     public Object try_register(ParseResult res) {
         if (res.error != null) {
+            error = res.error;
             toReverseCount += res.advanceCount;
             return null;
         } return register(res);

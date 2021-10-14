@@ -40,6 +40,7 @@ public class JDraw extends Library {
     static boolean changed = false;
 
     static Fnt font;
+    static Integer strokeSize = null;
 
     static int frames = 0;
     static double start = 1;
@@ -162,6 +163,7 @@ public class JDraw extends Library {
             put("drawCircle", Arrays.asList("radius", "x", "y", "color"));
             put("drawText", Arrays.asList("txt", "x", "y", "color"));
             put("drawSquare", Arrays.asList("radius", "x", "y", "color"));
+            put("drawLine", Arrays.asList("start", "end", "color"));
             put("drawPoly", Arrays.asList("points", "color"));
             put("tracePoly", Arrays.asList("points", "color"));
             put("setPixel", Arrays.asList("x", "y", "color"));
@@ -169,6 +171,7 @@ public class JDraw extends Library {
             put("drawImage", Arrays.asList("x", "y", "filename"));
             put("setFont", Arrays.asList("fontName", "fontType", "fontSize"));
             put("setSize", Arrays.asList("width", "height"));
+            put("setStrokeSize", Collections.singletonList("width"));
             put("setTitle", Collections.singletonList("value"));
             put("lockSize", Collections.singletonList("value"));
             put("gpuCompute", Collections.singletonList("value"));
@@ -481,7 +484,7 @@ public class JDraw extends Library {
         if (r.b != null) return res.failure(r.b);
         Color color = new Color(r.a[0], r.a[1], r.a[2]);
 
-        draw(new Polygon(points, color, outln));
+        draw(new Polygon(points, color, outln, strokeSize));
         return res.success(new Null());
     }
 
@@ -626,6 +629,21 @@ public class JDraw extends Library {
         return res.success(new Null());
     }
 
+    public RTResult execute_setStrokeSize(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        Obj width = res.register(checkPosInt(execCtx.symbolTable.get("width")));
+
+        if (res.error != null) return res;
+
+        strokeSize = width.number.intValue();
+
+        return res.success(new Null());
+    }
+
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_drawText(Context execCtx) {
         RTResult res = new RTResult();
@@ -646,6 +664,54 @@ public class JDraw extends Library {
         String msg = txt.string;
 
         draw(new Txt(pos.x, pos.y, msg, color, font));
+        return res.success(new Null());
+    }
+
+    public Pair<Point, Error> extractPoint(Obj var) {
+        RTResult res = new RTResult();
+
+        res.register(checkType(var, "list", Constants.JPType.List));
+        if (res.error != null) return new Pair<>(null, res.error);
+
+        if (var.list.size() != 2) return new Pair<>(null, RTError.Type(
+                var.get_start(), var.get_end(),
+                "Expected point ([x, y])",
+                var.get_ctx()
+        ));
+
+        Obj x = var.list.get(0);
+        Obj y = var.list.get(1);
+
+        res.register(checkInt(x));
+        if (res.error != null) return new Pair<>(null, res.error);
+        res.register(checkInt(y));
+        if (res.error != null) return new Pair<>(null, res.error);
+
+        return new Pair<>(new Point(x.number.intValue(), y.number.intValue()), null);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_drawLine(Context execCtx) {
+        RTResult res = new RTResult();
+
+        res.register(isInit());
+        if (res.error != null) return res;
+
+        Pair<Point, Error> dble;
+        dble = extractPoint((Obj) execCtx.symbolTable.get("start"));
+        if (dble.b != null) return res.failure(dble.b);
+        Point start = dble.a;
+
+        dble = extractPoint((Obj) execCtx.symbolTable.get("end"));
+        if (dble.b != null) return res.failure(dble.b);
+        Point end = dble.a;
+
+        Pair<Integer[], Error> dblc = getColor(execCtx.symbolTable.get("color"));
+        if (dblc.b != null) return res.failure(dblc.b);
+        Color color = new Color(dblc.a[0], dblc.a[1], dblc.a[2]);
+
+        draw(new Line(start, end, color, strokeSize));
+
         return res.success(new Null());
     }
 

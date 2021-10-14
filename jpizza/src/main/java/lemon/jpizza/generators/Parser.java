@@ -14,7 +14,6 @@ import lemon.jpizza.nodes.values.*;
 import lemon.jpizza.nodes.variables.AttrAccessNode;
 import lemon.jpizza.nodes.variables.VarAccessNode;
 import lemon.jpizza.results.ParseResult;
-import lemon.jpizza.results.RTResult;
 
 import java.util.*;
 
@@ -87,7 +86,7 @@ public class Parser {
     }
 
     public ParseResult parse() {
-        ParseResult res = statements();
+        ParseResult res = statements(TT.EOF);
         if (res.error == null && !currentToken.type.equals(TT.EOF)) {
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -96,7 +95,8 @@ public class Parser {
         } return res;
     }
 
-    public ParseResult statements() {
+    public ParseResult statements(TT end) { return statements(end, null); }
+    public ParseResult statements(TT end, Object value) {
         ParseResult res = new ParseResult();
         List<Node> statements = new ArrayList<>();
         Position pos_start = currentToken.pos_start.copy();
@@ -123,7 +123,7 @@ public class Parser {
             if (newlineCount == 0) {
                 moreStatements = false;
             }
-            if (!moreStatements)
+            if (!moreStatements || currentToken.matches(end, value))
                 break;
             statement = (Node) res.try_register(this.statement());
             if (statement == null) {
@@ -186,6 +186,7 @@ public class Parser {
         }
 
         Node expr = (Node) res.register(this.expr());
+        System.out.println(res.error != null ? res.error.asString() : null);
         if (res.error != null)
             return res;
         return res.success(expr);
@@ -461,6 +462,7 @@ public class Parser {
             } reverse();
         }
         Node node = (Node) res.register(binOp(this::getExpr, Collections.singletonList(TT.DOT)));
+        System.out.println(res.error != null ? res.error.asString() : null);
 
         if (res.error != null)
             return res;
@@ -1097,7 +1099,7 @@ public class Parser {
             ));
             res.registerAdvancement(); advance();
 
-            body = (Node) res.register(statements());
+            body = (Node) res.register(statements(TT.KEYWORD, "case"));
             if (res.error != null) return res;
 
             if (def)
@@ -1420,6 +1422,10 @@ match (a) {
             right_func = left_func;
         Node right; Node left;
         left = (Node) res.register(left_func.execute());
+        System.out.println(ops);
+        System.out.println(res.error != null ? res.error.asString() : null);
+        if (res.error != null)
+            return res;
         boolean instantSimplify = left == null || left.fluctuating;
 
         while (ops.contains(currentToken.type)) {
@@ -1605,7 +1611,7 @@ match (a) {
 
         res.registerAdvancement(); advance();
 
-        Node statements = (Node) res.register(this.statements());
+        Node statements = (Node) res.register(this.statements(TT.CLOSE));
         if (res.error != null)
             return res;
 

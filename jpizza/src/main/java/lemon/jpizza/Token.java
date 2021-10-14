@@ -51,7 +51,7 @@ public class Token implements Serializable {
     }
 
     public boolean matches(Tokens.TT type, Object value) {
-        return this.type.equals(type) && this.value.equals(value);
+        return this.type.equals(type) && (this.value == null || this.value.equals(value));
     }
 
     public String toString() {
