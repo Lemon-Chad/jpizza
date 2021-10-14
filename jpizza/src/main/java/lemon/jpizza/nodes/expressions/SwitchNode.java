@@ -61,8 +61,6 @@ public class SwitchNode extends Node {
             compare = res.register(cs.condition.visit(inter, context));
             if (res.error != null) return res;
 
-            System.out.println(ref.jptype);
-
             if (ref.equals(compare)) {
                 entry = i;
                 break;
