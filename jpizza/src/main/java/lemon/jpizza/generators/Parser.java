@@ -25,6 +25,67 @@ public class Parser {
     int tokIdx = -1;
     int displayTokIdx = -1;
     int tokount;
+
+    enum NamingConvention {
+        CamelCase,
+        ScreamingSnakeCase,
+        PascalCase,
+        SnakeCase,
+        MixedSnakeCase,
+        None,
+        Mixed
+    }
+
+    static String stringConvention(NamingConvention convention) {
+        return switch (convention) {
+            case CamelCase -> "camelCase";
+            case ScreamingSnakeCase -> "SCREAMING_SNAKE_CASE";
+            case PascalCase -> "PascalCase";
+            case SnakeCase -> "snake_case";
+            case MixedSnakeCase -> "Mixed_Snake_Case";
+            default -> "lowercase";
+        };
+    }
+
+    static NamingConvention getConvention(String name) {
+        int uppercase = 0;
+        int lowercase = 0;
+
+        for (char c: name.toCharArray()) {
+            if (!Character.isLetter(c)) continue;
+            
+            if ('A' <= c && c <= 'Z')
+                uppercase++;
+            else
+                lowercase++;
+        }
+
+        if (name.indexOf("_") != -1) {
+            if (uppercase == 0)
+                return NamingConvention.SnakeCase;
+            else if (lowercase == 0 && uppercase > 0)
+                return NamingConvention.ScreamingSnakeCase;
+            else
+                return NamingConvention.MixedSnakeCase;
+        }
+        else if (lowercase == 0 && uppercase > 0)
+            return NamingConvention.ScreamingSnakeCase;
+        else if ('A' <= name.charAt(0) && name.charAt(0) <= 'Z')
+            return NamingConvention.PascalCase;
+        else if (uppercase > 0)
+            return NamingConvention.CamelCase;
+
+        return NamingConvention.None;
+    }
+
+    static boolean conventionMatches(NamingConvention a, NamingConvention b) {
+        if (b == NamingConvention.ScreamingSnakeCase || b == NamingConvention.PascalCase)
+            return a == b;
+        if (a == NamingConvention.None || b == NamingConvention.None)
+            return true;
+        return a == b;
+    }
+
     static final List<String> declKeywords = Arrays.asList(
             "static",
             "stc",
@@ -95,8 +156,11 @@ public class Parser {
         } return res;
     }
 
-    public ParseResult statements(TT end) { return statements(end, Collections.singletonList(null)); }
-    public ParseResult statements(TT end, List<Object> value) {
+    public ParseResult statements(TT end) { 
+        return statements(Collections.singletonList(new Token(end))); 
+    }
+
+    public ParseResult statements(List<Token> tks) {
         ParseResult res = new ParseResult();
         List<Node> statements = new ArrayList<>();
         Position pos_start = currentToken.pos_start.copy();
@@ -123,7 +187,8 @@ public class Parser {
             if (newlineCount == 0) {
                 moreStatements = false;
             }
-            if (!moreStatements || (currentToken.type == end && value.contains(currentToken.value)))
+            
+            if (!moreStatements || tks.contains(currentToken))
                 break;
             statement = (Node) res.try_register(this.statement());
             if (statement == null) {
@@ -199,6 +264,7 @@ public class Parser {
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected identifier"
             ));
+        matchConvention(currentToken, "Variable name", NamingConvention.CamelCase);
 
         Token var_name = currentToken;
         res.registerAdvancement();
@@ -278,6 +344,9 @@ public class Parser {
                             currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                             "Expected identifier"
                     ));
+
+                    matchConvention(currentToken, "Variable name", NamingConvention.CamelCase);
+
                     destructs.add(currentToken);
                     res.registerAdvancement();
                     advance();
@@ -318,7 +387,7 @@ public class Parser {
                 ));
                 List<Node> varNames = new ArrayList<>(Collections.singletonList(new VarAssignNode(var_name, nll).setType(type)));
                 do {
-                    var_name = (Token) res.register(expectIdentifier());
+                    var_name = (Token) res.register(expectIdentifier("Variable name", NamingConvention.CamelCase));
                     if (res.error != null) return res;
                     varNames.add(new VarAssignNode(var_name, nll).setType(type));
                     res.registerAdvancement(); advance();
@@ -394,7 +463,7 @@ public class Parser {
                     .setRange(min, max));
         }
         else if (currentToken.matches(TT.KEYWORD, "let")) {
-            Token ident = (Token) res.register(expectIdentifier());
+            Token ident = (Token) res.register(expectIdentifier("Variable name", NamingConvention.CamelCase));
             if (res.error != null) return res;
             res.registerAdvancement(); advance();
             if (currentToken.type != TT.EQ) return res.failure(Error.ExpectedCharError(
@@ -482,13 +551,39 @@ public class Parser {
         } return pow();
     }
 
-    public ParseResult expectIdentifier() {
+    public ParseResult expectIdentifier() { 
+        return expectIdentifier("Identifier", NamingConvention.None); 
+    }
+
+    static void matchConvention(Token tok, String name, NamingConvention convention) {
+        NamingConvention tokenCase = getConvention(tok.value.toString());
+        if (!conventionMatches(tokenCase, convention))
+            if (tokenCase != convention) {
+                Shell.logger.tip(new Tip(
+                    tok.pos_start, tok.pos_end,
+                    String.format("%s should have naming convention %s, not %s.",
+                                  name, stringConvention(convention), stringConvention(tokenCase)),
+                    """
+camelCaseLooksLikeThis
+snake_case_looks_like_this
+SCREAMING_SNAKE_CASE_LOOKS_LIKE_THIS
+PascalCaseLooksLikeThis
+Mixed_Snake_Case_Looks_Like_This"""
+                ).asString());
+            }
+    }
+
+    public ParseResult expectIdentifier(String name, NamingConvention convention) {
         ParseResult res = new ParseResult();
         advance(); res.registerAdvancement();
         if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected identifier"
-        )); return res.success(currentToken);
+        )); 
+        
+        matchConvention(currentToken, name, convention);
+        
+        return res.success(currentToken);
     }
 
     public ParseResult useExpr() {
@@ -638,7 +733,7 @@ public class Parser {
                     res.registerAdvancement(); advance();
                     String name = null;
                     if (currentToken.type == TT.LSQUARE) {
-                        Token n = (Token) res.register(expectIdentifier());
+                        Token n = (Token) res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
                         if (res.error != null) return res;
 
                         name = n.value.toString();
@@ -663,9 +758,12 @@ public class Parser {
                                 file_name_tok.pos_start.copy(), file_name_tok.pos_end.copy(),
                                 "Expected module name"
                         ));
+                    
+                    matchConvention(file_name_tok, "Module name", NamingConvention.SnakeCase);
+
                     advance(); res.registerAdvancement();
                     if (currentToken.matches(TT.KEYWORD, "as")) {
-                        Token ident = (Token) res.register(expectIdentifier());
+                        Token ident = (Token) res.register(expectIdentifier("Module name", NamingConvention.SnakeCase));
                         if (res.error != null)
                             return res;
                         res.registerAdvancement(); advance();
@@ -682,6 +780,9 @@ public class Parser {
                                 fileNameTok.pos_start.copy(), fileNameTok.pos_end.copy(),
                                 "Expected module name"
                         ));
+
+                    matchConvention(fileNameTok, "Module name", NamingConvention.SnakeCase);
+
                     advance(); res.registerAdvancement();
                     return res.success(new ExtendNode(fileNameTok));
 
@@ -790,6 +891,24 @@ public class Parser {
         ));
     }
 
+    public ParseResult refExpr() {
+        Token prefixToken;
+        if (currentToken.type == TT.MUL || currentToken.type == TT.AND) {
+            ParseResult res = new ParseResult();
+
+            prefixToken = currentToken;
+            res.registerAdvancement(); advance();
+
+            Node expr = (Node) res.register(refExpr());
+            if (res.error != null) return res;
+            
+            if (prefixToken.type == TT.MUL) return res.success(new DerefNode(expr));
+            else return res.success(new RefNode(expr));
+        }
+    
+        return atom();
+    }
+
     public ParseResult formatStringExpr() {
         ParseResult res = new ParseResult();
         Token tok = currentToken;
@@ -874,7 +993,7 @@ public class Parser {
         List<Token> types = new ArrayList<>();
         List<Node> assignment = new ArrayList<>();
 
-        Token identifier = (Token) res.register(expectIdentifier());
+        Token identifier = (Token) res.register(expectIdentifier("Struct", NamingConvention.PascalCase));
         if (res.error != null) return res;
         res.registerAdvancement(); advance();
 
@@ -882,21 +1001,13 @@ public class Parser {
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected '{'"
         ));
-        res.registerAdvancement(); advance();
 
         Position start = currentToken.pos_start.copy();
 
         if (currentToken.type == TT.IDENTIFIER)
             do {
-                if (currentToken.type == TT.COMMA) {
-                    res.registerAdvancement();
-                    advance();
-                }
-
-                if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected identifier"
-                ));
+                res.register(expectIdentifier("Attribute name", NamingConvention.CamelCase));
+                if (res.error != null) return res;
 
                 children.add(currentToken);
                 childrenDecls.add(new AttrDeclareNode(currentToken));
@@ -969,6 +1080,9 @@ public class Parser {
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected identifier"
         ));
+
+        matchConvention(currentToken, "Enum", NamingConvention.PascalCase);
+
         name = currentToken;
         res.registerAdvancement(); advance();
 
@@ -981,12 +1095,13 @@ public class Parser {
 
         while (currentToken.type == TT.IDENTIFIER) {
             Token token = currentToken;
+            matchConvention(token, "Enum child", NamingConvention.PascalCase);
             res.registerAdvancement(); advance();
 
             List<String> generics = new ArrayList<>();
             if (currentToken.type == TT.LPAREN) {
                 do {
-                    Token ident = (Token) res.register(expectIdentifier());
+                    Token ident = (Token) res.register(expectIdentifier("Generic type", NamingConvention.PascalCase));
                     if (res.error != null) return res;
                     res.registerAdvancement(); advance();
                     generics.add(ident.value.toString());
@@ -1003,7 +1118,7 @@ public class Parser {
             List<String> types = new ArrayList<>();
             if (currentToken.type == TT.OPEN) {
                 do {
-                    Token tok = (Token) res.register(expectIdentifier());
+                    Token tok = (Token) res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
                     if (res.error != null) return res;
                     params.add((String) tok.value);
                     res.registerAdvancement(); advance();
@@ -1097,7 +1212,11 @@ public class Parser {
             ));
             res.registerAdvancement(); advance();
 
-            body = (Node) res.register(statements(TT.KEYWORD, Arrays.asList("case", "default")));
+            body = (Node) res.register(statements(Arrays.asList(
+                new Token(TT.CLOSE),
+                new Token(TT.KEYWORD, "case"),
+                new Token(TT.KEYWORD, "default")
+            )));
             if (res.error != null) return res;
 
             if (def)
@@ -1114,7 +1233,21 @@ public class Parser {
         endLine(1);
         res.registerAdvancement(); advance();
 
-        return res.success(new SwitchNode(ref, cases, elseCase, false));
+        Node swtch = new SwitchNode(ref, cases, elseCase, false);
+
+        if (cases.size() < 3) Shell.logger.tip(new Tip(
+            swtch.pos_start, swtch.pos_end,
+            "Switch can be replaced with if-elif-else structure", """
+if (x == 1) {
+    println("X is 1!");
+} elif (x == 2) {
+    println("X is two.");
+} else {
+    println("X is dumb! >:(");
+}"""
+        ).asString());
+
+        return res.success(swtch);
     }
 
     public ParseResult expectSemicolon() {
@@ -1497,6 +1630,7 @@ match (a) {
                             currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                             "Expected identifier"
                     ));
+                    matchConvention(currentToken, "Parameter", NamingConvention.CamelCase);
 
                     if (args) {
                         argname = currentToken.value.toString();
@@ -1539,7 +1673,7 @@ match (a) {
             }
 
             if (currentToken.type == TT.BACK) {
-                Token kw = (Token) res.register(expectIdentifier());
+                Token kw = (Token) res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
                 if (res.error != null) return res;
                 res.registerAdvancement(); advance();
                 kwargname = kw.value.toString();
@@ -1562,6 +1696,9 @@ match (a) {
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected type"
                 ));
+
+                matchConvention(currentToken, "Generic type", NamingConvention.PascalCase);
+
                 generics.add(currentToken);
                 res.registerAdvancement(); advance();
             } while (currentToken.type == TT.COMMA);
@@ -1841,8 +1978,10 @@ if (false)
         if (!currentToken.type.equals(TT.IDENTIFIER))
             return res.failure(Error.InvalidSyntax(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected 'identifier'"
+                    "Expected identifier"
             ));
+        
+        matchConvention(currentToken, "Variable name", NamingConvention.CamelCase);
 
         Token varName = currentToken;
         res.registerAdvancement(); advance();
@@ -2161,6 +2300,7 @@ while (false) {
                         "yourmom is invalid B) (must be a lambda)"
                 ));
             varNameTok = currentToken;
+            matchConvention(varNameTok, "Function name", NamingConvention.CamelCase);
             res.registerAdvancement(); advance();
         }
 
@@ -2261,6 +2401,9 @@ while (false) {
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected identifier"
         ));
+
+        matchConvention(currentToken, "Class", NamingConvention.PascalCase);
+
         Token classNameTok = currentToken;
         res.registerAdvancement(); advance();
 
@@ -2360,6 +2503,9 @@ while (false) {
                         "Expected identifier"
                 ));
                 Token varNameTok = currentToken;
+
+                matchConvention(varNameTok, "Method name", NamingConvention.CamelCase);
+
                 res.registerAdvancement(); advance();
                 ArgData args = (ArgData) res.register(gatherArgs());
 
@@ -2425,6 +2571,9 @@ while (false) {
             }
             else if (currentToken.type.equals(TT.IDENTIFIER)) {
                 Token valTok = currentToken;
+
+                matchConvention(valTok, "Attribute name", NamingConvention.CamelCase);
+
                 res.registerAdvancement(); advance();
                 if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -2442,6 +2591,9 @@ while (false) {
                                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                                 "Expected identifier"
                         ));
+
+                        matchConvention(currentToken, "Attribute name", NamingConvention.CamelCase);
+
                         attributeDeclarations.add(new AttrDeclareNode(currentToken));
                         advance();
                         res.registerAdvancement();
@@ -2471,6 +2623,9 @@ while (false) {
                 ));
 
                 Token valTok = currentToken;
+
+                matchConvention(valTok, "Attribute name", NamingConvention.CamelCase);
+
                 res.registerAdvancement(); advance();
                 res.register(getComplexAttr.apply(valTok, isstatic, isprivate));
                 if (res.error != null) return res;

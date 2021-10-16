@@ -60,4 +60,15 @@ public class Token implements Serializable {
                 type, value
         ) : String.valueOf(type);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (!(o instanceof Token)) return false;
+
+        Token other = (Token) o;
+
+        if (value == null) return other.type == type && other.value == value;
+        return other.type == type && value.equals(other.value);
+    }
 }
