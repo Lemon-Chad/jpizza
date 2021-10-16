@@ -57,6 +57,12 @@ public class BinOpNode extends Node {
         Obj right = res.register(right_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
+        if (op_tok.type == Tokens.TT.EQ) {
+            Pair<Obj, RTError> pair = left.mutate(right);
+            if (pair.b != null) return res.failure(pair.b);
+            return res.success(pair.a);
+        }
+
         if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
                 Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
                 .contains(op_tok.type)) {

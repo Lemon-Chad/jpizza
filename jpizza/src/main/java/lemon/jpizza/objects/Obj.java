@@ -89,6 +89,22 @@ public abstract class Obj implements Serializable {
     public abstract Pair<Obj, RTError> lte(Obj other);
     public abstract Pair<Obj, RTError> lt(Obj other);
 
+    public Pair<Obj, RTError> deref() {
+        return new Pair<>(null, RTError.Type(
+            get_start(), get_end(),
+            "Cannot be dereferenced",
+            get_ctx()
+        ));
+    }
+
+    public Pair<Obj, RTError> mutate(Obj other) {
+        return new Pair<>(null, RTError.Type(
+            get_start(), get_end(),
+            "Cannot be mutated",
+            get_ctx()
+        ));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;

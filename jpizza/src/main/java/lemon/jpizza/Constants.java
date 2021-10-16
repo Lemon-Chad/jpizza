@@ -111,6 +111,8 @@ public class Constants {
     }};
 
     public enum JPType {
+        Ref,
+        Deref,
         Pattern,
         Bytes,
         ClassInstance,

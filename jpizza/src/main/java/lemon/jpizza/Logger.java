@@ -53,7 +53,7 @@ public class Logger {
 
             return "{ " + sb.toString() + "len=" + b.arr.length + " }";
         } else if (text instanceof Obj) {
-            return text.toString();
+            return ((Obj) text).astring().toString();
         }
         return text.toString();
     }

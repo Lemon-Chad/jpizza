@@ -906,7 +906,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             else return res.success(new RefNode(expr));
         }
     
-        return atom();
+        return index();
     }
 
     public ParseResult formatStringExpr() {
@@ -1510,7 +1510,61 @@ match (a) {
 
     public ParseResult index() { return binOp(this::call, Collections.singletonList(TT.LSQUARE), this::expr); }
 
-    public ParseResult pow() { return binOp(this::index, Arrays.asList(TT.POWER, TT.MOD), this::factor); }
+    public ParseResult pow() { return binOp(this::refOp, Arrays.asList(TT.POWER, TT.MOD), this::factor); }
+
+    public ParseResult refOp() { return binOp(this::refSugars, Collections.singletonList(TT.EQ)); }
+
+    static List<TT> binRefOps = Arrays.asList(TT.PLE, TT.MIE, TT.MUE, TT.DIE, TT.POE);
+    static List<TT> unRefOps  = Arrays.asList(TT.INCR, TT.DECR);
+
+    public ParseResult refSugars() {
+        ParseResult res = new ParseResult();
+
+        Node expr = (Node) res.register(this.refExpr());
+        if (res.error != null) return res;
+
+        while (binRefOps.contains(currentToken.type) || unRefOps.contains(currentToken.type)) {
+            if (unRefOps.contains(currentToken.type)) {
+                expr = new BinOpNode(
+                    expr,
+                    new Token(TT.EQ),
+                    new UnaryOpNode(
+                        currentToken,
+                        expr
+                    )
+                );
+
+                res.registerAdvancement();
+                advance();
+            } else if (binRefOps.contains(currentToken.type)) {
+                Token opTok = new Token(switch (currentToken.type) {
+                    case POE -> TT.POWER;
+                    case MUE -> TT.MUL;
+                    case DIE -> TT.DIV;
+                    case PLE -> TT.PLUS;
+                    case MIE -> TT.MINUS;
+                    default -> null;
+                });
+                res.registerAdvancement();
+                advance();
+
+                Node right = (Node) res.register(this.expr());
+                if (res.error != null) return res;
+
+                expr = new BinOpNode(
+                    expr,
+                    new Token(TT.EQ),
+                    new BinOpNode(
+                        expr,
+                        opTok,
+                        right
+                    )
+                );
+            }
+        }
+        
+        return res.success(expr);
+    }
 
     public ParseResult term() { return binOp(this::factor, Arrays.asList(TT.MUL, TT.DIV)); }
 

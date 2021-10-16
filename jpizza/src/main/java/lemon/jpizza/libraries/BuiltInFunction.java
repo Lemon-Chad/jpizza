@@ -402,7 +402,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_floating(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
         if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
-                pos_start, pos_end,
+                num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
         ));
@@ -427,7 +427,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_round(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
         if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
-                pos_start, pos_end,
+                num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
         ));
@@ -455,7 +455,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_floor(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
         if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
-                pos_start, pos_end,
+                num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
         ));
@@ -467,7 +467,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_ceil(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
         if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
-                pos_start, pos_end,
+                num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
         ));
@@ -479,7 +479,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_abs(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
         if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
-                pos_start, pos_end,
+                num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
         ));
@@ -492,7 +492,7 @@ public class BuiltInFunction extends Library {
         RTResult res = new RTResult();
         Obj fln = (Obj) execCtx.symbolTable.get("fn");
         if (fln.jptype != Constants.JPType.String) return res.failure(RTError.Type(
-                pos_start, pos_end,
+                fln.get_start(), fln.get_end(),
                 "Argument must be a string",
                 execCtx
         ));
@@ -501,7 +501,7 @@ public class BuiltInFunction extends Library {
         Path path = Path.of(fn);
         File s = new File(String.valueOf(path));
         if (!s.exists()) return res.failure(RTError.FileNotFound(
-                pos_start, pos_end,
+                fln.get_start(), fln.get_end(),
                 "File does not exist in " + Paths.get("").toAbsolutePath(),
                 execCtx
         )); String script;

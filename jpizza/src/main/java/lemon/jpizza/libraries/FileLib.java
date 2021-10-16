@@ -49,7 +49,7 @@ public class FileLib extends Library {
         if (res.error != null) return res;
         String dir = d.string;
         if(!Files.exists(Path.of(dir))){
-            return new RTResult().failure(RTError.FileNotFound(value.pos_start, value.pos_end, "File not found", execCtx));
+            return new RTResult().failure(RTError.FileNotFound(value.get_start(), value.get_end(), "File not found", execCtx));
         }
         boolean isDirectory = Files.isDirectory(Path.of(dir));
         if(isDirectory){
@@ -58,7 +58,7 @@ public class FileLib extends Library {
                 return new RTResult().success(new Bool(true));
             }
             catch(IOException e) {
-                return new RTResult().failure(RTError.Internal(value.pos_start, value.pos_end, "Java IOException " + e.toString(), execCtx));
+                return new RTResult().failure(RTError.Internal(value.get_start(), value.get_end(), "Java IOException " + e.toString(), execCtx));
             }
             }
         else{
@@ -67,14 +67,14 @@ public class FileLib extends Library {
                 return new RTResult().success(new Bool(true));
             }
             catch(IOException e) {
-                return new RTResult().failure(RTError.Internal(value.pos_start, value.pos_end, "Java IOException " + e.toString(), execCtx));
+                return new RTResult().failure(RTError.Internal(value.get_start(), value.get_end(), "Java IOException " + e.toString(), execCtx));
             }
         }
     }
 
     private RTResult getdirectory(Obj value, Context ctx) {
         if (value.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
-                value.pos_start, value.pos_end,
+                value.get_start(), value.get_end(),
                 "Expected String",
                 ctx
         ));
@@ -95,7 +95,7 @@ public class FileLib extends Library {
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(
-                value.pos_start, value.pos_end,
+                value.get_start(), value.get_end(),
                 "File does not exist",
                 execCtx
         ));
@@ -105,7 +105,7 @@ public class FileLib extends Library {
             out = Files.readString(Path.of(dir));
         } catch (IOException e) {
             return res.failure(RTError.Internal(
-                    value.pos_start, value.pos_end,
+                    value.get_start(), value.get_end(),
                     "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
@@ -123,7 +123,7 @@ public class FileLib extends Library {
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(
-                value.pos_start, value.pos_end,
+                value.get_start(), value.get_end(),
                 "File does not exist",
                 execCtx
         ));
@@ -143,7 +143,7 @@ public class FileLib extends Library {
             fis.close();
         } catch (IOException | ClassNotFoundException e) {
             return res.failure(RTError.Internal(
-                    value.pos_start, value.pos_end,
+                    value.get_start(), value.get_end(),
                     "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
@@ -161,7 +161,7 @@ public class FileLib extends Library {
 
         File file = new File(dir);
         if (!file.exists()) return res.failure(RTError.FileNotFound(
-                value.pos_start, value.pos_end,
+                value.get_start(), value.get_end(),
                 "File does not exist",
                 execCtx
         ));
@@ -176,7 +176,7 @@ public class FileLib extends Library {
             fis.close();
         } catch (IOException e) {
             return res.failure(RTError.Internal(
-                    value.pos_start, value.pos_end,
+                    value.get_start(), value.get_end(),
                     "IOException occurred while reading.. " + e.toString(),
                     execCtx
             ));
@@ -216,7 +216,7 @@ public class FileLib extends Library {
         File file = new File(dir);
         
         if (!file.exists() || !file.isDirectory()) return res.failure(RTError.PathNotFound(
-                value.pos_start, value.pos_end,
+                value.get_start(), value.get_end(),
                 "Directory does not exist",
                 execCtx
         ));
@@ -239,7 +239,7 @@ public class FileLib extends Library {
 
         Obj vtwo = ((Obj) execCtx.symbolTable.get("val")).astring();
         if (vtwo.jptype != Constants.JPType.String) return res.failure(RTError.Type(
-                vtwo.pos_start, vtwo.pos_end,
+                vtwo.get_start(), vtwo.get_end(),
                 "Expected String",
                 execCtx
         ));
@@ -256,7 +256,7 @@ public class FileLib extends Library {
         } catch (IOException e) {
             e.printStackTrace();
             return res.failure(RTError.Internal(
-                    value.pos_start, value.pos_end,
+                    value.get_start(), value.get_end(),
                     "IOException occurred while writing.. " + e.toString(),
                     execCtx
             ));
@@ -289,7 +289,7 @@ public class FileLib extends Library {
         } catch (IOException e) {
             e.printStackTrace();
             return res.failure(RTError.Internal(
-                    value.pos_start, value.pos_end,
+                    value.get_start(), value.get_end(),
                     "IOException occurred while writing.. " + e.toString(),
                     execCtx
             ));
@@ -307,7 +307,7 @@ public class FileLib extends Library {
 
         Path path = Paths.get(dir);
         if (!Files.exists(path) || !Files.isDirectory(path)) return res.failure(RTError.PathNotFound(
-                value.pos_start, value.pos_end,
+                value.get_start(), value.get_end(),
                 "Path does not exist",
                 execCtx
         ));
@@ -315,7 +315,7 @@ public class FileLib extends Library {
         try {
             pathnames = path.toFile().list();
         } catch (Exception e) {
-            return res.failure(RTError.Internal(value.pos_start, value.pos_end, e.toString(), execCtx));
+            return res.failure(RTError.Internal(value.get_start(), value.get_end(), e.toString(), execCtx));
         }
 
         PList paths = new PList(new ArrayList<>());
