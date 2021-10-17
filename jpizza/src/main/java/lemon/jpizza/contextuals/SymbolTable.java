@@ -192,12 +192,12 @@ public class SymbolTable implements Serializable {
             return RTError.makeDetails(RTError::Scope, "Undefined attribute");
         }
     }
-    public void setattrtype(String name, String type) {
-        type = getType(type);
+    public void setattrtype(String name, List<String> rawType) {
+        String type = getType(rawType);
         if (attributes.containsKey(name)) {
             attrtypes.put(name, type);
         } else if (parent != null) {
-            parent.setattrtype(name, type);
+            parent.setattrtype(name, rawType);
         }
     }
 

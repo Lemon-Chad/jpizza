@@ -8,9 +8,12 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.Collections;
+import java.util.List;
+
 public class AttrDeclareNode extends Node {
     public final Token attrToken;
-    public final String type;
+    public final List<String> type;
     public final boolean isstatic;
     public final boolean isprivate;
     public final Node nValue;
@@ -20,7 +23,7 @@ public class AttrDeclareNode extends Node {
     public AttrDeclareNode(Token attrToken) {
         this.attrToken = attrToken;
 
-        type = "any";
+        type = Collections.singletonList("any");
         isstatic = false;
         isprivate = false;
         nValue = null;
@@ -30,7 +33,7 @@ public class AttrDeclareNode extends Node {
         pos_start = attrToken.pos_start; pos_end = attrToken.pos_end;
     }
 
-    public AttrDeclareNode(Token attrToken, String type, boolean isstatic, boolean isprivate, Node value) {
+    public AttrDeclareNode(Token attrToken, List<String> type, boolean isstatic, boolean isprivate, Node value) {
         this.attrToken = attrToken;
         this.type = type;
         this.isstatic = isstatic;

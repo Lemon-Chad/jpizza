@@ -2500,12 +2500,12 @@ while (false) {
         TriFunction<Token, Boolean, Boolean, ParseResult> getComplexAttr = (valTok, isstatic, isprivate) -> {
             ParseResult result = new ParseResult();
 
-            String type = "any";
+            List<String> type = Collections.singletonList("any");
             if (currentToken.type == TT.BITE) {
-                Token t = (Token) result.register(expectIdentifier());
-                if (result.error != null) return result;
-                type = t.value.toString();
                 result.registerAdvancement(); advance();
+                Token t = (Token) result.register(buildTypeTok());
+                if (result.error != null) return result;
+                type = (List<String>) t.value;
             }
 
             Node expr = null;
