@@ -134,6 +134,10 @@ class Array {
     mthd bin string -> str(for (x <- internal) => str(x));
 
     mthd bin type -> `Array(${T})`;
+    
+    mthd insert<item#T, index#num> = void {
+        insert(internal, item, index);
+    }
 
     mthd remove<item#T> = void {
         if (!contains(internal, item)) throw "Out of Bounds", "Item is not in Array";
