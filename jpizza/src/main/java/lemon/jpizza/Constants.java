@@ -279,6 +279,52 @@ class Map {
 }
 
         """);
+        put("socks", """
+import sockets as _sockets;
+
+class SocketConnection {
+	prv id: num;
+	ingredients<cID#num> {
+		id => cID;
+	}
+
+	mthd send<msg> = void -> _sockets::serverSend(id, msg);
+	mthd sendBytes<msg#bytearray> = void -> _sockets::serverSendBytes(id, msg);
+
+	mthd recv = any -> _sockets::serverRecv(id);
+	mthd recvBytes<length#num> = bytearray -> _sockets::serverRecvBytes(id, length);
+	mthd recvAllBytes = bytearray -> _sockets::serverRecvAllBytes(id);
+
+	mthd close = void -> _sockets::closeServerConnection(id);
+}
+
+class Socket {
+	prv id: num;
+	ingredients<port#num> {
+		id => _sockets::newServer(port);
+	}
+
+	mthd listen = SocketConnection -> SocketConnection(_sockets::connect(id));
+
+	mthd close = void -> _sockets::closeServer(id);
+}
+
+class SocketClient {
+	prv id: num;
+	ingredients<host#String, port#num> {
+		id => _sockets::newClient(host, port);
+	}
+
+	mthd send<msg> = void -> _sockets::clientSend(id, msg);
+	mthd sendBytes<msg#bytearray> = void -> _sockets::clientSendBytes(id, msg);
+
+	mthd recv = any -> _sockets::clientRecv(id);
+	mthd recvBytes<length#num> = bytearray -> _sockets::clientRecvBytes(id, length);
+	mthd recvAllBytes = bytearray -> _sockets::clientRecvAllBytes(id);
+
+	mthd close = void -> _sockets::clientClose(id);
+}
+""");
     }};
     
     public static final Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
