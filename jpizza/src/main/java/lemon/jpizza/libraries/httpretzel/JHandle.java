@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JHandle implements HttpHandler {
 
@@ -64,7 +65,7 @@ public class JHandle implements HttpHandler {
         }
     }
     public void _handle(HttpExchange exchange) {
-        Dict dat = new Dict(new HashMap<>());
+        Dict dat = new Dict(new ConcurrentHashMap<>());
         dat.set(new Str("method"), new Str(exchange.getRequestMethod()));
         try {
             handleRequest(exchange, dat);

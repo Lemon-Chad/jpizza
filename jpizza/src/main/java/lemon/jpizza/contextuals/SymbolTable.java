@@ -53,11 +53,8 @@ public class SymbolTable implements Serializable {
     public Object get(String name) {
         VarNode value = symbols.get(name);
         if (value == null) {
-            if (attributes.containsKey(name)) {
-                return attributes.get(name).value_node;
-            } else if (parent != null) {
-                return parent.get(name);
-            }
+            Object val = parent != null ? parent.get(name) : null;
+            return val != null ? val : getattr(name);
         }
         return value != null ? value.value_node : null;
     }

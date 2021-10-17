@@ -33,12 +33,11 @@ public class Dict extends Value {
     public Obj delete(Obj other) {
         if (other != null)
             map.remove(getKey(other));
-        return new Null();
+        return this;
     }
     public Obj set(Obj a, Obj b) {
-        delete(a);
         map.put(getKey(a), b);
-        return new Null();
+        return this;
     }
 
     public Obj getKey(Obj key) {

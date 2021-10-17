@@ -12,6 +12,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
+import lemon.jpizza.Shell;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,8 @@ public class ClassDefNode extends Node {
             RTResult res = new RTResult();
 
             String name = (String) class_name_tok.value;
-            Context classContext = new Context("<"+name+"-context>", context, pos_start);
-            classContext.symbolTable = new SymbolTable(context.symbolTable);
+            Context classContext = new Context("<"+name+"-context>", null, null);
+            classContext.symbolTable = new SymbolTable(Shell.globalSymbolTable);
 
             AttrDeclareNode[] attributes = new AttrDeclareNode[this.attributes.size()];
             for (int i = 0; i < this.attributes.size(); i++) {

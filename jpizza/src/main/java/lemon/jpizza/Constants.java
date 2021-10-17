@@ -24,9 +24,7 @@ public class Constants {
             Tokens.TT.LPAREN,
             Tokens.TT.RPAREN,
             Tokens.TT.LSQUARE,
-            Tokens.TT.RSQUARE,
-            Tokens.TT.OPEN,
-            Tokens.TT.CLOSE
+            Tokens.TT.RSQUARE
     );
     public static final String[] KEYWORDS = {
             "free",
@@ -81,6 +79,207 @@ public class Constants {
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};
     public static final Map<String, Context> LIBRARIES = new HashMap<>();
     public static final char splitter = '\n';
+
+    public static final Map<String, String> STANDLIBS = new HashMap<>(){{
+        put("std", """
+
+enum pub Option {
+    Some { val },
+    None,
+}
+
+class Iter {
+    prv iterable: list;
+    prv f;
+    prv output;
+
+    ingredients<iterable, f, output> {
+        attr iterable => iterable;
+        attr f => f;
+        attr output => output;
+    }
+
+    mthd collect {
+        let fin => for (x <- iterable) => f(x);
+        output(..fin)
+    }
+
+    mthd stream {
+        for (x <- iterable) f(x);
+    }
+
+    mthd bin type -> `Iter`;
+
+}
+
+class Array {
+    prv internal: list;
+
+    ingredients<..items>(T) {
+        internal => [];
+        if (T == "any") {
+            internal => for (item <- items) => &item;
+            return null;
+        }
+
+        let itype => None;
+        for (item <- items) {
+            itype => Some(type(item));
+            if (itype::val != T) 
+                throw "Type", `Expected type ${T}, got ${itype::val}`;
+            append(internal, &item);
+        }
+    }
+
+    mthd bin string -> str(for (x <- internal) => str(x));
+
+    mthd bin type -> `Array(${T})`;
+
+    mthd remove<item#T> = void {
+        if (!contains(internal, item)) throw "Out of Bounds", "Item is not in Array";
+        internal /= item;
+    }
+
+    mthd iter<func#function> = Iter {
+        Iter(internal, func, !<..items> -> Array(..items)<any>)
+    }
+
+    mthd pop<index#num> = T {
+        let item => *(internal[index]);
+        internal /= item;
+        return item;
+    }
+
+    mthd add<item#T> = void {
+        append(internal, &item);
+    }
+
+    mthd size -> size(internal);
+
+    mthd addAll<..items> = void {
+        for (item <- items)
+            add(item);
+    }
+
+    mthd bin list -> internal;
+
+    mthd slice<min#num, max#num> {
+        Array(..sublist(internal, min, max));
+    }
+
+    mthd indexOf<item> = num {
+        return indexOf(internal, &item);
+    }
+
+    mthd bin bracket<index> -> internal[index];
+
+    mthd contains<x> = bool {
+        return contains(internal, x);
+    }
+
+    mthd join<str#String> -> join(str, internal);
+
+}
+
+class Tuple {
+    prv items: list;
+    ingredients<..entry> {
+        items => [];
+        for (item <- entry)
+            append(items, &item);
+    }
+
+    mthd bin bracket<other> -> items[other];
+
+    mthd bin string -> `(${substr(str(items), 1, size(str(items)) - 1)})`;
+    
+    mthd bin type {
+        let str => '(';
+        for (item <- items)
+            str += type(item);
+        str + ')'
+    }
+
+    mthd bin list -> items;
+}
+
+class Map {
+    prv internal: dict;
+
+    ingredients<..pairs>(K, V) {
+        internal => {};
+        for (pair <- pairs) {
+            if (type(pair) != "list" | size(pair) != 2)
+                throw "Type", "Expected a key-value pair ([k, v])";
+            elif (K != "any" & type(pair[0]) != K) 
+                throw "Type", `Expected key type to be ${K}, got ${type(pair[0])}`;
+            elif (V != "any" & type(pair[1]) != V) 
+                throw "Type", `Expected key type to be ${V}, got ${type(pair[1])}`;
+            
+            set(internal, pair[0], &pair[1]);
+        }
+    }
+
+    mthd iter<f#function> -> Iter(
+        list(pairArray()),
+        f,
+        !<..array> {
+            let new => Map()<any, any>;
+            for (pair <- list(array))
+                new::set(pair[0], pair[1]);
+            new
+        }
+    );
+
+    mthd bin string {
+        let new => {};
+        for (key <- list(internal))
+            set(new, str(key), str(internal[key]));
+        str(new)
+    }
+
+    mthd bin bracket<other#K> -> internal[other];
+
+    mthd contains<other> -> contains(list(internal), other);
+
+    mthd bin list -> list(internal);
+
+    mthd keyArray -> Array(..list(internal));
+
+    mthd get<other#K> {
+        if (!this::contains(other)) throw "Out of Bounds", "Key not in map";
+        internal[other]
+    }
+
+    mthd getOrDefault<other#K, def> {
+        if (!this::contains(other)) return def;
+        internal[other]
+    }
+
+    mthd size -> size(list(internal));
+
+    mthd set<key#K, value#V> {
+        set(internal, key, value);
+    }
+
+    mthd del<key#K> {
+        if (!this::contains(key)) throw "Out of Bounds", "Key not in map";
+        delete(internal, key);
+    }
+
+    mthd pairArray {
+        let arr => Array()<Array(any)>;
+        for (key <- list(internal)) {
+            var a => Array()<any>;
+            a::addAll(key, internal[key]);
+            arr::add(a);
+        }
+        arr
+    }
+}
+
+        """);
+    }};
     
     public static final Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
         put(Tokens.TT.PLUS, Operations.OP.ADD);

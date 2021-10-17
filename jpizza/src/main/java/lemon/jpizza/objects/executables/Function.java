@@ -132,12 +132,8 @@ public class Function extends BaseFunction {
         } return res;
     }
 
-    public RTResult run(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+    public RTResult popKey(List<Obj> args, List<Token> generics, HashMap<String, String> genericKey) {
         RTResult res = new RTResult();
-        Interpreter interpreter = new Interpreter(parent.memo);
-        Context execCtx = newContext();
-
-        HashMap<String, String> genericKey = new HashMap<>();
 
         List<String> stringerics = new ArrayList<>();
         for (Token g : this.generics)
@@ -148,15 +144,15 @@ public class Function extends BaseFunction {
 
         if (generics.size() > this.generics.size()) {
             return res.failure(RTError.GenericCount(
-                    pos_start, pos_end,
+                    get_start(), get_end(),
                     String.format("Got %s too many generic types", generics.size() - this.generics.size()),
-                    context
+                    get_ctx()
             ));
         } else if (generics.size() + genericKey.size() < this.generics.size()) {
             return res.failure(RTError.GenericCount(
-                    pos_start, pos_end,
+                    get_start(), get_end(),
                     String.format("Got %s too few generic types", this.generics.size() - generics.size()),
-                    context
+                    get_ctx()
             ));
         }
 
@@ -167,12 +163,27 @@ public class Function extends BaseFunction {
             genericKey.put(key, value);
         }
 
+        return res;
+    }
+
+    public RTResult run(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
+        RTResult res = new RTResult();
+        Interpreter interpreter = new Interpreter(parent.memo);
+        Context execCtx = newContext();
+
+        HashMap<String, String> genericKey = new HashMap<>();
+
+        res.register(popKey(args, generics, genericKey));
+        if (res.error != null) return res;
+
         for (Map.Entry<String, String> entry : genericKey.entrySet())
             execCtx.symbolTable.addGeneric(entry.getKey(), entry.getValue());
 
         if (argname != null && args.size() > argNames.size()) {
             execCtx.symbolTable.define(argname, new PList(new ArrayList<>(args.subList(argNames.size(), args.size()))));
             args = new ArrayList<>(args.subList(0, argNames.size()));
+        } else {
+            execCtx.symbolTable.define(argname, new PList(new ArrayList<>()));
         }
 
         if (kwargname != null) {
@@ -214,16 +225,16 @@ public class Function extends BaseFunction {
         if (!returnType.equals("any")) {
             Obj type = retValue.type().astring();
             if (type.jptype != Constants.JPType.String) return res.failure(RTError.Type(
-                    pos_start, pos_end,
+                    get_start(), get_end(),
                     "Return value type is not a String",
-                    context
+                    get_ctx()
             ));
 
             String rtype = type.string;
             if (!rtype.equals(returnType)) return res.failure(RTError.Type(
-                    pos_start, pos_end,
+                    get_start(), get_end(),
                     "Return value has mismatched type",
-                    context
+                    get_ctx()
             ));
         }
 

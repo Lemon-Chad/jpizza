@@ -9,6 +9,7 @@ import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Pair;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.io.IOException;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -118,8 +119,8 @@ public class HTTPLIB extends Library {
 
         var headers = response.headers().map();
 
-        Dict ret = new Dict(new HashMap<>());
-        Dict heads = new Dict(new HashMap<>());
+        Dict ret = new Dict(new ConcurrentHashMap<>());
+        Dict heads = new Dict(new ConcurrentHashMap<>());
 
         List<String> v;
         List<Obj> vO;

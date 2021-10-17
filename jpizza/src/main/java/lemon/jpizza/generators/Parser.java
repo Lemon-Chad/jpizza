@@ -68,7 +68,7 @@ public class Parser {
             else
                 return NamingConvention.MixedSnakeCase;
         }
-        else if (lowercase == 0 && uppercase > 0)
+        else if (lowercase == 0 && uppercase > 1)
             return NamingConvention.ScreamingSnakeCase;
         else if ('A' <= name.charAt(0) && name.charAt(0) <= 'Z')
             return NamingConvention.PascalCase;
@@ -1464,24 +1464,21 @@ match (a) {
                     int advancements = 1;
                     res.registerAdvancement();
                     advance();
-                    if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
-                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                            "Expected type"
-                    ));
-                    generics.add(currentToken);
-                    res.registerAdvancement(); advance();
-                    advancements++;
+
+                    ParseResult r = buildTypeTok();
+                    if (r.error != null) return r;
+                    generics.add((Token) res.register(r));
+                    advancements += r.toReverseCount;
+
                     while (currentToken.type == TT.COMMA) {
                         res.registerAdvancement();
                         advance();
                         advancements++;
-                        if (currentToken.type != TT.IDENTIFIER) return res.failure(Error.InvalidSyntax(
-                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                                "Expected type"
-                        ));
-                        generics.add(currentToken);
-                        res.registerAdvancement(); advance();
-                        advancements++;
+                        
+                        r = buildTypeTok();
+                        if (r.error != null) return r;
+                        generics.add((Token) res.register(r));
+                        advancements += r.toReverseCount;
                     }
                     if (currentToken.type != TT.GT) {
                         generics = new ArrayList<>();
@@ -2063,10 +2060,9 @@ if (false)
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, false));
                 default:
-                    return res.failure(Error.ExpectedCharError(
-                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                            "Expected '{' or '=>'"
-                    ));
+                    body = (Node) res.register(this.statement());
+                    if (res.error != null) return res;
+                    return res.success(new IterNode(varName, iterableNode, body, true));
             }
         }
         Node start = (Node) res.register(this.compExpr());
@@ -2108,10 +2104,9 @@ if (false)
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, false));
             default:
-                return res.failure(Error.ExpectedCharError(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '{' or '=>'"
-                ));
+                body = (Node) res.register(this.statement());
+                if (res.error != null) return res;
+                return res.success(new ForNode(varName, start, end, step, body, true));
         }
 
     }
@@ -2193,10 +2188,9 @@ while (false) {
                 if (res.error != null) return res;
                 break;
             default:
-                return res.failure(Error.ExpectedCharError(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '{' or '=>'"
-                ));
+                body = (Node) res.register(this.statement());
+                if (res.error != null) return res;
+                break;
         }
 
         Node condition = (Node) res.register(getWhileCondition());
@@ -2231,10 +2225,9 @@ while (false) {
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
             default:
-                return res.failure(Error.ExpectedCharError(
-                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '{' or '=>'"
-                ));
+                body = (Node) res.register(this.statement());
+                if (res.error != null) return res;
+                return res.success(new WhileNode(condition, body, true, false));
         }
 
     }
@@ -2435,9 +2428,9 @@ while (false) {
         ParseResult res = new ParseResult();
         String retype = "any";
         if (currentToken.type.equals(TT.EQS)) {
-            Token etok = (Token) res.register(expectIdentifier());
-            if (res.error != null) return res;
             res.registerAdvancement(); advance();
+            Token etok = (Token) res.register(buildTypeTok());
+            if (res.error != null) return res;
 
             retype = (String) etok.value;
         } return res.success(retype);

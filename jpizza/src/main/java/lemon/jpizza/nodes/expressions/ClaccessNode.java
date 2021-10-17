@@ -31,11 +31,11 @@ public class ClaccessNode extends Node {
         RTResult res = new RTResult();
 
         Obj var = res.register(class_tok.visit(inter, context));
+        if (res.error != null) return res;
         while (var.jptype == Constants.JPType.Ref) {
             var = var.deref().a;
         }
 
-        if (res.error != null) return res;
         if (var.jptype != Constants.JPType.ClassInstance && var.jptype != Constants.JPType.Enum &&
                 var.jptype != Constants.JPType.ClassPlate) return res.failure(RTError.Type(
                 pos_start, pos_end,

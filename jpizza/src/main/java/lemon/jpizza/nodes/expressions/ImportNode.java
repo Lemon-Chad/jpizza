@@ -2,6 +2,7 @@ package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
+import lemon.jpizza.errors.Error;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.Obj;
@@ -11,6 +12,7 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
 import lemon.jpizza.nodes.Node;
+import lemon.jpizza.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,24 +41,40 @@ public class ImportNode extends Node {
     }
 
     public RTResult vis(Context context) throws IOException {
+        RTResult res = new RTResult();
+
         String fn = (String) file_name_tok.value;
         String file_name = System.getProperty("user.dir") + "/" + fn + ".devp";
+
         String modPath = Shell.root + "/modules/" + fn;
         String modFilePath = modPath + "/" + fn + ".devp";
-        var mkdirs = new File(Shell.root + "/modules").mkdirs();
+
+        new File(Shell.root + "/modules").mkdirs();
+
         Obj imp = null;
-        RTResult res = new RTResult();
+
         String userDataDir = System.getProperty("user.dir");
-        if (Constants.LIBRARIES.containsKey(fn))
-            imp = new ClassInstance(Constants.LIBRARIES.get(fn), fn).set_pos(pos_start, pos_end).set_context(context);
-        else {
-            if (Files.exists(Paths.get(modFilePath))){
+        if (Constants.LIBRARIES.containsKey(fn)) {
+            imp = new ClassInstance(Constants.LIBRARIES.get(fn), fn)
+                    .set_pos(pos_start, pos_end)
+                    .set_context(context);
+        } else if (Constants.STANDLIBS.containsKey(fn)) {
+            Pair<ClassInstance, Error> pair = Shell.imprt(fn, Constants.STANDLIBS.get(fn), context, pos_start);
+            if (pair.b != null) return res.failure(pair.b);
+            imp = pair.a;
+        } else {
+            if (Files.exists(Paths.get(modFilePath))) {
                 System.setProperty("user.dir", modPath);
+
                 imp = res.register(Interpreter.getImprt(modFilePath, fn, context, pos_start, pos_end));
-                System.setProperty("user.dir", userDataDir);}
+
+                System.setProperty("user.dir", userDataDir);
+            }
             else if (Files.exists(Paths.get(file_name)))
                 imp = res.register(Interpreter.getImprt(file_name, fn, context, pos_start, pos_end));
-            if (res.error != null) return res;
+            
+            if (res.error != null) 
+                return res;
         }
         if (imp == null) return res.failure(RTError.FileNotFound(
                 pos_start, pos_end,

@@ -50,13 +50,13 @@ public class BaseFunction extends Value {
 
         int tSize = argTypes.size();
         for (int i = 0; i < tSize; i++) {
-            String type = argTypes.get(i);
+            String type = context.symbolTable.getType(argTypes.get(i));
             String generictype = genericKey.get(type);
             if (type.equals("any") || (generictype != null && generictype.equals("any"))) continue;
 
             Obj arg;
             if (i >= size) {
-                arg = defaults.get(i);
+                arg = defaults.get(i - size);
             } else {
                 arg = args.get(i);
             }
@@ -93,11 +93,6 @@ public class BaseFunction extends Value {
             }
         }
 
-        if (genericKey.size() < generics.size()) return res.failure(RTError.GenericCount(
-                pos_start, pos_end,
-                String.format("Got %s too few generics", generics.size() - genericKey.size()),
-                ctx
-        ));
         return res.success(null);
     }
 
@@ -107,7 +102,7 @@ public class BaseFunction extends Value {
         for (int i = 0; i < size; i++) {
             Obj argValue;
             if (i >= aSize)
-                argValue = defaults.get(i);
+                argValue = defaults.get(i - aSize);
             else
                 argValue = args.get(i);
             argValue.set_context(execCtx);

@@ -11,6 +11,7 @@ import lemon.jpizza.results.RTResult;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DictNode extends Node {
     public final Map<Node, Node> dict;
@@ -28,7 +29,7 @@ public class DictNode extends Node {
 
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
-        Dict dict = new Dict(new HashMap<>());
+        Dict dict = new Dict(new ConcurrentHashMap<>());
 
         Map.Entry<Node, Node>[] entrySet = new Map.Entry[0];
         entrySet = this.dict.entrySet().toArray(entrySet);

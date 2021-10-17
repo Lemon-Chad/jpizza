@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Tokens.TT;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -12,6 +13,7 @@ import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.objects.Value;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
+import lemon.jpizza.Shell;
 
 import java.util.*;
 
@@ -128,15 +130,8 @@ public class ClassPlate extends Value {
     public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
 
-        Context classContext = new Context(name, context, pos_start);
-        classContext.symbolTable = new SymbolTable(context.symbolTable);
-
-        for (int i = 0; i < generics.size(); i++) {
-            Token key = this.generics.get(i);
-            String value = generics.get(i).value.toString();
-            classContext.symbolTable.declareattr(key, context, new Str(value));
-            classContext.symbolTable.addGeneric(key.value.toString(), value);
-        }
+        Context classContext = new Context(name, null, null);
+        classContext.symbolTable = new SymbolTable(Shell.globalSymbolTable);
 
         AttrDeclareNode[] attributes = getAttributes();
         int length = attributes.length;
@@ -157,6 +152,15 @@ public class ClassPlate extends Value {
 
         CMethod make = (CMethod) getMake().copy();
         make.set_context(classContext).set_pos(pos_start, pos_end);
+
+        HashMap<String, String> genericKey = new HashMap<>();
+        res.register(make.popKey(args, generics, genericKey));
+        if (res.error != null) return res;
+
+        for (Map.Entry<String, String> entry : genericKey.entrySet()) {
+            classContext.symbolTable.declareattr(new Token(TT.IDENTIFIER, entry.getKey()), context, new Str(entry.getValue()));
+            classContext.symbolTable.addGeneric(entry.getKey(), entry.getValue());
+        }
 
         res.register(make.execute(args, generics, kwargs, parent));
         if (res.error != null) return res;
