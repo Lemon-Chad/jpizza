@@ -9,6 +9,8 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.List;
+
 public class VarAssignNode extends Node {
     public final Token var_name_tok;
     public final Node value_node;
@@ -16,9 +18,9 @@ public class VarAssignNode extends Node {
     public boolean defining;
     public Integer min = null;
     public Integer max = null;
-    public String type;
+    public List<String> type;
 
-    public VarAssignNode setType(String type) {
+    public VarAssignNode setType(List<String> type) {
         this.type = type;
         return this;
     }

@@ -11,10 +11,7 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.Token;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SymbolTable implements Serializable {
     final Map<String, VarNode> symbols = new HashMap<>();
@@ -42,12 +39,19 @@ public class SymbolTable implements Serializable {
         generics.put(key, value);
     }
 
-    public String getType(String key) {
+    private String getType(String key) {
         if (generics.containsKey(key))
             return generics.get(key);
         else if (parent != null)
             return parent.getType(key);
         return key;
+    }
+
+    public String getType(List<String> key) {
+        StringBuilder sb = new StringBuilder();
+        for (String seg: key)
+            sb.append(getType(seg));
+        return sb.toString();
     }
 
     public Object get(String name) {
@@ -56,7 +60,7 @@ public class SymbolTable implements Serializable {
             Object val = parent != null ? parent.get(name) : null;
             return val != null ? val : getattr(name);
         }
-        return value != null ? value.value_node : null;
+        return value.value_node;
     }
 
     public Node getDyn(String name) {
@@ -79,8 +83,8 @@ public class SymbolTable implements Serializable {
         symbols.remove(name);
     }
 
-    public RTError.ErrorDetails define(String name, Object value, boolean locked, String type, Integer min, Integer max) {
-        type = getType(type);
+    public RTError.ErrorDetails define(String name, Object value, boolean locked, List<String> rawType, Integer min, Integer max) {
+        String type = getType(rawType);
         if (symbols.containsKey(name) && symbols.get(name).locked)
             return RTError.makeDetails(RTError::Const, "Baked variable already defined");
         if (min != null || max != null)
@@ -102,12 +106,12 @@ public class SymbolTable implements Serializable {
         types.put(name, type);
         return null;
     }
-    public void define(String name, Object value, String type) {
+    public void define(String name, Object value, List<String> type) {
         define(name, value, false, type, null, null);
     }
 
     public void define(String name, Object value) {
-        define(name, value, "any");
+        define(name, value, Collections.singletonList("any"));
     }
 
     public RTError.ErrorDetails set(String name, Obj value, boolean locked) {

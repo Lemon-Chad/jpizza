@@ -15,6 +15,7 @@ import lemon.jpizza.Token;
 import lemon.jpizza.Shell;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ClassDefNode extends Node {
@@ -69,11 +70,11 @@ public class ClassDefNode extends Node {
             }
 
             List<String> argNames = new ArrayList<>();
-            List<String> argTypes = new ArrayList<>();
+            List<List<String>> argTypes = new ArrayList<>();
             int size = arg_name_toks.size();
             for (int i = 0; i < size; i++) {
                 argNames.add((String) arg_name_toks.get(i).value);
-                argTypes.add((String) arg_type_toks.get(i).value);
+                argTypes.add((List<String>) arg_type_toks.get(i).value);
             }
 
             var dfts = inter.getDefaults(defaults, context);
@@ -81,7 +82,7 @@ public class ClassDefNode extends Node {
             if (res.error != null) return res;
 
             CMethod make = (CMethod) new CMethod("<make>", null, classContext, make_node, argNames,
-                    argTypes, false, false, false, "void", dfts.b, defaultCount,
+                    argTypes, false, false, false, Collections.singletonList("void"), dfts.b, defaultCount,
                     generic_toks, false, false, argname, kwargname)
                     .set_pos(pos_start, pos_end);
             size = methods.size();

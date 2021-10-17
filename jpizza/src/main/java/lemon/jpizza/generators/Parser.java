@@ -60,7 +60,7 @@ public class Parser {
                 lowercase++;
         }
 
-        if (name.indexOf("_") != -1) {
+        if (name.contains("_")) {
             if (uppercase == 0)
                 return NamingConvention.SnakeCase;
             else if (lowercase == 0 && uppercase > 0)
@@ -275,7 +275,7 @@ public class Parser {
     public ParseResult chainExpr() { return binOp(this::compExpr, Collections.singletonList(TT.BITE)); }
 
     public ParseResult buildTypeTok() {
-        StringBuilder type = new StringBuilder();
+        List<String> type = new ArrayList<>();
         ParseResult res = new ParseResult();
 
         if (!Constants.TYPETOKS.contains(currentToken.type)) return res.failure(Error.InvalidSyntax(
@@ -284,7 +284,7 @@ public class Parser {
         ));
 
         while (Constants.TYPETOKS.contains(currentToken.type)) {
-            type.append(switch (currentToken.type) {
+            type.add(switch (currentToken.type) {
                 case LSQUARE -> "[";
                 case RSQUARE -> "]";
                 case LPAREN -> "(";
@@ -298,12 +298,12 @@ public class Parser {
             res.registerAdvancement(); advance();
         }
 
-        return res.success(new Token(TT.IDENTIFIER, type.toString()));
+        return res.success(new Token(TT.TYPE, type));
     }
 
     public ParseResult expr() {
         ParseResult res = new ParseResult();
-        String type = "any";
+        List<String> type = Collections.singletonList("any");
         if (currentToken.matches(TT.KEYWORD, "attr")) {
             res.registerAdvancement(); advance();
             Token var_name = (Token) res.register(extractVarTok());
@@ -436,7 +436,7 @@ public class Parser {
                 advance(); res.registerAdvancement();
                 Token typeTok = (Token) res.register(buildTypeTok());
                 if (res.error != null) return res;
-                type = typeTok.value.toString();
+                type = (List<String>) typeTok.value;
             }
 
             if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
@@ -578,7 +578,7 @@ Mixed_Snake_Case_Looks_Like_This"""
         advance(); res.registerAdvancement();
         if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected identifier"
+                String.format("Expected %s", name.toLowerCase())
         )); 
         
         matchConvention(currentToken, name, convention);
@@ -1004,21 +1004,22 @@ Mixed_Snake_Case_Looks_Like_This"""
 
         Position start = currentToken.pos_start.copy();
 
-        if (currentToken.type == TT.IDENTIFIER)
-            do {
-                res.register(expectIdentifier("Attribute name", NamingConvention.CamelCase));
-                if (res.error != null) return res;
+        do {
+            res.register(expectIdentifier("Attribute name", NamingConvention.CamelCase));
+            if (res.error != null) return res;
 
-                children.add(currentToken);
-                childrenDecls.add(new AttrDeclareNode(currentToken));
-                types.add(new Token(TT.IDENTIFIER, "any", currentToken.pos_start, currentToken.pos_end));
-                assignment.add(new AttrAssignNode(
-                        currentToken,
-                        new VarAccessNode(currentToken)
-                ));
+            children.add(currentToken);
+            childrenDecls.add(new AttrDeclareNode(currentToken));
+            types.add(new Token(TT.TYPE, Collections.singletonList("any"),
+                    currentToken.pos_start, currentToken.pos_end));
+            assignment.add(new AttrAssignNode(
+                    currentToken,
+                    new VarAccessNode(currentToken)
+            ));
 
-                res.registerAdvancement(); advance();
-            } while (currentToken.type == TT.COMMA);
+            res.registerAdvancement(); advance();
+        } while (currentToken.type == TT.COMMA);
+
         Position end = currentToken.pos_end.copy();
 
         if (currentToken.type != TT.CLOSE) return res.failure(Error.ExpectedCharError(
@@ -1048,10 +1049,10 @@ Mixed_Snake_Case_Looks_Like_This"""
 
     public static class EnumChild {
         public final List<String> params;
-        public final List<String> types;
+        public final List<List<String>> types;
         public final List<String> generics;
         public final Token token;
-        public EnumChild(Token token, List<String> params, List<String> types, List<String> generics) {
+        public EnumChild(Token token, List<String> params, List<List<String>> types, List<String> generics) {
             this.params = params;
             this.types = types;
             this.generics = generics;
@@ -1115,7 +1116,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             }
 
             List<String> params = new ArrayList<>();
-            List<String> types = new ArrayList<>();
+            List<List<String>> types = new ArrayList<>();
             if (currentToken.type == TT.OPEN) {
                 do {
                     Token tok = (Token) res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
@@ -1124,12 +1125,12 @@ Mixed_Snake_Case_Looks_Like_This"""
                     res.registerAdvancement(); advance();
 
                     if (currentToken.type == TT.BITE) {
-                        tok = (Token) res.register(expectIdentifier());
-                        if (res.error != null) return res;
-                        types.add((String) tok.value);
                         res.registerAdvancement(); advance();
+                        tok = (Token) res.register(buildTypeTok());
+                        if (res.error != null) return res;
+                        types.add((List<String>) tok.value);
                     } else {
-                        types.add("any");
+                        types.add(Collections.singletonList("any"));
                     }
 
                 } while (currentToken.type == TT.COMMA);
@@ -1663,7 +1664,7 @@ match (a) {
         int defaultCount = 0;
         boolean optionals = false;
 
-        Token anyToken = new Token(TT.IDENTIFIER, "any");
+        Token anyToken = new Token(TT.TYPE, Collections.singletonList("any"));
         if (currentToken.type.equals(TT.LT)) {
             if (peek(1) != null && peek(1).type != TT.BACK) {
                 boolean args;
@@ -2050,19 +2051,23 @@ if (false)
             if (res.error != null) return res;
             Node body;
             switch (currentToken.type) {
-                case OPEN:
+                case OPEN -> {
                     body = (Node) res.register(this.block());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, true));
-                case EQ:
-                    res.registerAdvancement(); advance();
+                }
+                case EQ -> {
+                    res.registerAdvancement();
+                    advance();
                     body = (Node) res.register(this.statement());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, false));
-                default:
+                }
+                default -> {
                     body = (Node) res.register(this.statement());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, true));
+                }
             }
         }
         Node start = (Node) res.register(this.compExpr());
@@ -2094,19 +2099,23 @@ if (false)
 
         Node body;
         switch (currentToken.type) {
-            case OPEN:
+            case OPEN -> {
                 body = (Node) res.register(this.block());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, true));
-            case EQ:
-                res.registerAdvancement(); advance();
+            }
+            case EQ -> {
+                res.registerAdvancement();
+                advance();
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, false));
-            default:
+            }
+            default -> {
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, true));
+            }
         }
 
     }
@@ -2178,19 +2187,20 @@ while (false) {
         Node body;
         boolean bracket = currentToken.type == TT.OPEN;
         switch (currentToken.type) {
-            case EQ:
-                res.registerAdvancement(); advance();
+            case EQ -> {
+                res.registerAdvancement();
+                advance();
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
-                break;
-            case OPEN:
+            }
+            case OPEN -> {
                 body = (Node) res.register(block(false));
                 if (res.error != null) return res;
-                break;
-            default:
+            }
+            default -> {
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
-                break;
+            }
         }
 
         Node condition = (Node) res.register(getWhileCondition());
@@ -2215,19 +2225,23 @@ while (false) {
         }
         Node body;
         switch (currentToken.type) {
-            case EQ:
-                res.registerAdvancement(); advance();
+            case EQ -> {
+                res.registerAdvancement();
+                advance();
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, false, false));
-            case OPEN:
+            }
+            case OPEN -> {
                 body = (Node) res.register(block());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
-            default:
+            }
+            default -> {
                 body = (Node) res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
+            }
         }
 
     }
@@ -2357,7 +2371,7 @@ while (false) {
         boolean isCatcher = (boolean) res.register(this.isCatcher());
         if (res.error != null) return res;
 
-        String retype = (String) res.register(staticRet());
+        List<String> retype = (List<String>) res.register(staticRet());
         if (res.error != null) return res;
 
         Node nodeToReturn;
@@ -2426,13 +2440,13 @@ while (false) {
 
     public ParseResult staticRet() {
         ParseResult res = new ParseResult();
-        String retype = "any";
+        List<String> retype = Collections.singletonList("any");
         if (currentToken.type.equals(TT.EQS)) {
             res.registerAdvancement(); advance();
             Token etok = (Token) res.register(buildTypeTok());
             if (res.error != null) return res;
 
-            retype = (String) etok.value;
+            retype = (List<String>) etok.value;
         } return res.success(retype);
     }
 
@@ -2559,7 +2573,7 @@ while (false) {
                 boolean isCatcher = (boolean) res.register(this.isCatcher());
                 if (res.error != null) return res;
 
-                String retype = (String) res.register(staticRet());
+                List<String> retype = (List<String>) res.register(staticRet());
                 if (res.error != null) return res;
 
                 Node nodeToReturn;

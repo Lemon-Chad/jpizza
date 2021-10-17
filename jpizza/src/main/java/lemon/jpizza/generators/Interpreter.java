@@ -118,13 +118,13 @@ public class Interpreter {
     }
 
     @SuppressWarnings("DuplicatedCode")
-    public Pair< List<String>, List<String> > gatherArgs(List<Token> argNameToks, List<Token> argTypeToks) {
+    public Pair< List<String>, List<List<String>> > gatherArgs(List<Token> argNameToks, List<Token> argTypeToks, Context ctx) {
         List<String> argNames = new ArrayList<>();
-        List<String> argTypes = new ArrayList<>();
+        List<List<String>> argTypes = new ArrayList<>();
         int size = argNameToks.size();
         for (int i = 0; i < size; i++) {
             argNames.add((String) argNameToks.get(i).value);
-            argTypes.add((String) argTypeToks.get(i).value);
+            argTypes.add((List<String>) argTypeToks.get(i).value);
         }
         return new Pair<>(argNames, argTypes);
     }

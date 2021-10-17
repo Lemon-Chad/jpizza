@@ -12,16 +12,13 @@ import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
 import org.checkerframework.checker.units.qual.A;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Function extends BaseFunction {
     final Node bodyNode;
     public final List<String> argNames;
-    final List<String> argTypes;
+    final List<List<String>> argTypes;
     final List<Token> generics;
     List<Function> preprocessors;
     List<Function> postprocessors;
@@ -31,11 +28,11 @@ public class Function extends BaseFunction {
     final int defaultCount;
     final boolean async;
     final boolean autoreturn;
-    final String returnType;
+    final List<String> returnType;
     boolean catcher = false;
 
-    public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes,
-                    boolean async, boolean autoreturn, String returnType, List<Obj> defaults, int defaultCount,
+    public Function(String name, Node bodyNode, List<String> argNames, List<List<String>> argTypes,
+                    boolean async, boolean autoreturn, List<String> returnType, List<Obj> defaults, int defaultCount,
                     List<Token> generics) {
         super(name);
         this.generics = generics;
@@ -51,7 +48,7 @@ public class Function extends BaseFunction {
         jptype = Constants.JPType.Function;
     }
 
-    public Function(String name, Node bodyNode, List<String> argNames, List<String> argTypes, String returnType,
+    public Function(String name, Node bodyNode, List<String> argNames, List<List<String>> argTypes, List<String> returnType,
                     List<Obj> defaults, int defaultCount) {
         super(name);
         this.defaultCount = defaultCount;
@@ -77,10 +74,10 @@ public class Function extends BaseFunction {
         this.preprocessors = new ArrayList<>();
         this.postprocessors = new ArrayList<>();
         for (int i = 0; i < this.argNames.size(); i++) {
-            this.argTypes.add("any");
+            this.argTypes.add(Collections.singletonList("any"));
             this.defaults.add(null);
         }
-        this.returnType = "any";
+        this.returnType = Collections.singletonList("any");
         this.async = false; this.autoreturn = true;
         jptype = Constants.JPType.Function;
     }

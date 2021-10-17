@@ -19,7 +19,7 @@ public class MethDefNode extends Node {
     public final boolean bin;
     public final List<Token> arg_type_toks;
     public final List<Token> generic_toks;
-    public final String returnType;
+    public final List<String> returnType;
     public final List<Node> defaults;
     public final int defaultCount;
     public boolean catcher = false;
@@ -29,7 +29,7 @@ public class MethDefNode extends Node {
     final String kwargname;
 
     public MethDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
-                       boolean autoreturn, boolean bin, boolean async, String returnType, List<Node> defaults,
+                       boolean autoreturn, boolean bin, boolean async, List<String> returnType, List<Node> defaults,
                        int defaultCount, List<Token> generics, boolean stat, boolean priv, String argname,
                        String kwargname) {
         this.var_name_tok = var_name_tok;
@@ -62,7 +62,7 @@ public class MethDefNode extends Node {
         RTResult res = new RTResult();
 
         String funcName = (String) var_name_tok.value;
-        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks);
+        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks, context);
 
         var dfts = inter.getDefaults(defaults, context);
         res.register(dfts.a);

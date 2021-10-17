@@ -214,11 +214,11 @@ switch (input) {
 };
 
 println(match (input) {
-    case 2 -> 4
-    case 4 -> 8
-    case 8 -> 12
+    case 2 -> 4;
+    case 4 -> 8;
+    case 8 -> 12;
 
-    default -> 0
+    default -> 0;
 });
 
 free input;

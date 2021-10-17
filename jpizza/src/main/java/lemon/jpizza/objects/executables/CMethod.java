@@ -20,7 +20,7 @@ public class CMethod extends Function {
     final Token nameTok;
 
     public CMethod(String name, Token nameTok, Context context, Node bodyNode, List<String> argNames,
-                   List<String> argTypes, boolean bin, boolean async, boolean autoreturn, String returnType,
+                   List<List<String>> argTypes, boolean bin, boolean async, boolean autoreturn, List<String> returnType,
                    List<Obj> defaults, int defaultCount, List<Token> generics, boolean stat, boolean priv,
                    String argname, String kwargname) {
         super(name, bodyNode, argNames, argTypes, async, autoreturn, returnType, defaults, defaultCount, generics);

@@ -14,17 +14,15 @@ import lemon.jpizza.results.RTResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class EnumJChild extends Value {
     public EnumJ parent;
     public final int val;
     final List<String> params;
-    final List<String> types;
+    final List<List<String>> types;
     final List<String> generics;
 
-    public EnumJChild(int val, List<String> params, List<String> types, List<String> generics) {
+    public EnumJChild(int val, List<String> params, List<List<String>> types, List<String> generics) {
         this.val = val;
         this.params = params;
         this.types = types;
@@ -60,7 +58,7 @@ public class EnumJChild extends Value {
 
         int tSize = types.size();
         for (int i = 0; i < tSize; i++) {
-            String type = types.get(i);
+            String type = ctx.symbolTable.getType(types.get(i));
             if (genericKey.containsKey(type))
                 type = genericKey.get(type);
             if (type.equals("any")) continue;

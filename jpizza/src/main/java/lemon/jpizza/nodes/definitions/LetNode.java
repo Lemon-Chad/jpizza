@@ -9,6 +9,8 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.Collections;
+
 public class LetNode extends Node {
     public final Token var_name_tok;
     public final Node value_node;
@@ -28,7 +30,8 @@ public class LetNode extends Node {
         Obj value = res.register(value_node.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        RTError.ErrorDetails error = context.symbolTable.define(varName, value, false, value.type().toString(), null, null);
+        RTError.ErrorDetails error = context.symbolTable.define(varName, value, false,
+                Collections.singletonList(value.type().toString()), null, null);
         if (error != null) return res.failure(error.build(
                 pos_start, pos_end,
                 context

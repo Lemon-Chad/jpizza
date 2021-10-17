@@ -32,7 +32,7 @@ public class BaseFunction extends Value {
         return newContext;
     }
 
-    public RTResult checkArgs(List<Obj> defaults, List<String> argTypes, HashMap<String, String> genericKey,
+    public RTResult checkArgs(List<Obj> defaults, List<List<String>> argTypes, HashMap<String, String> genericKey,
                               List<Obj> args, int minArgs, int maxArgs) {
         RTResult res = new RTResult();
 
@@ -80,13 +80,13 @@ public class BaseFunction extends Value {
         return res.success(null);
     }
 
-    public static RTResult inferGenerics(List<Obj> args, List<String> types, List<String> generics, HashMap<String, String> genericKey,
+    public static RTResult inferGenerics(List<Obj> args, List<List<String>> types, List<String> generics, HashMap<String, String> genericKey,
                                          Position pos_start, Position pos_end, Context ctx) {
         RTResult res = new RTResult();
 
         int len = Math.min(args.size(), types.size());
         for (int i = 0; i < len; i++) {
-            String expect = types.get(i);
+            String expect = ctx.symbolTable.getType(types.get(i));
             if (generics.contains(expect) && !genericKey.containsKey(expect)) {
                 String actual = args.get(i).type().toString();
                 genericKey.put(expect, actual);
@@ -111,7 +111,7 @@ public class BaseFunction extends Value {
         }
     }
 
-    public RTResult checkPopArgs(List<String> argNames, List<String> argTypes, List<Obj> args, Context execCtx,
+    public RTResult checkPopArgs(List<String> argNames, List<List<String>> argTypes, List<Obj> args, Context execCtx,
                                  List<Obj> defaults, int minArgs, int maxArgs, HashMap<String, String> genericKey) {
         RTResult res = new RTResult();
         res.register(checkArgs(defaults, argTypes, genericKey, args, minArgs, maxArgs));

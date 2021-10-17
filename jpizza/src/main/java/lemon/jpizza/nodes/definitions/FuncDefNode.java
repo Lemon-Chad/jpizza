@@ -19,7 +19,7 @@ public class FuncDefNode extends Node {
     final boolean async;
     final List<Token> arg_type_toks;
     final List<Token> generic_toks;
-    final String returnType;
+    final List<String> returnType;
     final List<Node> defaults;
     final int defaultCount;
     boolean catcher = false;
@@ -27,7 +27,7 @@ public class FuncDefNode extends Node {
     final String kwargname;
 
     public FuncDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
-                       boolean autoreturn, boolean async, String returnType, List<Node> defaults, int defaultCount,
+                       boolean autoreturn, boolean async, List<String> returnType, List<Node> defaults, int defaultCount,
                        List<Token> generic_toks, String argname, String kwargname) {
         this.var_name_tok = var_name_tok;
         this.argname = argname;
@@ -58,7 +58,7 @@ public class FuncDefNode extends Node {
         RTResult res = new RTResult();
 
         String funcName = var_name_tok != null ? (String) var_name_tok.value : null;
-        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks);
+        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks, context);
 
         var dfts = inter.getDefaults(defaults, context);
         res.register(dfts.a);
