@@ -43,11 +43,7 @@ public class CallNode extends Node {
         Obj valueToCall = res.register(nodeToCall.visit(inter, context));
         if (res.shouldReturn()) return res;
 
-        valueToCall = valueToCall.function();
-        if (valueToCall.jptype == Constants.JPType.CMethod)
-            valueToCall = valueToCall.copy().set_pos(pos_start, pos_end);
-        else
-            valueToCall = valueToCall.copy().set_pos(pos_start, pos_end).set_context(context);
+        valueToCall = valueToCall.function().copy().set_pos(pos_start, pos_end);
         int size = argNodes.size();
         for (int i = 0; i < size; i++) {
             Node node = argNodes.get(i);

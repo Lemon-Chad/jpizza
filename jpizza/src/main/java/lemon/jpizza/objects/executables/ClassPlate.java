@@ -130,8 +130,8 @@ public class ClassPlate extends Value {
     public RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent) {
         RTResult res = new RTResult();
 
-        Context classContext = new Context(name, null, null);
-        classContext.symbolTable = new SymbolTable(Shell.globalSymbolTable);
+        Context classContext = new Context(name, context.getRoot(), pos_start);
+        classContext.symbolTable = new SymbolTable(classContext.parent.symbolTable);
 
         AttrDeclareNode[] attributes = getAttributes();
         int length = attributes.length;

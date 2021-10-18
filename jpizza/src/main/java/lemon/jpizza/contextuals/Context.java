@@ -23,4 +23,10 @@ public class Context implements Serializable {
         memoize = true;
     }
 
+    public Context getRoot() {
+        if (parent == null)
+            return this;
+        return parent.getRoot();
+    }
+
 }

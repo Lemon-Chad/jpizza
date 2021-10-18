@@ -168,7 +168,7 @@ class Array {
     mthd bin list -> internal;
 
     mthd slice<min#num, max#num> {
-        Array(..sublist(internal, min, max));
+        Array(..sublist(internal, min, max))<T>;
     }
 
     mthd indexOf<item> = num {

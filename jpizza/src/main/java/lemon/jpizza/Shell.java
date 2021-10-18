@@ -308,8 +308,8 @@ public class Shell {
     public static Pair<ClassInstance, Error> imprt(String fn, String text, Context parent, Position entry_pos) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
-        Context context = new Context(fn, parent, entry_pos);
-        context.symbolTable = globalSymbolTable;
+        Context context = new Context(fn, null, null);
+        context.symbolTable = new SymbolTable(globalSymbolTable);
         RTResult result = new Interpreter().interpret(ast.a, context, false);
         return new Pair<>(new ClassInstance(context, fn), result.error);
     }

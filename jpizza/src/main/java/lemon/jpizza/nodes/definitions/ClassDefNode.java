@@ -59,8 +59,8 @@ public class ClassDefNode extends Node {
             RTResult res = new RTResult();
 
             String name = (String) class_name_tok.value;
-            Context classContext = new Context("<"+name+"-context>", null, null);
-            classContext.symbolTable = new SymbolTable(Shell.globalSymbolTable);
+            Context classContext = new Context("<"+name+"-context>", context.getRoot(), pos_start);
+            classContext.symbolTable = new SymbolTable(classContext.parent.symbolTable);
 
             AttrDeclareNode[] attributes = new AttrDeclareNode[this.attributes.size()];
             for (int i = 0; i < this.attributes.size(); i++) {
