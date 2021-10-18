@@ -156,7 +156,7 @@ public class Function extends BaseFunction {
         int genericSize = generics.size();
         for (int i = genericKey.size(); i < genericSize; i++) {
             String key = stringerics.get(i);
-            String value = generics.get(i).value.toString();
+            String value = context.symbolTable.getType((List<String>) generics.get(i).value);
             genericKey.put(key, value);
         }
 
