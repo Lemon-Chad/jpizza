@@ -34,6 +34,9 @@ public class SymbolTable implements Serializable {
     public Map<String, AttrNode> attributes() {
         return attributes;
     }
+    public Map<String, VarNode> symbols() {
+        return symbols;
+    }
 
     public void addGeneric(String key, String value) {
         generics.put(key, value);

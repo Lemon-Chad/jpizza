@@ -2,6 +2,7 @@ package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.Cache;
 import lemon.jpizza.Constants;
+import lemon.jpizza.Tokens;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
@@ -13,10 +14,7 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CallNode extends Node {
     public final Node nodeToCall;
@@ -59,6 +57,12 @@ public class CallNode extends Node {
             }
         }
 
+        List<Token> processedTypes = new ArrayList<>();
+        for (Token generic : generics)
+            processedTypes.add(new Token(Tokens.TT.TYPE,
+                    Collections.singletonList(context.symbolTable.getType((List<String>) generic.value)),
+                    generic.pos_start, generic.pos_end));
+
         for (Map.Entry<String, Node> entry : this.kwargs.entrySet()) {
             Obj obj = res.register(entry.getValue().visit(inter, context));
             kwargs.put(entry.getKey(), obj);
@@ -66,7 +70,7 @@ public class CallNode extends Node {
         }
 
         if (valueToCall.jptype == Constants.JPType.EnumChild) {
-            Obj ret = res.register(((EnumJChild) valueToCall).instance(context, args, generics));
+            Obj ret = res.register(((EnumJChild) valueToCall).instance(context, args, processedTypes));
             if (res.error != null) return res;
             return res.success(ret);
         }
@@ -76,7 +80,7 @@ public class CallNode extends Node {
         Obj retValue;
         if (valueToCall.jptype == Constants.JPType.ClassPlate) {
             cValueToCall = (ClassPlate) valueToCall;
-            retValue = res.register(cValueToCall.execute(args, generics, kwargs, inter));
+            retValue = res.register(cValueToCall.execute(args, processedTypes, kwargs, inter));
         } else {
             bValueToCall = (BaseFunction) valueToCall.copy().set_pos(pos_start, pos_end);
             Cache cache;
@@ -88,11 +92,11 @@ public class CallNode extends Node {
             if (context.memoize && (cache != null)) retValue = (Obj) cache.result;
             else {
                 if (bValueToCall.isAsync()) {
-                    Thread thread = new Thread(() -> bValueToCall.execute(args, generics, kwargs, inter));
+                    Thread thread = new Thread(() -> bValueToCall.execute(args, processedTypes, kwargs, inter));
                     thread.start();
                     return res.success(new Null().set_pos(pos_start, pos_end).set_context(context));
                 }
-                retValue = res.register(bValueToCall.execute(args, generics, kwargs, inter));
+                retValue = res.register(bValueToCall.execute(args, processedTypes, kwargs, inter));
                 if (context.memoize)
                     inter.memo.add(new Cache(bValueToCall.name, args.toArray(new Obj[0]), retValue));
             }

@@ -7,6 +7,7 @@ import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.variables.AttrNode;
+import lemon.jpizza.nodes.variables.VarNode;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.primitives.Null;
@@ -57,6 +58,11 @@ public class DestructNode extends Node {
         Set<Map.Entry<String, AttrNode>> attrs = tar.ctx.symbolTable.attributes().entrySet();
         for (Map.Entry<String, AttrNode> entry : attrs)
             context.symbolTable.define(entry.getKey(), entry.getValue().value_node);
+
+        Set<Map.Entry<String, VarNode>> symbols = tar.ctx.symbolTable.symbols().entrySet();
+        for (Map.Entry<String, VarNode> entry : symbols)
+            context.symbolTable.define(entry.getKey(), entry.getValue().value_node);
+
         return new RTResult().success(new Null());
     }
 
@@ -64,12 +70,13 @@ public class DestructNode extends Node {
         Map<String, AttrNode> attrs = tar.ctx.symbolTable.attributes();
         for (Token struct : subs) {
             String sub = struct.value.toString();
-            if (!attrs.containsKey(sub)) return new RTResult().failure(RTError.Scope(
+            Object v = tar.ctx.symbolTable.get(sub);
+            if (v == null) return new RTResult().failure(RTError.Scope(
                     struct.pos_start, struct.pos_end,
                     "Attribute not in class",
                     context
             ));
-            context.symbolTable.define(sub, attrs.get(sub).value_node);
+            context.symbolTable.define(sub, v);
         }
         return new RTResult().success(new Null());
     }
