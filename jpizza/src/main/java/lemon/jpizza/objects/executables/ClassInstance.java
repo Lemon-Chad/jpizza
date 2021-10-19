@@ -101,14 +101,16 @@ public class ClassInstance extends Value {
     }
 
     private boolean checkType(String methodName, RTResult res) {
-        boolean typeMatch = res.value != null && Constants.methTypes.containsKey(methodName)
-                && res.value.jptype == Constants.methTypes.get(methodName);
+        boolean typeMatch = res.value != null && res.value.jptype == Constants.methTypes.get(methodName)
+                && Constants.methTypes.containsKey(methodName);
         if (typeMatch || !Constants.methTypes.containsKey(methodName))
             return true;
+        else if (res.error != null)
+            Shell.logger.warn(res.error.asString());
         else Shell.logger.warn(RTError.Type(
                 pos_start, pos_end,
                 String.format("Bin method should have return type %s, got %s",
-                        Constants.methTypes.get(methodName), res.value.jptype),
+                        Constants.methTypes.get(methodName), res.value.jptype != null ? res.value.jptype : null),
                 context
         ).asString());
         return false;
