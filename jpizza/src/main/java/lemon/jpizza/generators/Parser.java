@@ -1461,7 +1461,7 @@ match (a) {
                 }
                 res.registerAdvancement();
                 advance();
-                if (currentToken.type == TT.LT && peek(1).type == TT.IDENTIFIER) {
+                if (currentToken.type == TT.LT && Constants.TYPETOKS.contains(peek(1).type)) {
                     int advancements = 1;
                     res.registerAdvancement();
                     advance();
