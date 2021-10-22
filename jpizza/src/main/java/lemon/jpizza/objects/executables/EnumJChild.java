@@ -38,7 +38,7 @@ public class EnumJChild extends Value {
         ctx.symbolTable = new SymbolTable();
 
         HashMap<String, String> genericKey = new HashMap<>();
-        BaseFunction.inferGenerics(args, types, generics, genericKey, pos_start, pos_end, context);
+        BaseFunction.inferGenerics(args, types, generics, genericKey, pos_start, pos_end, ctx);
 
         if (args.size() != params.size()) return new RTResult().failure(RTError.ArgumentCount(
                 pos_start, pos_end,
