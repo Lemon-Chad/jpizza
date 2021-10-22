@@ -4,6 +4,7 @@ import lemon.jpizza.cases.Case;
 import lemon.jpizza.cases.ElseCase;
 import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
+import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.values.PatternNode;
@@ -35,9 +36,12 @@ public class SwitchNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
+        Context ctx = new Context("<switch>", context, pos_start);
+        ctx.symbolTable = new SymbolTable(context.symbolTable);
+
         Obj ret = new Null();
 
-        Obj ref = res.register(inter.visit(reference, context));
+        Obj ref = res.register(inter.visit(reference, ctx));
         if (res.error != null) return res;
 
         int entry = -1;
@@ -50,7 +54,7 @@ public class SwitchNode extends Node {
             if (cs.condition.jptype == Constants.JPType.Pattern) {
                 // Pattern matching
                 PatternNode pattern = (PatternNode) cs.condition;
-                Obj matches = res.register(pattern.compare(inter, context, ref));
+                Obj matches = res.register(pattern.compare(inter, ctx, ref));
                 if (res.error != null) return res;
                 if (matches.boolval) {
                     entry = i;
@@ -58,7 +62,7 @@ public class SwitchNode extends Node {
                 }
                 continue;
             }
-            compare = res.register(inter.visit(cs.condition, context));
+            compare = res.register(inter.visit(cs.condition, ctx));
             if (res.error != null) return res;
 
             if (ref.equals(compare)) {
@@ -68,18 +72,18 @@ public class SwitchNode extends Node {
         }
 
         if (autoreturn && entry > -1) {
-            ret = res.register(inter.visit(cases.get(entry).statements, context));
+            ret = res.register(inter.visit(cases.get(entry).statements, ctx));
             if (res.error != null) return res;
         } else if (entry > -1) {
             for (; entry < size; entry++) {
-                res.register(inter.visit(cases.get(entry).statements, context));
+                res.register(inter.visit(cases.get(entry).statements, ctx));
                 if (res.error != null) return res;
                 if (res.breakLoop) break;
             }
         }
 
         if (entry == -1 && elseCase != null) {
-            ret = res.register(inter.visit(elseCase.statements, context));
+            ret = res.register(inter.visit(elseCase.statements, ctx));
             if (res.error != null) return res;
         }
 

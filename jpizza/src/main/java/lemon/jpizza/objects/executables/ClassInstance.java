@@ -299,6 +299,6 @@ public class ClassInstance extends Value {
         }
         return x;
     }
-    public String toString() { return (String) (astring().value); }
+    public String toString() { return (astring().string); }
 
 }
