@@ -37,7 +37,7 @@ public class PatternNode extends Node {
         if (contrast.jptype != Constants.JPType.ClassInstance) return res.success(new Bool(false));
         ClassInstance other = (ClassInstance) contrast;
 
-        Obj cls = res.register(accessNode.visit(inter, context));
+        Obj cls = res.register(inter.visit(accessNode, context));
         if (res.error != null) return res;
 
         SymbolTable table = other.ctx.symbolTable;
@@ -46,7 +46,7 @@ public class PatternNode extends Node {
         HashMap<Token, Obj>    checks      = new HashMap<>();
         for (Map.Entry<Token, Node> entry : patterns.entrySet()) {
             assert entry.getKey().value != null;
-            Obj val = res.register(entry.getValue().visit(inter, context));
+            Obj val = res.register(inter.visit(entry.getValue(), context));
             if (res.error != null) {
                 if (entry.getValue().jptype == Constants.JPType.VarAccess && res.error.error_name.equals("Scope")) {
                     substitutes.put(entry.getKey(), ((VarAccessNode) entry.getValue()).var_name_tok.value.toString());

@@ -37,13 +37,13 @@ public class WhileNode extends Node {
         Obj condition, value;
         while (true) {
             if (!conLast) {
-                condition = res.register(conditionNode.visit(inter, context));
+                condition = res.register(inter.visit(conditionNode, context));
                 if (res.shouldReturn()) return res;
 
                 if (!condition.bool().boolval) break;
             }
 
-            value = res.register(body_node.visit(inter, context));
+            value = res.register(inter.visit(body_node, context));
             if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
 
             if (res.continueLoop) continue;
@@ -53,7 +53,7 @@ public class WhileNode extends Node {
                 elements.add(value);
 
             if (conLast) {
-                condition = res.register(conditionNode.visit(inter, context));
+                condition = res.register(inter.visit(conditionNode, context));
                 if (res.shouldReturn()) return res;
 
                 if (!condition.bool().boolval) break;

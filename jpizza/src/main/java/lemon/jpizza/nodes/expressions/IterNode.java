@@ -36,7 +36,7 @@ public class IterNode extends Node {
         RTResult res = new RTResult();
         List<Obj> elements = new ArrayList<>();
 
-        Obj iterableNode = res.register(iterable_node.visit(inter, context));
+        Obj iterableNode = res.register(inter.visit(iterable_node, context));
         if (res.shouldReturn()) return res;
         if (iterableNode.jptype != Constants.JPType.List) return res.failure(RTError.Type(
                 iterableNode.pos_start, iterableNode.pos_end,
@@ -55,7 +55,7 @@ public class IterNode extends Node {
         for (int i = 0; i < size; i++) {
             context.symbolTable.set(vtk, iterable.get(i));
 
-            value = res.register(body_node.visit(inter, context));
+            value = res.register(inter.visit(body_node, context));
             if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
 
             if (res.continueLoop) continue;

@@ -30,7 +30,7 @@ public class ReturnNode extends Node {
         Node ret = nodeToReturn;
         Obj value;
         if (ret != null) {
-            value = res.register(ret.visit(inter, context));
+            value = res.register(inter.visit(ret, context));
             if (res.shouldReturn()) return res;
         } else value = new Null();
 

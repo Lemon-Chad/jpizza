@@ -31,7 +31,7 @@ public class UnaryOpNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj number = res.register(node.visit(inter, context));
+        Obj number = res.register(inter.visit(node, context));
         if (res.shouldReturn()) return res;
 
         if (op_tok.type == Tokens.TT.BITCOMPL) {

@@ -21,7 +21,7 @@ public class DerefNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj ref = res.register(this.ref.visit(inter, context));
+        Obj ref = res.register(inter.visit(this.ref, context));
         if (res.error != null) return res;
 
         Pair<Obj, RTError> pair = ref.deref();

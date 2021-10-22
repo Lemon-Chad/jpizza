@@ -20,11 +20,11 @@ public class ThrowNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj err = res.register(thrown.visit(inter, context));
+        Obj err = res.register(inter.visit(thrown, context));
         if (res.error != null)
             return res;
 
-        Obj type = res.register(throwType.visit(inter, context));
+        Obj type = res.register(inter.visit(throwType, context));
         if (res.error != null)
             return res;
 

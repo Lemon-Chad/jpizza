@@ -28,7 +28,7 @@ public class ScopeNode extends Node {
         scopeContext.symbolTable = new SymbolTable(context.symbolTable);
 
         RTResult res = new RTResult();
-        res.register(statements.visit(inter, scopeContext));
+        res.register(inter.visit(statements, scopeContext));
         if (res.shouldReturn() && res.funcReturn == null) {
             return res;
         }

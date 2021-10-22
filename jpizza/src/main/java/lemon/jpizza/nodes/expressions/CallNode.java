@@ -38,7 +38,7 @@ public class CallNode extends Node {
         RTResult res = new RTResult();
         List<Obj> args = new ArrayList<>();
         Map<String, Obj> kwargs = new HashMap<>();
-        Obj valueToCall = res.register(nodeToCall.visit(inter, context));
+        Obj valueToCall = res.register(inter.visit(nodeToCall, context));
         if (res.shouldReturn()) return res;
 
         valueToCall = valueToCall.function().copy().set_pos(pos_start, pos_end);
@@ -47,11 +47,11 @@ public class CallNode extends Node {
             Node node = argNodes.get(i);
             if (node.jptype == Constants.JPType.Spread) {
                 SpreadNode spread = (SpreadNode) node;
-                Obj obj = res.register(spread.internal.visit(inter, context));
+                Obj obj = res.register(inter.visit(spread.internal, context));
                 if (res.shouldReturn()) return res;
                 args.addAll(obj.alist().list);
             } else {
-                Obj obj = res.register(argNodes.get(i).visit(inter, context));
+                Obj obj = res.register(inter.visit(argNodes.get(i), context));
                 args.add(obj);
                 if (res.shouldReturn()) return res;
             }
@@ -64,7 +64,7 @@ public class CallNode extends Node {
                     generic.pos_start, generic.pos_end));
 
         for (Map.Entry<String, Node> entry : this.kwargs.entrySet()) {
-            Obj obj = res.register(entry.getValue().visit(inter, context));
+            Obj obj = res.register(inter.visit(entry.getValue(), context));
             kwargs.put(entry.getKey(), obj);
             if (res.shouldReturn()) return res;
         }

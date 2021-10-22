@@ -64,7 +64,7 @@ public class ClassDefNode extends Node {
 
             AttrDeclareNode[] attributes = new AttrDeclareNode[this.attributes.size()];
             for (int i = 0; i < this.attributes.size(); i++) {
-                res.register(this.attributes.get(i).visit(inter, context));
+                res.register(inter.visit(this.attributes.get(i), context));
                 if (res.error != null) return res;
                 attributes[i] = this.attributes.get(i);
             }
@@ -88,7 +88,7 @@ public class ClassDefNode extends Node {
             size = methods.size();
             CMethod[] methods = new CMethod[size];
             for (int i = 0; i < size; i++) {
-                Object mthd = res.register(this.methods.get(i).visit(inter, classContext));
+                Object mthd = res.register(inter.visit(this.methods.get(i), classContext));
                 if (res.shouldReturn()) return res;
                 methods[i] = (CMethod) mthd;
             }

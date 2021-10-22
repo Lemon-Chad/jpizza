@@ -21,7 +21,7 @@ public class BytesNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj toBytes = res.register(this.toBytes.visit(inter, context));
+        Obj toBytes = res.register(inter.visit(this.toBytes, context));
         if (res.error != null) return res;
 
         Obj bytearrq = toBytes.bytes();

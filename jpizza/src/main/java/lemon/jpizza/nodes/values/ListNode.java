@@ -27,7 +27,7 @@ public class ListNode extends Node {
         Object[] nodeElements = this.elements.toArray();
         int length = nodeElements.length;
         for (int i = 0; i < length; i++) {
-            elements.add(res.register(((Node) nodeElements[i]).visit(inter, context)));
+            elements.add(res.register(inter.visit(((Node) nodeElements[i]), context)));
             if (res.shouldReturn())
                 return res;
         } return res.success(new PList(elements).set_context(context).set_pos(pos_start, pos_end));

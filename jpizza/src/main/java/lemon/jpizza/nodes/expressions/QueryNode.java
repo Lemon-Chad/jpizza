@@ -34,7 +34,7 @@ public class QueryNode extends Node {
         int size = cases.size();
         for (int i = 0; i < size; i++) {
             Case c = cases.get(i);
-            conditionValue = res.register(c.condition.visit(inter, context));
+            conditionValue = res.register(inter.visit(c.condition, context));
             if (res.shouldReturn()) return res;
             Obj bx = conditionValue.bool();
             if (bx.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
@@ -43,14 +43,14 @@ public class QueryNode extends Node {
                     context
             ));
             if (bx.boolval) {
-                exprValue = res.register(c.statements.visit(inter, context));
+                exprValue = res.register(inter.visit(c.statements, context));
                 if (res.shouldReturn()) return res;
                 return res.success(c.x ? new Null() : exprValue);
             }
         }
 
         if (else_case != null) {
-            Obj elseValue = res.register(else_case.statements.visit(inter, context));
+            Obj elseValue = res.register(inter.visit(else_case.statements, context));
             if (res.shouldReturn()) return res;
             return res.success(else_case.x ? new Null() : elseValue);
         }

@@ -37,7 +37,7 @@ public class SwitchNode extends Node {
 
         Obj ret = new Null();
 
-        Obj ref = res.register(reference.visit(inter, context));
+        Obj ref = res.register(inter.visit(reference, context));
         if (res.error != null) return res;
 
         int entry = -1;
@@ -58,7 +58,7 @@ public class SwitchNode extends Node {
                 }
                 continue;
             }
-            compare = res.register(cs.condition.visit(inter, context));
+            compare = res.register(inter.visit(cs.condition, context));
             if (res.error != null) return res;
 
             if (ref.equals(compare)) {
@@ -68,18 +68,18 @@ public class SwitchNode extends Node {
         }
 
         if (autoreturn && entry > -1) {
-            ret = res.register(cases.get(entry).statements.visit(inter, context));
+            ret = res.register(inter.visit(cases.get(entry).statements, context));
             if (res.error != null) return res;
         } else if (entry > -1) {
             for (; entry < size; entry++) {
-                res.register(cases.get(entry).statements.visit(inter, context));
+                res.register(inter.visit(cases.get(entry).statements, context));
                 if (res.error != null) return res;
                 if (res.breakLoop) break;
             }
         }
 
         if (entry == -1 && elseCase != null) {
-            ret = res.register(elseCase.statements.visit(inter, context));
+            ret = res.register(inter.visit(elseCase.statements, context));
             if (res.error != null) return res;
         }
 

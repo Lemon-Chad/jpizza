@@ -28,7 +28,7 @@ public class BaseFunction extends Value {
 
     public Context newContext() {
         Context newContext = new Context(name, context, pos_start);
-        newContext.symbolTable = new SymbolTable(newContext.parent.symbolTable);
+        newContext.symbolTable = new SymbolTable(context != null ? context.symbolTable : null);
         return newContext;
     }
 

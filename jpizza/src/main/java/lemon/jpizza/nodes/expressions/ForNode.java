@@ -40,7 +40,7 @@ public class ForNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj startNode = res.register(start_value_node.visit(inter, context));
+        Obj startNode = res.register(inter.visit(start_value_node, context));
         if (res.shouldReturn()) return res;
         if (startNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
                 startNode.pos_start, startNode.pos_end,
@@ -48,7 +48,7 @@ public class ForNode extends Node {
                 context
         ));
         double start = startNode.number;
-        Obj endNode = res.register(end_value_node.visit(inter, context));
+        Obj endNode = res.register(inter.visit(end_value_node, context));
         if (res.shouldReturn()) return res;
         if (endNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
                 endNode.pos_start, endNode.pos_end,
@@ -60,7 +60,7 @@ public class ForNode extends Node {
 
         double step;
         if (step_value_node != null) {
-            Obj stepNode = res.register(step_value_node.visit(inter, context));
+            Obj stepNode = res.register(inter.visit(step_value_node, context));
             if (res.shouldReturn()) return res;
             if (stepNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
                     stepNode.pos_start, stepNode.pos_end,
@@ -95,7 +95,7 @@ public class ForNode extends Node {
                 context.symbolTable.set(vtk, new Num(i));
             i += step;
 
-            value = res.register(body_node.visit(inter, context));
+            value = res.register(inter.visit(body_node, context));
             // value = null;
             if (res.continueLoop) continue;
             else if (res.breakLoop) break;

@@ -71,7 +71,7 @@ public class VarAssignNode extends Node {
         RTResult res = new RTResult();
 
         String varName = (String) var_name_tok.value;
-        Obj value = res.register(value_node.visit(inter, context));
+        Obj value = res.register(inter.visit(value_node, context));
         if (res.shouldReturn()) return res;
 
         RTError.ErrorDetails error;

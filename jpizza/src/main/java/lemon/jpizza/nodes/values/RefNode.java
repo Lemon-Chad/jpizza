@@ -20,7 +20,7 @@ public class RefNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
         
-        Obj inner = res.register(this.inner.visit(inter, context));
+        Obj inner = res.register(inter.visit(this.inner, context));
         if (res.error != null) return res;
 
         return res.success(new Ref(inner).set_pos(pos_start, pos_end).set_context(context));

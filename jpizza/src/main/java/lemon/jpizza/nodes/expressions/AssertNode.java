@@ -21,7 +21,7 @@ public class AssertNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj conditional = res.register(condition.visit(inter, context));
+        Obj conditional = res.register(inter.visit(condition, context));
         if (res.error != null) return res;
         boolean value = conditional.bool().boolval;
         if (value)

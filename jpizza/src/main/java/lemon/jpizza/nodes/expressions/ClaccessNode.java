@@ -30,7 +30,7 @@ public class ClaccessNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj var = res.register(class_tok.visit(inter, context));
+        Obj var = res.register(inter.visit(class_tok, context));
         if (res.error != null) return res;
         while (var.jptype == Constants.JPType.Ref) {
             var = var.deref().a;

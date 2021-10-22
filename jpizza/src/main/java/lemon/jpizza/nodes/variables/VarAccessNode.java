@@ -25,7 +25,7 @@ public class VarAccessNode extends Node {
         String varName = (String) var_name_tok.value;
         if (context.symbolTable.isDyn(varName)) {
             Node value = context.symbolTable.getDyn(varName);
-            Obj ret = res.register(value.visit(inter, context));
+            Obj ret = res.register(inter.visit(value, context));
             if (res.shouldReturn()) return res;
             return res.success(ret);
         }
@@ -39,7 +39,7 @@ public class VarAccessNode extends Node {
         ));
         else if (value instanceof String)
             return Interpreter.getThis(value, context, pos_start, pos_end);
-        Obj val = ((Obj) value).set_pos(pos_start, pos_end).set_context(context).copy();
+        Obj val = ((Obj) value).copy().set_pos(pos_start, pos_end);
         return res.success(val);
     }
 

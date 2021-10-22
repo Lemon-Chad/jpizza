@@ -36,9 +36,9 @@ public class DictNode extends Node {
         int length = entrySet.length;
         for (int i = 0; i < length; i++) {
             Map.Entry<Node, Node> entry = entrySet[i];
-            Obj key = res.register(entry.getKey().visit(inter, context));
+            Obj key = res.register(inter.visit(entry.getKey(), context));
             if (res.shouldReturn()) return res;
-            Obj value = res.register(entry.getValue().visit(inter, context));
+            Obj value = res.register(inter.visit(entry.getValue(), context));
             if (res.shouldReturn()) return res;
             dict.set(key, value);
         } return res.success(dict.set_context(context).set_pos(pos_start, pos_end));

@@ -43,18 +43,18 @@ public class BinOpNode extends Node {
         if (op_tok.type == Tokens.TT.BITE) {
             boolean leftfailed = false;
             boolean rightfailed = false;
-            Obj left = res.register(left_node.visit(inter, context));
+            Obj left = res.register(inter.visit(left_node, context));
             if (res.shouldReturn()) leftfailed = true;
-            Obj right = res.register(right_node.visit(inter, context));
+            Obj right = res.register(inter.visit(right_node, context));
             if (res.shouldReturn()) rightfailed = true;
             if (leftfailed || left.jptype == Constants.JPType.Null) {
                 return res.success(rightfailed ? new Null() : right);
             } else return res.success(left);
         }
 
-        Obj left = res.register(left_node.visit(inter, context));
+        Obj left = res.register(inter.visit(left_node, context));
         if (res.shouldReturn()) return res;
-        Obj right = res.register(right_node.visit(inter, context));
+        Obj right = res.register(inter.visit(right_node, context));
         if (res.shouldReturn()) return res;
 
         if (op_tok.type == Tokens.TT.EQ) {

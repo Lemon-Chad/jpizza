@@ -48,7 +48,7 @@ public class AttrDeclareNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
         if (nValue != null)
-            value = res.register(this.nValue.visit(inter, context));
+            value = res.register(inter.visit(this.nValue, context));
         else
             value = new Null();
         return res;

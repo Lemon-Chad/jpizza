@@ -203,7 +203,7 @@ public class Function extends BaseFunction {
             execCtx.symbolTable.define(entry.getKey(), new Str(entry.getValue()));
 
         for (Function f: this.preprocessors) {
-            res.register((f.copy().set_context(execCtx)).execute(args, generics, kwargs, interpreter));
+            res.register((f.copy()).execute(args, generics, kwargs, interpreter));
             if (res.error != null) return res;
         }
 
@@ -238,11 +238,11 @@ public class Function extends BaseFunction {
         ArrayList<Obj> newArgs = new ArrayList<>(args);
         newArgs.add(retValue);
         for (Function f: this.postprocessors) {
-            retValue = res.register((f.copy().set_context(execCtx)).execute(newArgs, generics, kwargs, interpreter));
+            retValue = res.register((f.copy()).execute(newArgs, generics, kwargs, interpreter));
             if (res.error != null) return res;
         }
 
-        return res.success(retValue.set_context(context));
+        return res.success(retValue);
     }
 
     // Methods

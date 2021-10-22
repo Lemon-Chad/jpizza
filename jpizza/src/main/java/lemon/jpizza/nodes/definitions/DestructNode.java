@@ -42,7 +42,7 @@ public class DestructNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
 
-        Obj tar = res.register(target.visit(inter, context));
+        Obj tar = res.register(inter.visit(target, context));
         if (res.error != null) return res;
         if (tar.jptype != Constants.JPType.ClassInstance) return res.failure(RTError.Type(
                 tar.get_start(), tar.get_end(),
