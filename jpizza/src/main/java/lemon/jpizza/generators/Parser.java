@@ -1465,28 +1465,26 @@ match (a) {
                 res.registerAdvancement();
                 advance();
                 if (currentToken.type == TT.LT && Constants.TYPETOKS.contains(peek(1).type)) {
-                    int advancements = 1;
+                    int startIndex = tokIdx;
                     res.registerAdvancement();
                     advance();
 
                     ParseResult r = buildTypeTok();
                     if (r.error != null) return r;
                     generics.add((Token) res.register(r));
-                    advancements += r.toReverseCount;
 
                     while (currentToken.type == TT.COMMA) {
                         res.registerAdvancement();
                         advance();
-                        advancements++;
                         
                         r = buildTypeTok();
                         if (r.error != null) return r;
                         generics.add((Token) res.register(r));
-                        advancements += r.toReverseCount;
                     }
                     if (currentToken.type != TT.GT) {
                         generics = new ArrayList<>();
-                        reverse(advancements);
+                        tokIdx = startIndex;
+                        updateTok();
                     } else {
                         res.registerAdvancement();
                         advance();
