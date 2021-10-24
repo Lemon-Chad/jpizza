@@ -10,6 +10,7 @@ import lemon.jpizza.objects.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,7 +68,13 @@ public class Dict extends Value {
 
     public Pair<Obj, RTError> eq(Obj o) {
         if (o.jptype != Constants.JPType.Dict) return new Pair<>(new Bool(false), null);
-        return new Pair<>(new Bool(map.equals(o.map)), null);
+        if (o.map.size() != this.map.size()) return new Pair<>(new Bool(false), null);
+        List<Obj> okeys = new ArrayList<>(o.map.keySet());
+        for (Obj key: map.keySet()) {
+            if (!okeys.contains(key)) return new Pair<>(new Bool(false), null);
+            if (!o.get(key).a.equals(map.get(key))) return new Pair<>(new Bool(false), null);
+        }
+        return new Pair<>(new Bool(true), null);
     }
 
     // Conversions

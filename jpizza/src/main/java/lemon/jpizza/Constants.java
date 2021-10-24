@@ -88,6 +88,11 @@ enum pub Option {
     None,
 }
 
+enum pub StaticOption {
+    Box(T){ val: T },
+    Empty(T),
+}
+
 class Iter {
     prv iterable: list;
     prv f;
@@ -134,6 +139,13 @@ class Array {
     mthd bin string -> str(for (x <- internal) => str(x));
 
     mthd bin type -> `Array(${T})`;
+    
+    mthd bin eq<other> {
+        if (type(other) != type(this)) return false;
+        if (other::size() != this::size()) return false;
+        
+        list(this) == list(other)
+    }
     
     mthd insert<item#T, index#num> = void {
         insert(internal, item, index);
@@ -193,9 +205,18 @@ class Tuple {
             append(items, &item);
     }
 
+    mthd size -> size(items);
+
     mthd bin bracket<other> -> items[other];
 
     mthd bin string -> `(${substr(str(items), 1, size(str(items)) - 1)})`;
+    
+    mthd bin eq<other> {
+        if (type(other) != type(this)) return false;
+        if (other::size() != this::size()) return false;
+        
+        list(this) == list(other)
+    }
     
     mthd bin type {
         let str => '(';
@@ -203,6 +224,8 @@ class Tuple {
             str += type(item);
         str + ')'
     }
+    
+    mthd contains<x> -> contains(items, x);
 
     mthd bin list -> items;
 }
@@ -261,6 +284,14 @@ class Map {
     }
 
     mthd size -> size(list(internal));
+    
+    mthd bin eq<other> {
+        if (type(other) != type(this)) return false;
+        
+        dict(this) == dict(other)
+    }
+    
+    mthd bin dictionary -> internal;
 
     mthd set<key#K, value#V> {
         set(internal, key, value);
