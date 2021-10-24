@@ -256,7 +256,9 @@ public class Parser {
         return res.success(expr);
     }
 
-    public ParseResult extractVarTok() {
+    public ParseResult extractVarTok() { return extractVarTok(false); }
+
+    public ParseResult extractVarTok(boolean screaming) {
         ParseResult res = new ParseResult();
 
         if (!currentToken.type.equals(TT.IDENTIFIER))
@@ -264,7 +266,8 @@ public class Parser {
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Expected identifier"
             ));
-        matchConvention(currentToken, "Variable name", NamingConvention.CamelCase);
+        matchConvention(currentToken, "Variable name", screaming ? NamingConvention.ScreamingSnakeCase
+                                                                       : NamingConvention.CamelCase);
 
         Token var_name = currentToken;
         res.registerAdvancement();
@@ -372,7 +375,7 @@ public class Parser {
                 else
                     return res.success(new DestructNode(destructed, destructs));
             }
-            Token var_name = (Token) res.register(extractVarTok());
+            Token var_name = (Token) res.register(extractVarTok(locked));
             if (res.error != null) return res;
 
             Integer min = null;
