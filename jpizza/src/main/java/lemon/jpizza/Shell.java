@@ -10,6 +10,7 @@ import lemon.jpizza.generators.Parser;
 import lemon.jpizza.libraries.*;
 import lemon.jpizza.libraries.httpretzel.HTTPretzel;
 import lemon.jpizza.libraries.jdraw.JDraw;
+import lemon.jpizza.libraries.pdl.SafeSocks;
 import lemon.jpizza.libraries.socks.SockLib;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.values.ListNode;
@@ -55,6 +56,7 @@ public class Shell {
         JDraw.initialize();
         HTTPretzel.initialize();
         Time.initialize();
+        SafeSocks.initialize();
     }
 
     @SuppressWarnings("DuplicatedCode")
