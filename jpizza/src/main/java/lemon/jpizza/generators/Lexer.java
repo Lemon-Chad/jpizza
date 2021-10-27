@@ -88,24 +88,12 @@ public class Lexer {
                     tokens.add(new Token(TT.KEYWORD, "fn", pos.copy(), pos.copy().advance()));
                     advance();
                 } else if (currentChar.equals("!")){
-                    Pair<Token, Error> d = make_equals_expr();
-                    Token tok = d.a; Error error = d.b;
-                    if (error != null) {
-                        return new Pair<>(
-                                new ArrayList<>(),
-                                error
-                        );
-                    } tokens.add(tok);
+                    Pair<List<Token>, Error> error = eqExpr(tokens);
+                    if (error != null) return error;
                 }
             } else if ("<>=".contains(currentChar)) {
-                Pair<Token, Error> d = make_equals_expr();
-                Token tok = d.a; Error error = d.b;
-                if (error != null) {
-                    return new Pair<>(
-                            new ArrayList<>(),
-                            error
-                    );
-                } tokens.add(tok);
+                Pair<List<Token>, Error> error = eqExpr(tokens);
+                if (error != null) return error;
             } else {
                 String c = currentChar;
                 Position p = pos.copy();
@@ -121,6 +109,20 @@ public class Lexer {
                 tokens,
                 null
         );
+    }
+
+    private Pair<List<Token>, Error> eqExpr(List<Token> tokens) {
+        Pair<Token, Error> d = make_equals_expr();
+        Token tok = d.a;
+        Error error = d.b;
+        if (error != null) {
+            return new Pair<>(
+                    new ArrayList<>(),
+                    error
+            );
+        }
+        tokens.add(tok);
+        return null;
     }
 
     public Token make_string(String q) {

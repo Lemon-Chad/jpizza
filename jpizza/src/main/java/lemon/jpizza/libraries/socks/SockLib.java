@@ -130,10 +130,9 @@ public class SockLib extends Library {
         double id = Math.random();
         ServerConn conn = new ServerConn(id, pos_start, pos_end, context);
 
-        RTError e = conn.host(sock);
-        if (e != null) return new RTResult().failure(e);
+        conn.host(sock);
 
-        e = conn.conn();
+        RTError e = conn.conn();
         if (e != null) return new RTResult().failure(e);
 
         socks.put(id, conn);

@@ -22,7 +22,6 @@ public class ForNode extends Node {
     public final Node step_value_node;
     public final Node body_node;
     public final boolean retnull;
-    public boolean fluctuating = true;
 
     public ForNode(Token var_name_tok, Node start_value_node, Node end_value_node, Node step_value_node, Node body_node,
                    boolean retnull) {

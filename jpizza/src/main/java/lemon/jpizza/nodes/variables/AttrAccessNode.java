@@ -11,7 +11,6 @@ import lemon.jpizza.Token;
 
 public class AttrAccessNode extends Node {
     public final Token var_name_tok;
-    public boolean fluctuating = true;
 
     public AttrAccessNode(Token var_name_tok) {
         this.var_name_tok = var_name_tok;

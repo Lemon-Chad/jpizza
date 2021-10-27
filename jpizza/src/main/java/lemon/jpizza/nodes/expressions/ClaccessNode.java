@@ -18,7 +18,6 @@ import lemon.jpizza.Token;
 public class ClaccessNode extends Node {
     public final Node class_tok;
     public final Token attr_name_tok;
-    public boolean fluctuating = true;
 
     public ClaccessNode(Node cls, Token atr) {
         class_tok = cls;

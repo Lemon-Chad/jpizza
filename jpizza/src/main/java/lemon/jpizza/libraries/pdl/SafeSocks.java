@@ -30,8 +30,8 @@ public class SafeSocks extends Library {
         }});
     }
 
-    public static Map<Integer, ServerPuddle> serverCodes = new HashMap<>();
-    public static Map<Integer, SocketPuddle> clientCodes = new HashMap<>();
+    public static final Map<Integer, ServerPuddle> serverCodes = new HashMap<>();
+    public static final Map<Integer, SocketPuddle> clientCodes = new HashMap<>();
 
     public RTResult execute_host(Context execCtx) {
         RTResult res = new RTResult();
@@ -87,9 +87,9 @@ public class SafeSocks extends Library {
     }
 
     static class SocketData {
-        public int offset;
-        public int len;
-        public SocketPuddle puddle;
+        public final int offset;
+        public final int len;
+        public final SocketPuddle puddle;
         public SocketData(int offset, int len, SocketPuddle puddle) {
             this.offset = offset;
             this.len = len;

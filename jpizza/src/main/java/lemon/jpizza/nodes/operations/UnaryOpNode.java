@@ -19,7 +19,6 @@ import java.io.ObjectInputStream;
 public class UnaryOpNode extends Node {
     public final Token op_tok;
     public final Node node;
-    public boolean fluctuating = true;
 
     public UnaryOpNode(Token op_tok, Node node) {
         this.node = node;

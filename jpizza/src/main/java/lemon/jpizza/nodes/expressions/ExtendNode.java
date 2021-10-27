@@ -21,7 +21,6 @@ import java.nio.file.Paths;
 public class ExtendNode extends Node {
     public final Token file_name_tok;
     public final Token as_tok;
-    public boolean fluctuating = true;
 
     public ExtendNode(Token file_name_tok) {
         this.file_name_tok = file_name_tok;
@@ -31,20 +30,16 @@ public class ExtendNode extends Node {
         jptype = Constants.JPType.Import;
     }
 
-    public ExtendNode(Token file_name_tok, Token as_tok) {
-        this.file_name_tok = file_name_tok;
-        this.as_tok = as_tok;
-
-        pos_start = file_name_tok.pos_start.copy(); pos_end = as_tok.pos_end.copy();
-        jptype = Constants.JPType.Import;
-    }
-
+    @SuppressWarnings("DuplicatedCode")
     public RTResult vis(Context context) throws IOException {
         String fn = (String) file_name_tok.value;
         String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
         String modPath = Shell.root + "/extensions/" + fn;
         String modFilePath = modPath + "/" + fn + ".jar";
-        var mkdirs = new File(Shell.root + "/extensions").mkdirs();
+
+        //noinspection ResultOfMethodCallIgnored
+        new File(Shell.root + "/extensions").mkdirs();
+
         RTResult res = new RTResult();
         if (Files.exists(Paths.get(modFilePath))) {
             URL[] urls = new URL[]{new URL("file://" + modFilePath)};

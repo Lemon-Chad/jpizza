@@ -9,7 +9,6 @@ import lemon.jpizza.objects.primitives.Dict;
 import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

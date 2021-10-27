@@ -8,7 +8,6 @@ public class VarNode extends Node {
     public final boolean locked;
     public Integer min = null;
     public Integer max = null;
-    public boolean fluctuating = true;
 
     public VarNode(Object value_node, boolean locked) {
         this.value_node = value_node;

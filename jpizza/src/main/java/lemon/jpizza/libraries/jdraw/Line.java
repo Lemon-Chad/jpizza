@@ -3,10 +3,10 @@ package lemon.jpizza.libraries.jdraw;
 import java.awt.*;
 
 public class Line implements DrawSlice {
-    Point start;
-    Point end;
-    Color color;
-    Integer width;
+    final Point start;
+    final Point end;
+    final Color color;
+    final Integer width;
 
     public Line(Point start, Point end, Color color, Integer width) {
         this.start = start;

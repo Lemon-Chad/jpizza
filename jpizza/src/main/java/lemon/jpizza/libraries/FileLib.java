@@ -1,7 +1,6 @@
 package lemon.jpizza.libraries;
 
 import lemon.jpizza.Constants;
-import lemon.jpizza.Shell;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Library;

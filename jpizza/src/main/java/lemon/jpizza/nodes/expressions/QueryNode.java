@@ -16,7 +16,6 @@ import java.util.List;
 public class QueryNode extends Node {
     public final List<Case> cases;
     public final ElseCase else_case;
-    public boolean fluctuating = true;
 
     public QueryNode(List<Case> cases, ElseCase else_case) {
         this.else_case = else_case;

@@ -68,7 +68,7 @@ public class Token implements Serializable {
 
         Token other = (Token) o;
 
-        if (value == null) return other.type == type && other.value == value;
+        if (value == null) return other.type == type && other.value == null;
         return other.type == type && value.equals(other.value);
     }
 }

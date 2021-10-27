@@ -19,7 +19,6 @@ public class IterNode extends Node {
     public final Node iterable_node;
     public final Node body_node;
     public final boolean retnull;
-    public boolean fluctuating = true;
 
     public IterNode(Token var_name_tok, Node iterable_node, Node body_node,
                     boolean retnull) {
@@ -32,6 +31,7 @@ public class IterNode extends Node {
         jptype = Constants.JPType.Iter;
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
         List<Obj> elements = new ArrayList<>();

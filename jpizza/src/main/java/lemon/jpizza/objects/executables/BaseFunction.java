@@ -81,7 +81,8 @@ public class BaseFunction extends Value {
     }
 
     public static RTResult inferGenerics(List<Obj> args, List<List<String>> types, List<String> generics, HashMap<String, String> genericKey,
-                                         Position pos_start, Position pos_end, Context ctx) {
+                                         @SuppressWarnings("unused") Position pos_start,
+                                         @SuppressWarnings("unused") Position pos_end, Context ctx) {
         RTResult res = new RTResult();
 
         int len = Math.min(args.size(), types.size());

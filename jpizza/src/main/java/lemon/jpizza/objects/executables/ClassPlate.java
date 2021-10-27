@@ -13,7 +13,6 @@ import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.objects.Value;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
-import lemon.jpizza.Shell;
 
 import java.util.*;
 
@@ -195,6 +194,7 @@ public class ClassPlate extends Value {
 
     // Defaults
 
+    @SuppressWarnings("unused")
     public boolean isAsync() { return false; }
     public Obj copy() { return new ClassPlate(name, attributes, (CMethod) make.copy(), copyMethods(), parent, generics)
             .set_context(context).set_pos(pos_start, pos_end); }

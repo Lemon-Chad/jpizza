@@ -21,7 +21,6 @@ public class CallNode extends Node {
     public final List<Node> argNodes;
     public final Map<String, Node> kwargs;
     public final List<Token> generics;
-    public boolean fluctuating = true;
 
     public CallNode(Node nodeToCall, List<Node> argNodes, List<Token> generics, Map<String, Node> kwargs) {
         this.nodeToCall = nodeToCall;

@@ -12,7 +12,6 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
-import lemon.jpizza.Shell;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public class SocketPuddle {
-    Socket inner;
+    final Socket inner;
     public int id;
     OutputStream outputStream;
     InputStream inputStream;

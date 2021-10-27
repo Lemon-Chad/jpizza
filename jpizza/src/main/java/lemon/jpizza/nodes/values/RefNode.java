@@ -5,12 +5,11 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.primitives.Ref;
 import lemon.jpizza.objects.Obj;
-import lemon.jpizza.Pair;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
 public class RefNode extends Node {
-    Node inner;
+    final Node inner;
     public RefNode(Node inner) {
         this.inner = inner;
         pos_start = inner.pos_start; pos_end = inner.pos_end;

@@ -20,9 +20,8 @@ public class ServerConn extends GenConn {
         context = ctx;
     }
 
-    public RTError host(ServerSocket sock) {
+    public void host(ServerSocket sock) {
         inner = sock;
-        return null;
     }
 
     public RTError conn() {

@@ -7,7 +7,6 @@ import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.ClassInstance;
-import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
@@ -22,7 +21,6 @@ import java.nio.file.Paths;
 public class ImportNode extends Node {
     public final Token file_name_tok;
     public final Token as_tok;
-    public boolean fluctuating = true;
 
     public ImportNode(Token file_name_tok) {
         this.file_name_tok = file_name_tok;
@@ -49,6 +47,7 @@ public class ImportNode extends Node {
         String modPath = Shell.root + "/modules/" + fn;
         String modFilePath = modPath + "/" + fn + ".devp";
 
+        //noinspection ResultOfMethodCallIgnored
         new File(Shell.root + "/modules").mkdirs();
 
         Obj imp = null;

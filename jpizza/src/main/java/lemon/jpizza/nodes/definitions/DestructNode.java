@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class DestructNode extends Node {
-    Node target;
+    final Node target;
     List<Token> subs = new ArrayList<>();
     boolean glob = false;
 

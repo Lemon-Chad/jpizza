@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PatternNode extends Node {
-    Node accessNode;
-    HashMap<Token, Node> patterns;
+    final Node accessNode;
+    final HashMap<Token, Node> patterns;
 
     public PatternNode(Node accessNode, HashMap<Token, Node> patterns) {
         this.accessNode = accessNode;

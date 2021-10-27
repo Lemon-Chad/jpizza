@@ -10,10 +10,8 @@ import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Function extends BaseFunction {
     final Node bodyNode;

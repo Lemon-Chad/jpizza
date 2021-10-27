@@ -1163,7 +1163,6 @@ Mixed_Snake_Case_Looks_Like_This"""
         return res.success(new EnumNode(name, children, pub));
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public ParseResult switchExpr() {
         ParseResult res = new ParseResult();
 
@@ -1300,7 +1299,6 @@ if (x == 1) {
         return res.success(new PatternNode(expr, patterns));
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public ParseResult matchExpr() {
         ParseResult res = new ParseResult();
 
@@ -1402,7 +1400,6 @@ match (a) {
         return res.success(swtch);
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public ParseResult call() {
         ParseResult res = new ParseResult();
         Node node = (Node) res.register(this.atom());
@@ -1513,8 +1510,8 @@ match (a) {
 
     public ParseResult refOp() { return binOp(this::refSugars, Collections.singletonList(TT.EQ)); }
 
-    static List<TT> binRefOps = Arrays.asList(TT.PLE, TT.MIE, TT.MUE, TT.DIE, TT.POE);
-    static List<TT> unRefOps  = Arrays.asList(TT.INCR, TT.DECR);
+    static final List<TT> binRefOps = Arrays.asList(TT.PLE, TT.MIE, TT.MUE, TT.DIE, TT.POE);
+    static final List<TT> unRefOps  = Arrays.asList(TT.INCR, TT.DECR);
 
     public ParseResult refSugars() {
         ParseResult res = new ParseResult();
@@ -1608,14 +1605,12 @@ match (a) {
         left = (Node) res.register(left_func.execute());
         if (res.error != null)
             return res;
-        boolean instantSimplify = left == null || left.fluctuating;
 
         while (ops.contains(currentToken.type)) {
             Token op_tok = currentToken;
             res.registerAdvancement();
             advance();
             right = (Node) res.register(right_func.execute());
-            instantSimplify = instantSimplify && (right == null || right.fluctuating);
             if (res.error != null)
                 return res;
             if (op_tok.type == TT.LSQUARE) {
@@ -1626,8 +1621,7 @@ match (a) {
                 advance();
                 res.registerAdvancement();
             }
-            //noinspection ConstantConditions
-            left = new BinOpNode(left, op_tok, right).fluctuates(instantSimplify);
+            left = new BinOpNode(left, op_tok, right);
         }
         return res.success(left);
     }
