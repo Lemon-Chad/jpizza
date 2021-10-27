@@ -1621,7 +1621,11 @@ match (a) {
                 advance();
                 res.registerAdvancement();
             }
-            left = new BinOpNode(left, op_tok, right);
+            if (op_tok.type == TT.DOT && right.jptype == Constants.JPType.Call) {
+                CallNode call = (CallNode) right;
+                call.argNodes.add(0, left);
+                left = call;
+            } else left = new BinOpNode(left, op_tok, right);
         }
         return res.success(left);
     }
