@@ -1,6 +1,9 @@
 package lemon.jpizza.nodes.operations;
 
-import lemon.jpizza.*;
+import lemon.jpizza.Constants;
+import lemon.jpizza.Pair;
+import lemon.jpizza.Token;
+import lemon.jpizza.Tokens;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;

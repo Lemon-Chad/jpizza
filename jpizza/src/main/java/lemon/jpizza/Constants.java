@@ -535,28 +535,38 @@ class SocketClient {
     }
 
     public static Object toObject(Obj obj) {
-        if (obj.jptype == JPType.Dict) {
-            Map<Object, Object> objMap = new ConcurrentHashMap<>();
-            ConcurrentHashMap<Obj, Obj> deMap = obj.map;
+        return switch (obj.jptype) {
+            case Dict ->{
+                Map<Object, Object> objMap = new ConcurrentHashMap<>();
+                ConcurrentHashMap<Obj, Obj> deMap = obj.map;
 
-            for (Obj k : deMap.keySet())
-                objMap.put(toObject(k), toObject(deMap.get(k)));
+                for (Obj k : deMap.keySet())
+                    objMap.put(toObject(k), toObject(deMap.get(k)));
 
-            return objMap;
-        }
-        else if (obj.jptype == JPType.List) {
-            List<Object> objLst = new ArrayList<>();
-            List<Obj> olst = new ArrayList<>(obj.list);
+                yield objMap;
+            }
 
-            for (int i = 0; i < olst.size(); i++)
-                objLst.add(toObject(olst.get(i)));
+            case List ->{
+                List<Object> objLst = new ArrayList<>();
+                List<Obj> olst = new ArrayList<>(obj.list);
 
-            return objLst;
-        }
-        else if (obj.jptype == JPType.Generic) {
-            return obj.value;
-        }
-        return null;
+                for (int i = 0; i < olst.size(); i++)
+                    objLst.add(toObject(olst.get(i)));
+
+                yield objLst;
+            }
+
+            case Number -> obj.number;
+
+            case String -> obj.string;
+
+            case Boolean -> obj.boolval;
+
+            case Bytes -> obj.arr;
+
+            case Generic -> obj.value;
+            default -> null;
+        };
     }
 
 }
