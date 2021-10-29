@@ -101,7 +101,7 @@ public class CallNode extends Node {
             }
         }
         if (res.shouldReturn()) return res;
-        return res.success(retValue.copy().set_pos(pos_start, pos_end).set_context(context));
+        return res.success(retValue.copy().set_pos(pos_start, pos_end));
     }
 
 }
