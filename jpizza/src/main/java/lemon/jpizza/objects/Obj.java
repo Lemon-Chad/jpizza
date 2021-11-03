@@ -16,11 +16,8 @@ public abstract class Obj implements Serializable {
 
     public String string;
 
-    public Double number;
-    public boolean floating;
+    public double number;
     public boolean hex;
-    public long longForm;
-    public double doubleForm;
 
     public ConcurrentHashMap<Obj, Obj> map;
 
@@ -67,6 +64,10 @@ public abstract class Obj implements Serializable {
     public abstract Pair<Obj, RTError> pop(Obj other);
     public abstract Pair<Obj, RTError> remove(Obj other);
     public abstract Pair<Obj, RTError> bracket(Obj other);
+
+    public boolean floating() {
+        return Math.floor(number) == number;
+    }
 
     public abstract RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent);
 

@@ -60,19 +60,19 @@ public class BinOpNode extends Node {
         if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
                 Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
                 .contains(op_tok.type)) {
-            if (left.jptype != Constants.JPType.Number || left.floating) return res.failure(RTError.Type(
+            if (left.jptype != Constants.JPType.Number || left.floating()) return res.failure(RTError.Type(
                     left.get_start(), left.get_end(),
                     "Left operand must be an integer",
                     context
             ));
-            if (right.jptype != Constants.JPType.Number || right.floating) return res.failure(RTError.Type(
+            if (right.jptype != Constants.JPType.Number || right.floating()) return res.failure(RTError.Type(
                     right.get_start(), right.get_end(),
                     "Right operand must be an integer",
                     context
             ));
 
-            long a = left.number.longValue();
-            long b = right.number.longValue();
+            long a = Double.valueOf(left.number).longValue();
+            long b = Double.valueOf(right.number).longValue();
 
             return res.success(new Num(switch (op_tok.type) {
                 case BITAND -> a & b;

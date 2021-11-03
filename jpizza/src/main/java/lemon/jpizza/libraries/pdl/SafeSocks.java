@@ -39,7 +39,7 @@ public class SafeSocks extends Library {
         if (res.error != null) return res;
 
         try {
-            int id = ServerPuddle.create(port.number.intValue());
+            int id = ServerPuddle.create(Double.valueOf(port.number).intValue());
             return res.success(new Num(id));
         } catch (Exception e) {
             return res.failure(RTError.Internal(
@@ -55,12 +55,12 @@ public class SafeSocks extends Library {
         Obj id = res.register(checkInt(execCtx.symbolTable.get("id")));
         if (res.error != null) return res;
 
-        if (!serverCodes.containsKey(id.number.intValue())) return res.failure(RTError.Scope(
+        if (!serverCodes.containsKey(Double.valueOf(id.number).intValue())) return res.failure(RTError.Scope(
                 get_start(), get_end(),
                 "Server does not exist",
                 execCtx
         ));
-        ServerPuddle puddle = serverCodes.get(id.number.intValue());
+        ServerPuddle puddle = serverCodes.get(Double.valueOf(id.number).intValue());
 
         Pair<SocketPuddle, RTError> pair = puddle.accept(get_start(), get_end(), execCtx);
         if (pair.b != null) return res.failure(pair.b);
@@ -74,7 +74,7 @@ public class SafeSocks extends Library {
 
         String host = execCtx.symbolTable.get("host").toString();
         try {
-            Socket sock = new Socket(host, port.number.intValue());
+            Socket sock = new Socket(host, Double.valueOf(port.number).intValue());
             int id = SocketPuddle.create(sock);
             return res.success(new Num(id));
         } catch (IOException e) {
@@ -103,7 +103,7 @@ public class SafeSocks extends Library {
         Obj num = res.register(checkInt(execCtx.symbolTable.get("id")));
         if (res.error != null) return new Pair<>(null, res.error);
 
-        int id = num.number.intValue();
+        int id = Double.valueOf(num.number).intValue();
         if (!clientCodes.containsKey(id)) return new Pair<>(null, RTError.Scope(
                 num.get_start(), num.get_end(),
                 "Socket does not exist",
@@ -116,7 +116,7 @@ public class SafeSocks extends Library {
         Obj len = res.register(checkInt(execCtx.symbolTable.get("len")));
         if (res.error != null) return new Pair<>(null, res.error);
 
-        return new Pair<>(new SocketData(offs.number.intValue(), len.number.intValue(), puddle), null);
+        return new Pair<>(new SocketData(Double.valueOf(offs.number).intValue(), Double.valueOf(len.number).intValue(), puddle), null);
     }
 
     public RTResult execute_write(Context execCtx) {

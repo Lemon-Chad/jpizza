@@ -27,7 +27,7 @@ public class Str extends Value {
 
     public Pair<Obj, RTError> mul(Obj o) {
         Obj other = o.number();
-        if (other.floating)
+        if (other.floating())
             return new Pair<>(null, RTError.Type(
                     pos_start, pos_end,
                     "Expected long",

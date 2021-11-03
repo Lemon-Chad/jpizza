@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Shell;
 import lemon.jpizza.Tokens;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -83,7 +84,7 @@ public class Library extends BaseFunction {
                     null
             ));
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || o.floating) return new RTResult().failure(RTError.Type(
+        if (o.jptype != Constants.JPType.Number || o.floating()) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected an integer",
                 o.get_ctx()
@@ -99,7 +100,7 @@ public class Library extends BaseFunction {
                     null
             ));
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || o.floating || o.number < 0)
+        if (o.jptype != Constants.JPType.Number || o.floating() || o.number < 0)
             return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected a postive integer",
@@ -110,7 +111,7 @@ public class Library extends BaseFunction {
 
     public static void initialize(String libName, Class<? extends Library> cls, Map<String, List<String>> funcs) {
         Context libContext = new Context(libName, null, null);
-        libContext.symbolTable = new SymbolTable();
+        libContext.symbolTable = new SymbolTable(Shell.globalSymbolTable);
         initialize(libName, cls, funcs, libContext, true);
     }
 

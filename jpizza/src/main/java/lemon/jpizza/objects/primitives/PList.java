@@ -50,7 +50,7 @@ public class PList extends Value {
                 "List index must be a number",
                 context
         ));
-        if (other.floating)
+        if (other.floating())
             return new Pair<>(null, RTError.Type(
                     pos_start, pos_end,
                     "Multiplier must be long, not double",
@@ -82,7 +82,7 @@ public class PList extends Value {
                 "List index must be a number",
                 context
         ));
-        if (other.floating)
+        if (other.floating())
             return new Pair<>(null, RTError.Type(
                     pos_start, pos_end,
                     "List index must be long, not double",

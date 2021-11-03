@@ -20,13 +20,6 @@ public class Num extends Value {
         value = v;
         number = v;
 
-        floating = Math.floor(v) != v;
-
-        if (floating)
-            doubleForm = v;
-        else
-            longForm = (long) v;
-
         hex = false;
 
         jptype = Constants.JPType.Number;
@@ -35,29 +28,6 @@ public class Num extends Value {
     public Num(double v, boolean hex) {
         value = v;
         number = v;
-
-        floating = Math.floor(v) != v;
-
-        if (floating)
-            doubleForm = v;
-        else
-            longForm = (long) v;
-
-        this.hex = hex;
-
-        jptype = Constants.JPType.Number;
-    }
-
-    public Num(double v, boolean f, boolean hex) {
-        value = v;
-        number = v;
-
-        floating = f && Math.floor(v) != v;
-
-        if (floating)
-            doubleForm = v;
-        else
-            longForm = (long) v;
 
         this.hex = hex;
 
@@ -72,14 +42,8 @@ public class Num extends Value {
                 "Expected number",
                 context
         ));
-        double v;
 
-        if (other.floating)
-            v = other.doubleForm + (floating ? doubleForm : longForm);
-        else
-            v = other.longForm + (floating ? doubleForm : longForm);
-
-        return new Pair<>(new Num(v, other.floating || floating, hex)
+        return new Pair<>(new Num(number + other.number, hex)
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> mod(Obj other) {
@@ -88,13 +52,8 @@ public class Num extends Value {
                 "Expected number",
                 context
         ));
-        double v;
-        if (other.floating)
-            v = (floating ? doubleForm : longForm) % other.doubleForm;
-        else
-            v = (floating ? doubleForm : longForm) % other.longForm;
 
-        return new Pair<>(new Num(v, other.floating || floating, hex)
+        return new Pair<>(new Num(number % other.number, hex)
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> sub(Obj other) {
@@ -103,13 +62,8 @@ public class Num extends Value {
                 "Expected number",
                 context
         ));
-        double v;
-        if (other.floating)
-            v = (floating ? doubleForm : longForm) - other.doubleForm;
-        else
-            v = (floating ? doubleForm : longForm) - other.longForm;
 
-        return new Pair<>(new Num(v, other.floating || floating, hex).set_context(context), null);
+        return new Pair<>(new Num(number - other.number, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> mul(Obj other) {
         if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
@@ -117,13 +71,8 @@ public class Num extends Value {
                 "Expected number",
                 context
         ));
-        double v;
-        if (other.floating)
-            v = other.doubleForm * (floating ? doubleForm : longForm);
-        else
-            v = other.longForm * (floating ? doubleForm : longForm);
 
-        return new Pair<>(new Num(v, other.floating || floating, hex).set_context(context), null);
+        return new Pair<>(new Num(number * other.number, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> div(Obj other) {
         if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
@@ -138,13 +87,7 @@ public class Num extends Value {
                     context
             ));
 
-        double v;
-        if (other.floating)
-            v = (floating ? doubleForm : longForm) / other.doubleForm;
-        else
-            v = (floating ? doubleForm : longForm) / other.longForm;
-
-        return new Pair<>(new Num(v, true, hex).set_context(context), null);
+        return new Pair<>(new Num(number / other.number, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> fastpow(Obj other) {
         if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
@@ -152,13 +95,8 @@ public class Num extends Value {
                 "Expected number",
                 context
         ));
-        double v;
-        if (other.floating)
-            v = Math.pow(floating ? doubleForm : longForm, other.doubleForm);
-        else
-            v = Math.pow(floating ? doubleForm : longForm, other.longForm);
 
-        return new Pair<>(new Num(v, other.floating || floating, hex).set_context(context), null);
+        return new Pair<>(new Num(Math.pow(number, other.number), hex).set_context(context), null);
     }
     public Pair<Obj, RTError> lt(Obj other) {
         if (other
@@ -178,12 +116,12 @@ public class Num extends Value {
         return new Pair<>(new Bool(number <= other.number).set_context(context), null);
     }
     public Pair<Obj, RTError> invert() {
-        return new Pair<>(new Num(-number, floating, hex).set_context(context), null);
+        return new Pair<>(new Num(-number, hex).set_context(context), null);
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
         if (o.jptype != Constants.JPType.Number) return new Pair<>(new Bool(false), null);
-        return new Pair<>(new Bool(this.number.equals(o.number)), null);
+        return new Pair<>(new Bool(this.number == o.number), null);
     }
 
     // Conversions
@@ -194,7 +132,7 @@ public class Num extends Value {
                 .set_pos(pos_start, pos_end);
     }
     public Obj function() { return new Function(
-            null, new NumberNode(new Token(floating ? TT.FLOAT : TT.INT, number, pos_start, pos_end), hex),
+            null, new NumberNode(new Token(TT.FLOAT, number, pos_start, pos_end), hex),
                                 null)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj number() { return this; }
@@ -204,13 +142,13 @@ public class Num extends Value {
 
     // Defaults
 
-    public Obj copy() { return new Num(number, floating, hex)
+    public Obj copy() { return new Num(number, hex)
                                         .set_context(context)
                                         .set_pos(pos_start, pos_end); }
     public Obj type() { return new Str(hex ? "hex" : "num").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() {
         if (hex) return "0x" + Integer.toHexString(((Double) value).intValue());
-        else if (!floating) return String.valueOf(number.longValue());
+        else if (floating()) return String.valueOf(Double.valueOf(number).longValue());
         return String.valueOf(number);
     }
 

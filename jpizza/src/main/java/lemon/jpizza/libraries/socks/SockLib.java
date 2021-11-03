@@ -54,7 +54,7 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newServer(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || p.floating) return new RTResult().failure(RTError.Type(
+        if (p.jptype != Constants.JPType.Number || p.floating()) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
@@ -191,7 +191,7 @@ public class SockLib extends Library {
         Obj length = res.register(checkPosInt(execCtx.symbolTable.get("length")));
         if (res.error != null) return res;
 
-        return conn.receiveBytes(length.number.intValue());
+        return conn.receiveBytes(Double.valueOf(length.number).intValue());
     }
 
     public RTResult execute_closeServerConnection(Context execCtx) {
@@ -236,7 +236,7 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newClient(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || p.floating) return new RTResult().failure(RTError.Type(
+        if (p.jptype != Constants.JPType.Number || p.floating()) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
@@ -339,7 +339,7 @@ public class SockLib extends Library {
         Obj length = res.register(checkPosInt(execCtx.symbolTable.get("length")));
         if (res.error != null) return res;
 
-        return conn.receiveBytes(length.number.intValue());
+        return conn.receiveBytes(Double.valueOf(length.number).intValue());
     }
 
     public RTResult execute_clientClose(Context execCtx) {

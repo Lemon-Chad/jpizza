@@ -406,7 +406,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        return new RTResult().success(new Bool(num.floating));
+        return new RTResult().success(new Bool(num.floating()));
     }
 
     public RTResult execute_random(Context _execCtx) {
@@ -573,7 +573,7 @@ public class BuiltInFunction extends Library {
                 "Index is out of bounds",
                 execCtx
         ));
-        list.list.set(index.number.intValue(), item);
+        list.list.set(Double.valueOf(index.number).intValue(), item);
         return new RTResult().success(list);
     }
 
@@ -589,8 +589,8 @@ public class BuiltInFunction extends Library {
 
         if (res.error != null) return res;
 
-        int strt = start.number.intValue();
-        int nd = end.number.intValue();
+        int strt = Double.valueOf(start.number).intValue();
+        int nd = Double.valueOf(end.number).intValue();
 
         if (strt > val.length() || strt < 0) return new RTResult().failure(RTError.OutOfBounds(
                 pos_start, pos_end,
@@ -618,8 +618,8 @@ public class BuiltInFunction extends Library {
 
         if (res.error != null) return res;
 
-        int strt = start.number.intValue();
-        int nd = end.number.intValue();
+        int strt = Double.valueOf(start.number).intValue();
+        int nd = Double.valueOf(end.number).intValue();
         List<Obj> lst = val.list;
 
         if (strt > lst.size() || strt < 0) return new RTResult().failure(RTError.OutOfBounds(
@@ -796,7 +796,7 @@ public class BuiltInFunction extends Library {
                 "Argument must be a number",
                 execCtx
         ));
-        if (num.floating) return new RTResult().failure(RTError.Type(
+        if (num.floating()) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a long",
                 execCtx

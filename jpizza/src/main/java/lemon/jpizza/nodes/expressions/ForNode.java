@@ -95,7 +95,6 @@ public class ForNode extends Node {
             i += step;
 
             value = res.register(inter.visit(body_node, context));
-            // value = null;
             if (res.continueLoop) continue;
             else if (res.breakLoop) break;
             else if (res.error != null || res.funcReturn != null) return res;

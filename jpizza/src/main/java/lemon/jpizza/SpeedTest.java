@@ -11,7 +11,7 @@ public class SpeedTest {
         Pair<Obj, Error> out;
         String demoCode = """
 import time;
-println(time::stopwatch(! -> println(for (i -> 1:1000000) => i)));
+println(time::stopwatch(! -> (for (i -> 1:10000000) => i + 1)));
 println("Why is camel so bad???");
         """;
 

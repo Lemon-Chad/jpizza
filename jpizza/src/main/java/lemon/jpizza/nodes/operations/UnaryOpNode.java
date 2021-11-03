@@ -37,13 +37,13 @@ public class UnaryOpNode extends Node {
         if (res.shouldReturn()) return res;
 
         if (op_tok.type == Tokens.TT.BITCOMPL) {
-            if (number.jptype != Constants.JPType.Number || number.floating) return res.failure(RTError.Type(
+            if (number.jptype != Constants.JPType.Number || number.floating()) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be an integer",
                     context
             ));
 
-            long n = number.number.longValue();
+            long n = Double.valueOf(number.number).longValue();
 
             return res.success(new Num(~n));
         } else if (op_tok.type == Tokens.TT.QUEBACK) {

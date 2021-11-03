@@ -220,7 +220,7 @@ public class JDraw extends Library {
             Obj obj = list.get(i);
             res.register(checkInt(obj));
             if (res.error != null) return new Pair<>(null, res.error);
-            int num = obj.number.intValue();
+            int num = Double.valueOf(obj.number).intValue();
             if (0 > num || num > 255) return new Pair<>(null, RTError.Type(
                     obj.get_start(), obj.get_end(),
                     errmsg,
@@ -249,8 +249,8 @@ public class JDraw extends Library {
 
         if (res.error != null) return new Pair<>(null, res.error);
 
-        int x = cx.number.intValue();
-        int y = cy.number.intValue();
+        int x = Double.valueOf(cx.number).intValue();
+        int y = Double.valueOf(cy.number).intValue();
         return new Pair<>(new Point(x, y), null);
     }
 
@@ -262,8 +262,8 @@ public class JDraw extends Library {
 
         if (res.error != null) return new Pair<>(null, res.error);
 
-        int w = width.number.intValue();
-        int h = height.number.intValue();
+        int w = Double.valueOf(width.number).intValue();
+        int h = Double.valueOf(height.number).intValue();
         return new Pair<>(new Point(w, h), null);
     }
 
@@ -381,7 +381,7 @@ public class JDraw extends Library {
         Obj rad = res.register(checkPosInt(execCtx.symbolTable.get("radius")));
         if (res.error != null) return res;
 
-        int radius = rad.number.intValue();
+        int radius = Double.valueOf(rad.number).intValue();
 
         Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
@@ -405,7 +405,7 @@ public class JDraw extends Library {
         Obj rad = res.register(checkPosInt(execCtx.symbolTable.get("radius")));
         if (res.error != null) return res;
 
-        int radius = rad.number.intValue();
+        int radius = Double.valueOf(rad.number).intValue();
 
         Pair<Point, Error> p = getCoords(execCtx);
         if (p.b != null) return res.failure(p.b);
@@ -474,8 +474,8 @@ public class JDraw extends Library {
             res.register(checkInt(pL.get(1)));
             if (res.error != null) return res;
 
-            int x = pL.get(0).number.intValue();
-            int y = pL.get(1).number.intValue();
+            int x = Double.valueOf(pL.get(0).number).intValue();
+            int y = Double.valueOf(pL.get(1).number).intValue();
 
             points[i] = new Point(x, y);
         }
@@ -602,7 +602,7 @@ public class JDraw extends Library {
 
         Obj s = res.register(checkPosInt(execCtx.symbolTable.get("fontSize")));
         if (res.error != null) return res;
-        int fontSize = s.number.intValue();
+        int fontSize = Double.valueOf(s.number).intValue();
 
         font = new Fnt(name, fontType, fontSize);
 
@@ -621,7 +621,7 @@ public class JDraw extends Library {
 
         if (res.error != null) return res;
 
-        Dimension dim = new Dimension(width.number.intValue(), height.number.intValue());
+        Dimension dim = new Dimension(Double.valueOf(width.number).intValue(), Double.valueOf(height.number).intValue());
 
         canvas.setPreferredSize(dim);
         changed = true;
@@ -639,7 +639,7 @@ public class JDraw extends Library {
 
         if (res.error != null) return res;
 
-        strokeSize = width.number.intValue();
+        strokeSize = Double.valueOf(width.number).intValue();
 
         return res.success(new Null());
     }
@@ -687,7 +687,7 @@ public class JDraw extends Library {
         res.register(checkInt(y));
         if (res.error != null) return new Pair<>(null, res.error);
 
-        return new Pair<>(new Point(x.number.intValue(), y.number.intValue()), null);
+        return new Pair<>(new Point(Double.valueOf(x.number).intValue(), Double.valueOf(y.number).intValue()), null);
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -900,7 +900,7 @@ public class JDraw extends Library {
         Obj md = res.register(checkPosInt(execCtx.symbolTable.get("mode")));
         if (res.error != null) return res;
 
-        int mode = md.number.intValue();
+        int mode = Double.valueOf(md.number).intValue();
         Integer result = switch (mode) {
             case 32 -> chooser.showSaveDialog(null);
             case 64 -> chooser.showOpenDialog(null);
@@ -996,7 +996,7 @@ public class JDraw extends Library {
 
         Obj i = res.register(checkPosInt(execCtx.symbolTable.get("button")));
         if (res.error != null) return res;
-        int index = i.number.intValue();
+        int index = Double.valueOf(i.number).intValue();
 
         if (index > 2) return res.failure(RTError.Range(
                 i.get_start(), i.get_end(),
