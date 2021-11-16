@@ -81,7 +81,7 @@ public class JasonLib extends Library {
     }
 
     public String toStr(Obj o) {
-        if (o.jptype == Constants.JPType.String) return "\"" + o.toString() + "\"";
+        if (o.jptype == Constants.JPType.String) return "\"" + o + "\"";
         else if (o.jptype == Constants.JPType.Dict) return visitDictionary(o);
         else if (o.jptype == Constants.JPType.List) return visitList(o);
         else return o.toString();

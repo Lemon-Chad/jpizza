@@ -112,8 +112,8 @@ public class Parser {
             "var"
     );
 
-    public interface L {
-        ParseResult execute();
+    public interface L<T> {
+        ParseResult<T> execute();
     }
 
     public Parser(List<Token> Tokens) {
@@ -146,8 +146,8 @@ public class Parser {
         reverse(1);
     }
 
-    public ParseResult parse() {
-        ParseResult res = statements(TT.EOF);
+    public ParseResult<Node> parse() {
+        ParseResult<Node> res = statements(TT.EOF);
         if (res.error == null && !currentToken.type.equals(TT.EOF)) {
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -156,12 +156,22 @@ public class Parser {
         } return res;
     }
 
-    public ParseResult statements(TT end) { 
-        return statements(Collections.singletonList(new Token(end))); 
+    private static class TokenMatcher {
+        TT type;
+        String value;
+
+        public TokenMatcher(TT type, String value) {
+            this.type = type;
+            this.value = value;
+        }
     }
 
-    public ParseResult statements(List<Token> tks) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> statements(TT end) {
+        return statements(Collections.singletonList(new TokenMatcher(end, null)));
+    }
+
+    public ParseResult<Node> statements(List<TokenMatcher> tks) {
+        ParseResult<Node> res = new ParseResult<>();
         List<Node> statements = new ArrayList<>();
         Position pos_start = currentToken.pos_start.copy();
 
@@ -170,7 +180,7 @@ public class Parser {
             res.registerAdvancement();
             advance();
         }
-        Node statement = (Node) res.register(this.statement());
+        Node statement = res.register(this.statement());
         if (res.error != null)
             return res;
         statements.add(statement);
@@ -187,10 +197,15 @@ public class Parser {
             if (newlineCount == 0) {
                 moreStatements = false;
             }
-            
-            if (!moreStatements || tks.contains(currentToken))
+
+            for (TokenMatcher matcher: tks) if (currentToken.type == matcher.type && (matcher.value == null || matcher.value.equals(currentToken.value))) {
+                moreStatements = false;
                 break;
-            statement = (Node) res.try_register(this.statement());
+            }
+            if (!moreStatements)
+                break;
+
+            statement = res.try_register(this.statement());
             if (statement == null) {
                 reverse(res.toReverseCount);
                 moreStatements = false;
@@ -222,14 +237,14 @@ public class Parser {
         return String.valueOf(currentToken.type);
     }
 
-    public ParseResult statement() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> statement() {
+        ParseResult<Node> res = new ParseResult<>();
         Position pos_start = currentToken.pos_start.copy();
 
         if (currentToken.matches(TT.KEYWORD, "return")) {
             res.registerAdvancement();
             advance();
-            Node expr = (Node) res.try_register(this.expr());
+            Node expr = res.try_register(this.expr());
             if (expr == null)
                 reverse(res.toReverseCount);
             return res.success(new ReturnNode(expr, pos_start, currentToken.pos_end.copy()));
@@ -250,16 +265,16 @@ public class Parser {
             return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
         }
 
-        Node expr = (Node) res.register(this.expr());
+        Node expr = res.register(this.expr());
         if (res.error != null)
             return res;
         return res.success(expr);
     }
 
-    public ParseResult extractVarTok() { return extractVarTok(false); }
+    public ParseResult<Token> extractVarTok() { return extractVarTok(false); }
 
-    public ParseResult extractVarTok(boolean screaming) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Token> extractVarTok(boolean screaming) {
+        ParseResult<Token> res = new ParseResult<>();
 
         if (!currentToken.type.equals(TT.IDENTIFIER))
             return res.failure(Error.InvalidSyntax(
@@ -275,11 +290,13 @@ public class Parser {
         return res.success(var_name);
     }
 
-    public ParseResult chainExpr() { return binOp(this::compExpr, Collections.singletonList(TT.BITE)); }
+    public ParseResult<Node> chainExpr() { return binOp(this::compExpr, Collections.singletonList(TT.BITE)); }
 
-    public ParseResult buildTypeTok() {
+    public ParseResult<Token> buildTypeTok() {
         List<String> type = new ArrayList<>();
-        ParseResult res = new ParseResult();
+        ParseResult<Token> res = new ParseResult<>();
+        Position start = currentToken.pos_start;
+        Position end = start;
 
         if (!Constants.TYPETOKS.contains(currentToken.type)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start, currentToken.pos_end,
@@ -298,18 +315,19 @@ public class Parser {
                 case GT -> ">";
                 default -> currentToken.value.toString();
             });
+            end = currentToken.pos_end;
             res.registerAdvancement(); advance();
         }
 
-        return res.success(new Token(TT.TYPE, type));
+        return res.success(new Token(TT.TYPE, type, start, end));
     }
 
-    public ParseResult expr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> expr() {
+        ParseResult<Node> res = new ParseResult<>();
         List<String> type = Collections.singletonList("any");
         if (currentToken.matches(TT.KEYWORD, "attr")) {
             res.registerAdvancement(); advance();
-            Token var_name = (Token) res.register(extractVarTok());
+            Token var_name = res.register(extractVarTok());
             if (res.error != null) return res;
 
             if (currentToken.type.equals(TT.EQS)) return res.failure(Error.ExpectedCharError(
@@ -322,7 +340,7 @@ public class Parser {
             res.registerAdvancement();
             advance();
 
-            Node expr = (Node) res.register(this.expr());
+            Node expr = res.register(this.expr());
             if (res.error != null)
                 return res;
             return res.success(new AttrAssignNode(var_name, expr));
@@ -367,7 +385,7 @@ public class Parser {
                 ));
                 res.registerAdvancement(); advance();
 
-                Node destructed = (Node) res.register(expr());
+                Node destructed = res.register(expr());
                 if (res.error != null) return res;
 
                 if (glob)
@@ -375,7 +393,7 @@ public class Parser {
                 else
                     return res.success(new DestructNode(destructed, destructs));
             }
-            Token var_name = (Token) res.register(extractVarTok(locked));
+            Token var_name = res.register(extractVarTok(locked));
             if (res.error != null) return res;
 
             Integer min = null;
@@ -390,7 +408,7 @@ public class Parser {
                 ));
                 List<Node> varNames = new ArrayList<>(Collections.singletonList(new VarAssignNode(var_name, nll).setType(type)));
                 do {
-                    var_name = (Token) res.register(expectIdentifier("Variable name", NamingConvention.CamelCase));
+                    var_name = res.register(expectIdentifier("Variable name", NamingConvention.CamelCase));
                     if (res.error != null) return res;
                     varNames.add(new VarAssignNode(var_name, nll).setType(type));
                     res.registerAdvancement(); advance();
@@ -437,7 +455,7 @@ public class Parser {
 
             if (currentToken.type.equals(TT.USE)) {
                 advance(); res.registerAdvancement();
-                Token typeTok = (Token) res.register(buildTypeTok());
+                Token typeTok = res.register(buildTypeTok());
                 if (res.error != null) return res;
                 type = (List<String>) typeTok.value;
             }
@@ -458,7 +476,7 @@ public class Parser {
 
             res.registerAdvancement();
             advance();
-            Node expr = (Node) res.register(this.expr());
+            Node expr = res.register(this.expr());
             if (res.error != null)
                 return res;
             return res.success(new VarAssignNode(var_name, expr, locked)
@@ -466,7 +484,7 @@ public class Parser {
                     .setRange(min, max));
         }
         else if (currentToken.matches(TT.KEYWORD, "let")) {
-            Token ident = (Token) res.register(expectIdentifier("Variable name", NamingConvention.CamelCase));
+            Token ident = res.register(expectIdentifier("Variable name", NamingConvention.CamelCase));
             if (res.error != null) return res;
             res.registerAdvancement(); advance();
             if (currentToken.type != TT.EQ) return res.failure(Error.ExpectedCharError(
@@ -475,14 +493,14 @@ public class Parser {
             ));
             res.registerAdvancement(); advance();
 
-            Node expr = (Node) res.register(this.expr());
+            Node expr = res.register(this.expr());
             if (res.error != null) return res;
 
             return res.success(new LetNode(ident, expr));
         }
         else if (currentToken.matches(TT.KEYWORD, "cal")) {
             res.registerAdvancement(); advance();
-            Token var_name = (Token) res.register(extractVarTok());
+            Token var_name = res.register(extractVarTok());
             if (res.error != null) return res;
 
             if (!currentToken.type.equals(TT.LAMBDA))
@@ -493,7 +511,7 @@ public class Parser {
 
             res.registerAdvancement();
             advance();
-            Node expr = (Node) res.register(this.expr());
+            Node expr = res.register(this.expr());
             if (res.error != null)
                 return res;
             return res.success(new DynAssignNode(var_name, expr));
@@ -506,20 +524,19 @@ public class Parser {
                 Token op_tok = currentToken;
                 advance();
                 res.registerAdvancement();
-                Node value = (Node) res.register(this.expr());
+                Node value = res.register(this.expr());
                 if (res.error != null)
                     return res;
                 return res.success(new VarAssignNode(var_tok, new BinOpNode(
                         new VarAccessNode(var_tok),
-                        new Token(switch (op_tok.type) {
-                                    case POE -> TT.POWER;
-                                    case MUE -> TT.MUL;
-                                    case DIE -> TT.DIV;
-                                    case PLE -> TT.PLUS;
-                                    case MIE -> TT.MINUS;
-                                    default -> null;
-                                }, op_tok.pos_start.copy(), op_tok.pos_end
-                        ), value
+                        switch (op_tok.type) {
+                            case POE -> TT.POWER;
+                            case MUE -> TT.MUL;
+                            case DIE -> TT.DIV;
+                            case PLE -> TT.PLUS;
+                            case MIE -> TT.MINUS;
+                            default -> null;
+                        }, value
                 ), false).setDefining(false));
             }
             if (currentToken.type.equals(TT.INCR) || currentToken.type.equals(TT.DECR)) {
@@ -532,7 +549,7 @@ public class Parser {
                 ), false).setDefining(false));
             } reverse();
         }
-        Node node = (Node) res.register(binOp(this::getExpr, Collections.singletonList(TT.DOT)));
+        Node node = res.register(binOp(this::getExpr, Collections.singletonList(TT.DOT)));
 
         if (res.error != null)
             return res;
@@ -540,21 +557,21 @@ public class Parser {
         return res.success(node);
     }
 
-    public ParseResult factor() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> factor() {
+        ParseResult<Node> res = new ParseResult<>();
         Token tok = currentToken;
 
         if (Arrays.asList(TT.PLUS, TT.MINUS, TT.INCR, TT.DECR).contains(tok.type)) {
             res.registerAdvancement();
             advance();
-            Node factor = (Node) res.register(this.factor());
+            Node factor = res.register(this.factor());
             if (res.error != null)
                 return res;
             return res.success(new UnaryOpNode(tok, factor));
         } return pow();
     }
 
-    public ParseResult expectIdentifier() { 
+    public ParseResult<Token> expectIdentifier() {
         return expectIdentifier("Identifier", NamingConvention.None); 
     }
 
@@ -576,8 +593,8 @@ Mixed_Snake_Case_Looks_Like_This"""
             }
     }
 
-    public ParseResult expectIdentifier(String name, NamingConvention convention) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Token> expectIdentifier(String name, NamingConvention convention) {
+        ParseResult<Token> res = new ParseResult<>();
         advance(); res.registerAdvancement();
         if (!currentToken.type.equals(TT.IDENTIFIER)) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -589,9 +606,9 @@ Mixed_Snake_Case_Looks_Like_This"""
         return res.success(currentToken);
     }
 
-    public ParseResult useExpr() {
-        ParseResult res = new ParseResult();
-        Token useToken = (Token) res.register(expectIdentifier());
+    public ParseResult<Node> useExpr() {
+        ParseResult<Node> res = new ParseResult<>();
+        Token useToken = res.register(expectIdentifier());
         if (res.error != null) return res;
         advance(); res.registerAdvancement();
         List<Token> args = new ArrayList<>();
@@ -602,37 +619,37 @@ Mixed_Snake_Case_Looks_Like_This"""
         return res.success(new UseNode(useToken, args));
     }
 
-    public ParseResult btshftExpr() {
+    public ParseResult<Node> btshftExpr() {
         return binOp(this::btwsExpr, Arrays.asList(TT.LEFTSHIFT, TT.RIGHTSHIFT, TT.SIGNRIGHTSHIFT), this::expr);
     }
 
-    public ParseResult btwsExpr() {
+    public ParseResult<Node> btwsExpr() {
         return binOp(this::complExpr, Arrays.asList(TT.BITAND, TT.BITOR, TT.BITXOR), this::expr);
     }
 
-    public ParseResult complExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> complExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         if (currentToken.type == TT.BITCOMPL || currentToken.type == TT.QUEBACK) {
             Token opToken = currentToken;
             res.registerAdvancement();
             advance();
 
-            Node expr = (Node) res.register(this.expr());
+            Node expr = res.register(this.expr());
             if (res.error != null) return res;
 
             return res.success(new UnaryOpNode(opToken, expr));
         } return byteExpr();
     }
 
-    public ParseResult byteExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> byteExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         boolean toBytes = currentToken.type == TT.TOBYTE;
         if (toBytes) {
             res.registerAdvancement();
             advance();
         }
 
-        Node expr = (Node) res.register(this.chainExpr());
+        Node expr = res.register(this.chainExpr());
         if (res.error != null) return res;
 
         if (toBytes)
@@ -640,119 +657,120 @@ Mixed_Snake_Case_Looks_Like_This"""
         return res.success(expr);
     }
 
-    public ParseResult atom() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> atom() {
+        ParseResult<Node> res = new ParseResult<>();
         Token tok = currentToken;
 
         if (tok.type.equals(TT.KEYWORD))
             switch ((String) tok.value) {
-                case "assert":
-                    res.registerAdvancement(); advance();
-                    Node condition = (Node) res.register(expr());
+                case "assert" -> {
+                    res.registerAdvancement();
+                    advance();
+                    Node condition = res.register(expr());
                     if (res.error != null) return res;
                     return res.success(new AssertNode(condition));
-
-                case "free":
-                    Token varTok = (Token) res.register(expectIdentifier());
+                }
+                case "free" -> {
+                    Token varTok = res.register(expectIdentifier());
                     if (res.error != null) return res;
-                    res.registerAdvancement(); advance();
+                    res.registerAdvancement();
+                    advance();
                     return res.success(new DropNode(varTok));
-
-                case "throw":
-                    Node throwNode = (Node) res.register(this.throwExpr());
+                }
+                case "throw" -> {
+                    Node throwNode = res.register(this.throwExpr());
                     if (res.error != null) return res;
                     return res.success(throwNode);
-
-                case "class":
-                case "obj":
-                case "recipe":
-                    Node classDef = (Node) res.register(this.classDef());
+                }
+                case "class", "obj", "recipe" -> {
+                    Node classDef = res.register(this.classDef());
                     if (res.error != null)
                         return res;
                     return res.success(classDef);
-
-                case "if":
-                    Node ifExpr = (Node) res.register(this.ifExpr());
+                }
+                case "if" -> {
+                    Node ifExpr = res.register(this.ifExpr());
                     if (res.error != null)
                         return res;
                     return res.success(ifExpr);
-
-                case "enum":
-                    Node enumExpr = (Node) res.register(this.enumExpr());
+                }
+                case "enum" -> {
+                    Node enumExpr = res.register(this.enumExpr());
                     if (res.error != null)
-                         return res;
+                        return res;
                     return res.success(enumExpr);
-
-                case "switch":
-                    Node switchExpr = (Node) res.register(this.switchExpr());
+                }
+                case "switch" -> {
+                    Node switchExpr = res.register(this.switchExpr());
                     if (res.error != null)
                         return res;
                     return res.success(switchExpr);
-
-                case "match":
-                    Node matchExpr = (Node) res.register(this.matchExpr());
+                }
+                case "match" -> {
+                    Node matchExpr = res.register(this.matchExpr());
                     if (res.error != null)
                         return res;
                     return res.success(matchExpr);
-
-                case "null":
-                    res.registerAdvancement(); advance();
+                }
+                case "null" -> {
+                    res.registerAdvancement();
+                    advance();
                     return res.success(new NullNode(tok));
-
-                case "for":
-                    Node forExpr = (Node) res.register(this.forExpr());
+                }
+                case "for" -> {
+                    Node forExpr = res.register(this.forExpr());
                     if (res.error != null)
                         return res;
                     return res.success(forExpr);
-
-                case "function":
-                case "yourmom":
-                case "fn":
-                    Node funcDef = (Node) res.register(this.funcDef());
+                }
+                case "function", "yourmom", "fn" -> {
+                    Node funcDef = res.register(this.funcDef());
                     if (res.error != null)
                         return res;
                     return res.success(funcDef);
-
-                case "struct":
-                    Node structDef = (Node) res.register(this.structDef());
+                }
+                case "struct" -> {
+                    Node structDef = res.register(this.structDef());
                     if (res.error != null)
                         return res;
                     return res.success(structDef);
-
-                case "loop":
-                case "while":
-                    Node whileExpr = (Node) res.register(this.whileExpr());
+                }
+                case "loop", "while" -> {
+                    Node whileExpr = res.register(this.whileExpr());
                     if (res.error != null)
                         return res;
                     return res.success(whileExpr);
-
-                case "do":
-                    Node doExpr = (Node) res.register(this.doExpr());
+                }
+                case "do" -> {
+                    Node doExpr = res.register(this.doExpr());
                     if (res.error != null)
                         return res;
                     return res.success(doExpr);
-
-                case "scope":
-                    res.registerAdvancement(); advance();
+                }
+                case "scope" -> {
+                    res.registerAdvancement();
+                    advance();
                     String name = null;
                     if (currentToken.type == TT.LSQUARE) {
-                        Token n = (Token) res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
+                        Token n = res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
                         if (res.error != null) return res;
 
                         name = n.value.toString();
 
-                        res.registerAdvancement(); advance();
+                        res.registerAdvancement();
+                        advance();
                         if (currentToken.type != TT.RSQUARE) return res.failure(Error.ExpectedCharError(
                                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                                 "Expected ']'"
                         ));
-                        res.registerAdvancement(); advance();
+                        res.registerAdvancement();
+                        advance();
                     }
-                    Node statements = (Node) res.register(block());
+                    Node statements = res.register(block());
                     if (res.error != null) return res;
                     return res.success(new ScopeNode(name, statements));
-
-                case "import":
+                }
+                case "import" -> {
                     advance();
                     res.registerAdvancement();
                     Token file_name_tok = currentToken;
@@ -761,20 +779,20 @@ Mixed_Snake_Case_Looks_Like_This"""
                                 file_name_tok.pos_start.copy(), file_name_tok.pos_end.copy(),
                                 "Expected module name"
                         ));
-                    
                     matchConvention(file_name_tok, "Module name", NamingConvention.SnakeCase);
-
-                    advance(); res.registerAdvancement();
+                    advance();
+                    res.registerAdvancement();
                     if (currentToken.matches(TT.KEYWORD, "as")) {
-                        Token ident = (Token) res.register(expectIdentifier("Module name", NamingConvention.SnakeCase));
+                        Token ident = res.register(expectIdentifier("Module name", NamingConvention.SnakeCase));
                         if (res.error != null)
                             return res;
-                        res.registerAdvancement(); advance();
+                        res.registerAdvancement();
+                        advance();
                         return res.success(new ImportNode(file_name_tok, ident));
                     }
                     return res.success(new ImportNode(file_name_tok));
-
-                case "extend":
+                }
+                case "extend" -> {
                     advance();
                     res.registerAdvancement();
                     Token fileNameTok = currentToken;
@@ -783,25 +801,26 @@ Mixed_Snake_Case_Looks_Like_This"""
                                 fileNameTok.pos_start.copy(), fileNameTok.pos_end.copy(),
                                 "Expected module name"
                         ));
-
                     matchConvention(fileNameTok, "Module name", NamingConvention.SnakeCase);
-
-                    advance(); res.registerAdvancement();
+                    advance();
+                    res.registerAdvancement();
                     return res.success(new ExtendNode(fileNameTok));
-
-                case "attr":
-                    advance(); res.registerAdvancement();
+                }
+                case "attr" -> {
+                    advance();
+                    res.registerAdvancement();
                     Token var_name_tok = currentToken;
                     if (!currentToken.type.equals(TT.IDENTIFIER))
                         return res.failure(Error.InvalidSyntax(
                                 var_name_tok.pos_start.copy(), var_name_tok.pos_end.copy(),
                                 "Expected identifier"
                         ));
-                    advance(); res.registerAdvancement();
+                    advance();
+                    res.registerAdvancement();
                     return res.success(new AttrAccessNode(var_name_tok));
-
-                default:
-                    break;
+                }
+                default -> {
+                }
             }
         else if (Arrays.asList(TT.INT, TT.FLOAT).contains(tok.type)) {
             res.registerAdvancement(); advance();
@@ -818,20 +837,20 @@ Mixed_Snake_Case_Looks_Like_This"""
                 res.registerAdvancement(); advance();
                 return res.success(new BinOpNode(
                         new NumberNode(tok),
-                        new Token(TT.MUL, tok.pos_start, identifier.pos_end),
+                        TT.MUL,
                         identifier
                 ));
             }
             return res.success(new NumberNode(tok));
         }
         else if (tok.type.equals(TT.USE)) {
-            Node useExpr = (Node) res.register(this.useExpr());
+            Node useExpr = res.register(this.useExpr());
             if (res.error != null) return res;
             return res.success(useExpr);
         }
         else if (tok.type.equals(TT.STRING)) {
             if (((Pair<String, Boolean>) tok.value).b) {
-                Node val = (Node) res.register(formatStringExpr());
+                Node val = res.register(formatStringExpr());
                 if (res.error != null) return res;
                 return res.success(val);
             }
@@ -846,7 +865,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             ));
             if (currentToken.type.equals(TT.EQ)) {
                 res.registerAdvancement(); advance();
-                Node value = (Node) res.register(expr());
+                Node value = res.register(expr());
                 if (res.error != null) return res;
                 return res.success(new VarAssignNode(tok, value, false, 1));
             }
@@ -857,26 +876,26 @@ Mixed_Snake_Case_Looks_Like_This"""
             return res.success(new BooleanNode(tok));
         }
         else if (tok.type.equals(TT.QUERY)) {
-            Node queryExpr = (Node) res.register(this.queryExpr());
+            Node queryExpr = res.register(this.queryExpr());
             if (res.error != null)
                 return res;
             return res.success(queryExpr);
         }
         else if (tok.type.equals(TT.LSQUARE)) {
-            Node listExpr = (Node) res.register(this.listExpr());
+            Node listExpr = res.register(this.listExpr());
             if (res.error != null)
                 return res;
             return res.success(listExpr);
         }
         else if (tok.type.equals(TT.OPEN)) {
-            Node dictExpr = (Node) res.register(this.dictExpr());
+            Node dictExpr = res.register(this.dictExpr());
             if (res.error != null)
                 return res;
             return res.success(dictExpr);
         }
         else if (tok.type.equals(TT.LPAREN)) {
             res.registerAdvancement(); advance();
-            Node expr = (Node) res.register(this.expr());
+            Node expr = res.register(this.expr());
             if (res.error != null)
                 return res;
             if (currentToken.type.equals(TT.RPAREN)) {
@@ -894,15 +913,15 @@ Mixed_Snake_Case_Looks_Like_This"""
         ));
     }
 
-    public ParseResult refExpr() {
+    public ParseResult<Node> refExpr() {
         Token prefixToken;
         if (currentToken.type == TT.MUL || currentToken.type == TT.AND) {
-            ParseResult res = new ParseResult();
+            ParseResult<Node> res = new ParseResult<>();
 
             prefixToken = currentToken;
             res.registerAdvancement(); advance();
 
-            Node expr = (Node) res.register(refExpr());
+            Node expr = res.register(refExpr());
             if (res.error != null) return res;
             
             if (prefixToken.type == TT.MUL) return res.success(new DerefNode(expr));
@@ -912,13 +931,13 @@ Mixed_Snake_Case_Looks_Like_This"""
         return index();
     }
 
-    public ParseResult formatStringExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> formatStringExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         Token tok = currentToken;
         StringBuilder sb = new StringBuilder();
         Pair<String, Boolean> val = (Pair<String, Boolean>) tok.value;
 
-        Token addToken = new Token(TT.PLUS, tok.pos_start, tok.pos_end);
+        TT addToken = TT.PLUS;
         Node node = new StringNode(new Token(TT.STRING, new Pair<>("", false), tok.pos_start, tok.pos_end));
         for (int i = 0; i < val.a.length(); i++) {
             char current = val.a.charAt(i);
@@ -946,7 +965,7 @@ Mixed_Snake_Case_Looks_Like_This"""
 
                 Pair<List<Token>, Error> ts = new Lexer("<fstring>", expr.toString()).make_tokens();
                 if (ts.b != null) return res.failure(ts.b);
-                Node r = (Node) res.register(new Parser(ts.a).statement());
+                Node r = res.register(new Parser(ts.a).statement());
                 if (res.error != null) return res;
                 node = new BinOpNode(node, addToken, r);
             } else {
@@ -959,21 +978,21 @@ Mixed_Snake_Case_Looks_Like_This"""
                 new StringNode(new Token(TT.STRING, new Pair<>(sb.toString(), false), tok.pos_start, tok.pos_end))));
     }
 
-    public ParseResult throwExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> throwExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         if (!currentToken.matches(TT.KEYWORD, "throw")) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected 'throw'"
         )); res.registerAdvancement(); advance();
 
-        Node first = (Node) res.register(this.expr());
+        Node first = res.register(this.expr());
         if (res.error != null)
             return res;
 
         if (currentToken.type == TT.COMMA) {
             res.registerAdvancement(); advance();
 
-            Node second = (Node) res.register(this.expr());
+            Node second = res.register(this.expr());
             if (res.error != null)
                 return res;
 
@@ -984,8 +1003,8 @@ Mixed_Snake_Case_Looks_Like_This"""
                 first.pos_start, first.pos_end)), first));
     }
 
-    public ParseResult structDef() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> structDef() {
+        ParseResult<Node> res = new ParseResult<>();
         if (!currentToken.matches(TT.KEYWORD, "struct")) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected 'struct'"
@@ -996,7 +1015,7 @@ Mixed_Snake_Case_Looks_Like_This"""
         List<Token> types = new ArrayList<>();
         List<Node> assignment = new ArrayList<>();
 
-        Token identifier = (Token) res.register(expectIdentifier("Struct", NamingConvention.PascalCase));
+        Token identifier = res.register(expectIdentifier("Struct", NamingConvention.PascalCase));
         if (res.error != null) return res;
         res.registerAdvancement(); advance();
 
@@ -1050,21 +1069,13 @@ Mixed_Snake_Case_Looks_Like_This"""
 
     }
 
-    public static class EnumChild {
-        public final List<String> params;
-        public final List<List<String>> types;
-        public final List<String> generics;
-        public final Token token;
-        public EnumChild(Token token, List<String> params, List<List<String>> types, List<String> generics) {
-            this.params = params;
-            this.types = types;
-            this.generics = generics;
-            this.token = token;
-        }
+    public record EnumChild(Token token, List<String> params,
+                            List<List<String>> types,
+                            List<String> generics) {
     }
 
-    public ParseResult enumExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> enumExpr() {
+        ParseResult<Node> res = new ParseResult<>();
 
         List<EnumChild> children = new ArrayList<>();
         Token name;
@@ -1075,8 +1086,8 @@ Mixed_Snake_Case_Looks_Like_This"""
         ));
         res.registerAdvancement(); advance();
 
-        boolean pub;
-        if (pub = currentToken.matches(TT.KEYWORD, "pub")) {
+        boolean pub = currentToken.matches(TT.KEYWORD, "pub");
+        if (pub) {
             res.registerAdvancement(); advance();
         }
 
@@ -1105,7 +1116,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             List<String> generics = new ArrayList<>();
             if (currentToken.type == TT.LPAREN) {
                 do {
-                    Token ident = (Token) res.register(expectIdentifier("Generic type", NamingConvention.PascalCase));
+                    Token ident = res.register(expectIdentifier("Generic type", NamingConvention.PascalCase));
                     if (res.error != null) return res;
                     res.registerAdvancement(); advance();
                     generics.add(ident.value.toString());
@@ -1122,14 +1133,14 @@ Mixed_Snake_Case_Looks_Like_This"""
             List<List<String>> types = new ArrayList<>();
             if (currentToken.type == TT.OPEN) {
                 do {
-                    Token tok = (Token) res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
+                    Token tok = res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
                     if (res.error != null) return res;
                     params.add((String) tok.value);
                     res.registerAdvancement(); advance();
 
                     if (currentToken.type == TT.BITE) {
                         res.registerAdvancement(); advance();
-                        tok = (Token) res.register(buildTypeTok());
+                        tok = res.register(buildTypeTok());
                         if (res.error != null) return res;
                         types.add((List<String>) tok.value);
                     } else {
@@ -1163,8 +1174,8 @@ Mixed_Snake_Case_Looks_Like_This"""
         return res.success(new EnumNode(name, children, pub));
     }
 
-    public ParseResult switchExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> switchExpr() {
+        ParseResult<Node> res = new ParseResult<>();
 
         ElseCase elseCase = null;
         List<Case> cases = new ArrayList<>();
@@ -1182,7 +1193,7 @@ Mixed_Snake_Case_Looks_Like_This"""
                     "Expected '('"
             ));
         res.registerAdvancement(); advance();
-        ref = (Node) res.register(expr());
+        ref = res.register(expr());
         if (res.error != null) return res;
         if (!currentToken.type.equals(TT.RPAREN))
             return res.failure(Error.ExpectedCharError(
@@ -1205,7 +1216,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             res.registerAdvancement(); advance();
 
             if (!def) {
-                condition = (Node) res.register(compExpr());
+                condition = res.register(compExpr());
                 if (res.error != null) return res;
             } else condition = null;
 
@@ -1215,10 +1226,10 @@ Mixed_Snake_Case_Looks_Like_This"""
             ));
             res.registerAdvancement(); advance();
 
-            body = (Node) res.register(statements(Arrays.asList(
-                new Token(TT.CLOSE),
-                new Token(TT.KEYWORD, "case"),
-                new Token(TT.KEYWORD, "default")
+            body = res.register(statements(Arrays.asList(
+                    new TokenMatcher(TT.CLOSE, null),
+                    new TokenMatcher(TT.KEYWORD, "case"),
+                    new TokenMatcher(TT.KEYWORD, "default")
             )));
             if (res.error != null) return res;
 
@@ -1253,16 +1264,16 @@ if (x == 1) {
         return res.success(swtch);
     }
 
-    public ParseResult expectSemicolon() {
-        if (currentToken.type != TT.INVISILINE && currentToken.type != TT.NEWLINE) return new ParseResult().failure(Error.ExpectedCharError(
+    public ParseResult<Void> expectSemicolon() {
+        if (currentToken.type != TT.INVISILINE && currentToken.type != TT.NEWLINE) return new ParseResult<Void>().failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected ';'"
         ));
-        return new ParseResult();
+        return new ParseResult<>();
     }
 
-    public ParseResult patternExpr(Node expr) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> patternExpr(Node expr) {
+        ParseResult<Node> res = new ParseResult<>();
         HashMap<Token, Node> patterns = new HashMap<>();
 
         if (currentToken.type != TT.LPAREN) return res.failure(Error.ExpectedCharError(
@@ -1271,7 +1282,7 @@ if (x == 1) {
         ));
 
         if (peek(1).type == TT.IDENTIFIER) do {
-            Token ident = (Token) res.register(expectIdentifier());
+            Token ident = res.register(expectIdentifier());
             if (res.error != null) return res;
             res.registerAdvancement(); advance();
 
@@ -1281,7 +1292,7 @@ if (x == 1) {
             }
             res.registerAdvancement(); advance();
 
-            Node pattern = (Node) res.register(this.expr());
+            Node pattern = res.register(this.expr());
             if (res.error != null) return res;
 
             patterns.put(ident, pattern);
@@ -1299,8 +1310,8 @@ if (x == 1) {
         return res.success(new PatternNode(expr, patterns));
     }
 
-    public ParseResult matchExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> matchExpr() {
+        ParseResult<Node> res = new ParseResult<>();
 
         ElseCase elseCase = null;
         List<Case> cases = new ArrayList<>();
@@ -1318,7 +1329,7 @@ if (x == 1) {
                     "Expected '('"
             ));
         res.registerAdvancement(); advance();
-        ref = (Node) res.register(expr());
+        ref = res.register(expr());
         if (res.error != null) return res;
         if (!currentToken.type.equals(TT.RPAREN))
             return res.failure(Error.ExpectedCharError(
@@ -1346,17 +1357,17 @@ if (x == 1) {
                 res.registerAdvancement(); advance();
                 Node condition;
                 if (pat) {
-                    condition = (Node) res.register(atom());
+                    condition = res.register(atom());
                     if (res.error != null) return res;
                     if (currentToken.type == TT.LPAREN) {
-                        condition = (Node) res.register(patternExpr(condition));
+                        condition = res.register(patternExpr(condition));
                         if (res.error != null) return res;
                     }
                 } else {
                     res.registerAdvancement();
                     advance();
                     if (!def) {
-                        condition = (Node) res.register(expr());
+                        condition = res.register(expr());
                         if (res.error != null) return res;
                     } else condition = null;
                 }
@@ -1370,7 +1381,7 @@ if (x == 1) {
             ));
             res.registerAdvancement(); advance();
 
-            body = (Node) res.register(expr());
+            body = res.register(expr());
             if (res.error != null) return res;
 
             if (def)
@@ -1400,9 +1411,9 @@ match (a) {
         return res.success(swtch);
     }
 
-    public ParseResult call() {
-        ParseResult res = new ParseResult();
-        Node node = (Node) res.register(this.atom());
+    public ParseResult<Node> call() {
+        ParseResult<Node> res = new ParseResult<>();
+        Node node = res.register(this.atom());
         if (res.error != null)
             return res;
         while (currentToken.type.equals(TT.LPAREN) || currentToken.type.equals(TT.CLACCESS)) {
@@ -1418,9 +1429,9 @@ match (a) {
 
                             if (currentToken.type == TT.SPREAD) {
                                 res.registerAdvancement(); advance();
-                                arg_nodes.add(new SpreadNode((Node) res.register(this.expr())));
+                                arg_nodes.add(new SpreadNode(res.register(this.expr())));
                             } else {
-                                arg_nodes.add((Node) res.register(this.expr()));
+                                arg_nodes.add(res.register(this.expr()));
                             }
 
                             if (res.error != null)
@@ -1435,7 +1446,7 @@ match (a) {
                     if (currentToken.type == TT.BACK) {
                         Token vk; Node val;
                         do {
-                            vk = (Token) res.register(expectIdentifier());
+                            vk = res.register(expectIdentifier());
                             if (res.error != null) return res;
                             res.registerAdvancement(); advance();
 
@@ -1444,7 +1455,7 @@ match (a) {
                                     "Expected ':'"
                             )); res.registerAdvancement(); advance();
 
-                            val = (Node) res.register(this.expr());
+                            val = res.register(this.expr());
                             if (res.error != null) return res;
 
                             kwargs.put(vk.value.toString(), val);
@@ -1466,17 +1477,17 @@ match (a) {
                     res.registerAdvancement();
                     advance();
 
-                    ParseResult r = buildTypeTok();
-                    if (r.error != null) return r;
-                    generics.add((Token) res.register(r));
+                    ParseResult<Token> r = buildTypeTok();
+                    if (r.error != null) return res.failure(r.error);
+                    generics.add(res.register(r));
 
                     while (currentToken.type == TT.COMMA) {
                         res.registerAdvancement();
                         advance();
                         
                         r = buildTypeTok();
-                        if (r.error != null) return r;
-                        generics.add((Token) res.register(r));
+                        if (r.error != null) return res.failure(r.error);
+                        generics.add(res.register(r));
                     }
                     if (currentToken.type != TT.GT) {
                         generics = new ArrayList<>();
@@ -1495,7 +1506,7 @@ match (a) {
                 );
             }
             else {
-                Token tok = (Token) res.register(expectIdentifier());
+                Token tok = res.register(expectIdentifier());
                 if (res.error != null) return res;
                 advance(); res.registerAdvancement();
                 node = new ClaccessNode(node, tok);
@@ -1504,26 +1515,26 @@ match (a) {
         return res.success(node);
     }
 
-    public ParseResult index() { return binOp(this::call, Collections.singletonList(TT.LSQUARE), this::expr); }
+    public ParseResult<Node> index() { return binOp(this::call, Collections.singletonList(TT.LSQUARE), this::expr); }
 
-    public ParseResult pow() { return binOp(this::refOp, Arrays.asList(TT.POWER, TT.MOD), this::factor); }
+    public ParseResult<Node> pow() { return binOp(this::refOp, Arrays.asList(TT.POWER, TT.MOD), this::factor); }
 
-    public ParseResult refOp() { return binOp(this::refSugars, Collections.singletonList(TT.EQ)); }
+    public ParseResult<Node> refOp() { return binOp(this::refSugars, Collections.singletonList(TT.EQ)); }
 
     static final List<TT> binRefOps = Arrays.asList(TT.PLE, TT.MIE, TT.MUE, TT.DIE, TT.POE);
     static final List<TT> unRefOps  = Arrays.asList(TT.INCR, TT.DECR);
 
-    public ParseResult refSugars() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> refSugars() {
+        ParseResult<Node> res = new ParseResult<>();
 
-        Node expr = (Node) res.register(this.refExpr());
+        Node expr = res.register(this.refExpr());
         if (res.error != null) return res;
 
         while (binRefOps.contains(currentToken.type) || unRefOps.contains(currentToken.type)) {
             if (unRefOps.contains(currentToken.type)) {
                 expr = new BinOpNode(
                     expr,
-                    new Token(TT.EQ),
+                    TT.EQ,
                     new UnaryOpNode(
                         currentToken,
                         expr
@@ -1533,23 +1544,23 @@ match (a) {
                 res.registerAdvancement();
                 advance();
             } else if (binRefOps.contains(currentToken.type)) {
-                Token opTok = new Token(switch (currentToken.type) {
+                TT opTok = switch (currentToken.type) {
                     case POE -> TT.POWER;
                     case MUE -> TT.MUL;
                     case DIE -> TT.DIV;
                     case PLE -> TT.PLUS;
                     case MIE -> TT.MINUS;
                     default -> null;
-                });
+                };
                 res.registerAdvancement();
                 advance();
 
-                Node right = (Node) res.register(this.expr());
+                Node right = res.register(this.expr());
                 if (res.error != null) return res;
 
                 expr = new BinOpNode(
                     expr,
-                    new Token(TT.EQ),
+                    TT.EQ,
                     new BinOpNode(
                         expr,
                         opTok,
@@ -1562,58 +1573,58 @@ match (a) {
         return res.success(expr);
     }
 
-    public ParseResult term() { return binOp(this::factor, Arrays.asList(TT.MUL, TT.DIV)); }
+    public ParseResult<Node> term() { return binOp(this::factor, Arrays.asList(TT.MUL, TT.DIV)); }
 
-    public ParseResult arithExpr() { return binOp(this::term, Arrays.asList(TT.PLUS, TT.MINUS)); }
+    public ParseResult<Node> arithExpr() { return binOp(this::term, Arrays.asList(TT.PLUS, TT.MINUS)); }
 
-    public ParseResult compExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> compExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         if (currentToken.type.equals(TT.NOT)) {
             Token op_tok = currentToken;
             res.registerAdvancement();
             advance();
 
-            Node node = (Node) res.register(compExpr());
+            Node node = res.register(compExpr());
             if (res.error != null)
                 return res;
             return res.success(new UnaryOpNode(op_tok, node));
         }
-        Node node = (Node) res.register(binOp(this::arithExpr, Arrays.asList(TT.EE, TT.NE, TT.LT, TT.GT, TT.LTE, TT.GTE)));
+        Node node = res.register(binOp(this::arithExpr, Arrays.asList(TT.EE, TT.NE, TT.LT, TT.GT, TT.LTE, TT.GTE)));
 
         if (res.error != null)
             return res;
         return res.success(node);
     }
 
-    public ParseResult getExpr() {
-        ParseResult res = new ParseResult();
-        Node node = (Node) res.register(binOp(this::btshftExpr, Arrays.asList(TT.AND, TT.OR)));
+    public ParseResult<Node> getExpr() {
+        ParseResult<Node> res = new ParseResult<>();
+        Node node = res.register(binOp(this::btshftExpr, Arrays.asList(TT.AND, TT.OR)));
         if (res.error != null)
             return res;
         return res.success(node);
     }
 
-    public ParseResult binOp(L left_func, List<TT> ops) {
+    public ParseResult<Node> binOp(L<Node> left_func, List<TT> ops) {
         return binOp(left_func, ops, null);
     }
 
-    public ParseResult binOp(L left_func, List<TT> ops, L right_func) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> binOp(L<Node> left_func, List<TT> ops, L<Node> right_func) {
+        ParseResult<Node> res = new ParseResult<>();
         if (right_func == null)
             right_func = left_func;
         Node right; Node left;
-        left = (Node) res.register(left_func.execute());
+        left = res.register(left_func.execute());
         if (res.error != null)
             return res;
 
         while (ops.contains(currentToken.type)) {
-            Token op_tok = currentToken;
+            TT op_tok = currentToken.type;
             res.registerAdvancement();
             advance();
-            right = (Node) res.register(right_func.execute());
+            right = res.register(right_func.execute());
             if (res.error != null)
                 return res;
-            if (op_tok.type == TT.LSQUARE) {
+            if (op_tok == TT.LSQUARE) {
                 if (currentToken.type != TT.RSQUARE) return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected closing bracket (']')"
@@ -1621,7 +1632,7 @@ match (a) {
                 advance();
                 res.registerAdvancement();
             }
-            if (op_tok.type == TT.DOT && right.jptype == Constants.JPType.Call) {
+            if (op_tok == TT.DOT && right.jptype == Constants.JPType.Call) {
                 CallNode call = (CallNode) right;
                 call.argNodes.add(0, left);
                 left = call;
@@ -1630,28 +1641,13 @@ match (a) {
         return res.success(left);
     }
 
-    static class ArgData {
-        public final List<Token> argNameToks;
-        public final List<Token> argTypeToks;
-        public final List<Token> generics;
-        public final List<Node> defaults;
-        public final int defaultCount;
-        public final String argname;
-        public final String kwargname;
-        public ArgData(List<Token> argNameToks, List<Token> argTypeToks, List<Node> defaults, int defaultCount,
-                       List<Token> generics, String argname, String kwargname) {
-            this.argNameToks = argNameToks;
-            this.argTypeToks = argTypeToks;
-            this.defaults = defaults;
-            this.defaultCount = defaultCount;
-            this.generics = generics;
-            this.argname = argname;
-            this.kwargname = kwargname;
-        }
+    record ArgData(List<Token> argNameToks, List<Token> argTypeToks,
+                   List<Node> defaults, int defaultCount,
+                   List<Token> generics, String argname, String kwargname) {
     }
 
-    public ParseResult gatherArgs() {
-        ParseResult res = new ParseResult();
+    public ParseResult<ArgData> gatherArgs() {
+        ParseResult<ArgData> res = new ParseResult<>();
 
         List<Token> argNameToks = new ArrayList<>();
         List<Token> argTypeToks = new ArrayList<>();
@@ -1663,7 +1659,6 @@ match (a) {
         int defaultCount = 0;
         boolean optionals = false;
 
-        Token anyToken = new Token(TT.TYPE, Collections.singletonList("any"));
         if (currentToken.type.equals(TT.LT)) {
             if (peek(1) != null && peek(1).type != TT.BACK) {
                 boolean args;
@@ -1698,15 +1693,16 @@ match (a) {
                         res.registerAdvancement();
                         advance();
 
-                        Token typetok = (Token) res.register(buildTypeTok());
+                        Token typetok = res.register(buildTypeTok());
                         if (res.error != null) return res;
                         argTypeToks.add(typetok);
-                    } else argTypeToks.add(anyToken);
+                    } else argTypeToks.add(new Token(TT.TYPE,
+                            Collections.singletonList("any"), currentToken.pos_start, currentToken.pos_end));
                     if (currentToken.type.equals(TT.EQS)) {
                         res.registerAdvancement();
                         advance();
 
-                        Node val = (Node) res.register(arithExpr());
+                        Node val = res.register(arithExpr());
                         if (res.error != null) return res;
 
                         defaults.add(val);
@@ -1724,7 +1720,7 @@ match (a) {
             }
 
             if (currentToken.type == TT.BACK) {
-                Token kw = (Token) res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
+                Token kw = res.register(expectIdentifier("Parameter", NamingConvention.CamelCase));
                 if (res.error != null) return res;
                 res.registerAdvancement(); advance();
                 kwargname = kw.value.toString();
@@ -1784,9 +1780,9 @@ match (a) {
         tokount++;
     }
 
-    public ParseResult block() { return block(true); }
-    public ParseResult block(boolean vLine) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> block() { return block(true); }
+    public ParseResult<Node> block(boolean vLine) {
+        ParseResult<Node> res = new ParseResult<>();
         if (!currentToken.type.equals(TT.OPEN))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -1795,7 +1791,7 @@ match (a) {
 
         res.registerAdvancement(); advance();
 
-        Node statements = (Node) res.register(this.statements(TT.CLOSE));
+        Node statements = res.register(this.statements(TT.CLOSE));
         if (res.error != null)
             return res;
 
@@ -1814,9 +1810,9 @@ match (a) {
 
     // If Parts
 
-    public ParseResult ifExpr() {
-        ParseResult res = new ParseResult();
-        var allCases = (Pair<List<Case>, ElseCase>) res.register(this.ifExprCases("if", true));
+    public ParseResult<Node> ifExpr() {
+        ParseResult<Node> res = new ParseResult<>();
+        var allCases = res.register(this.ifExprCases("if", true));
         if (res.error != null)
             return res;
         List<Case> cases = allCases.a;
@@ -1825,8 +1821,8 @@ match (a) {
         return res.success(new QueryNode(cases, elseCase));
     }
 
-    public ParseResult ifExprCases(String caseKeyword, boolean parenthesis) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Pair<List<Case>, ElseCase>> ifExprCases(String caseKeyword, boolean parenthesis) {
+        ParseResult<Pair<List<Case>, ElseCase>> res = new ParseResult<>();
         List<Case> cases = new ArrayList<>();
 
         if (!currentToken.matches(TT.KEYWORD, caseKeyword))
@@ -1846,7 +1842,7 @@ match (a) {
                 ));
             res.registerAdvancement(); advance();
         }
-        Node condition = (Node) res.register(this.expr());
+        Node condition = res.register(this.expr());
         if (res.error != null)
             return res;
 
@@ -1876,9 +1872,9 @@ if (false)
 
         Node statements;
         if (currentToken.type.equals(TT.OPEN))
-            statements = (Node) res.register(this.block(false));
+            statements = res.register(this.block(false));
         else {
-            statements = (Node) res.register(this.statement());
+            statements = res.register(this.statement());
             res.register(expectSemicolon());
             if (res.error != null) return res;
             res.registerAdvancement(); advance();
@@ -1887,7 +1883,7 @@ if (false)
             return res;
         cases.add(new Case(condition, statements, true));
 
-        Pair<List<Case>, ElseCase> allCases = (Pair<List<Case>, ElseCase>) res.register(this.elifElse(parenthesis));
+        Pair<List<Case>, ElseCase> allCases = res.register(this.elifElse(parenthesis));
         if (res.error != null)
             return res;
         List<Case> newCases = allCases.a;
@@ -1897,8 +1893,8 @@ if (false)
         return res.success(new Pair<>(cases, elseCase));
     }
 
-    public ParseResult elifElse(boolean parenthesis) {
-        ParseResult res = new ParseResult();
+    public ParseResult<Pair<List<Case>, ElseCase>> elifElse(boolean parenthesis) {
+        ParseResult<Pair<List<Case>, ElseCase>> res = new ParseResult<>();
         List<Case> cases = new ArrayList<>();
         ElseCase elseCase;
 
@@ -1910,7 +1906,7 @@ if (false)
             elseCase = allCases.b;
         }
         else {
-            elseCase = (ElseCase) res.register(this.elseExpr());
+            elseCase = res.register(this.elseExpr());
             if (res.error != null)
                 return res;
         } return res.success(
@@ -1919,12 +1915,12 @@ if (false)
 
     }
 
-    public ParseResult elifExpr(boolean parenthesis) {
+    public ParseResult<Pair<List<Case>, ElseCase>> elifExpr(boolean parenthesis) {
         return ifExprCases("elif", parenthesis);
     }
 
-    public ParseResult elseExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<ElseCase> elseExpr() {
+        ParseResult<ElseCase> res = new ParseResult<>();
         ElseCase elseCase = null;
 
         if (currentToken.matches(TT.KEYWORD, "else")) {
@@ -1932,9 +1928,9 @@ if (false)
 
             Node statements;
             if (currentToken.type.equals(TT.OPEN))
-                statements = (Node) res.register(this.block());
+                statements = res.register(this.block());
             else {
-                statements = (Node) res.register(this.statement());
+                statements = res.register(this.statement());
                 res.register(expectSemicolon());
                 if (res.error != null) return res;
                 res.registerAdvancement(); advance();
@@ -1949,28 +1945,28 @@ if (false)
 
     // Query
 
-    public ParseResult kv() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> kv() {
+        ParseResult<Node> res = new ParseResult<>();
         if (!currentToken.type.equals(TT.BITE)) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                 "Expected ':'"
         ));
         res.registerAdvancement(); advance();
-        Node expr = (Node) res.register(expr());
+        Node expr = res.register(expr());
         if (res.error != null) return res;
         return res.success(expr);
     }
 
-    public ParseResult queryExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> queryExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         List<Case> cases = new ArrayList<>();
         ElseCase elseCase = null;
 
-        L getStatement = () -> {
+        L<Node> getStatement = () -> {
             res.registerAdvancement(); advance();
-            Node condition = (Node) res.register(compExpr());
+            Node condition = res.register(compExpr());
             if (res.error != null) return res;
-            Node expr_ = (Node) res.register(this.kv());
+            Node expr_ = res.register(this.kv());
             if (res.error != null) return res;
             cases.add(new Case(condition, expr_, false));
             return null;
@@ -1981,7 +1977,7 @@ if (false)
                 "Expected '?'"
         ));
 
-        ParseResult r;
+        ParseResult<Node> r;
         r = getStatement.execute();
         if (r != null) return r;
 
@@ -1998,7 +1994,7 @@ if (false)
             ));
             res.registerAdvancement(); advance();
 
-            Node expr = (Node) res.register(this.statement());
+            Node expr = res.register(this.statement());
             if (res.error != null) return res;
             elseCase = new ElseCase(expr, false);
         }
@@ -2007,8 +2003,8 @@ if (false)
 
     // Loops
 
-    public ParseResult forExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> forExpr() {
+        ParseResult<Node> res = new ParseResult<>();
 
         if (!currentToken.matches(TT.KEYWORD, "for"))
             return res.failure(Error.InvalidSyntax(
@@ -2046,30 +2042,30 @@ if (false)
         res.registerAdvancement(); advance();
 
         if (iterating) {
-            Node iterableNode = (Node) res.register(getClosing());
+            Node iterableNode = res.register(getClosing());
             if (res.error != null) return res;
             Node body;
             switch (currentToken.type) {
                 case OPEN -> {
-                    body = (Node) res.register(this.block());
+                    body = res.register(this.block());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, true));
                 }
                 case EQ -> {
                     res.registerAdvancement();
                     advance();
-                    body = (Node) res.register(this.statement());
+                    body = res.register(this.statement());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, false));
                 }
                 default -> {
-                    body = (Node) res.register(this.statement());
+                    body = res.register(this.statement());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, true));
                 }
             }
         }
-        Node start = (Node) res.register(this.compExpr());
+        Node start = res.register(this.compExpr());
         if (res.error != null) return res;
 
         if (!currentToken.type.equals(TT.BITE))
@@ -2079,13 +2075,13 @@ if (false)
             ));
         res.registerAdvancement(); advance();
 
-        Node end = (Node) res.register(this.expr());
+        Node end = res.register(this.expr());
         if (res.error != null) return res;
 
         Node step;
         if (currentToken.type.equals(TT.STEP)) {
             res.registerAdvancement(); advance();
-            step = (Node) res.register(this.expr());
+            step = res.register(this.expr());
         } else step = null;
 
         if (!currentToken.type.equals(TT.RPAREN))
@@ -2099,19 +2095,19 @@ if (false)
         Node body;
         switch (currentToken.type) {
             case OPEN -> {
-                body = (Node) res.register(this.block());
+                body = res.register(this.block());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, true));
             }
             case EQ -> {
                 res.registerAdvancement();
                 advance();
-                body = (Node) res.register(this.statement());
+                body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, false));
             }
             default -> {
-                body = (Node) res.register(this.statement());
+                body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, true));
             }
@@ -2119,9 +2115,9 @@ if (false)
 
     }
 
-    public ParseResult getClosing() {
-        ParseResult res = new ParseResult();
-        Node condition = (Node) res.register(this.expr());
+    public ParseResult<Node> getClosing() {
+        ParseResult<Node> res = new ParseResult<>();
+        Node condition = res.register(this.expr());
         if (res.error != null) return res;
         if (!currentToken.type.equals(TT.RPAREN))
             return res.failure(Error.ExpectedCharError(
@@ -2132,8 +2128,8 @@ if (false)
         return res.success(condition);
     }
 
-    public ParseResult getWhileCondition() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> getWhileCondition() {
+        ParseResult<Node> res = new ParseResult<>();
 
         if (!currentToken.matches(TT.KEYWORD, "while")) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -2150,7 +2146,7 @@ if (false)
         res.registerAdvancement();
         advance();
 
-        Node condition = (Node) res.register(getClosing());
+        Node condition = res.register(getClosing());
         if (res.error != null) return res;
         if (condition.jptype == Constants.JPType.Boolean) {
             if (((BooleanNode) condition).val) {
@@ -2173,8 +2169,8 @@ while (false) {
         return res.success(condition);
     }
 
-    public ParseResult doExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> doExpr() {
+        ParseResult<Node> res = new ParseResult<>();
 
         if (!currentToken.matches(TT.KEYWORD, "do")) return res.failure(Error.InvalidSyntax(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -2189,27 +2185,27 @@ while (false) {
             case EQ -> {
                 res.registerAdvancement();
                 advance();
-                body = (Node) res.register(this.statement());
+                body = res.register(this.statement());
                 if (res.error != null) return res;
             }
             case OPEN -> {
-                body = (Node) res.register(block(false));
+                body = res.register(block(false));
                 if (res.error != null) return res;
             }
             default -> {
-                body = (Node) res.register(this.statement());
+                body = res.register(this.statement());
                 if (res.error != null) return res;
             }
         }
 
-        Node condition = (Node) res.register(getWhileCondition());
+        Node condition = res.register(getWhileCondition());
         if (res.error != null) return res;
 
         return res.success(new WhileNode(condition, body, bracket, true));
     }
 
-    public ParseResult whileExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> whileExpr() {
+        ParseResult<Node> res = new ParseResult<>();
 
         Node condition;
         if (currentToken.matches(TT.KEYWORD, "loop")) {
@@ -2218,7 +2214,7 @@ while (false) {
             advance();
             condition = new BooleanNode(new Token(TT.BOOL, true, loopTok.pos_start, loopTok.pos_end));
         } else {
-            condition = (Node) res.register(getWhileCondition());
+            condition = res.register(getWhileCondition());
 
             if (res.error != null) return res;
         }
@@ -2227,17 +2223,17 @@ while (false) {
             case EQ -> {
                 res.registerAdvancement();
                 advance();
-                body = (Node) res.register(this.statement());
+                body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, false, false));
             }
             case OPEN -> {
-                body = (Node) res.register(block());
+                body = res.register(block());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
             }
             default -> {
-                body = (Node) res.register(this.statement());
+                body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
             }
@@ -2247,8 +2243,8 @@ while (false) {
 
     // Collections
 
-    public ParseResult listExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> listExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         List<Node> elementNodes = new ArrayList<>();
         Position pos_start = currentToken.pos_start.copy();
 
@@ -2259,13 +2255,13 @@ while (false) {
         res.registerAdvancement(); advance();
 
         if (!currentToken.type.equals(TT.RSQUARE)) {
-            elementNodes.add((Node) res.register(this.expr()));
+            elementNodes.add(res.register(this.expr()));
             if (res.error != null) return res;
 
             while (currentToken.type.equals(TT.COMMA)) {
                 res.registerAdvancement();
                 advance();
-                elementNodes.add((Node) res.register(this.expr()));
+                elementNodes.add(res.register(this.expr()));
                 if (res.error != null) return res;
             }
             if (!currentToken.type.equals(TT.RSQUARE)) return res.failure(Error.ExpectedCharError(
@@ -2282,8 +2278,8 @@ while (false) {
         ));
     }
 
-    public ParseResult dictExpr() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> dictExpr() {
+        ParseResult<Node> res = new ParseResult<>();
         Map<Node, Node> dict = new HashMap<>();
         Position pos_start = currentToken.pos_start.copy();
 
@@ -2292,17 +2288,17 @@ while (false) {
                 "Expected '{'"
         )); res.registerAdvancement(); advance();
 
-        L kv = () -> {
-            Node key = (Node) res.register(compExpr());
+        L<Node> kv = () -> {
+            Node key = res.register(compExpr());
             if (res.error != null) return res;
 
-            Node value = (Node) res.register(this.kv());
+            Node value = res.register(this.kv());
             if (res.error != null) return res;
             dict.put(key, value);
             return null;
         };
 
-        ParseResult x;
+        ParseResult<Node> x;
         if (!currentToken.type.equals(TT.CLOSE)) {
             x = kv.execute();
             if (x != null) return x;
@@ -2321,8 +2317,8 @@ while (false) {
         return res.success(new DictNode(dict, pos_start, currentToken.pos_end.copy()));
     }
 
-    public ParseResult isCatcher() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Boolean> isCatcher() {
+        ParseResult<Boolean> res = new ParseResult<>();
         if (currentToken.type == TT.LSQUARE) {
             res.registerAdvancement(); advance();
             if (currentToken.type != TT.RSQUARE) return res.failure(Error.ExpectedCharError(
@@ -2336,8 +2332,8 @@ while (false) {
 
     // Executables
 
-    public ParseResult funcDef() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> funcDef() {
+        ParseResult<Node> res = new ParseResult<>();
 
         String tokV = (String) currentToken.value;
         if (!currentToken.type.equals(TT.KEYWORD) && Arrays.asList("fn", "function", "yourmom").contains(tokV))
@@ -2364,13 +2360,13 @@ while (false) {
             res.registerAdvancement(); advance();
         }
 
-        ArgData argTKs = (ArgData) res.register(gatherArgs());
+        ArgData argTKs = res.register(gatherArgs());
         if (res.error != null) return res;
 
-        boolean isCatcher = (boolean) res.register(this.isCatcher());
+        boolean isCatcher = res.register(this.isCatcher());
         if (res.error != null) return res;
 
-        List<String> retype = (List<String>) res.register(staticRet());
+        List<String> retype = res.register(staticRet());
         if (res.error != null) return res;
 
         Node nodeToReturn;
@@ -2378,7 +2374,7 @@ while (false) {
             case LAMBDA -> {
                 res.registerAdvancement();
                 advance();
-                nodeToReturn = (Node) res.register(this.statement());
+                nodeToReturn = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new FuncDefNode(
                         varNameTok,
@@ -2396,7 +2392,7 @@ while (false) {
                 ).setCatcher(isCatcher));
             }
             case OPEN -> {
-                nodeToReturn = (Node) res.register(this.block(varNameTok != null));
+                nodeToReturn = res.register(this.block(varNameTok != null));
                 if (res.error != null) return res;
 
                 Node funcNode = new FuncDefNode(
@@ -2437,20 +2433,20 @@ while (false) {
 
     }
 
-    public ParseResult staticRet() {
-        ParseResult res = new ParseResult();
+    public ParseResult<List<String>> staticRet() {
+        ParseResult<List<String>> res = new ParseResult<>();
         List<String> retype = Collections.singletonList("any");
         if (currentToken.type.equals(TT.EQS)) {
             res.registerAdvancement(); advance();
-            Token etok = (Token) res.register(buildTypeTok());
+            Token etok = res.register(buildTypeTok());
             if (res.error != null) return res;
 
             retype = (List<String>) etok.value;
         } return res.success(retype);
     }
 
-    public ParseResult classDef() {
-        ParseResult res = new ParseResult();
+    public ParseResult<Node> classDef() {
+        ParseResult<Node> res = new ParseResult<>();
 
         if (currentToken.type != TT.KEYWORD || !classWords.contains(currentToken.value.toString()))
             return res.failure(Error.InvalidSyntax(
@@ -2496,13 +2492,13 @@ while (false) {
                 null
         );
 
-        TriFunction<Token, Boolean, Boolean, ParseResult> getComplexAttr = (valTok, isstatic, isprivate) -> {
-            ParseResult result = new ParseResult();
+        TriFunction<Token, Boolean, Boolean, ParseResult<Node>> getComplexAttr = (valTok, isstatic, isprivate) -> {
+            ParseResult<Node> result = new ParseResult<>();
 
             List<String> type = Collections.singletonList("any");
             if (currentToken.type == TT.BITE) {
                 result.registerAdvancement(); advance();
-                Token t = (Token) result.register(buildTypeTok());
+                Token t = result.register(buildTypeTok());
                 if (result.error != null) return result;
                 type = (List<String>) t.value;
             }
@@ -2514,7 +2510,7 @@ while (false) {
             ));
             if (currentToken.type == TT.EQ) {
                 result.registerAdvancement(); advance();
-                expr = (Node) result.register(this.expr());
+                expr = result.register(this.expr());
                 if (result.error != null) return result;
             }
 
@@ -2536,10 +2532,10 @@ while (false) {
         while (currentToken.type.equals(TT.KEYWORD) || currentToken.type.equals(TT.IDENTIFIER)) {
             if (currentToken.value.equals("ingredients")) {
                 advance(); res.registerAdvancement();
-                argTKs = (ArgData) res.register(gatherArgs());
+                argTKs = res.register(gatherArgs());
                 if (res.error != null) return res;
 
-                ingredientNode = (Node) res.register(this.block(false));
+                ingredientNode = res.register(this.block(false));
                 if (res.error != null) return res;
             }
             else if (methKeywords.contains(currentToken.value.toString())) {
@@ -2567,19 +2563,19 @@ while (false) {
                 matchConvention(varNameTok, "Method name", NamingConvention.CamelCase);
 
                 res.registerAdvancement(); advance();
-                ArgData args = (ArgData) res.register(gatherArgs());
+                ArgData args = res.register(gatherArgs());
 
-                boolean isCatcher = (boolean) res.register(this.isCatcher());
+                boolean isCatcher = res.register(this.isCatcher());
                 if (res.error != null) return res;
 
-                List<String> retype = (List<String>) res.register(staticRet());
+                List<String> retype = res.register(staticRet());
                 if (res.error != null) return res;
 
                 Node nodeToReturn;
                 switch (currentToken.type) {
                     case LAMBDA:
                         res.registerAdvancement(); advance();
-                        nodeToReturn = (Node) res.register(this.statement());
+                        nodeToReturn = res.register(this.statement());
                         if (res.error != null) return res;
                         res.register(expectSemicolon());
                         if (res.error != null) return res;
@@ -2602,7 +2598,7 @@ while (false) {
                                 argTKs.kwargname
                         ).setCatcher(isCatcher)); break;
                     case OPEN:
-                         nodeToReturn = (Node) res.register(this.block(false));
+                         nodeToReturn = res.register(this.block(false));
                          if (res.error != null) return res;
                          methods.add(new MethDefNode(
                                  varNameTok,

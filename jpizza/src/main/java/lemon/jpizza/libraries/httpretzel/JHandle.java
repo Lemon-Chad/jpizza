@@ -58,7 +58,7 @@ public class JHandle implements HttpHandler {
         } catch (Exception e) {
             res.failure(RTError.Internal(
                     handle.pos_start, handle.pos_end,
-                    "Exception occurred... " + e.toString(),
+                    "Exception occurred... " + e,
                     handle.context
             ));
             safeError(exchange, exchange.getResponseBody());
@@ -73,7 +73,7 @@ public class JHandle implements HttpHandler {
         } catch (IOException e) {
             res.failure(RTError.Internal(
                     handle.pos_start, handle.pos_end,
-                    "IOException occurred... " + e.toString(),
+                    "IOException occurred... " + e,
                     handle.context
             ));
             safeError(exchange, exchange.getResponseBody());

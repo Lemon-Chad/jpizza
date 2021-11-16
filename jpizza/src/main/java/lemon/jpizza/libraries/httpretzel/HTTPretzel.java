@@ -58,7 +58,7 @@ public class HTTPretzel extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     pos_start, pos_end,
-                    String.format("An IOException occurred..\n%s", e.toString()),
+                    String.format("An IOException occurred..\n%s", e),
                     execCtx
             ));
         }

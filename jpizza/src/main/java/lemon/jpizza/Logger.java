@@ -27,7 +27,7 @@ public class Logger {
                     if (i == omitt + 1) sb.append("..., ");
                 } else sb.append(ots(l.get(i))).append(", ");
 
-            return "[ " + sb.toString() + "len=" + l.size() + " ]";
+            return "[ " + sb + "len=" + l.size() + " ]";
         }
         else if (text instanceof Dict) {
             StringBuilder sb = new StringBuilder();
@@ -40,7 +40,7 @@ public class Logger {
                 } else sb.append(ots(keys[i])).append(": ")
                         .append(ots(d.get(keys[i]))).append(", ");
 
-            return "{ " + sb.toString() + "len=" + keys.length + " }";
+            return "{ " + sb + "len=" + keys.length + " }";
         }
         else if (text instanceof Bytes) {
             StringBuilder sb = new StringBuilder();
@@ -51,7 +51,7 @@ public class Logger {
                     if (i == omitt + 1) sb.append("..., ");
                 } else sb.append(b.arr[i]).append(", ");
 
-            return "{ " + sb.toString() + "len=" + b.arr.length + " }";
+            return "{ " + sb + "len=" + b.arr.length + " }";
         } else if (text instanceof Obj) {
             return ((Obj) text).astring().toString();
         }

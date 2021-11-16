@@ -18,22 +18,6 @@ public class Token implements Serializable {
         }
     }
 
-    public Token(Tokens.TT type) {
-        this.type = type;
-        this.value = null;
-
-        this.pos_start = null;
-        this.pos_end = null;
-    }
-
-    public Token(Tokens.TT type, Object value) {
-        this.type = type;
-        this.value = value;
-
-        this.pos_start = null;
-        this.pos_end = null;
-    }
-
     public Token(Tokens.TT type, Position start_pos) {
         this.type = type;
         this.value = null;
@@ -64,9 +48,7 @@ public class Token implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
-        if (!(o instanceof Token)) return false;
-
-        Token other = (Token) o;
+        if (!(o instanceof Token other)) return false;
 
         if (value == null) return other.type == type && other.value == null;
         return other.type == type && value.equals(other.value);

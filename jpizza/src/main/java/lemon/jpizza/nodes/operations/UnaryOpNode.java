@@ -62,7 +62,7 @@ public class UnaryOpNode extends Node {
             } catch (IOException | ClassNotFoundException e) {
                 return res.failure(RTError.Internal(
                         number.get_start(), number.get_end(),
-                        "Internal byte error: " + e.toString(),
+                        "Internal byte error: " + e,
                         context
                 ));
             }

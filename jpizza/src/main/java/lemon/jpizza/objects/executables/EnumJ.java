@@ -64,7 +64,7 @@ public class EnumJ extends Value {
     public Obj bool() { return new Bool(children.size() > 0).set_context(context).set_pos(pos_start, pos_end); }
 
     public Obj function() {
-        return new Function(null, new NullNode(new Token(Tokens.TT.KEYWORD, "null")), null)
+        return new Function(null, new NullNode(new Token(Tokens.TT.KEYWORD, "null", pos_start, pos_end)), null)
             .set_context(context).set_pos(pos_start, pos_end);
     }
 

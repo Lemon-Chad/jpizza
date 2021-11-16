@@ -218,7 +218,7 @@ public class Shell {
         if (error != null)
             return new Pair<>(null, error);
         Parser parser = new Parser(tokens);
-        ParseResult ast = parser.parse();
+        ParseResult<Node> ast = parser.parse();
         if (ast.error != null)
             return new Pair<>(null, ast.error);
         return new Pair<>(((ListNode)ast.node).elements, null);
@@ -307,7 +307,7 @@ public class Shell {
     }
 
     //Another public static 
-    public static Pair<ClassInstance, Error> imprt(String fn, String text, Context parent, Position entry_pos) {
+    public static Pair<ClassInstance, Error> imprt(String fn, String text, Context _parent, Position _entry_pos) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         Context context = new Context(fn, null, null);

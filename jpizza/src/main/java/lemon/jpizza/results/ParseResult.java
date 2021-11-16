@@ -2,22 +2,22 @@ package lemon.jpizza.results;
 
 import lemon.jpizza.errors.Error;
 
-public class ParseResult {
-    public Object node = null;
+public class ParseResult<T> {
+    public T node = null;
     public Error error = null;
     public int advanceCount = 0;
     public int toReverseCount = 0;
 
     public void registerAdvancement() { advanceCount++; }
 
-    public Object register(ParseResult res) {
+    public<U> U register(ParseResult<U> res) {
         advanceCount += res.advanceCount;
         if (res.error != null) {
             error = res.error;
         } return res.node;
     }
 
-    public Object try_register(ParseResult res) {
+    public<U> U try_register(ParseResult<U> res) {
         if (res.error != null) {
             error = res.error;
             toReverseCount += res.advanceCount;
@@ -25,12 +25,12 @@ public class ParseResult {
         } return register(res);
     }
 
-    public ParseResult success(Object node) {
+    public ParseResult<T> success(T node) {
         this.node = node;
         return this;
     }
 
-    public ParseResult failure(Error error) {
+    public ParseResult<T> failure(Error error) {
         if (this.error == null || advanceCount == 0) {
             this.error = error;
         } return this;

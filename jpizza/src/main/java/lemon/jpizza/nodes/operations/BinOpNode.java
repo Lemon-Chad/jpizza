@@ -9,15 +9,16 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.objects.primitives.Num;
 import lemon.jpizza.results.RTResult;
+import lemon.jpizza.Tokens.TT;
 
 import java.util.Arrays;
 
 public class BinOpNode extends Node {
     public final Node left_node;
-    public final Token op_tok;
+    public final TT op_tok;
     public final Node right_node;
 
-    public BinOpNode(Node left_node, Token op_tok, Node right_node) {
+    public BinOpNode(Node left_node, TT op_tok, Node right_node) {
         this.left_node = left_node;
         this.op_tok = op_tok;
         this.right_node = right_node;
@@ -32,9 +33,9 @@ public class BinOpNode extends Node {
         RTResult res = new RTResult();
         Pair<Obj, RTError> ret;
 
-        Operations.OP op = Constants.tto.get(op_tok.type);
+        Operations.OP op = Constants.tto.get(op_tok);
 
-        if (op_tok.type == Tokens.TT.BITE) {
+        if (op_tok == Tokens.TT.BITE) {
             boolean leftfailed = false;
             boolean rightfailed = false;
             Obj left = res.register(inter.visit(left_node, context));
@@ -51,15 +52,15 @@ public class BinOpNode extends Node {
         Obj right = res.register(inter.visit(right_node, context));
         if (res.shouldReturn()) return res;
 
-        if (op_tok.type == Tokens.TT.EQ) {
+        if (op_tok == TT.EQ) {
             Pair<Obj, RTError> pair = left.mutate(right);
             if (pair.b != null) return res.failure(pair.b);
             return res.success(pair.a);
         }
 
-        if (Arrays.asList(Tokens.TT.BITAND, Tokens.TT.BITOR, Tokens.TT.BITXOR, Tokens.TT.LEFTSHIFT,
-                Tokens.TT.RIGHTSHIFT, Tokens.TT.SIGNRIGHTSHIFT)
-                .contains(op_tok.type)) {
+        if (Arrays.asList(TT.BITAND, TT.BITOR, TT.BITXOR, TT.LEFTSHIFT,
+                TT.RIGHTSHIFT, TT.SIGNRIGHTSHIFT)
+                .contains(op_tok)) {
             if (left.jptype != Constants.JPType.Number || left.floating()) return res.failure(RTError.Type(
                     left.get_start(), left.get_end(),
                     "Left operand must be an integer",
@@ -74,7 +75,7 @@ public class BinOpNode extends Node {
             long a = Double.valueOf(left.number).longValue();
             long b = Double.valueOf(right.number).longValue();
 
-            return res.success(new Num(switch (op_tok.type) {
+            return res.success(new Num(switch (op_tok) {
                 case BITAND -> a & b;
                 case BITOR -> a | b;
                 case BITXOR -> a ^ b;
@@ -85,10 +86,10 @@ public class BinOpNode extends Node {
             }));
         }
 
-        if (op_tok.type == Tokens.TT.GT) {
+        if (op_tok == Tokens.TT.GT) {
             ret = right.lt(left);
         }
-        else if (op_tok.type == Tokens.TT.GTE) {
+        else if (op_tok == Tokens.TT.GTE) {
             ret = right.lte(left);
         }
         else ret = switch (op) {

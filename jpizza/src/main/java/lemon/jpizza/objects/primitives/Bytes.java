@@ -35,7 +35,7 @@ public class Bytes extends Value {
         } catch (IOException | ClassNotFoundException e) {
             return new Pair<>(null, RTError.Internal(
                     pos_start, pos_end,
-                    "Internal byte error: " + e.toString(),
+                    "Internal byte error: " + e,
                     context
             ));
         }
@@ -73,7 +73,7 @@ public class Bytes extends Value {
         for (int i = 0; i < arr.length; i++)
             sb.append(arr[i]).append(", ");
 
-        return "{ " + sb.toString() + "len=" + arr.length + " }";
+        return "{ " + sb + "len=" + arr.length + " }";
     }
 
     public Obj copy() { return new Bytes(arr).set_context(context).set_pos(pos_start, pos_end); }

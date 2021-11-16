@@ -36,7 +36,7 @@ public class PlayThread extends Thread {
             sourceDataLine.drain();
             sourceDataLine.close();
         } catch (LineUnavailableException | IOException e) {
-            Shell.logger.outln("Error playing audio: " + e.toString());
+            Shell.logger.outln("Error playing audio: " + e);
         }
     }
 }

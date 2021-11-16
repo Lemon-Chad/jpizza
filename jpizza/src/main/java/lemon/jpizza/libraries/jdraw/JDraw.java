@@ -742,7 +742,7 @@ public class JDraw extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     pos_start, pos_end,
-                    "Encountered IOException " + e.toString(),
+                    "Encountered IOException " + e,
                     execCtx
             ));
         }
@@ -763,7 +763,7 @@ public class JDraw extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     pos_start, pos_end,
-                    "Encountered IOException " + e.toString(),
+                    "Encountered IOException " + e,
                     execCtx
             ));
         }
@@ -791,7 +791,7 @@ public class JDraw extends Library {
         } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
             return res.failure(RTError.Internal(
                     pos_start, pos_end,
-                    "Encountered IOException " + e.toString(),
+                    "Encountered IOException " + e,
                     execCtx
             ));
         }
@@ -1052,7 +1052,7 @@ public class JDraw extends Library {
         } catch (IOException e) {
             return res.failure(RTError.Internal(
                     fn.get_start(), fn.get_end(),
-                    "Encountered IOException " + e.toString(),
+                    "Encountered IOException " + e,
                     execCtx
             ));
         }

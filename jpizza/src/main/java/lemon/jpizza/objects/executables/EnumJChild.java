@@ -96,7 +96,7 @@ public class EnumJChild extends Value {
             genericAddition.append(")");
         }
 
-        ctx.displayName = this.parent.name + genericAddition.toString();
+        ctx.displayName = this.parent.name + genericAddition;
         return new RTResult().success(new ClassInstance(ctx, this.parent.name));
     }
 
