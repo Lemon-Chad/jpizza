@@ -44,7 +44,8 @@ public class BinOpNode extends Node {
             if (res.shouldReturn()) rightfailed = true;
             if (leftfailed || left.jptype == Constants.JPType.Null) {
                 return res.success(rightfailed ? new Null() : right);
-            } else return res.success(left);
+            }
+            else return res.success(left);
         }
 
         Obj left = res.register(inter.visit(left_node, context));

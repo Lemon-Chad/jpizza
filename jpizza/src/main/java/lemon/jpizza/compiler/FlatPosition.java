@@ -1,0 +1,18 @@
+package lemon.jpizza.compiler;
+
+import java.io.Serializable;
+
+public class FlatPosition implements Serializable {
+    // The starting index of the token in the source file
+    public int index;
+    // The number of characters after the index
+    public int len;
+    // How many bytes this instruction takes
+    public int span;
+
+    public FlatPosition(int index, int len, int span) {
+        this.index = index;
+        this.len = len;
+        this.span = span;
+    }
+}

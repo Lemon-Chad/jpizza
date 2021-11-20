@@ -16,7 +16,6 @@ public class DropNode extends Node {
     }
 
     public RTResult visit(Interpreter inter, Context context) {
-        assert varTok.value != null;
         context.symbolTable.remove(varTok.value.toString());
         return new RTResult().success(new Null());
     }

@@ -173,7 +173,6 @@ public class Parser {
     public ParseResult<Node> statements(List<TokenMatcher> tks) {
         ParseResult<Node> res = new ParseResult<>();
         List<Node> statements = new ArrayList<>();
-        Position pos_start = currentToken.pos_start.copy();
 
         int newlineCount;
         while (currentToken.type.equals(TT.NEWLINE) || currentToken.type.equals(TT.INVISILINE)) {
@@ -224,11 +223,7 @@ public class Parser {
                     true
             ));
         } advance();
-        return res.success(new ListNode(
-                statements,
-                pos_start,
-                currentToken.pos_end.copy()
-        ));
+        return res.success(new BodyNode(statements));
     }
 
     private String tokenFound() {
@@ -413,8 +408,7 @@ public class Parser {
                     varNames.add(new VarAssignNode(var_name, nll).setType(type));
                     res.registerAdvancement(); advance();
                 } while (currentToken.type == TT.COMMA);
-                return res.success(new ListNode(varNames, varNames.get(0).pos_start,
-                        varNames.get(varNames.size() - 1).pos_end));
+                return res.success(new BodyNode(varNames));
             }
 
             if (currentToken.type == TT.LSQUARE) {
@@ -544,7 +538,7 @@ public class Parser {
                 res.registerAdvancement();
                 advance();
                 return res.success(new VarAssignNode(var_tok, new UnaryOpNode(
-                        op_tok,
+                        op_tok.type,
                         new VarAccessNode(var_tok)
                 ), false).setDefining(false));
             } reverse();
@@ -567,7 +561,7 @@ public class Parser {
             Node factor = res.register(this.factor());
             if (res.error != null)
                 return res;
-            return res.success(new UnaryOpNode(tok, factor));
+            return res.success(new UnaryOpNode(tok.type, factor));
         } return pow();
     }
 
@@ -637,7 +631,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             Node expr = res.register(this.expr());
             if (res.error != null) return res;
 
-            return res.success(new UnaryOpNode(opToken, expr));
+            return res.success(new UnaryOpNode(opToken.type, expr));
         } return byteExpr();
     }
 
@@ -901,7 +895,8 @@ Mixed_Snake_Case_Looks_Like_This"""
             if (currentToken.type.equals(TT.RPAREN)) {
                 res.registerAdvancement(); advance();
                 return res.success(expr);
-            } else
+            }
+            else
                 return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                         "Expected ')'"
@@ -945,7 +940,8 @@ Mixed_Snake_Case_Looks_Like_This"""
             if (current == '!' && next == '$') {
                 sb.append("$");
                 i++;
-            } else if (current == '$' && next == '{') {
+            }
+            else if (current == '$' && next == '{') {
                 node = new BinOpNode(node, addToken,
                         new StringNode(new Token(TT.STRING, new Pair<>(sb.toString(), false),
                                 tok.pos_start, tok.pos_end)));
@@ -968,7 +964,8 @@ Mixed_Snake_Case_Looks_Like_This"""
                 Node r = res.register(new Parser(ts.a).statement());
                 if (res.error != null) return res;
                 node = new BinOpNode(node, addToken, r);
-            } else {
+            }
+            else {
                 sb.append(current);
             }
         }
@@ -1024,8 +1021,6 @@ Mixed_Snake_Case_Looks_Like_This"""
                 "Expected '{'"
         ));
 
-        Position start = currentToken.pos_start.copy();
-
         do {
             res.register(expectIdentifier("Attribute name", NamingConvention.CamelCase));
             if (res.error != null) return res;
@@ -1056,7 +1051,7 @@ Mixed_Snake_Case_Looks_Like_This"""
                 childrenDecls,
                 children,
                 types,
-                new ListNode(assignment, start, end),
+                new BodyNode(assignment),
                 new ArrayList<>(),
                 end,
                 new ArrayList<>(),
@@ -1143,7 +1138,8 @@ Mixed_Snake_Case_Looks_Like_This"""
                         tok = res.register(buildTypeTok());
                         if (res.error != null) return res;
                         types.add((List<String>) tok.value);
-                    } else {
+                    }
+                    else {
                         types.add(Collections.singletonList("any"));
                     }
 
@@ -1218,7 +1214,8 @@ Mixed_Snake_Case_Looks_Like_This"""
             if (!def) {
                 condition = res.register(compExpr());
                 if (res.error != null) return res;
-            } else condition = null;
+            }
+            else condition = null;
 
             if (currentToken.type != TT.BITE) return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -1363,13 +1360,15 @@ if (x == 1) {
                         condition = res.register(patternExpr(condition));
                         if (res.error != null) return res;
                     }
-                } else {
+                }
+                else {
                     res.registerAdvancement();
                     advance();
                     if (!def) {
                         condition = res.register(expr());
                         if (res.error != null) return res;
-                    } else condition = null;
+                    }
+                else condition = null;
                 }
                 if (condition != null)
                     conditions.add(condition);
@@ -1430,7 +1429,8 @@ match (a) {
                             if (currentToken.type == TT.SPREAD) {
                                 res.registerAdvancement(); advance();
                                 arg_nodes.add(new SpreadNode(res.register(this.expr())));
-                            } else {
+                            }
+                            else {
                                 arg_nodes.add(res.register(this.expr()));
                             }
 
@@ -1467,7 +1467,8 @@ match (a) {
                                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                                 "Expected ',' or ')'"
                         ));
-                } else {
+                }
+                else {
                     res.registerAdvancement(); advance();
                 }
                 res.registerAdvancement();
@@ -1493,7 +1494,8 @@ match (a) {
                         generics = new ArrayList<>();
                         tokIdx = startIndex;
                         updateTok();
-                    } else {
+                    }
+                    else {
                         res.registerAdvancement();
                         advance();
                     }
@@ -1536,14 +1538,15 @@ match (a) {
                     expr,
                     TT.EQ,
                     new UnaryOpNode(
-                        currentToken,
+                        currentToken.type,
                         expr
                     )
                 );
 
                 res.registerAdvancement();
                 advance();
-            } else if (binRefOps.contains(currentToken.type)) {
+            }
+            else if (binRefOps.contains(currentToken.type)) {
                 TT opTok = switch (currentToken.type) {
                     case POE -> TT.POWER;
                     case MUE -> TT.MUL;
@@ -1587,7 +1590,7 @@ match (a) {
             Node node = res.register(compExpr());
             if (res.error != null)
                 return res;
-            return res.success(new UnaryOpNode(op_tok, node));
+            return res.success(new UnaryOpNode(op_tok.type, node));
         }
         Node node = res.register(binOp(this::arithExpr, Arrays.asList(TT.EE, TT.NE, TT.LT, TT.GT, TT.LTE, TT.GTE)));
 
@@ -1636,7 +1639,8 @@ match (a) {
                 CallNode call = (CallNode) right;
                 call.argNodes.add(0, left);
                 left = call;
-            } else left = new BinOpNode(left, op_tok, right);
+            }
+            else left = new BinOpNode(left, op_tok, right);
         }
         return res.success(left);
     }
@@ -1696,7 +1700,8 @@ match (a) {
                         Token typetok = res.register(buildTypeTok());
                         if (res.error != null) return res;
                         argTypeToks.add(typetok);
-                    } else argTypeToks.add(new Token(TT.TYPE,
+                    }
+                    else argTypeToks.add(new Token(TT.TYPE,
                             Collections.singletonList("any"), currentToken.pos_start, currentToken.pos_end));
                     if (currentToken.type.equals(TT.EQS)) {
                         res.registerAdvancement();
@@ -1708,13 +1713,15 @@ match (a) {
                         defaults.add(val);
                         defaultCount++;
                         optionals = true;
-                    } else if (optionals) return res.failure(Error.InvalidSyntax(
+                    }
+                    else if (optionals) return res.failure(Error.InvalidSyntax(
                             currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                             "Expected default value"
                     ));
 
                 } while (currentToken.type.equals(TT.COMMA));
-            } else {
+            }
+            else {
                 res.registerAdvancement();
                 advance();
             }
@@ -1852,7 +1859,8 @@ match (a) {
 if (true)
     println("This runs no matter what");""")
                     .asString());
-        } else if (condition.jptype == Constants.JPType.Boolean) {
+        }
+        else if (condition.jptype == Constants.JPType.Boolean) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                     "Conditional will never run", """
 if (false)
@@ -2082,7 +2090,8 @@ if (false)
         if (currentToken.type.equals(TT.STEP)) {
             res.registerAdvancement(); advance();
             step = res.register(this.expr());
-        } else step = null;
+        }
+        else step = null;
 
         if (!currentToken.type.equals(TT.RPAREN))
             return res.failure(Error.ExpectedCharError(
@@ -2156,7 +2165,8 @@ loop {
     println("To infinity and beyond!");
 }""")
                         .asString());
-            } else {
+            }
+            else {
                 Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                         "Loop will never run", """
 while (false) {
@@ -2213,7 +2223,8 @@ while (false) {
             res.registerAdvancement();
             advance();
             condition = new BooleanNode(new Token(TT.BOOL, true, loopTok.pos_start, loopTok.pos_end));
-        } else {
+        }
+        else {
             condition = res.register(getWhileCondition());
 
             if (res.error != null) return res;
@@ -2523,7 +2534,7 @@ while (false) {
             return result;
         };
 
-        Node ingredientNode = new ListNode(
+        Node ingredientNode = new BodyNode(
                 new ArrayList<>(),
                 classNameTok.pos_start.copy(),
                 classNameTok.pos_end.copy()
@@ -2638,7 +2649,8 @@ while (false) {
                 if (currentToken.type == TT.EQ || currentToken.type == TT.BITE) {
                     res.register(getComplexAttr.apply(valTok, false, false));
                     if (res.error != null) return res;
-                } else {
+                }
+                else {
                     attributeDeclarations.add(new AttrDeclareNode(valTok));
                     while (currentToken.type.equals(TT.COMMA)) {
                         res.registerAdvancement();

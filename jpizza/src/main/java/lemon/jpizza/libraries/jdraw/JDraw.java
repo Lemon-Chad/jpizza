@@ -1085,7 +1085,8 @@ public class JDraw extends Library {
                 pixels.replace(p, r);
             else
                 pixels.put(p, r);
-        } else
+        }
+        else
             canvas.setPixel(p, color);
     }
 
@@ -1094,6 +1095,7 @@ public class JDraw extends Library {
         if (queue) {
             slices = new ArrayList<>();
             pixels = new ConcurrentHashMap<>();
-        } else canvas.flush();
+        }
+        else canvas.flush();
     }
 }

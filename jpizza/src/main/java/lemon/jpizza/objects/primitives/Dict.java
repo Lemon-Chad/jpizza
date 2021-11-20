@@ -90,6 +90,7 @@ public class Dict extends Value {
 
     // Defaults
 
+    @SuppressWarnings("DuplicatedCode")
     public String toString() {
         StringBuilder result = new StringBuilder("{");
         map.forEach((k, v) -> result.append(k).append(": ").append(v).append(", "));

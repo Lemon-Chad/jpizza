@@ -73,7 +73,8 @@ public class SwitchNode extends Node {
         if (autoreturn && entry > -1) {
             ret = res.register(inter.visit(cases.get(entry).statements, ctx));
             if (res.error != null) return res;
-        } else if (entry > -1) {
+        }
+        else if (entry > -1) {
             for (; entry < size; entry++) {
                 res.register(inter.visit(cases.get(entry).statements, ctx));
                 if (res.error != null) return res;

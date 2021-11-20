@@ -282,7 +282,8 @@ public class FileLib extends Library {
                 ObjectOutputStream oos = new ObjectOutputStream(fout);
                 oos.writeObject(val);
                 oos.close();
-            } else
+            }
+            else
                 fout.write(val.arr);
             fout.close();
         } catch (IOException e) {
@@ -318,11 +319,10 @@ public class FileLib extends Library {
         }
 
         PList paths = new PList(new ArrayList<>());
-
-        assert pathnames != null;
         for (String pth: pathnames) {
             paths.append(new Str(pth));
         }
+
         return res.success(paths);
     }
 

@@ -130,7 +130,7 @@ class Array {
         let itype => None;
         for (item <- items) {
             itype => Some(type(item));
-            if (itype::val != T) 
+            if (itype::val != T)
                 throw "Type", `Expected type ${T}, got ${itype::val}`;
             append(internal, &item);
         }
@@ -238,9 +238,9 @@ class Map {
         for (pair <- pairs) {
             if (type(pair) != "list" | size(pair) != 2)
                 throw "Type", "Expected a key-value pair ([k, v])";
-            elif (K != "any" & type(pair[0]) != K) 
+            elif (K != "any" & type(pair[0]) != K)
                 throw "Type", `Expected key type to be ${K}, got ${type(pair[0])}`;
-            elif (V != "any" & type(pair[1]) != V) 
+            elif (V != "any" & type(pair[1]) != V)
                 throw "Type", `Expected key type to be ${V}, got ${type(pair[1])}`;
             
             set(internal, pair[0], &pair[1]);
@@ -361,7 +361,76 @@ class SocketClient {
 }
 """);
     }};
-    
+
+    public static int indexToLine(String code, int index) {
+        return code.substring(0, index).split("\n").length - 1;
+    }
+
+    public static int leftPadding(String str) {
+        int tabs = 0;
+        while (tabs < str.length() && Character.isWhitespace(str.charAt(tabs))) {
+            tabs++;
+        }
+        return tabs;
+    }
+
+    public static String highlightFlat(String source, int index, int len) {
+        StringBuilder sb = new StringBuilder();
+
+        String[] lines = source.split("\n");
+
+        int line = 0;
+        while (index >= lines[line].length() && line < lines.length - 1) {
+            index -= lines[line].length() + 1;
+            line++;
+        }
+
+        int tabs = leftPadding(lines[line]);
+        index -= tabs;
+        len += tabs;
+
+        while (len > 0 && line < lines.length) {
+            String lineStr = lines[line];
+            int lineLen = lineStr.length();
+
+            tabs = leftPadding(lineStr);
+            len -= tabs;
+            lineLen -= tabs;
+            String text = lineStr.substring(tabs);
+
+            if (lineLen == 0) {
+                sb.append("\n");
+                line++;
+                continue;
+            }
+
+            int end = Math.min(index + len, lineLen);
+            String highlight;
+            if (end - index >= 2) {
+                if (Shell.fileEncoding.equals("UTF-8"))
+                    highlight = "╰" + "─".repeat(end - index - 2) + "╯";
+                else
+                    highlight = "\\" + "_".repeat(end - index - 2) + "/";
+            }
+            else {
+                highlight = "^";
+            }
+
+            sb.append(text)
+              .append("\n")
+              .append(" ".repeat(index))
+              .append(highlight)
+              .append("\n");
+
+            len -= lineLen - index;
+
+            line++;
+            index = 0;
+        }
+
+        return sb.toString();
+    }
+
     public static final Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
         put(Tokens.TT.PLUS, Operations.OP.ADD);
         put(Tokens.TT.MINUS, Operations.OP.SUB);
@@ -473,10 +542,11 @@ class SocketClient {
             String grouping;
             if (dist >= 2) {
                 if (Shell.fileEncoding.equals("UTF-8"))
-                    grouping = "╰" + "─".repeat(colEnd - colStart - 2) + "╯";
+                    grouping = "╰" + "─".repeat(dist - 2) + "╯";
                 else
-                    grouping = "\\" + "_".repeat(colEnd - colStart - 2) + "/";
-            } else {
+                    grouping = "\\" + "_".repeat(dist - 2) + "/";
+            }
+            else {
                 grouping = "^";
             }
 

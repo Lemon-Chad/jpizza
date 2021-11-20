@@ -1,5 +1,9 @@
 package lemon.jpizza;
 
+import lemon.jpizza.compiler.Chunk;
+import lemon.jpizza.compiler.Compiler;
+import lemon.jpizza.compiler.Disassembler;
+import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.Error;
@@ -13,7 +17,7 @@ import lemon.jpizza.libraries.jdraw.JDraw;
 import lemon.jpizza.libraries.pdl.SafeSocks;
 import lemon.jpizza.libraries.socks.SockLib;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.nodes.values.ListNode;
+import lemon.jpizza.nodes.expressions.BodyNode;
 import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.PList;
@@ -82,7 +86,8 @@ public class Shell {
                         jpizza <file> --compile ->  Compile file
                         jpizza <file> --refactor -> Run file with refactoring tips
                         """);
-            } else if (args[0].endsWith(".devp")) {
+            }
+            else if (args[0].endsWith(".devp")) {
                 if (Files.exists(Path.of(args[0]))) {
                     String scrpt = Files.readString(Path.of(args[0]));
                     String dir = Path.of(args[0]).toString();
@@ -92,10 +97,12 @@ public class Shell {
                     Pair<Obj, Error> res = run(fn, scrpt, false);
                     if (res.b != null)
                         Shell.logger.fail(res.b.asString());
-                } else {
+                }
+                else {
                     Shell.logger.outln("File does not exist.");
                 }
-            } else if (args[0].equals("docs")) {
+            }
+            else if (args[0].equals("docs")) {
                 Shell.logger.outln("Documentation: https://bit.ly/3vM8G0a");
             }
             else if (args[0].endsWith(".jbox")) {
@@ -107,7 +114,8 @@ public class Shell {
                     Pair<Obj, Error> res = runCompiled(fn, args[0]);
                     if (res.b != null)
                         Shell.logger.fail(res.b.asString());
-                } else {
+                }
+                else {
                     Shell.logger.outln("File does not exist.");
                 }
             }
@@ -133,7 +141,8 @@ public class Shell {
                                         e.pos_start.ln, e.pos_end.ln,
                                         e.pos_start.col, e.pos_end.col,
                                         message));
-                            } else {
+                            }
+                            else {
                                 logger.enableLogging();
                                 logger.outln("{}");
                             }
@@ -141,16 +150,15 @@ public class Shell {
                             return;
                         }
                         case "--compile" -> {
-                            Pair<Obj, Error> res = compile(fn, scrpt,
+                            Error res = compile(fn, scrpt,
                                     newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox");
-                            if (res.b != null) {
-                                Error e = res.b;
-                                String message = String.format("%s: %s", e.error_name, e.details);
+                            if (res != null) {
+                                String message = String.format("%s: %s", res.error_name, res.details);
                                 Shell.logger.enableLogging();
                                 Shell.logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": " +
                                                 "\"%s\"}",
-                                        e.pos_start.ln, e.pos_end.ln,
-                                        e.pos_start.col, e.pos_end.col,
+                                        res.pos_start.ln, res.pos_end.ln,
+                                        res.pos_start.col, res.pos_end.col,
                                         message));
                             }
                             return;
@@ -161,7 +169,8 @@ public class Shell {
                     if (res.b != null) {
                         Shell.logger.fail(res.b.asString());
                     }
-                } else {
+                }
+                else {
                     Shell.logger.outln("File does not exist.");
                 }
             }
@@ -175,7 +184,8 @@ public class Shell {
                     Pair<Obj, Error> res = run(args[0], scrpt, false);
                     if (res.b != null)
                         Shell.logger.fail(res.b.asString());
-                } else {
+                }
+                else {
                     Shell.logger.outln("File does not exist.");
                 }
             }
@@ -185,9 +195,12 @@ public class Shell {
         Shell.logger.outln("Exit with 'quit'");
         Shell.logger.enableTips();
         while (true) {
-            Shell.logger.out("-> "); String input = in.nextLine() + ";";
+            Shell.logger.out("-> ");
+            String input = in.nextLine() + ";";
+
             if (input.equals("quit;"))
                 break;
+           //  compile("<shell>", input, "shell.jbox");
             Pair<Obj, Error> a = run("<shell>", input, true);
             if (a.b != null) {
                 Shell.logger.fail(a.b.asString());
@@ -221,7 +234,7 @@ public class Shell {
         ParseResult<Node> ast = parser.parse();
         if (ast.error != null)
             return new Pair<>(null, ast.error);
-        return new Pair<>(((ListNode)ast.node).elements, null);
+        return new Pair<>(((BodyNode)ast.node).statements, null);
     }
 
     public static Pair<Obj, Error> run(String fn, String text, boolean log) {
@@ -249,31 +262,31 @@ public class Shell {
         return new Pair<>(result.value, result.error);
     }
 
-    public static Pair<Obj, Error> compile(String fn, String text, String outpath) {
+    public static Error compile(String fn, String text, String outpath) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
-        if (ast.b != null) return new Pair<>(null, ast.b);
+        if (ast.b != null) return ast.b;
         List<Node> outNode = ast.a;
-        FileOutputStream fout;
-        ObjectOutputStream oos;
 
-        File outFile = new File(outpath);
+        Compiler compiler = new Compiler(new Chunk(text));
+        compiler.compileBlock(outNode);
+        Disassembler.disassembleChunk(compiler.chunk, fn);
+
         try {
-            //noinspection ResultOfMethodCallIgnored
-            outFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            fout = new FileOutputStream(outFile);
-            oos = new ObjectOutputStream(fout);
-            System.out.println("Pizza boxing...");
-            oos.writeObject(new PizzaBox(outNode));
-            fout.close();
+            FileOutputStream fout;
+            fout = new FileOutputStream(outpath);
+            ObjectOutputStream oos = new ObjectOutputStream(fout);
+            oos.writeObject(compiler.chunk);
             oos.close();
+            fout.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            return RTError.Internal(
+                    null, null,
+                    "Could not write to file",
+                    null
+            );
         }
-        return new Pair<>(null, null);
+
+        return null;
     }
 
     public static Pair<Obj, Error> runCompiled(String fn, String inpath) {
@@ -289,17 +302,16 @@ public class Shell {
             Object ost = ois.readObject();
             ois.close();
             fis.close();
-            if (!(ost instanceof PizzaBox)) return new Pair<>(null, RTError.FileNotFound(null, null,
-                    "File is not a JPizza AST!", null));
-            List<Node> ast = ((PizzaBox) ost).value;
-            Context context = new Context(fn, null, null);
-            context.symbolTable = globalSymbolTable;
-            Interpreter inter = new Interpreter();
-            inter.makeMain();
-            RTResult result = inter.interpret(ast, context, true);
-            if (result.error != null) return new Pair<>(result.value, result.error);
-            result.register(inter.finish(context));
-            return new Pair<>(result.value, result.error);
+            if (!(ost instanceof Chunk)) return new Pair<>(null, RTError.FileNotFound(null, null,
+                    "File is not JPizza bytecode!", null));
+
+            Chunk chunk = (Chunk) ost;
+            VM vm = new VM().setChunk(fn, chunk);
+
+            vm.init();
+            vm.run();
+            vm.free();
+
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }

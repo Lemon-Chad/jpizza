@@ -8,8 +8,8 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
 public class ScopeNode extends Node {
-    final Node statements;
-    final String scopeName;
+    public final Node statements;
+    public final String scopeName;
 
     public ScopeNode(String name, Node states) {
         statements = states;

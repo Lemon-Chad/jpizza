@@ -146,7 +146,8 @@ public class SymbolTable implements Serializable {
         }
         else if (parent != null) {
             return parent.set(name, value, locked);
-        } else
+        }
+        else
             return RTError.makeDetails(RTError::Scope, "Variable not defined");
     }
 
@@ -170,7 +171,6 @@ public class SymbolTable implements Serializable {
     }
 
     public void declareattr(Token name_tok, Context context, Obj value) {
-        assert name_tok.value != null;
         String tokenVal = name_tok.value.toString();
         attributes.put(tokenVal, new AttrNode(value.set_pos(name_tok.pos_start, name_tok.pos_end).set_context(context)));
         attrtypes.put(tokenVal, "any");
@@ -189,9 +189,11 @@ public class SymbolTable implements Serializable {
             }
             attributes.replace(name, new AttrNode(value));
             return null;
-        } else if (parent != null) {
+        }
+        else if (parent != null) {
             return parent.setattr(name, value);
-        } else {
+        }
+        else {
             return RTError.makeDetails(RTError::Scope, "Undefined attribute");
         }
     }
@@ -199,7 +201,8 @@ public class SymbolTable implements Serializable {
         String type = getType(rawType);
         if (attributes.containsKey(name)) {
             attrtypes.put(name, type);
-        } else if (parent != null) {
+        }
+        else if (parent != null) {
             parent.setattrtype(name, rawType);
         }
     }

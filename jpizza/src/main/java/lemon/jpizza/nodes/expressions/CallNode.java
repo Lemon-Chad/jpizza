@@ -49,7 +49,8 @@ public class CallNode extends Node {
                 Obj obj = res.register(inter.visit(spread.internal, context));
                 if (res.shouldReturn()) return res;
                 args.addAll(obj.alist().list);
-            } else {
+            }
+            else {
                 Obj obj = res.register(inter.visit(argNodes.get(i), context));
                 args.add(obj);
                 if (res.shouldReturn()) return res;
@@ -80,7 +81,8 @@ public class CallNode extends Node {
         if (valueToCall.jptype == Constants.JPType.ClassPlate) {
             cValueToCall = (ClassPlate) valueToCall;
             retValue = res.register(cValueToCall.execute(args, processedTypes, kwargs, inter));
-        } else {
+        }
+        else {
             bValueToCall = (BaseFunction) valueToCall.copy().set_pos(pos_start, pos_end);
             Cache cache;
             if (bValueToCall.jptype == Constants.JPType.Library)

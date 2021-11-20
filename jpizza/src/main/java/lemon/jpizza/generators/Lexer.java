@@ -60,26 +60,35 @@ public class Lexer {
         while (currentChar != null) {
             if (!currentChar.matches(".") || Character.isWhitespace(currentChar.toCharArray()[0])) {
                 advance();
-            } else if (next() != null && (currentChar + next()).equals("<>")) {
+            }
+            else if (next() != null && (currentChar + next()).equals("<>")) {
                 skip_comment();
-            } else if (next() != null && (currentChar + next()).equals("<<")) {
+            }
+            else if (next() != null && (currentChar + next()).equals("<<")) {
                 skip_multiline_comment();
-            } else if ("\"'`".contains(currentChar)) {
+            }
+            else if ("\"'`".contains(currentChar)) {
                 tokens.add(make_string(currentChar));
-            } else if (currentChar.equals("}")) {
+            }
+            else if (currentChar.equals("}")) {
                 tokens.add(new Token(TT.CLOSE, pos));
                 advance();
-            } else if (next() != null && TOKEY.containsKey(currentChar + next())) {
+            }
+            else if (next() != null && TOKEY.containsKey(currentChar + next())) {
                 tokens.add(new Token(TOKEY.get(currentChar + next()), pos, pos.copy().advance().advance()));
                 advance(); advance();
-            } else if (TOKEY.containsKey(currentChar)) {
+            }
+            else if (TOKEY.containsKey(currentChar)) {
                 tokens.add(new Token(TOKEY.get(currentChar), pos));
                 advance();
-            } else if (String.valueOf(LETTERS).contains(currentChar)) {
+            }
+            else if (String.valueOf(LETTERS).contains(currentChar)) {
                 tokens.add(make_identifier());
-            } else if (String.valueOf(NUMBERS).contains(currentChar)) {
+            }
+            else if (String.valueOf(NUMBERS).contains(currentChar)) {
                 tokens.add(make_number());
-            } else if (currentChar.equals("!")) {
+            }
+            else if (currentChar.equals("!")) {
                 int nextdex = 1;
                 while (next(nextdex) != null && Character.isWhitespace(next(nextdex).charAt(0)))
                     nextdex++;
@@ -87,14 +96,17 @@ public class Lexer {
                         (next(nextdex) + next(nextdex + 1)).equals("->")) {
                     tokens.add(new Token(TT.KEYWORD, "fn", pos.copy(), pos.copy().advance()));
                     advance();
-                } else if (currentChar.equals("!")){
+                }
+                else if (currentChar.equals("!")){
                     Pair<List<Token>, Error> error = eqExpr(tokens);
                     if (error != null) return error;
                 }
-            } else if ("<>=".contains(currentChar)) {
+            }
+            else if ("<>=".contains(currentChar)) {
                 Pair<List<Token>, Error> error = eqExpr(tokens);
                 if (error != null) return error;
-            } else {
+            }
+            else {
                 String c = currentChar;
                 Position p = pos.copy();
                 advance();
@@ -140,13 +152,15 @@ public class Lexer {
             if (escaped) {
                 if (escapeCharacters.containsKey(currentChar)) {
                     string.append(escapeCharacters.get(currentChar));
-                } else {
+                }
+                else {
                     string.append("\\").append(currentChar);
                 } escaped = false;
             }
             else if (currentChar.equals("\\")) {
                 escaped = true;
-            } else {
+            }
+            else {
                 string.append(currentChar);
             } advance();
         }

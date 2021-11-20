@@ -33,7 +33,8 @@ public class PizzaCanvas extends JPanel {
 
         if (pixels.containsKey(pixel)) {
             pixels.replace(pixel, r);
-        } else
+        }
+        else
             pixels.put(pixel, r);
     }
 

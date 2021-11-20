@@ -67,7 +67,8 @@ public class ForNode extends Node {
                     context
             ));
             step = stepNode.number;
-        } else {
+        }
+        else {
             step = 1;
         }
         long round = Math.round((end - start) / step);

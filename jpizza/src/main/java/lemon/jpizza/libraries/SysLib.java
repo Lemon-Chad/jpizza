@@ -1,7 +1,9 @@
 package lemon.jpizza.libraries;
 
+import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
+import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.Library;
 import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.objects.primitives.Null;
@@ -12,10 +14,7 @@ import lemon.jpizza.Shell;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 @SuppressWarnings("unused")
 public class SysLib extends Library {
@@ -29,6 +28,7 @@ public class SysLib extends Library {
             put("enableOut", new ArrayList<>());
             put("jpv", new ArrayList<>());
             put("execute", Collections.singletonList("cmd"));
+            put("executeFloor", Collections.singletonList("cmd"));
             put("getEnvVar", Collections.singletonList("variableName"));
             put("envVarExists", Collections.singletonList("variableName"));
             put("getProp", Collections.singletonList("prop"));
@@ -48,6 +48,7 @@ public class SysLib extends Library {
         return new RTResult().success(new Str(home));
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public RTResult execute_execute(Context execCtx) throws IOException, InterruptedException {
         Runtime run = Runtime.getRuntime();
 
@@ -55,6 +56,33 @@ public class SysLib extends Library {
         pr.waitFor();
 
         BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+
+        String line;
+        StringBuilder sb = new StringBuilder();
+        while ((line = buf.readLine()) != null)
+            sb.append(line).append("\n");
+
+        return new RTResult().success(new Str(sb.toString()));
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public RTResult execute_executeFloor(Context execCtx) throws IOException, InterruptedException {
+        RTResult res = new RTResult();
+
+        Obj list = res.register(checkType(execCtx.symbolTable.get("cmd"), "list", Constants.JPType.List));
+        if (res.error != null) return res;
+        List<Obj> args = list.list;
+
+        String[] cmd = new String[args.size()];
+        for (int i = 0; i < args.size(); i++)
+            cmd[i] = args.get(i).toString();
+
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.inheritIO();
+        Process proc = pb.start();
+        proc.waitFor();
+
+        BufferedReader buf = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
         String line;
         StringBuilder sb = new StringBuilder();

@@ -94,7 +94,6 @@ public class ClassDefNode extends Node {
 
             ClassPlate parent = null;
             if (parentToken != null) {
-                assert parentToken.value != null;
                 Obj p = (Obj) context.symbolTable.get(parentToken.value.toString());
                 if (p == null || p.jptype != Constants.JPType.ClassPlate) return res.failure(RTError.Scope(
                         parentToken.pos_start, parentToken.pos_end,

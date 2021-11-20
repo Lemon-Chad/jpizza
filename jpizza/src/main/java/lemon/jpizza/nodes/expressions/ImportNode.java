@@ -57,11 +57,13 @@ public class ImportNode extends Node {
             imp = new ClassInstance(Constants.LIBRARIES.get(fn), fn)
                     .set_pos(pos_start, pos_end)
                     .set_context(context);
-        } else if (Constants.STANDLIBS.containsKey(fn)) {
+        }
+        else if (Constants.STANDLIBS.containsKey(fn)) {
             Pair<ClassInstance, Error> pair = Shell.imprt(fn, Constants.STANDLIBS.get(fn), context, pos_start);
             if (pair.b != null) return res.failure(pair.b);
             imp = pair.a;
-        } else {
+        }
+        else {
             if (Files.exists(Paths.get(modFilePath))) {
                 System.setProperty("user.dir", modPath);
 

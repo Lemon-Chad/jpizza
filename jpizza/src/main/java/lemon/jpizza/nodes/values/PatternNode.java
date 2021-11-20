@@ -45,14 +45,14 @@ public class PatternNode extends Node {
         HashMap<Token, String> substitutes = new HashMap<>();
         HashMap<Token, Obj>    checks      = new HashMap<>();
         for (Map.Entry<Token, Node> entry : patterns.entrySet()) {
-            assert entry.getKey().value != null;
             Obj val = res.register(inter.visit(entry.getValue(), context));
             if (res.error != null) {
                 if (entry.getValue().jptype == Constants.JPType.VarAccess && res.error.error_name.equals("Scope")) {
                     substitutes.put(entry.getKey(), ((VarAccessNode) entry.getValue()).var_name_tok.value.toString());
                     res.error = null;
                     continue;
-                } else {
+                }
+                else {
                     return res;
                 }
             }
@@ -90,7 +90,6 @@ public class PatternNode extends Node {
         }
 
         for (Map.Entry<Token, Obj> entry : checks.entrySet()) {
-            assert entry.getKey().value != null;
             String key = entry.getKey().value.toString();
             Object v = table.get(key);
             if (v == null)
@@ -105,7 +104,6 @@ public class PatternNode extends Node {
         }
 
         for (Map.Entry<Token, String> entry : substitutes.entrySet()) {
-            assert entry.getKey().value != null;
             String key = entry.getKey().value.toString();
             Object v = table.get(key);
             if (v == null)

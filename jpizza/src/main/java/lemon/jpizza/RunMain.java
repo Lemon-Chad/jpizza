@@ -1,12 +1,21 @@
 package lemon.jpizza;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public class RunMain {
-    public static void main(String[] args) {
-        Shell.initLibs();
-        var out = Shell.run("<test>", """
-                run("main.devp");
-                """, false);
-        if (out.b != null)
-            Shell.logger.fail(out.b.asString());
+    public static void main(String[] args) throws IOException {
+        String text = Files.readString(Path.of("main.devp"));
+
+        Shell.compile("main.devp", text, "main.jbox");
+        Shell.runCompiled("main.jbox", "main.jbox");
+
+        Shell.logger.reset();
+
+        var pair = Shell.run("main.devp", text, false);
+        if (pair.b != null) {
+            Shell.logger.fail(pair.b.asString());
+        }
     }
 }

@@ -143,7 +143,8 @@ public class Function extends BaseFunction {
                     String.format("Got %s too many generic types", generics.size() - this.generics.size()),
                     get_ctx()
             ));
-        } else if (generics.size() + genericKey.size() < this.generics.size()) {
+        }
+        else if (generics.size() + genericKey.size() < this.generics.size()) {
             return res.failure(RTError.GenericCount(
                     get_start(), get_end(),
                     String.format("Got %s too few generic types", this.generics.size() - generics.size()),
@@ -177,7 +178,8 @@ public class Function extends BaseFunction {
         if (argname != null && args.size() > argNames.size()) {
             execCtx.symbolTable.define(argname, new PList(new ArrayList<>(args.subList(argNames.size(), args.size()))));
             args = new ArrayList<>(args.subList(0, argNames.size()));
-        } else {
+        }
+        else {
             execCtx.symbolTable.define(argname, new PList(new ArrayList<>()));
         }
 

@@ -17,14 +17,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 public class UnaryOpNode extends Node {
-    public final Token op_tok;
+    public final Tokens.TT op_tok;
     public final Node node;
 
-    public UnaryOpNode(Token op_tok, Node node) {
+    public UnaryOpNode(Tokens.TT op_tok, Node node) {
         this.node = node;
         this.op_tok = op_tok;
 
-        pos_start = op_tok.pos_start.copy(); pos_end = node.pos_end.copy();
+        pos_start = node.pos_start.copy(); pos_end = node.pos_end.copy();
         jptype = Constants.JPType.UnaryOp;
     }
 
@@ -36,7 +36,7 @@ public class UnaryOpNode extends Node {
         Obj number = res.register(inter.visit(node, context));
         if (res.shouldReturn()) return res;
 
-        if (op_tok.type == Tokens.TT.BITCOMPL) {
+        if (op_tok == Tokens.TT.BITCOMPL) {
             if (number.jptype != Constants.JPType.Number || number.floating()) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be an integer",
@@ -46,7 +46,8 @@ public class UnaryOpNode extends Node {
             long n = Double.valueOf(number.number).longValue();
 
             return res.success(new Num(~n));
-        } else if (op_tok.type == Tokens.TT.QUEBACK) {
+        }
+        else if (op_tok == Tokens.TT.QUEBACK) {
             if (number.jptype != Constants.JPType.Bytes) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be bytes",
@@ -68,7 +69,7 @@ public class UnaryOpNode extends Node {
             }
         }
 
-        Tokens.TT opTokType = op_tok.type;
+        Tokens.TT opTokType = op_tok;
         Pair<Obj, RTError> ret = switch (opTokType) {
             case MINUS -> number.mul(new Num(-1.0));
             case INCR, DECR -> number.add(new Num(opTokType.hashCode() == Tokens.TT.INCR.hashCode() ? 1.0 : -1.0));

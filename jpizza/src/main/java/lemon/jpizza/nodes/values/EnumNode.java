@@ -31,7 +31,6 @@ public class EnumNode extends ValueNode {
 
         for (int i = 0; i < size; i++) {
             EnumChild c = this.children.get(i);
-            assert c.token().value != null;
             String key = c.token().value.toString();
             EnumJChild child = new EnumJChild(i, c.params(), c.types(), c.generics());
 

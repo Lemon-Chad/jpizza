@@ -44,14 +44,14 @@ public class QueryNode extends Node {
             if (bx.boolval) {
                 exprValue = res.register(inter.visit(c.statements, context));
                 if (res.shouldReturn()) return res;
-                return res.success(c.x ? new Null() : exprValue);
+                return res.success(c.returnValue ? exprValue : new Null());
             }
         }
 
         if (else_case != null) {
             Obj elseValue = res.register(inter.visit(else_case.statements, context));
             if (res.shouldReturn()) return res;
-            return res.success(else_case.x ? new Null() : elseValue);
+            return res.success(else_case.returnValue ? elseValue : new Null());
         }
 
         return res.success(new Null());

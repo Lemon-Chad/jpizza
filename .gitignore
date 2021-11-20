@@ -5,6 +5,7 @@ replit.nix
 sometoken.txt
 .DS_STORE
 *.devp
+*.jbox
 *.json
 .classpath
 .project

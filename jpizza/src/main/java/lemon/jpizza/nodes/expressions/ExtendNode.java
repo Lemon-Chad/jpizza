@@ -64,7 +64,8 @@ public class ExtendNode extends Node {
             } catch(Exception e) {
                 return res.failure(RTError.Internal(pos_start,pos_end, e.toString(), context));
             }
-        } else {
+        }
+        else {
             return res.failure(RTError.FileNotFound(
                     pos_start, pos_end,
                     "Extension does not exist",

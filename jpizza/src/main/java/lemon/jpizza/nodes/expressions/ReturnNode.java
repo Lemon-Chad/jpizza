@@ -32,7 +32,8 @@ public class ReturnNode extends Node {
         if (ret != null) {
             value = res.register(inter.visit(ret, context));
             if (res.shouldReturn()) return res;
-        } else value = new Null();
+        }
+        else value = new Null();
 
         return res.sreturn(value);
     }

@@ -125,7 +125,7 @@ public class RTError extends Error {
         Position pos = pos_start.copy();
         Context ctx = context;
 
-        String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──>" : "--->";
+        String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►" : "--->";
 
         while (ctx != null) {
             if (pos != null)

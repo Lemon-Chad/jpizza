@@ -57,7 +57,8 @@ public class BaseFunction extends Value {
             Obj arg;
             if (i >= size) {
                 arg = defaults.get(i - size);
-            } else {
+            }
+            else {
                 arg = args.get(i);
             }
 

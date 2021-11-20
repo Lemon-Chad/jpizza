@@ -5,14 +5,14 @@ import lemon.jpizza.nodes.Node;
 import java.io.Serializable;
 
 public class Case implements Serializable {
-    public final boolean x;
+    public final boolean returnValue;
     public final Node condition;
     public final Node statements;
 
-    public Case(Node condition, Node statements, boolean x) {
+    public Case(Node condition, Node statements, boolean returnValue) {
         this.condition = condition;
         this.statements = statements;
-        this.x = x;
+        this.returnValue = returnValue;
     }
 
 }
