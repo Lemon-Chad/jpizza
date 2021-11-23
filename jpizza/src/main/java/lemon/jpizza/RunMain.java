@@ -13,9 +13,9 @@ public class RunMain {
 
         Shell.logger.reset();
 
-        var pair = Shell.run("main.devp", text, false);
-        if (pair.b != null) {
-            Shell.logger.fail(pair.b.asString());
-        }
+        // var pair = Shell.run("main.devp", text, false);
+        // if (pair.b != null) {
+        //     Shell.logger.fail(pair.b.asString());
+        // }
     }
 }

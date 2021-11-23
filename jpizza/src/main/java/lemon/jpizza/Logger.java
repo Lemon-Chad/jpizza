@@ -129,8 +129,6 @@ public class Logger {
 
     public void debug(String format) {
         if (debug)
-            System.out.println(Chalk.on(
-                    getTape("DEBUG") + "\n" + format
-            ).magenta());
+            System.out.print(Chalk.on(format).magenta());
     }
 }

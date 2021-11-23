@@ -1,8 +1,8 @@
 package lemon.jpizza;
 
-import lemon.jpizza.compiler.Chunk;
 import lemon.jpizza.compiler.Compiler;
-import lemon.jpizza.compiler.Disassembler;
+import lemon.jpizza.compiler.FunctionType;
+import lemon.jpizza.compiler.values.JFunc;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -18,8 +18,8 @@ import lemon.jpizza.libraries.pdl.SafeSocks;
 import lemon.jpizza.libraries.socks.SockLib;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.expressions.BodyNode;
-import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.Obj;
+import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.ParseResult;
@@ -28,7 +28,9 @@ import lemon.jpizza.results.RTResult;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Shell {
 
@@ -267,15 +269,14 @@ public class Shell {
         if (ast.b != null) return ast.b;
         List<Node> outNode = ast.a;
 
-        Compiler compiler = new Compiler(new Chunk(text));
-        compiler.compileBlock(outNode);
-        Disassembler.disassembleChunk(compiler.chunk, fn);
+        Compiler compiler = new Compiler(FunctionType.Script, text);
+        JFunc func = compiler.compileBlock(outNode);
 
         try {
             FileOutputStream fout;
             fout = new FileOutputStream(outpath);
             ObjectOutputStream oos = new ObjectOutputStream(fout);
-            oos.writeObject(compiler.chunk);
+            oos.writeObject(func);
             oos.close();
             fout.close();
         } catch (IOException e) {
@@ -302,15 +303,14 @@ public class Shell {
             Object ost = ois.readObject();
             ois.close();
             fis.close();
-            if (!(ost instanceof Chunk)) return new Pair<>(null, RTError.FileNotFound(null, null,
+            if (!(ost instanceof JFunc)) return new Pair<>(null, RTError.FileNotFound(null, null,
                     "File is not JPizza bytecode!", null));
 
-            Chunk chunk = (Chunk) ost;
-            VM vm = new VM().setChunk(fn, chunk);
+            JFunc func = (JFunc) ost;
+            VM vm = new VM(func).trace(fn);
 
-            vm.init();
+            logger.debug = true;
             vm.run();
-            vm.free();
 
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

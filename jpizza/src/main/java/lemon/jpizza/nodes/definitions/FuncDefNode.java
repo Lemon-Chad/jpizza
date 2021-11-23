@@ -12,12 +12,12 @@ import lemon.jpizza.Token;
 import java.util.List;
 
 public class FuncDefNode extends Node {
-    final Token var_name_tok;
-    final List<Token> arg_name_toks;
-    final Node body_node;
+    public final Token var_name_tok;
+    public final List<Token> arg_name_toks;
+    public final Node body_node;
     final boolean autoreturn;
     final boolean async;
-    final List<Token> arg_type_toks;
+    public final List<Token> arg_type_toks;
     final List<Token> generic_toks;
     final List<String> returnType;
     final List<Node> defaults;

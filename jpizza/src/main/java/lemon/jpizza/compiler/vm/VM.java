@@ -6,38 +6,53 @@ import lemon.jpizza.compiler.Chunk;
 import lemon.jpizza.compiler.Disassembler;
 import lemon.jpizza.compiler.FlatPosition;
 import lemon.jpizza.compiler.OpCode;
+import lemon.jpizza.compiler.values.JFunc;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.Var;
 
 import java.util.*;
 
 public class VM {
-    private static final int MAX_STACK_SIZE = 256;
+    public static final int MAX_STACK_SIZE = 256;
+    public static final int FRAMES_MAX = 64;
+    public static final int STACK_MAX = FRAMES_MAX * (Byte.MAX_VALUE + 1);
 
     private static record Traceback(String filename, String context, int offset) {}
 
-    Chunk chunk;
-    int ip;
     Value[] stack;
     int stackTop;
+
     Stack<Traceback> tracebacks;
     Map<String, Var> globals;
     Stack<List<Value>> loopCache;
 
-    public VM() {
-        this.chunk = null;
-        this.globals = new HashMap<>();
-        this.ip = 0;
+    CallFrame frame;
+    CallFrame[] frames;
+    int frameCount;
+
+    public VM(JFunc function) {
         this.stack = new Value[MAX_STACK_SIZE];
         this.stackTop = 0;
+        push(new Value(function));
+
+        this.globals = new HashMap<>();
         this.tracebacks = new Stack<>();
         this.loopCache = new Stack<>();
+
+        this.frames = new CallFrame[FRAMES_MAX];
+        this.frameCount = 0;
+
+        this.frame = new CallFrame(function, 0, stack);
+        frames[frameCount++] = frame;
     }
 
-    public VM setChunk(String name, Chunk chunk) {
-        this.chunk = chunk;
+    public VM trace(String name) {
         tracebacks.push(new Traceback(name, name, 0));
         return this;
+    }
+
+    void moveIP(int offset) {
+        frame.ip += offset;
     }
 
     void push(Value value) {
@@ -60,17 +75,17 @@ public class VM {
             Traceback last = tracebacks.peek();
             while (!tracebacks.empty()) {
                 Traceback top = tracebacks.pop();
-                int line = Constants.indexToLine(chunk.source(), top.offset);
+                int line = Constants.indexToLine(frame.function.chunk.source(), top.offset);
                 output = String.format("  %s  File %s, line %s, in %s\n%s", arrow, top.filename, line, top.context, output);
             }
             output = "Traceback (most recent call last):\n" + output;
 
             // Generate error message
-            int line = Constants.indexToLine(chunk.source(), idx);
+            int line = Constants.indexToLine(frame.function.chunk.source(), idx);
             output += String.format("\n%s Error (Runtime): %s\nFile %s, line %s\n%s\n",
                                     message, reason,
                                     last.filename, line + 1,
-                                    Constants.highlightFlat(chunk.source(), idx, len));
+                                    Constants.highlightFlat(frame.function.chunk.source(), idx, len));
         }
         else {
             output = String.format("%s Error (Runtime): %s\n", message, reason);
@@ -82,26 +97,19 @@ public class VM {
 
     void resetStack() {
         stackTop = 0;
-    }
-
-    public void free() {
-        chunk.free();
-        chunk = null;
-        globals.clear();
-        ip = 0;
-        resetStack();
-    }
-
-    public void init() {
-        resetStack();
+        frameCount = 0;
     }
 
     String readString() {
-        return chunk.constants().values.get(chunk.code().get(ip++)).asString();
+        return readConstant().asString();
+    }
+
+    Value readConstant() {
+        return frame.function.chunk.constants().values.get(readByte());
     }
 
     int readByte() {
-        return chunk.code().get(ip++);
+        return frame.function.chunk.code().get(frame.ip++);
     }
 
     Value peek(int offset) {
@@ -113,7 +121,7 @@ public class VM {
     }
 
     FlatPosition currentPos() {
-        return chunk.getPosition(ip - 1);
+        return frame.function.chunk.getPosition(frame.ip - 1);
     }
 
     VMResult binary(int op) {
@@ -156,10 +164,10 @@ public class VM {
         return switch (op) {
             case OpCode.DefineGlobal -> {
                 String name = readString();
+                String type = pop().asString();
                 Value value = peek(0);
 
                 boolean constant = readByte() == 1;
-                String type = readString();
 
                 globals.put(name, new Var(type, value, constant));
                 yield VMResult.OK;
@@ -228,15 +236,15 @@ public class VM {
 
                 Value val = stack[slot];
                 if (val.isVar)
-                    push(stack[slot].asVar().val);
+                    push(frame.slots[slot].asVar().val);
                 else
-                    push(stack[slot]);
+                    push(frame.slots[slot]);
                 yield VMResult.OK;
             }
             case OpCode.SetLocal -> {
                 int slot = readByte();
 
-                Value var = stack[slot];
+                Value var = frame.slots[slot];
                 Value val = peek(0);
                 if (var != null && var.isVar) {
                     Var v = var.asVar();
@@ -256,10 +264,10 @@ public class VM {
                 yield VMResult.OK;
             }
             case OpCode.DefineLocal -> {
+                String type = pop().asString();
                 Value val = pop();
 
                 boolean constant = readByte() == 1;
-                String type = readString();
 
                 push(new Value(new Var(type, val, constant)));
 
@@ -274,7 +282,7 @@ public class VM {
         switch (op) {
             case OpCode.Loop -> {
                 int offset = readByte();
-                ip -= offset;
+                moveIP(-offset);
             }
 
             case OpCode.StartCache -> loopCache.push(new ArrayList<>());
@@ -286,20 +294,13 @@ public class VM {
     }
 
     VMResult jumpOps(int op) {
-        switch (op) {
-            case OpCode.JumpIfFalse -> {
-                int offset = readByte();
-                ip += offset * isFalsey(peek(0));
-            }
-            case OpCode.JumpIfTrue -> {
-                int offset = readByte();
-                ip += offset * (1 - isFalsey(peek(0)));
-            }
-            case OpCode.Jump -> {
-                int offset = readByte();
-                ip += offset;
-            }
-        }
+        int offset = switch (op) {
+            case OpCode.JumpIfFalse -> readByte() * isFalsey(peek(0));
+            case OpCode.JumpIfTrue -> readByte() * (1 - isFalsey(peek(0)));
+            case OpCode.Jump -> readByte();
+            default -> throw new IllegalStateException("Unexpected value: " + op);
+        };
+        moveIP(offset);
         return VMResult.OK;
     }
 
@@ -317,13 +318,15 @@ public class VM {
 
         double i = stack[slot].asNumber();
         if ((i >= end && step.asNumber() >= 1) || (i <= end && step.asNumber() < 1)) {
-            ip += jump;
+            moveIP(jump);
         }
 
         return VMResult.OK;
     }
 
     public VMResult run() {
+        frame = frames[frameCount - 1];
+
         while (true) {
             Shell.logger.debug("          ");
             for (int i = 0; i < stackTop; i++) {
@@ -333,14 +336,14 @@ public class VM {
             }
             Shell.logger.debug("\n");
 
-            Disassembler.disassembleInstruction(chunk, ip);
+            Disassembler.disassembleInstruction(frame.function.chunk, frame.ip);
 
             int instruction = readByte();
 
             VMResult res = switch (instruction) {
                 case OpCode.Return -> VMResult.EXIT;
                 case OpCode.Constant -> {
-                    push(chunk.constants().values.get(readByte()));
+                    push(readConstant());
                     yield VMResult.OK;
                 }
 

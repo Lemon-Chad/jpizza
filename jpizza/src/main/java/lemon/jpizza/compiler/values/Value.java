@@ -16,7 +16,6 @@ public class Value implements Serializable {
     protected Map<Value, Value> map;
     protected JFunc func;
     protected Var var;
-    protected List<String> type;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -26,7 +25,6 @@ public class Value implements Serializable {
     public boolean isBool = false;
     public boolean isFunc = false;
     public boolean isVar = false;
-    public boolean isType = false;
 
     public Value() {
         this.isNull = true;
@@ -40,11 +38,6 @@ public class Value implements Serializable {
     public Value(double number) {
         this.number = number;
         this.isNumber = true;
-    }
-
-    public Value(List<String> type, boolean isType) {
-        this.type = type;
-        this.isType = isType;
     }
 
     public Value(String string) {
@@ -161,9 +154,6 @@ public class Value implements Serializable {
         else if (isFunc) {
             return func.toString();
         }
-        else if (isType) {
-            return String.join("", type);
-        }
         return "";
     }
 
@@ -210,10 +200,6 @@ public class Value implements Serializable {
 
     public Var asVar() {
         return var;
-    }
-
-    public List<String> asType() {
-        return type;
     }
 
     public Map<Value, Value> asMap() {

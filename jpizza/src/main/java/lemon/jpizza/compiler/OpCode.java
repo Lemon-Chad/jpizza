@@ -33,4 +33,5 @@ public class OpCode {
     public static final int CollectLoop = 29;
     public static final int FlushLoop = 30;
     public static final int DefineLocal = 31;
+    public static final int GetGeneric = 32;
 }
