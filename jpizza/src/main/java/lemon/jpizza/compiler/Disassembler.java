@@ -1,6 +1,7 @@
 package lemon.jpizza.compiler;
 
 import lemon.jpizza.Shell;
+import lemon.jpizza.compiler.values.JFunc;
 
 public class Disassembler {
     public static void disassembleChunk(Chunk chunk, String string) {
@@ -52,7 +53,13 @@ public class Disassembler {
 
             case OpCode.SetLocal -> byteInstruction("OP_SET_LOCAL", chunk, offset);
             case OpCode.GetLocal -> byteInstruction("OP_GET_LOCAL", chunk, offset);
-            
+            case OpCode.DefineLocal -> byteInstruction("OP_DEFINE_LOCAL", chunk, offset);
+
+            case OpCode.GetUpvalue -> byteInstruction("OP_GET_UPVALUE", chunk, offset);
+            case OpCode.SetUpvalue -> byteInstruction("OP_SET_UPVALUE", chunk, offset);
+
+            case OpCode.GetGeneric -> byteInstruction("OP_GET_GENERIC", chunk, offset);
+
             case OpCode.Jump -> jumpInstruction("OP_JUMP", 1, chunk, offset);
             case OpCode.JumpIfFalse -> jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
             case OpCode.JumpIfTrue -> jumpInstruction("OP_JUMP_IF_TRUE", 1, chunk, offset);
@@ -64,6 +71,25 @@ public class Disassembler {
             case OpCode.FlushLoop -> simpleInstruction("OP_FLUSH_LOOP", offset);
 
             case OpCode.For -> forInstruction(chunk, offset);
+
+            case OpCode.Call -> byteInstruction("OP_CALL", chunk, offset);
+            case OpCode.Closure -> {
+                offset++;
+                int constant = chunk.code.get(offset++);
+                Shell.logger.debug(String.format("%-16s %4d ", "OP_CLOSURE", constant));
+                Shell.logger.debug(chunk.constants.values.get(constant));
+                Shell.logger.debug("\n");
+
+                JFunc func = chunk.constants.values.get(constant).asFunc();
+                for (int i = 0; i < func.upvalueCount; i++) {
+                    int isLocal = chunk.code.get(offset++);
+                    int index = chunk.code.get(offset++);
+                    Shell.logger.debug(String.format("%04d      |                     %s %d\n",
+                            offset - 2, isLocal == 1 ? "local" : "upvalue", index));
+                }
+
+                yield offset;
+            }
 
             default -> {
                 Shell.logger.debug(String.format("Unknown opcode %d%n", instruction));

@@ -34,4 +34,10 @@ public class OpCode {
     public static final int FlushLoop = 30;
     public static final int DefineLocal = 31;
     public static final int GetGeneric = 32;
+    public static final int Call = 33;
+    public static final int Closure = 34;
+    public static final int GetUpvalue = 35;
+    public static final int SetUpvalue = 36;
+    public static final int MakeArray = 37;
+    public static final int MakeMap = 38;
 }

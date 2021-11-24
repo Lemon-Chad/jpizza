@@ -15,7 +15,10 @@ public class Value implements Serializable {
     protected List<Value> list;
     protected Map<Value, Value> map;
     protected JFunc func;
+    protected JNative nativeFunc;
     protected Var var;
+    protected JClosure closure;
+    protected Upvalue upvalue;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -24,10 +27,23 @@ public class Value implements Serializable {
     public boolean isMap = false;
     public boolean isBool = false;
     public boolean isFunc = false;
+    public boolean isNativeFunc = false;
     public boolean isVar = false;
+    public boolean isClosure = false;
+    public boolean isUpvalue = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(JClosure closure) {
+        this.closure = closure;
+        this.isClosure = true;
+    }
+
+    public Value(Upvalue upvalue) {
+        this.upvalue = upvalue;
+        this.isUpvalue = true;
     }
 
     public Value(Var var) {
@@ -65,21 +81,9 @@ public class Value implements Serializable {
         this.isFunc = true;
     }
 
-    public VMResult add(Value value) {
-        if (isNumber && value.isNumber) {
-            number += value.number;
-            return VMResult.OK;
-        }
-        else if (isString) {
-            string += value.asString();
-        }
-        else if (isList) {
-            list.addAll(value.asList());
-        }
-        else if (isMap) {
-            map.putAll(value.asMap());
-        }
-        return VMResult.ERROR;
+    public Value(JNative nativeFunc) {
+        this.nativeFunc = nativeFunc;
+        this.isNativeFunc = true;
     }
 
     public Double asNumber() {
@@ -101,6 +105,7 @@ public class Value implements Serializable {
         return 0.0;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean asBool() {
         if (isBool) {
             return bool;
@@ -154,10 +159,21 @@ public class Value implements Serializable {
         else if (isFunc) {
             return func.toString();
         }
+        else if (isClosure) {
+            return closure.function.toString();
+        }
+        else if (isVar) {
+            return var.toString();
+        }
+        else if (isUpvalue) {
+            return upvalue.toString();
+        }
+        else if (isNativeFunc) {
+            return nativeFunc.toString();
+        }
         return "";
     }
 
-    @Override
     public String toString() {
         return asString();
     }
@@ -202,6 +218,10 @@ public class Value implements Serializable {
         return var;
     }
 
+    public Upvalue asUpvalue() {
+        return upvalue;
+    }
+
     public Map<Value, Value> asMap() {
         if (isMap) {
             return map;
@@ -210,6 +230,27 @@ public class Value implements Serializable {
             return Map.of();
         }
         return Map.of(this, this);
+    }
+
+    public JFunc asFunc() {
+        if (isFunc) {
+            return func;
+        }
+        else if (this.isClosure) {
+            return closure.function;
+        }
+        return null;
+    }
+
+    public JClosure asClosure() {
+        if (isClosure) {
+            return closure;
+        }
+        return null;
+    }
+
+    public JNative asNative() {
+        return nativeFunc;
     }
 
     public String type() {
@@ -228,10 +269,56 @@ public class Value implements Serializable {
         else if (isMap) {
             return "dict";
         }
-        else if (isFunc) {
+        else if (isFunc || isNativeFunc || isClosure) {
             return "function";
         }
         return "void";
     }
 
+    // Mutative Addition
+    public VMResult add(Value other) {
+        if (isNumber) {
+            number += other.asNumber();
+            return VMResult.OK;
+        }
+        else if (isList) {
+            list.addAll(other.asList());
+            return VMResult.OK;
+        }
+
+        return VMResult.ERROR;
+    }
+
+    // List Mutators
+    public void append(Value value) {
+        list.add(value);
+    }
+
+    public Value pop(Double index) {
+        int i = index.intValue();
+        Value value = list.get(i);
+        list.remove(i);
+        return value;
+    }
+
+    public void insert(Double index, Value value) {
+        list.add(index.intValue(), value);
+    }
+
+    public void set(Double index, Value value) {
+        list.set(index.intValue(), value);
+    }
+
+    public void remove(Value value) {
+        list.remove(value);
+    }
+
+    // Map Mutators
+    public void set(Value key, Value value) {
+        map.put(key, value);
+    }
+
+    public void delete(Value key) {
+        map.remove(key);
+    }
 }

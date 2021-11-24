@@ -16,4 +16,8 @@ public class Var implements Serializable {
     public void val(Value v) {
         val = v;
     }
+
+    public String toString() {
+        return type + ":" + val;
+    }
 }

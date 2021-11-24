@@ -1,15 +1,16 @@
 package lemon.jpizza.compiler.vm;
 
+import lemon.jpizza.compiler.values.JClosure;
 import lemon.jpizza.compiler.values.JFunc;
 import lemon.jpizza.compiler.values.Value;
 
 public class CallFrame {
-    public JFunc function;
+    public JClosure closure;
     public int ip;
-    public Value[] slots;
+    public int slots;
 
-    public CallFrame(JFunc function, int ip, Value[] slots) {
-        this.function = function;
+    public CallFrame(JClosure closure, int ip, int slots) {
+        this.closure = closure;
         this.ip = ip;
         this.slots = slots;
     }
