@@ -2,25 +2,23 @@ package lemon.jpizza.compiler.vm;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Shell;
-import lemon.jpizza.compiler.Chunk;
 import lemon.jpizza.compiler.Disassembler;
 import lemon.jpizza.compiler.FlatPosition;
 import lemon.jpizza.compiler.OpCode;
-import lemon.jpizza.compiler.values.JFunc;
-import lemon.jpizza.compiler.values.Value;
-import lemon.jpizza.compiler.values.Var;
+import lemon.jpizza.compiler.values.*;
 
 import java.util.*;
 
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 64;
-    public static final int STACK_MAX = FRAMES_MAX * (Byte.MAX_VALUE + 1);
+    public static final int STACK_MAX = FRAMES_MAX * 256;
 
     private static record Traceback(String filename, String context, int offset) {}
 
     Value[] stack;
     int stackTop;
+    int ip;
 
     Stack<Traceback> tracebacks;
     Map<String, Var> globals;
@@ -31,6 +29,8 @@ public class VM {
     int frameCount;
 
     public VM(JFunc function) {
+        this.ip = 0;
+
         this.stack = new Value[MAX_STACK_SIZE];
         this.stackTop = 0;
         push(new Value(function));
@@ -42,8 +42,128 @@ public class VM {
         this.frames = new CallFrame[FRAMES_MAX];
         this.frameCount = 0;
 
-        this.frame = new CallFrame(function, 0, stack);
+        this.frame = new CallFrame(new JClosure(function), 0, 0);
         frames[frameCount++] = frame;
+
+        setup();
+    }
+
+    void setup() {
+        defineNative("print", (args) -> {
+            Shell.logger.out(args[0]);
+            return NativeResult.Ok();
+        }, 1);
+        defineNative("println", (args) -> {
+            Shell.logger.outln(args[0]);
+            return NativeResult.Ok();
+        }, 1);
+
+        // List Functions
+        defineNative("append", (args) -> {
+            Value list = args[0];
+            Value value = args[1];
+
+            list.append(value);
+            return NativeResult.Ok();
+        }, 2, List.of("list", "any"));
+        defineNative("remove", (args) -> {
+            Value list = args[0];
+            Value value = args[1];
+
+            list.remove(value);
+            return NativeResult.Ok();
+        }, 2, List.of("list", "any"));
+        defineNative("pop", (args) -> {
+            Value list = args[0];
+            Value index = args[1];
+
+            push(list.pop(index.asNumber()));
+            return NativeResult.Ok();
+        }, 2, List.of("list", "num"));
+        defineNative("extend", (args) -> {
+            Value list = args[0];
+            Value other = args[1];
+
+            list.add(other);
+            return NativeResult.Ok();
+        }, 2, List.of("list", "list"));
+        defineNative("insert", (args) -> {
+            Value list = args[0];
+            Value index = args[2];
+            Value value = args[1];
+
+            list.insert(index.asNumber(), value);
+            return NativeResult.Ok();
+        }, 3, List.of("list", "any", "num"));
+        defineNative("setIndex", (args) -> {
+            Value list = args[0];
+            Value index = args[2];
+            Value value = args[1];
+
+            list.set(index.asNumber(), value);
+            return NativeResult.Ok();
+        }, 3, List.of("list", "any", "num"));
+        defineNative("size", (args) -> {
+            Value list = args[0];
+            push(new Value(list.asList().size()));
+            return NativeResult.Ok();
+        }, 1, List.of("list"));
+        defineNative("choose", (args) -> {
+            List<Value> list = args[0].asList();
+            int max = list.size() - 1;
+            int index = (int) (Math.random() * max);
+            push(list.get(index));
+            return NativeResult.Ok();
+        }, 1, List.of("list"));
+        defineNative("contains", (args) -> {
+            Value list = args[0];
+            Value val = args[1];
+            push(new Value(list.asList().contains(val)));
+            return NativeResult.Ok();
+        }, 2, List.of("list", "any"));
+        defineNative("sublist", (args) -> {
+            Value list = args[0];
+            Value start = args[1];
+            Value end = args[2];
+
+            push(new Value(list.asList().subList(start.asNumber().intValue(),
+                    end.asNumber().intValue())));
+            return NativeResult.Ok();
+        }, 3, List.of("list", "num", "num"));
+        defineNative("join", (args) -> {
+            Value str = args[0];
+            Value list = args[1];
+
+            List<String> strings = new ArrayList<>();
+            for (Value val : list.asList())
+                strings.add(val.asString());
+
+            push(new Value(String.join(str.asString(), strings)));
+            return NativeResult.Ok();
+        }, 2, List.of("str", "list"));
+        defineNative("indexOf", (args) -> {
+            Value list = args[0];
+            Value val = args[1];
+            push(new Value(list.asList().indexOf(val)));
+            return NativeResult.Ok();
+        }, 2, List.of("list", "any"));
+
+    }
+
+    void defineNative(String name, JNative.Method method, int argc) {
+        globals.put(name, new Var(
+                "function",
+                new Value(new JNative(name, method, argc)),
+                false
+        ));
+    }
+
+    void defineNative(String name, JNative.Method method, int argc, List<String> types) {
+        globals.put(name, new Var(
+                "function",
+                new Value(new JNative(name, method, argc, types)),
+                false
+        ));
     }
 
     public VM trace(String name) {
@@ -53,6 +173,7 @@ public class VM {
 
     void moveIP(int offset) {
         frame.ip += offset;
+        ip += offset;
     }
 
     void push(Value value) {
@@ -63,29 +184,34 @@ public class VM {
         return stack[--stackTop];
     }
 
+    protected void runtimeError(String message, String reason) {
+        runtimeError(message, reason, currentPos());
+    }
+
     protected void runtimeError(String message, String reason, FlatPosition position) {
         int idx = position.index;
         int len = position.len;
 
         String output = "";
         if (!tracebacks.empty()) {
-            String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►\uD83E\uDC12" : "--->";
+            String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►" : "--->";
 
             // Generate traceback
             Traceback last = tracebacks.peek();
             while (!tracebacks.empty()) {
                 Traceback top = tracebacks.pop();
-                int line = Constants.indexToLine(frame.function.chunk.source(), top.offset);
-                output = String.format("  %s  File %s, line %s, in %s\n%s", arrow, top.filename, line, top.context, output);
+                int line = Constants.indexToLine(frame.closure.function.chunk.source(), top.offset);
+                System.out.println(top.offset);
+                output = String.format("  %s  File %s, line %s, in %s\n%s", arrow, top.filename, line + 1, top.context, output);
             }
             output = "Traceback (most recent call last):\n" + output;
 
             // Generate error message
-            int line = Constants.indexToLine(frame.function.chunk.source(), idx);
+            int line = Constants.indexToLine(frame.closure.function.chunk.source(), idx);
             output += String.format("\n%s Error (Runtime): %s\nFile %s, line %s\n%s\n",
                                     message, reason,
                                     last.filename, line + 1,
-                                    Constants.highlightFlat(frame.function.chunk.source(), idx, len));
+                                    Constants.highlightFlat(frame.closure.function.chunk.source(), idx, len));
         }
         else {
             output = String.format("%s Error (Runtime): %s\n", message, reason);
@@ -105,11 +231,12 @@ public class VM {
     }
 
     Value readConstant() {
-        return frame.function.chunk.constants().values.get(readByte());
+        return frame.closure.function.chunk.constants().values.get(readByte());
     }
 
     int readByte() {
-        return frame.function.chunk.code().get(frame.ip++);
+        ip++;
+        return frame.closure.function.chunk.code().get(frame.ip++);
     }
 
     Value peek(int offset) {
@@ -121,7 +248,7 @@ public class VM {
     }
 
     FlatPosition currentPos() {
-        return frame.function.chunk.getPosition(frame.ip - 1);
+        return frame.closure.function.chunk.getPosition(frame.ip - 1);
     }
 
     VMResult binary(int op) {
@@ -177,7 +304,7 @@ public class VM {
                 Var value = globals.get(name);
 
                 if (value == null) {
-                    runtimeError("Scope", "Undefined variable", currentPos());
+                    runtimeError("Scope", "Undefined variable");
                     yield VMResult.ERROR;
                 }
 
@@ -190,23 +317,12 @@ public class VM {
 
                 Var var = globals.get(name);
                 if (var != null) {
-                    if (var.constant) {
-                        runtimeError("Scope", "Cannot reassign constant", currentPos());
-                        yield VMResult.ERROR;
-                    }
-                    if (!var.type.equals("any") && !var.type.equals(value.type())) {
-                        runtimeError("Type",
-                                String.format("Got type %s, expected type %s", value.type(), var.type),
-                                currentPos());
-                        yield VMResult.ERROR;
-                    }
-                    var.val(value);
+                    yield set(var, value);
                 }
                 else {
-                    runtimeError("Scope", "Undefined variable", currentPos());
+                    runtimeError("Scope", "Undefined variable");
                     yield VMResult.ERROR;
                 }
-                yield VMResult.OK;
             }
             default -> VMResult.OK;
         };
@@ -225,43 +341,46 @@ public class VM {
         return VMResult.OK;
     }
 
+    Value get(int index) {
+        return stack[index + frame.slots];
+    }
+
+    VMResult set(Var var, Value val) {
+        if (var.constant) {
+            runtimeError("Scope", "Cannot reassign constant");
+            return VMResult.ERROR;
+        }
+        if (!"any".equals(var.type) && !val.type().equals(var.type)) {
+            runtimeError("Type",
+                    String.format("Got type %s, expected type %s", val.type(), var.type));
+            return VMResult.ERROR;
+        }
+        var.val(val);
+        return VMResult.OK;
+    }
+
     VMResult localOps(int op) {
         return switch (op) {
             case OpCode.GetLocal -> {
                 int slot = readByte();
                 if (stackTop - slot <= 0) {
-                    runtimeError("Scope", "Undefined variable", currentPos());
+                    runtimeError("Scope", "Undefined variable");
                     yield VMResult.ERROR;
                 }
 
-                Value val = stack[slot];
+                Value val = get(slot);
                 if (val.isVar)
-                    push(frame.slots[slot].asVar().val);
+                    push(val.asVar().val);
                 else
-                    push(frame.slots[slot]);
+                    push(val);
                 yield VMResult.OK;
             }
             case OpCode.SetLocal -> {
                 int slot = readByte();
 
-                Value var = frame.slots[slot];
+                Value var = get(slot);
                 Value val = peek(0);
-                if (var != null && var.isVar) {
-                    Var v = var.asVar();
-                    if (v.constant) {
-                        runtimeError("Scope", "Cannot reassign constant", currentPos());
-                        yield VMResult.ERROR;
-                    }
-                    if (!"any".equals(v.type) && !val.type().equals(v.type)) {
-                        runtimeError("Type",
-                                String.format("Got type %s, expected type %s", val.type(), v.type),
-                                currentPos());
-                        yield VMResult.ERROR;
-                    }
-                    v.val(val);
-                }
-
-                yield VMResult.OK;
+                yield set(var.asVar(), val);
             }
             case OpCode.DefineLocal -> {
                 String type = pop().asString();
@@ -311,17 +430,86 @@ public class VM {
         int slot = readByte();
         int jump = readByte();
 
-        VMResult res = stack[slot].add(step);
-        if (res != VMResult.OK) {
+        Var var = get(slot).asVar();
+        VMResult res = var.val.add(step);
+        if (res != VMResult.OK)
             return res;
-        }
 
-        double i = stack[slot].asNumber();
+        double i = var.val.asNumber();
         if ((i >= end && step.asNumber() >= 1) || (i <= end && step.asNumber() < 1)) {
             moveIP(jump);
         }
 
         return VMResult.OK;
+    }
+
+    VMResult call() {
+        int argCount = readByte();
+        if (!callValue(peek(argCount), argCount)) {
+            return VMResult.ERROR;
+        }
+        frame = frames[frameCount - 1];
+        return VMResult.OK;
+    }
+
+    VMResult upvalueOps(int op) {
+        switch (op) {
+            case OpCode.GetUpvalue -> {
+                int slot = readByte();
+                push(frame.closure.upvalues.get(slot).val);
+            }
+            case OpCode.SetUpvalue -> {
+                int slot = readByte();
+                return set(frame.closure.upvalues.get(slot), peek(0));
+            }
+        }
+
+        return VMResult.OK;
+    }
+
+    boolean callValue(Value callee, int argCount) {
+        if (callee.isNativeFunc) {
+            return call(callee.asNative(), argCount);
+        }
+        else if (callee.isClosure) {
+            return call(callee.asClosure(), argCount);
+        }
+        runtimeError("Type", "Can only call functions and classes");
+        return false;
+    }
+
+    boolean call(JClosure closure, int argCount) {
+        if (argCount != closure.function.arity) {
+            runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
+            return false;
+        }
+
+        if (frameCount == FRAMES_MAX) {
+            runtimeError("Stack", "Stack overflow");
+            return false;
+        }
+
+        tracebacks.push(new Traceback(tracebacks.peek().filename, closure.function.name, currentPos().index));
+
+        frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1);
+        return true;
+    }
+
+    boolean call(JNative nativeFunc, int argCount) {
+        NativeResult result = nativeFunc.call(Arrays.copyOfRange(stack, stackTop - argCount, stackTop));
+
+        if (!result.ok()) {
+            runtimeError(result.name(), result.reason());
+            return false;
+        }
+
+        stackTop -= argCount + 1;
+        push(result.value());
+        return true;
+    }
+
+    Var captureUpvalue(int slot) {
+        return stack[slot].asVar();
     }
 
     public VMResult run() {
@@ -331,17 +519,28 @@ public class VM {
             Shell.logger.debug("          ");
             for (int i = 0; i < stackTop; i++) {
                 Shell.logger.debug("[ ");
-                Shell.logger.debug(stack[i].toString());
+                Shell.logger.debug(stack[i]);
                 Shell.logger.debug(" ]");
             }
             Shell.logger.debug("\n");
 
-            Disassembler.disassembleInstruction(frame.function.chunk, frame.ip);
+            Disassembler.disassembleInstruction(frame.closure.function.chunk, frame.ip);
 
             int instruction = readByte();
-
             VMResult res = switch (instruction) {
-                case OpCode.Return -> VMResult.EXIT;
+                case OpCode.Return -> {
+                    Value result = pop();
+                    frameCount--;
+                    if (frameCount == 0) {
+                        yield VMResult.EXIT;
+                    }
+
+                    stackTop = frame.slots;
+                    frame = frames[frameCount - 1];
+                    tracebacks.pop();
+                    push(result);
+                    yield VMResult.OK;
+                }
                 case OpCode.Constant -> {
                     push(readConstant());
                     yield VMResult.OK;
@@ -406,6 +605,50 @@ public class VM {
                         OpCode.FlushLoop -> loopOps(instruction);
 
                 case OpCode.For -> forLoop();
+
+                case OpCode.Call -> call();
+                case OpCode.Closure -> {
+                    JFunc func = readConstant().asFunc();
+                    JClosure closure = new JClosure(func);
+                    push(new Value(closure));
+
+                    for (int i = 0; i < closure.upvalueCount; i++) {
+                        int isLocal = readByte();
+                        int index = readByte();
+                        if (isLocal == 1)
+                            closure.upvalues.set(i, captureUpvalue(frame.slots + index));
+                        else
+                            closure.upvalues.set(i, frame.closure.upvalues.get(index));
+                        System.out.println(frame.slots + index);
+                        System.out.println(closure.upvalues);
+                    }
+
+                    yield VMResult.OK;
+                }
+
+                case OpCode.GetUpvalue,
+                        OpCode.SetUpvalue -> upvalueOps(instruction);
+
+                case OpCode.MakeArray -> {
+                    int count = readByte();
+                    List<Value> array = new ArrayList<>();
+                    for (int i = 0; i < count; i++)
+                        array.add(pop());
+                    push(new Value(array));
+                    yield VMResult.OK;
+                }
+
+                case OpCode.MakeMap -> {
+                    int count = readByte();
+                    Map<Value, Value> map = new HashMap<>();
+                    for (int i = 0; i < count; i++) {
+                        Value value = pop();
+                        Value key = pop();
+                        map.put(key, value);
+                    }
+                    push(new Value(map));
+                    yield VMResult.OK;
+                }
 
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
             };

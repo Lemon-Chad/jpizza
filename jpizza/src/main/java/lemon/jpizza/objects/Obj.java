@@ -66,7 +66,7 @@ public abstract class Obj implements Serializable {
     public abstract Pair<Obj, RTError> bracket(Obj other);
 
     public boolean floating() {
-        return Math.floor(number) == number;
+        return Math.floor(number) != number;
     }
 
     public abstract RTResult execute(List<Obj> args, List<Token> generics, Map<String, Obj> kwargs, Interpreter parent);

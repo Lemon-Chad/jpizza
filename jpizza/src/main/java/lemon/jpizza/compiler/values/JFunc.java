@@ -10,10 +10,14 @@ public class JFunc implements Serializable {
     public Chunk chunk;
     public String name;
 
+    public int upvalueCount;
+
     public JFunc(String source) {
         arity = 0;
         name = "";
         chunk = new Chunk(source);
+
+        upvalueCount = 0;
     }
 
     public String toString() {

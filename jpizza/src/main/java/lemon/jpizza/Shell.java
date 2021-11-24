@@ -37,6 +37,7 @@ public class Shell {
     public static final Logger logger = new Logger();
     public static final SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
+    public static VM vm;
     public static final String fileEncoding = System.getProperty("file.encoding");
 
     public static String[] getFNDirs(String dir) {
@@ -72,8 +73,8 @@ public class Shell {
         initLibs();
 
         PList cmdargs = new PList(new ArrayList<>());
-        for (int i = 0; i < args.length; i++) {
-            cmdargs.append(new Str(args[i]));
+        for (String arg : args) {
+            cmdargs.append(new Str(arg));
         }
         globalSymbolTable.define("CMDARGS", cmdargs);
 
@@ -212,9 +213,9 @@ public class Shell {
                 if (results.size() > 0) {
                     StringBuilder out = new StringBuilder();
                     int size = results.size();
-                    for (int i = 0; i < size; i++) {
-                        if (results.get(i) != null && results.get(i).jptype != Constants.JPType.Null)
-                            out.append(Shell.logger.ots(results.get(i))).append(", ");
+                    for (Obj result : results) {
+                        if (result != null && result.jptype != Constants.JPType.Null)
+                            out.append(Shell.logger.ots(result)).append(", ");
                     }
                     if (out.length() > 0) out.setLength(out.length() - 2);
                     Shell.logger.outln(out.toString());
@@ -307,7 +308,7 @@ public class Shell {
                     "File is not JPizza bytecode!", null));
 
             JFunc func = (JFunc) ost;
-            VM vm = new VM(func).trace(fn);
+            vm = new VM(func).trace(fn);
 
             logger.debug = true;
             vm.run();

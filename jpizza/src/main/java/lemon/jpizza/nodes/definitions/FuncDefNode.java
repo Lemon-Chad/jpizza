@@ -15,16 +15,16 @@ public class FuncDefNode extends Node {
     public final Token var_name_tok;
     public final List<Token> arg_name_toks;
     public final Node body_node;
-    final boolean autoreturn;
-    final boolean async;
+    public final boolean autoreturn;
+    public final boolean async;
     public final List<Token> arg_type_toks;
-    final List<Token> generic_toks;
-    final List<String> returnType;
-    final List<Node> defaults;
-    final int defaultCount;
-    boolean catcher = false;
-    final String argname;
-    final String kwargname;
+    public final List<Token> generic_toks;
+    public final List<String> returnType;
+    public final List<Node> defaults;
+    public final int defaultCount;
+    public boolean catcher = false;
+    public final String argname;
+    public final String kwargname;
 
     public FuncDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean async, List<String> returnType, List<Node> defaults, int defaultCount,

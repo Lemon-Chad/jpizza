@@ -78,7 +78,23 @@ public class Logger {
                     else sb.append(ots(l.get(i))).append(", ");
 
                 return "[ " + sb + "len=" + l.size() + " ]";
+            }
+            else if (val.isMap) {
+                StringBuilder sb = new StringBuilder();
+                Map<Value, Value> d = val.asMap();
 
+                Value[] keys = d.keySet().toArray(new Value[0]);
+                for (int i = 0; i < keys.length; i++)
+                    if (i >= omitt && i < keys.length - omitt) {
+                        if (i == omitt + 1) sb.append("..., ");
+                    }
+                    else sb.append(ots(keys[i])).append(": ")
+                            .append(ots(d.get(keys[i]))).append(", ");
+
+                return "{ " + sb + "len=" + keys.length + " }";
+            }
+            else if (val.isNull) {
+                return "null";
             }
             return val.asString();
         }
@@ -130,5 +146,10 @@ public class Logger {
     public void debug(String format) {
         if (debug)
             System.out.print(Chalk.on(format).magenta());
+    }
+
+    public void debug(Value val) {
+        if (debug)
+            System.out.print(Chalk.on(ots(val)).magenta());
     }
 }

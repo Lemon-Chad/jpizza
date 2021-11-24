@@ -10,7 +10,7 @@ import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 
 public class ReturnNode extends Node {
-    final Node nodeToReturn;
+    public final Node nodeToReturn;
     final boolean newline;
 
     public ReturnNode(Node n, Position ps, Position pe) {
