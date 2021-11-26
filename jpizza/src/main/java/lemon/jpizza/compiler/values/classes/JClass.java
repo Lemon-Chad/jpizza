@@ -2,7 +2,6 @@ package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
-import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.util.HashMap;
@@ -11,7 +10,7 @@ import java.util.Map;
 public class JClass {
     public final String name;
     public final Map<String, ClassAttr> attributes;
-    public Map<String, Value> methods;
+    public final Map<String, Value> methods;
 
     public Value constructor;
 

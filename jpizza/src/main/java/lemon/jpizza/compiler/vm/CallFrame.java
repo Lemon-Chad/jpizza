@@ -4,11 +4,11 @@ import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
 
 public class CallFrame {
-    public JClosure closure;
+    public final JClosure closure;
     public int ip;
-    public int slots;
-    public String returnType;
-    public Value bound;
+    public final int slots;
+    public final String returnType;
+    public final Value bound;
 
     public CallFrame(JClosure closure, int ip, int slots, String returnType) {
         this(closure, ip, slots, returnType, null);

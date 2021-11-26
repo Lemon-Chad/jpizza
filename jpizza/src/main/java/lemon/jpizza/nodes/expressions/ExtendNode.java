@@ -20,11 +20,9 @@ import java.nio.file.Paths;
 
 public class ExtendNode extends Node {
     public final Token file_name_tok;
-    public final Token as_tok;
 
     public ExtendNode(Token file_name_tok) {
         this.file_name_tok = file_name_tok;
-        this.as_tok = null;
 
         pos_start = file_name_tok.pos_start.copy(); pos_end = file_name_tok.pos_end.copy();
         jptype = Constants.JPType.Import;

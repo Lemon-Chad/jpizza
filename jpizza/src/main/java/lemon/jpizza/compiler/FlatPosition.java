@@ -4,9 +4,9 @@ import java.io.Serializable;
 
 public class FlatPosition implements Serializable {
     // The starting index of the token in the source file
-    public int index;
+    public final int index;
     // The number of characters after the index
-    public int len;
+    public final int len;
     // How many bytes this instruction takes
     public int span;
 

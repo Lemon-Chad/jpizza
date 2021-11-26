@@ -30,7 +30,6 @@ public class PatternNode extends Node {
         jptype = Constants.JPType.Pattern;
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public RTResult compare(Interpreter inter, Context context, Obj contrast) {
         RTResult res = new RTResult();
 

@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ValueArray implements Serializable {
     public int length;
-    public List<Value> values;
+    public final List<Value> values;
 
     public ValueArray() {
         this.length = 0;

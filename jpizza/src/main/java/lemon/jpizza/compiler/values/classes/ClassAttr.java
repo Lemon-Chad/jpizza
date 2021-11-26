@@ -4,9 +4,9 @@ import lemon.jpizza.compiler.values.Value;
 
 public class ClassAttr {
     public Value val;
-    public String type;
-    public boolean isStatic;
-    public boolean isPrivate;
+    public final String type;
+    public final boolean isStatic;
+    public final boolean isPrivate;
 
     public ClassAttr(Value val, String type, boolean isStatic, boolean isPrivate) {
         this.val = val;

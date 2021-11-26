@@ -212,7 +212,6 @@ public class Shell {
                 List<Obj> results = a.a.list;
                 if (results.size() > 0) {
                     StringBuilder out = new StringBuilder();
-                    int size = results.size();
                     for (Obj result : results) {
                         if (result != null && result.jptype != Constants.JPType.Null)
                             out.append(Shell.logger.ots(result)).append(", ");
@@ -319,7 +318,7 @@ public class Shell {
     }
 
     //Another public static 
-    public static Pair<ClassInstance, Error> imprt(String fn, String text, Context _parent, Position _entry_pos) {
+    public static Pair<ClassInstance, Error> imprt(String fn, String text) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         Context context = new Context(fn, null, null);
