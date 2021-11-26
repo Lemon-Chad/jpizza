@@ -403,8 +403,9 @@ public class VM {
         if (frame.bound != null) {
             if (frame.bound.isInstance) {
                 Instance instance = frame.bound.asInstance();
-                if (instance.has(name)) {
-                    push(instance.getField(name, true));
+                Value field = instance.getField(name, true);
+                if (field != null) {
+                    push(field);
                     return VMResult.OK;
                 }
                 else {
@@ -414,8 +415,9 @@ public class VM {
                 }
             } else if (frame.bound.isClass) {
                 JClass clazz = frame.bound.asClass();
-                if (clazz.has(name)) {
-                    push(clazz.getField(name, true));
+                Value field = clazz.getField(name, true);
+                if (field != null) {
+                    push(field);
                     return VMResult.OK;
                 }
                 else {
@@ -449,19 +451,13 @@ public class VM {
     }
 
     VMResult boundNeutral(boolean suppress, boolean b, NativeResult nativeResult) {
-        if (b) {
-            if (nativeResult.ok())
-                return VMResult.OK;
-            else {
-                if (!suppress)
-                    runtimeError(nativeResult.name(), nativeResult.reason());
-                return VMResult.ERROR;
-            }
+        if (nativeResult.ok())
+            return VMResult.OK;
+        else {
+            if (!suppress)
+                runtimeError(nativeResult.name(), nativeResult.reason());
+            return VMResult.ERROR;
         }
-
-        if (!suppress)
-            runtimeError("Scope", "Undefined attribute");
-        return VMResult.ERROR;
     }
 
     VMResult attrOps(int op) {
@@ -764,7 +760,7 @@ public class VM {
             return false;
         }
 
-        tracebacks.push(new Traceback(tracebacks.peek().filename, closure.function.name, currentPos().index));
+        tracebacks.push(new Traceback(tracebacks.peek().filename, closure.function.name, 0));
 
         frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1,
                 readType(closure.function.returnType), binding);
