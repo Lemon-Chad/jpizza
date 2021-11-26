@@ -12,5 +12,4 @@ public class Cache {
         this.args = args;
         this.result = result;
     }
-
 }
