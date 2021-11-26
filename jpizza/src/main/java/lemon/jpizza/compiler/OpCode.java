@@ -40,4 +40,8 @@ public class OpCode {
     public static final int SetUpvalue = 36;
     public static final int MakeArray = 37;
     public static final int MakeMap = 38;
+    public static final int Class = 39;
+    public static final int Access = 40;
+    public static final int Method = 41;
+    public static final int MakeVar = 42;
 }

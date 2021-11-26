@@ -1,5 +1,11 @@
 package lemon.jpizza.compiler.values;
 
+import lemon.jpizza.compiler.values.classes.BoundMethod;
+import lemon.jpizza.compiler.values.classes.Instance;
+import lemon.jpizza.compiler.values.classes.JClass;
+import lemon.jpizza.compiler.values.functions.JClosure;
+import lemon.jpizza.compiler.values.functions.JFunc;
+import lemon.jpizza.compiler.values.functions.JNative;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.io.Serializable;
@@ -18,7 +24,10 @@ public class Value implements Serializable {
     protected JNative nativeFunc;
     protected Var var;
     protected JClosure closure;
-    protected Upvalue upvalue;
+    protected JClass jClass;
+    protected Instance instance;
+    protected List<String> type;
+    protected BoundMethod boundMethod;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -30,10 +39,18 @@ public class Value implements Serializable {
     public boolean isNativeFunc = false;
     public boolean isVar = false;
     public boolean isClosure = false;
-    public boolean isUpvalue = false;
+    public boolean isClass = false;
+    public boolean isInstance = false;
+    public boolean isType = false;
+    public boolean isBoundMethod = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(BoundMethod boundMethod) {
+        this.boundMethod = boundMethod;
+        this.isBoundMethod = true;
     }
 
     public Value(JClosure closure) {
@@ -41,9 +58,22 @@ public class Value implements Serializable {
         this.isClosure = true;
     }
 
-    public Value(Upvalue upvalue) {
-        this.upvalue = upvalue;
-        this.isUpvalue = true;
+    public Value(JClass jClass) {
+        this.jClass = jClass;
+        this.isClass = true;
+    }
+
+    public static Value fromType(List<String> type) {
+        Value value = new Value();
+        value.type = type;
+        value.isType = true;
+        value.isNull = false;
+        return value;
+    }
+
+    public Value(Instance instance) {
+        this.instance = instance;
+        this.isInstance = true;
     }
 
     public Value(Var var) {
@@ -165,11 +195,20 @@ public class Value implements Serializable {
         else if (isVar) {
             return var.toString();
         }
-        else if (isUpvalue) {
-            return upvalue.toString();
-        }
         else if (isNativeFunc) {
             return nativeFunc.toString();
+        }
+        else if (isClass) {
+            return jClass.toString();
+        }
+        else if (isType) {
+            return String.join("", type);
+        }
+        else if (isInstance) {
+            return instance.toString();
+        }
+        else if (isBoundMethod) {
+            return boundMethod.toString();
         }
         return "";
     }
@@ -218,10 +257,6 @@ public class Value implements Serializable {
         return var;
     }
 
-    public Upvalue asUpvalue() {
-        return upvalue;
-    }
-
     public Map<Value, Value> asMap() {
         if (isMap) {
             return map;
@@ -249,8 +284,22 @@ public class Value implements Serializable {
         return null;
     }
 
+    public JClass asClass() {
+        if (isClass) {
+            return jClass;
+        }
+        return null;
+    }
+
     public JNative asNative() {
         return nativeFunc;
+    }
+
+    public BoundMethod asBoundMethod() {
+        if (isBoundMethod) {
+            return boundMethod;
+        }
+        return null;
     }
 
     public String type() {
@@ -271,6 +320,12 @@ public class Value implements Serializable {
         }
         else if (isFunc || isNativeFunc || isClosure) {
             return "function";
+        }
+        else if (isClass) {
+            return "recipe";
+        }
+        else if (isInstance) {
+            return instance.type();
         }
         return "void";
     }
@@ -320,5 +375,13 @@ public class Value implements Serializable {
 
     public void delete(Value key) {
         map.remove(key);
+    }
+
+    public Instance asInstance() {
+        return instance;
+    }
+
+    public List<String> asType() {
+        return type;
     }
 }

@@ -2,7 +2,7 @@ package lemon.jpizza;
 
 import lemon.jpizza.compiler.Compiler;
 import lemon.jpizza.compiler.FunctionType;
-import lemon.jpizza.compiler.values.JFunc;
+import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -310,7 +310,6 @@ public class Shell {
             JFunc func = (JFunc) ost;
             vm = new VM(func).trace(fn);
 
-            logger.debug = true;
             vm.run();
 
         } catch (IOException | ClassNotFoundException e) {

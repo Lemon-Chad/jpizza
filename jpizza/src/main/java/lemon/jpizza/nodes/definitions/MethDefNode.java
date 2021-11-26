@@ -23,10 +23,10 @@ public class MethDefNode extends Node {
     public final List<Node> defaults;
     public final int defaultCount;
     public boolean catcher = false;
-    final boolean stat;
-    final boolean priv;
-    final String argname;
-    final String kwargname;
+    public final boolean stat;
+    public final boolean priv;
+    public final String argname;
+    public final String kwargname;
 
     public MethDefNode(Token var_name_tok, List<Token> arg_name_toks, List<Token> arg_type_toks, Node body_node,
                        boolean autoreturn, boolean bin, boolean async, List<String> returnType, List<Node> defaults,
@@ -73,5 +73,10 @@ public class MethDefNode extends Node {
 
         context.symbolTable.define(funcName, methValue);
         return res.success(methValue.setCatch(catcher));
+    }
+
+    public FuncDefNode asFuncDef() {
+        return new FuncDefNode(var_name_tok, arg_name_toks, arg_type_toks, body_node, autoreturn, async,
+                returnType, defaults, defaultCount, generic_toks, argname, kwargname).setCatcher(catcher);
     }
 }

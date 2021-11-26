@@ -1,4 +1,6 @@
-package lemon.jpizza.compiler.values;
+package lemon.jpizza.compiler.values.functions;
+
+import lemon.jpizza.compiler.values.Value;
 
 public class Upvalue {
     public Value location;

@@ -6,7 +6,6 @@ import java.nio.file.Path;
 
 public class RunMain {
     public static void main(String[] args) throws IOException {
-        Shell.logger.debug = true;
         String text = Files.readString(Path.of("main.devp"));
 
         var res = Shell.compile("main.devp", text, "main.jbox");
