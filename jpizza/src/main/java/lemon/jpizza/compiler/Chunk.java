@@ -66,8 +66,7 @@ public class Chunk implements Serializable {
     }
 
     public int addConstant(Value value) {
-        constants.write(value);
-        return constants.length - 1;
+        return constants.write(value);
     }
 
     public String source() {

@@ -1231,9 +1231,9 @@ Mixed_Snake_Case_Looks_Like_This"""
             if (res.error != null) return res;
 
             if (def)
-                elseCase = new ElseCase(body, true);
+                elseCase = new ElseCase(body, false);
             else
-                cases.add(new Case(condition, body, true));
+                cases.add(new Case(condition, body, false));
         }
 
         if (!currentToken.type.equals(TT.CLOSE))
@@ -1384,9 +1384,9 @@ if (x == 1) {
             if (res.error != null) return res;
 
             if (def)
-                elseCase = new ElseCase(body, false);
+                elseCase = new ElseCase(body, true);
             else for (Node condition: conditions)
-                cases.add(new Case(condition, body, false));
+                cases.add(new Case(condition, body, true));
             res.register(expectSemicolon());
             if (res.error != null) return res;
             res.registerAdvancement(); advance();
@@ -1889,7 +1889,7 @@ if (false)
         }
         if (res.error != null)
             return res;
-        cases.add(new Case(condition, statements, true));
+        cases.add(new Case(condition, statements, false));
 
         Pair<List<Case>, ElseCase> allCases = res.register(this.elifElse(parenthesis));
         if (res.error != null)
@@ -1945,7 +1945,7 @@ if (false)
             }
             if (res.error != null)
                 return res;
-            elseCase = new ElseCase(statements, true);
+            elseCase = new ElseCase(statements, false);
         }
 
         return res.success(elseCase);
@@ -1976,7 +1976,7 @@ if (false)
             if (res.error != null) return res;
             Node expr_ = res.register(this.kv());
             if (res.error != null) return res;
-            cases.add(new Case(condition, expr_, false));
+            cases.add(new Case(condition, expr_, true));
             return null;
         };
 
@@ -2004,7 +2004,7 @@ if (false)
 
             Node expr = res.register(this.statement());
             if (res.error != null) return res;
-            elseCase = new ElseCase(expr, false);
+            elseCase = new ElseCase(expr, true);
         }
         return res.success(new QueryNode(cases, elseCase));
     }

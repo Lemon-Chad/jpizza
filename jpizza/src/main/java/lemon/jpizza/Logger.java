@@ -13,7 +13,7 @@ import java.util.Map;
 public class Logger {
     boolean log = true;
     boolean tips = false;
-    boolean debug = false;
+    public boolean debug = false;
     final int omitt = 5;
     final int tape = 40;
 

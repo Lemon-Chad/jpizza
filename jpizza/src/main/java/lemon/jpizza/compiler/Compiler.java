@@ -1,15 +1,15 @@
 package lemon.jpizza.compiler;
 
 import lemon.jpizza.Position;
+import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
+import lemon.jpizza.Tokens;
 import lemon.jpizza.cases.Case;
-import lemon.jpizza.compiler.values.JFunc;
+import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.nodes.definitions.FuncDefNode;
-import lemon.jpizza.nodes.definitions.LetNode;
-import lemon.jpizza.nodes.definitions.VarAssignNode;
+import lemon.jpizza.nodes.definitions.*;
 import lemon.jpizza.nodes.expressions.*;
 import lemon.jpizza.nodes.operations.BinOpNode;
 import lemon.jpizza.nodes.operations.UnaryOpNode;
@@ -50,6 +50,9 @@ public class Compiler {
     JFunc function;
     FunctionType type;
 
+    int continueTo;
+    List<Integer> breaks;
+
     Upvalue[] upvalues;
 
     public Chunk chunk() {
@@ -72,9 +75,12 @@ public class Compiler {
         this.localCount = 0;
         this.scopeDepth = 0;
 
-        locals[localCount++] = new Local(new LocalToken("", 0, 0), 0);
+        locals[localCount++] = new Local(new LocalToken(type == FunctionType.Method ? "this" : "", 0, 0), 0);
 
         this.enclosing = enclosing;
+
+        this.continueTo = 0;
+        this.breaks = new ArrayList<>();
     }
 
     void beginScope() {
@@ -195,7 +201,8 @@ public class Compiler {
     }
 
     public JFunc endCompiler() {
-        Disassembler.disassembleChunk(chunk(), function.name != null ? function.name : "<script>");
+        if (Shell.logger.debug)
+            Disassembler.disassembleChunk(chunk(), function.name != null ? function.name : "<script>");
         return function;
     }
 
@@ -272,6 +279,22 @@ public class Compiler {
         else if (statement instanceof DictNode)
             compile((DictNode) statement);
 
+        else if (statement instanceof ClassDefNode)
+            compile((ClassDefNode) statement);
+
+        else if (statement instanceof ContinueNode)
+            emitLoop(continueTo, statement.pos_start, statement.pos_end);
+
+        else if (statement instanceof BreakNode)
+            breaks.add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
+
+        else if (statement instanceof ClaccessNode) {
+            ClaccessNode node = (ClaccessNode) statement;
+            compile(node.class_tok);
+            int constant = chunk().addConstant(new Value(node.attr_name_tok.value.toString()));
+            emit(OpCode.Access, constant, node.pos_start, node.pos_end);
+        }
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
     }
@@ -298,8 +321,6 @@ public class Compiler {
         markInitialized();
         function(FunctionType.Function, node);
         defineVariable(global, List.of("function"), false, node.pos_start, node.pos_end);
-        emit(OpCode.Pop, node.pos_start, node.pos_end);
-        compileNull(node.pos_start, node.pos_end);
     }
 
     void markInitialized() {
@@ -316,18 +337,16 @@ public class Compiler {
             compiler.function.arity++;
             Token param = node.arg_name_toks.get(i);
             Token paramType = node.arg_type_toks.get(i);
-            int constant = compiler.parseVariable(param, param.pos_start, param.pos_end);
-            compiler.defineVariable(constant, (List<String>) paramType.value, false, param.pos_start, param.pos_end);
-            compiler.emit(OpCode.Pop, param.pos_start, param.pos_end);
+            compiler.parseVariable(param, param.pos_start, param.pos_end);
+            compiler.makeVar(compiler.localCount - 1, (List<String>) paramType.value, false, param.pos_start, param.pos_end);
         }
 
         compiler.compile(node.body_node);
-        if (!node.autoreturn)
-            compiler.compileNull(node.pos_start, node.pos_end);
         compiler.emit(OpCode.Return, node.body_node.pos_start, node.body_node.pos_end);
         JFunc function = compiler.endCompiler();
 
         function.name = node.var_name_tok.value.toString();
+        function.returnType = compileType(node.returnType, node.pos_start, node.pos_end, false);
 
         emit(OpCode.Closure, chunk().addConstant(new Value(function)), node.pos_start, node.pos_end);
 
@@ -394,17 +413,21 @@ public class Compiler {
 
     void compile(VarAccessNode node) {
         String name = node.var_name_tok.value.toString();
+        accessVariable(name, node.pos_start, node.pos_end);
+    }
+
+    void accessVariable(String name, Position start, Position end) {
         int arg = resolveLocal(name);
 
         if (arg != -1) {
-            emit(OpCode.GetLocal, arg, node.pos_start, node.pos_end);
+            emit(OpCode.GetLocal, arg, start, end);
         }
         else if ((arg = resolveUpvalue(name)) != -1) {
-            emit(OpCode.GetUpvalue, arg, node.pos_start, node.pos_end);
+            emit(OpCode.GetUpvalue, arg, start, end);
         }
         else {
             arg = chunk().addConstant(new Value(name));
-            emit(OpCode.GetGlobal, arg, node.pos_start, node.pos_end);
+            emit(OpCode.GetGlobal, arg, start, end);
         }
     }
 
@@ -420,17 +443,23 @@ public class Compiler {
     }
 
     void defineVariable(int global, List<String> type, boolean constant, Position start, Position end) {
-        compileType(type, start, end);
-
         if (scopeDepth > 0) {
             markInitialized();
-            emit(OpCode.DefineLocal, start, end);
+            emit(OpCode.DefineLocal, localCount - 1, start, end);
+            compileType(type, start, end);
             emit(constant ? 1 : 0, start, end);
             compileNull(start, end);
             return;
         }
 
         emit(OpCode.DefineGlobal, global, start, end);
+        compileType(type, start, end);
+        emit(constant ? 1 : 0, start, end);
+    }
+
+    void makeVar(int slot, List<String> type, boolean constant, Position start, Position end) {
+        emit(OpCode.MakeVar, slot, start, end);
+        compileType(type, start, end);
         emit(constant ? 1 : 0, start, end);
     }
 
@@ -451,7 +480,6 @@ public class Compiler {
             return;
 
         String name = varNameTok.value.toString();
-
         addLocal(name, start, end);
     }
 
@@ -558,6 +586,8 @@ public class Compiler {
     }
 
     void loopBody(Node body, boolean returnsNull, int loopStart) {
+        continueTo = loopStart;
+
         beginScope();
         compile(body);
         endScope(body.pos_start, body.pos_end);
@@ -570,26 +600,113 @@ public class Compiler {
         }
 
         emitLoop(loopStart, body.pos_start, body.pos_end);
+
+        continueTo = 0;
+        for (int i : breaks)
+            patchJump(i);
     }
 
-    void compileType(String type, Position start, Position end) {
+    String compileType(String type) {
         int g = resolveGeneric(type);
         if (g != -1) {
-            emit(OpCode.GetGeneric, g, start, end);
+            return "@" + g;
         }
         else {
-            compileString(type, start, end);
+            return type;
         }
     }
 
     void compileType(List<String> type, Position start, Position end) {
-        compileType(type.get(0), start, end);
-        for (int i = 1; i < type.size(); i++) {
-            // My(Type) -> Turns into "My" + "(" + "Type" + ")"
-            // Including any generics
-            compileType(type.get(i), start, end);
-            emit(OpCode.Add, start, end);
+        compileType(type, start, end, true);
+    }
+
+    List<String> compileType(List<String> type, Position start, Position end, boolean emit) {
+        List<String> compiled = new ArrayList<>();
+        for (String t : type) {
+            compiled.add(compileType(t));
         }
+        Value compiledval = Value.fromType(compiled);
+        int constant = chunk().addConstant(compiledval);
+        if (emit)
+            emit(constant, start, end);
+        return compiled;
+    }
+
+    void compile(ClassDefNode node) {
+        String name = node.class_name_tok.value.toString();
+        int nameConstant = chunk().addConstant(new Value(name));
+        declareVariable(node.class_name_tok, node.class_name_tok.pos_start, node.class_name_tok.pos_end);
+
+        for (int i = node.attributes.size() - 1; i >= 0; i--) {
+            Node def = node.attributes.get(i).nValue;
+            if (def != null)
+                compile(def);
+            else
+                compileNull(node.attributes.get(i).pos_start, node.attributes.get(i).pos_end);
+        }
+
+        emit(OpCode.Class, nameConstant, node.pos_start, node.pos_end);
+
+        emit(node.attributes.size(), node.pos_start, node.pos_end);
+        for (AttrDeclareNode attr : node.attributes)
+            compile(attr);
+
+        defineVariable(nameConstant, List.of("recipe"), true, node.pos_start, node.pos_end);
+
+        for (MethDefNode method : node.methods)
+            compile(method);
+
+        Position constructorStart = node.make_node.pos_start;
+        Position constructorEnd = node.make_node.pos_end;
+        compile(new MethDefNode(
+                new Token(Tokens.TT.IDENTIFIER, "<make>", constructorStart, constructorEnd),
+                node.arg_name_toks,
+                node.arg_type_toks,
+                node.make_node,
+                false,
+                false,
+                false,
+                List.of("void"),
+                node.defaults,
+                node.defaultCount,
+                node.generic_toks,
+                false,
+                false,
+                node.argname,
+                node.kwargname
+        ), true);
+
+        emit(OpCode.Pop, node.pos_start, node.pos_end);
+        compileNull(node.pos_start, node.pos_end);
+    }
+
+    void compile(MethDefNode node) {
+        compile(node, false);
+    }
+
+    void compile(MethDefNode node, boolean isConstructor) {
+        String name = node.var_name_tok.value.toString();
+        int nameConstant = chunk().addConstant(new Value(name));
+
+        FunctionType type = isConstructor ? FunctionType.Constructor : FunctionType.Method;
+        function(type, node.asFuncDef());
+
+        emit(new int[]{
+                OpCode.Method,
+                nameConstant,
+                node.stat ? 1 : 0,
+                node.priv ? 1 : 0,
+        }, node.pos_start, node.pos_end);
+    }
+
+    void compile(AttrDeclareNode node) {
+        int global = chunk().addConstant(new Value(node.name));
+        emit(new int[]{
+                global,
+                node.isprivate ? 1 : 0,
+                node.isstatic ? 1 : 0,
+        }, node.pos_start, node.pos_end);
+        compileType(node.type, node.pos_start, node.pos_end);
     }
 
     // CollectLoop adds the previous value to the loop stack in the VM

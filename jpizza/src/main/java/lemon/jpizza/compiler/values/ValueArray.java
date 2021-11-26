@@ -13,9 +13,10 @@ public class ValueArray implements Serializable {
         this.values = new ArrayList<>();
     }
 
-    public void write(Value value) {
+    public int write(Value value) {
         values.add(value);
         length++;
+        return length - 1;
     }
 
     public void free() {

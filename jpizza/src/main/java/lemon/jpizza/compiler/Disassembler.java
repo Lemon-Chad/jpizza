@@ -1,7 +1,7 @@
 package lemon.jpizza.compiler;
 
 import lemon.jpizza.Shell;
-import lemon.jpizza.compiler.values.JFunc;
+import lemon.jpizza.compiler.values.functions.JFunc;
 
 public class Disassembler {
     public static void disassembleChunk(Chunk chunk, String string) {
@@ -30,7 +30,7 @@ public class Disassembler {
             case OpCode.Constant -> constantInstruction("OP_CONSTANT", chunk, offset);
             case OpCode.SetGlobal -> constantInstruction("OP_SET_GLOBAL", chunk, offset);
             case OpCode.GetGlobal -> constantInstruction("OP_GET_GLOBAL", chunk, offset);
-            case OpCode.DefineGlobal -> constantInstruction("OP_DEFINE_GLOBAL", chunk, offset);
+            case OpCode.DefineGlobal -> declInstruction("OP_DEFINE_GLOBAL", chunk, offset, false);
 
             case OpCode.PushTraceback -> constantInstruction("OP_PUSH_TRACEBACK", chunk, offset);
             case OpCode.PopTraceback -> simpleInstruction("OP_POP_TRACEBACK", offset);
@@ -53,7 +53,15 @@ public class Disassembler {
 
             case OpCode.SetLocal -> byteInstruction("OP_SET_LOCAL", chunk, offset);
             case OpCode.GetLocal -> byteInstruction("OP_GET_LOCAL", chunk, offset);
-            case OpCode.DefineLocal -> byteInstruction("OP_DEFINE_LOCAL", chunk, offset);
+            case OpCode.DefineLocal -> declInstruction("OP_DEFINE_LOCAL", chunk, offset, true);
+
+            case OpCode.MakeVar -> {
+                int arg = chunk.code.get(offset + 1);
+                String type = chunk.constants.values.get(chunk.code.get(offset + 2)).asString();
+                String constant = chunk.code.get(offset + 3) == 1 ? "CONSTANT" : "MUTABLE";
+                Shell.logger.debug(String.format("%-16s %-16s %4d '%s'%n", constant, "OP_MAKE_VAR", arg, type));
+                yield offset + 4;
+            }
 
             case OpCode.GetUpvalue -> byteInstruction("OP_GET_UPVALUE", chunk, offset);
             case OpCode.SetUpvalue -> byteInstruction("OP_SET_UPVALUE", chunk, offset);
@@ -66,11 +74,26 @@ public class Disassembler {
             
             case OpCode.Loop -> jumpInstruction("OP_LOOP", -1, chunk, offset);
 
+            case OpCode.Method -> {
+                constantInstruction("OP_METHOD", chunk, offset);
+                yield offset + 4;
+            }
+
+            case OpCode.Access -> constantInstruction("OP_ACCESS", chunk, offset);
+
             case OpCode.StartCache -> simpleInstruction("OP_START_CACHE", offset);
             case OpCode.CollectLoop -> simpleInstruction("OP_COLLECT_LOOP", offset);
             case OpCode.FlushLoop -> simpleInstruction("OP_FLUSH_LOOP", offset);
 
             case OpCode.For -> forInstruction(chunk, offset);
+
+            case OpCode.Class -> {
+                int end = constantInstruction("OP_CLASS", chunk, offset);
+                int attributeCount = chunk.code.get(offset + 2);
+                // CONSTANT ISSTATIC ISPRIVATE TYPE
+                int totalAttributeOffset = 1 + attributeCount * 4;
+                yield end + totalAttributeOffset;
+            }
 
             case OpCode.Call -> byteInstruction("OP_CALL", chunk, offset);
             case OpCode.Closure -> {
@@ -105,7 +128,9 @@ public class Disassembler {
     
     static int constantInstruction(String name, Chunk chunk, int offset) {
         int constant = chunk.code.get(offset + 1);
-        Shell.logger.debug(String.format("%-16s %4d '%s'%n", name, constant, chunk.constants.values.get(constant)));
+        Shell.logger.debug(String.format("%-16s %4d '", name, constant));
+        Shell.logger.debug(chunk.constants.values.get(constant));
+        Shell.logger.debug("'\n");
         return offset + 2;
     }
     
@@ -113,6 +138,18 @@ public class Disassembler {
         int local = chunk.code.get(offset + 1);
         Shell.logger.debug(String.format("%-16s %4d%n", name, local));
         return offset + 2;
+    }
+
+    static int declInstruction(String name, Chunk chunk, int offset, boolean isLocal) {
+        int arg = !isLocal ? chunk.code.get(offset + 1) : 0;
+        String type = chunk.constants.values.get(chunk.code.get(offset + 1 + (!isLocal ? 1 : 0))).asString();
+        String constant = chunk.code.get(offset + 2 + (!isLocal ? 1 : 0)) == 1 ? "CONSTANT" : "MUTABLE";
+        if (isLocal)
+            Shell.logger.debug(String.format("%-16s %-16s '%s'%n", constant, name, type));
+        else
+            Shell.logger.debug(String.format("%-16s %-16s %4d '%s' : '%s'%n", constant, name, arg,
+                    chunk.constants.values.get(arg), type));
+        return offset + 3 + (!isLocal ? 1 : 0);
     }
     
     static int jumpInstruction(String name, int sign, Chunk chunk, int offset) {

@@ -6,6 +6,14 @@ import lemon.jpizza.compiler.Disassembler;
 import lemon.jpizza.compiler.FlatPosition;
 import lemon.jpizza.compiler.OpCode;
 import lemon.jpizza.compiler.values.*;
+import lemon.jpizza.compiler.values.classes.BoundMethod;
+import lemon.jpizza.compiler.values.classes.ClassAttr;
+import lemon.jpizza.compiler.values.classes.Instance;
+import lemon.jpizza.compiler.values.classes.JClass;
+import lemon.jpizza.compiler.values.functions.JClosure;
+import lemon.jpizza.compiler.values.functions.JFunc;
+import lemon.jpizza.compiler.values.functions.JNative;
+import lemon.jpizza.compiler.values.functions.NativeResult;
 
 import java.util.*;
 
@@ -28,6 +36,9 @@ public class VM {
     CallFrame[] frames;
     int frameCount;
 
+    public boolean safe = false;
+    public boolean failed = false;
+
     public VM(JFunc function) {
         this.ip = 0;
 
@@ -42,7 +53,7 @@ public class VM {
         this.frames = new CallFrame[FRAMES_MAX];
         this.frameCount = 0;
 
-        this.frame = new CallFrame(new JClosure(function), 0, 0);
+        this.frame = new CallFrame(new JClosure(function), 0, 0, "void");
         frames[frameCount++] = frame;
 
         setup();
@@ -58,6 +69,8 @@ public class VM {
             return NativeResult.Ok();
         }, 1);
 
+        defineNative("clock", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
+
         // List Functions
         defineNative("append", (args) -> {
             Value list = args[0];
@@ -65,28 +78,27 @@ public class VM {
 
             list.append(value);
             return NativeResult.Ok();
-        }, 2, List.of("list", "any"));
+        }, List.of("list", "any"));
         defineNative("remove", (args) -> {
             Value list = args[0];
             Value value = args[1];
 
             list.remove(value);
             return NativeResult.Ok();
-        }, 2, List.of("list", "any"));
+        }, List.of("list", "any"));
         defineNative("pop", (args) -> {
             Value list = args[0];
             Value index = args[1];
 
-            push(list.pop(index.asNumber()));
-            return NativeResult.Ok();
-        }, 2, List.of("list", "num"));
+            return NativeResult.Ok(list.pop(index.asNumber()));
+        }, List.of("list", "num"));
         defineNative("extend", (args) -> {
             Value list = args[0];
             Value other = args[1];
 
             list.add(other);
             return NativeResult.Ok();
-        }, 2, List.of("list", "list"));
+        }, List.of("list", "list"));
         defineNative("insert", (args) -> {
             Value list = args[0];
             Value index = args[2];
@@ -94,7 +106,7 @@ public class VM {
 
             list.insert(index.asNumber(), value);
             return NativeResult.Ok();
-        }, 3, List.of("list", "any", "num"));
+        }, List.of("list", "any", "num"));
         defineNative("setIndex", (args) -> {
             Value list = args[0];
             Value index = args[2];
@@ -102,34 +114,30 @@ public class VM {
 
             list.set(index.asNumber(), value);
             return NativeResult.Ok();
-        }, 3, List.of("list", "any", "num"));
+        }, List.of("list", "any", "num"));
         defineNative("size", (args) -> {
             Value list = args[0];
-            push(new Value(list.asList().size()));
-            return NativeResult.Ok();
-        }, 1, List.of("list"));
+            return NativeResult.Ok(new Value(list.asList().size()));
+        }, List.of("list"));
         defineNative("choose", (args) -> {
             List<Value> list = args[0].asList();
             int max = list.size() - 1;
             int index = (int) (Math.random() * max);
-            push(list.get(index));
-            return NativeResult.Ok();
-        }, 1, List.of("list"));
+            return NativeResult.Ok(list.get(index));
+        }, List.of("list"));
         defineNative("contains", (args) -> {
             Value list = args[0];
             Value val = args[1];
-            push(new Value(list.asList().contains(val)));
-            return NativeResult.Ok();
-        }, 2, List.of("list", "any"));
+            return NativeResult.Ok(new Value(list.asList().contains(val)));
+        }, List.of("list", "any"));
         defineNative("sublist", (args) -> {
             Value list = args[0];
             Value start = args[1];
             Value end = args[2];
 
-            push(new Value(list.asList().subList(start.asNumber().intValue(),
+            return NativeResult.Ok(new Value(list.asList().subList(start.asNumber().intValue(),
                     end.asNumber().intValue())));
-            return NativeResult.Ok();
-        }, 3, List.of("list", "num", "num"));
+        }, List.of("list", "num", "num"));
         defineNative("join", (args) -> {
             Value str = args[0];
             Value list = args[1];
@@ -138,15 +146,13 @@ public class VM {
             for (Value val : list.asList())
                 strings.add(val.asString());
 
-            push(new Value(String.join(str.asString(), strings)));
-            return NativeResult.Ok();
-        }, 2, List.of("str", "list"));
+            return NativeResult.Ok(new Value(String.join(str.asString(), strings)));
+        }, List.of("str", "list"));
         defineNative("indexOf", (args) -> {
             Value list = args[0];
             Value val = args[1];
-            push(new Value(list.asList().indexOf(val)));
-            return NativeResult.Ok();
-        }, 2, List.of("list", "any"));
+            return NativeResult.Ok(new Value(list.asList().indexOf(val)));
+        }, List.of("list", "any"));
 
     }
 
@@ -158,10 +164,10 @@ public class VM {
         ));
     }
 
-    void defineNative(String name, JNative.Method method, int argc, List<String> types) {
+    void defineNative(String name, JNative.Method method, List<String> types) {
         globals.put(name, new Var(
                 "function",
-                new Value(new JNative(name, method, argc, types)),
+                new Value(new JNative(name, method, types.size(), types)),
                 false
         ));
     }
@@ -201,7 +207,6 @@ public class VM {
             while (!tracebacks.empty()) {
                 Traceback top = tracebacks.pop();
                 int line = Constants.indexToLine(frame.closure.function.chunk.source(), top.offset);
-                System.out.println(top.offset);
                 output = String.format("  %s  File %s, line %s, in %s\n%s", arrow, top.filename, line + 1, top.context, output);
             }
             output = "Traceback (most recent call last):\n" + output;
@@ -217,8 +222,14 @@ public class VM {
             output = String.format("%s Error (Runtime): %s\n", message, reason);
         }
 
-        Shell.logger.fail(output);
-        resetStack();
+        if (safe) {
+            Shell.logger.warn(output);
+        }
+        else {
+            Shell.logger.fail(output);
+            resetStack();
+        }
+        failed = true;
     }
 
     void resetStack() {
@@ -291,16 +302,42 @@ public class VM {
         return switch (op) {
             case OpCode.DefineGlobal -> {
                 String name = readString();
-                String type = pop().asString();
+                String type = readType();
                 Value value = peek(0);
 
+
+                if (type.equals("<inferred>"))
+                    type = value.type();
+
                 boolean constant = readByte() == 1;
+
+                if (!type.equals("any") && !value.type().equals(type)) {
+                    runtimeError("Type", "Type mismatch");
+                    yield VMResult.ERROR;
+                }
 
                 globals.put(name, new Var(type, value, constant));
                 yield VMResult.OK;
             }
             case OpCode.GetGlobal -> {
                 String name = readString();
+
+                if (frame.bound != null) {
+                    if (frame.bound.isInstance) {
+                        Instance instance = frame.bound.asInstance();
+                        if (instance.has(name)) {
+                            push(instance.getField(name, true));
+                            yield VMResult.OK;
+                        }
+                    } else if (frame.bound.isClass) {
+                        JClass clazz = frame.bound.asClass();
+                        if (clazz.has(name)) {
+                            push(clazz.getField(name, true));
+                            yield VMResult.OK;
+                        }
+                    }
+                }
+
                 Var value = globals.get(name);
 
                 if (value == null) {
@@ -314,6 +351,24 @@ public class VM {
             case OpCode.SetGlobal -> {
                 String name = readString();
                 Value value = peek(0);
+
+                if (frame.bound != null) {
+                    if (frame.bound.isInstance) {
+                        Instance instance = frame.bound.asInstance();
+                        if (instance.hasField(name)) {
+                            VMResult res = instance.setField(name, value, true);
+                            if (res == VMResult.OK)
+                                yield VMResult.OK;
+                        }
+                    } else if (frame.bound.isClass) {
+                        JClass clazz = frame.bound.asClass();
+                        if (clazz.hasField(name)) {
+                            VMResult res = clazz.setField(name, value, true);
+                            if (res == VMResult.OK)
+                                yield VMResult.OK;
+                        }
+                    }
+                }
 
                 Var var = globals.get(name);
                 if (var != null) {
@@ -350,9 +405,10 @@ public class VM {
             runtimeError("Scope", "Cannot reassign constant");
             return VMResult.ERROR;
         }
-        if (!"any".equals(var.type) && !val.type().equals(var.type)) {
+        String type = val.type();
+        if (!"any".equals(var.type) && !type.equals(var.type)) {
             runtimeError("Type",
-                    String.format("Got type %s, expected type %s", val.type(), var.type));
+                    String.format("Got type %s, expected type %s", type, var.type));
             return VMResult.ERROR;
         }
         var.val(val);
@@ -383,18 +439,50 @@ public class VM {
                 yield set(var.asVar(), val);
             }
             case OpCode.DefineLocal -> {
-                String type = pop().asString();
+                String type = readType();
                 Value val = pop();
+
+                if (type.equals("<inferred>"))
+                    type = val.type();
 
                 boolean constant = readByte() == 1;
 
-                push(new Value(new Var(type, val, constant)));
+                if (!type.equals("any") && !val.type().equals(type)) {
+                    runtimeError("Type", "Type mismatch");
+                    yield VMResult.ERROR;
+                }
+
+                Var var = new Var(type, val, constant);
+                push(new Value(var));
 
                 yield VMResult.OK;
             }
 
             default -> VMResult.OK;
         };
+    }
+
+    String readType() {
+        return readType(readConstant().asType());
+    }
+
+    String readType(List<String> rawtype) {
+        StringBuilder sb = new StringBuilder();
+
+        for (String raw : rawtype) {
+            // @SLOT = Generic type slot
+            if (raw.startsWith("@")) {
+                int slot = Integer.parseInt(raw.substring(1));
+                sb.append(get(slot).asString());
+            }
+            else {
+                sb.append(raw);
+            }
+        }
+
+        // ['MyCool', '(', '@1', ')', 'Type'] -> MyCool(GenericAtSlot1)Type
+
+        return sb.toString();
     }
 
     VMResult loopOps(int op) {
@@ -436,9 +524,7 @@ public class VM {
             return res;
 
         double i = var.val.asNumber();
-        if ((i >= end && step.asNumber() >= 1) || (i <= end && step.asNumber() < 1)) {
-            moveIP(jump);
-        }
+        moveIP(jump * (((i >= end && step.asNumber() >= 1) || (i <= end && step.asNumber() < 1)) ? 1 : 0));
 
         return VMResult.OK;
     }
@@ -467,6 +553,42 @@ public class VM {
         return VMResult.OK;
     }
 
+    VMResult access() {
+        String name = readString();
+        Value val = pop();
+
+        if (val.isInstance) {
+            return access(val, val.asInstance(), name);
+        }
+        else if (val.isClass) {
+            return access(val, val.asClass(), name);
+        }
+        else {
+            runtimeError("Type", "Type " + val.type() + " does not have members");
+            return VMResult.ERROR;
+        }
+    }
+
+    VMResult access(Value val, Instance instance, String name) {
+        return access(val, name, instance.getField(name, false));
+    }
+
+    VMResult access(Value val, JClass clazz, String name) {
+        return access(val, name, clazz.getField(name, false));
+    }
+
+    private VMResult access(Value val, String name, Value member) {
+        if (member == null) {
+            runtimeError("Scope", "No member named " + name);
+            return VMResult.ERROR;
+        }
+        if (member.isClosure) {
+            member = new Value(new BoundMethod(member.asClosure(), val));
+        }
+        push(member);
+        return VMResult.OK;
+    }
+
     boolean callValue(Value callee, int argCount) {
         if (callee.isNativeFunc) {
             return call(callee.asNative(), argCount);
@@ -474,11 +596,30 @@ public class VM {
         else if (callee.isClosure) {
             return call(callee.asClosure(), argCount);
         }
+        else if (callee.isClass) {
+            return call(callee.asClass(), argCount);
+        }
+        else if (callee.isBoundMethod) {
+            BoundMethod bound = callee.asBoundMethod();
+            stack[stackTop - argCount - 1] = new Value(new Var("any", bound.receiver, true));
+            return call(bound.closure, argCount, bound.receiver);
+        }
         runtimeError("Type", "Can only call functions and classes");
         return false;
     }
 
+    boolean call(JClass clazz, int argCount) {
+        Instance instance = new Instance(clazz);
+        Value value = new Value(instance);
+        BoundMethod bound = new BoundMethod(clazz.constructor.asClosure(), value);
+        return callValue(new Value(bound), argCount);
+    }
+
     boolean call(JClosure closure, int argCount) {
+        return call(closure, argCount, frame.bound);
+    }
+
+    boolean call(JClosure closure, int argCount, Value binding) {
         if (argCount != closure.function.arity) {
             runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
             return false;
@@ -491,7 +632,8 @@ public class VM {
 
         tracebacks.push(new Traceback(tracebacks.peek().filename, closure.function.name, currentPos().index));
 
-        frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1);
+        frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1,
+                readType(closure.function.returnType), binding);
         return true;
     }
 
@@ -512,33 +654,65 @@ public class VM {
         return stack[slot].asVar();
     }
 
+    void defineMethod(String name) {
+        Value val = peek(0);
+        JClass clazz = peek(1).asClass();
+
+        boolean isStatic = readByte() == 1;
+        boolean isPrivate = readByte() == 1;
+
+        JClosure method = val.asClosure();
+        method.asMethod(isStatic, isPrivate, clazz.name);
+
+        clazz.addMethod(name, val);
+        pop();
+    }
+
     public VMResult run() {
         frame = frames[frameCount - 1];
+        int exitLevel = frameCount - 1;
 
         while (true) {
-            Shell.logger.debug("          ");
-            for (int i = 0; i < stackTop; i++) {
-                Shell.logger.debug("[ ");
-                Shell.logger.debug(stack[i]);
-                Shell.logger.debug(" ]");
-            }
-            Shell.logger.debug("\n");
+            if (Shell.logger.debug) {
+                Shell.logger.debug("          ");
+                for (int i = 0; i < stackTop; i++) {
+                    Shell.logger.debug("[ ");
+                    Shell.logger.debug(stack[i]);
+                    Shell.logger.debug(" ]");
+                }
+                Shell.logger.debug("\n");
 
-            Disassembler.disassembleInstruction(frame.closure.function.chunk, frame.ip);
+                Disassembler.disassembleInstruction(frame.closure.function.chunk, frame.ip);
+            }
 
             int instruction = readByte();
             VMResult res = switch (instruction) {
                 case OpCode.Return -> {
                     Value result = pop();
                     frameCount--;
-                    if (frameCount == 0) {
+                    if (frameCount == exitLevel) {
                         yield VMResult.EXIT;
                     }
+
+                    if (!frame.returnType.equals("any") && !result.type().equals(frame.returnType)) {
+                        runtimeError("Type", "Expected " + frame.returnType + " but got " + result.type());
+                        yield VMResult.ERROR;
+                    }
+
+                    boolean isConstructor = frame.closure.function.name.equals("<make>");
+                    Value bound = frame.bound;
 
                     stackTop = frame.slots;
                     frame = frames[frameCount - 1];
                     tracebacks.pop();
-                    push(result);
+
+                    if (isConstructor) {
+                        push(bound);
+                    }
+                    else {
+                        push(result);
+                    }
+
                     yield VMResult.OK;
                 }
                 case OpCode.Constant -> {
@@ -619,8 +793,6 @@ public class VM {
                             closure.upvalues.set(i, captureUpvalue(frame.slots + index));
                         else
                             closure.upvalues.set(i, frame.closure.upvalues.get(index));
-                        System.out.println(frame.slots + index);
-                        System.out.println(closure.upvalues);
                     }
 
                     yield VMResult.OK;
@@ -649,6 +821,39 @@ public class VM {
                     push(new Value(map));
                     yield VMResult.OK;
                 }
+
+                case OpCode.Class -> {
+                    String name = readString();
+
+                    int attributeCount = readByte();
+                    Map<String, ClassAttr> attributes = new HashMap<>();
+                    for (int i = 0; i < attributeCount; i++) {
+                        String attrname = readString();
+                        boolean isprivate = readByte() == 1;
+                        boolean isstatic = readByte() == 1;
+                        String type = readType();
+                        attributes.put(attrname, new ClassAttr(pop(), type, isstatic, isprivate));
+                    }
+
+                    push(new Value(new JClass(name, attributes)));
+                    yield VMResult.OK;
+                }
+
+                case OpCode.Method -> {
+                    defineMethod(readString());
+                    yield VMResult.OK;
+                }
+
+                case OpCode.MakeVar -> {
+                    int slot = readByte();
+                    String type = readType();
+                    boolean constant = readByte() == 1;
+
+                    stack[frame.slots + slot] = new Value(new Var(type, get(slot), constant));
+                    yield VMResult.OK;
+                }
+
+                case OpCode.Access -> access();
 
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
             };

@@ -1,14 +1,20 @@
-package lemon.jpizza.compiler.values;
+package lemon.jpizza.compiler.values.functions;
 
 import lemon.jpizza.compiler.Chunk;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class JFunc implements Serializable {
-    public Value obj;
     public int arity;
     public Chunk chunk;
     public String name;
+    public List<String> returnType;
+
+    // Only if the function is a method
+    public boolean isPrivate;
+    public boolean isStatic;
+    public String owner;
 
     public int upvalueCount;
 
@@ -21,6 +27,8 @@ public class JFunc implements Serializable {
     }
 
     public String toString() {
+        if (owner != null)
+            return "<" + owner + "-method-" + name + ">";
         return "<function-" + name + ">";
     }
 
