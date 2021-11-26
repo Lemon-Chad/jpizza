@@ -11,10 +11,10 @@ public class JNative {
         NativeResult call(Value[] stack);
     }
 
-    String name;
-    Method method;
-    int argc;
-    List<String> types;
+    final String name;
+    final Method method;
+    final int argc;
+    final List<String> types;
 
     public JNative(String name, Method method, int argc, List<String> types) {
         this.name = name;

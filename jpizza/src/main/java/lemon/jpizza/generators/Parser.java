@@ -32,8 +32,7 @@ public class Parser {
         PascalCase,
         SnakeCase,
         MixedSnakeCase,
-        None,
-        Mixed
+        None
     }
 
     static String stringConvention(NamingConvention convention) {
@@ -157,8 +156,8 @@ public class Parser {
     }
 
     private static class TokenMatcher {
-        TT type;
-        String value;
+        final TT type;
+        final String value;
 
         public TokenMatcher(TT type, String value) {
             this.type = type;

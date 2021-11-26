@@ -37,17 +37,4 @@ public class ServerPuddle {
         }
     }
 
-    public RTResult close(Position pos_start, Position pos_end, Context context) {
-        try {
-            inner.close();
-            SafeSocks.serverCodes.remove(id);
-        } catch (IOException e) {
-            return new RTResult().failure(RTError.Internal(
-                    pos_start, pos_end,
-                    e.toString(),
-                    context
-            ));
-        } return new RTResult().success(new Null());
-    }
-
 }

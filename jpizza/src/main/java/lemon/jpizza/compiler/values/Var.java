@@ -3,9 +3,9 @@ package lemon.jpizza.compiler.values;
 import java.io.Serializable;
 
 public class Var implements Serializable {
-    public String type;
+    public final String type;
     public Value val;
-    public boolean constant;
+    public final boolean constant;
 
     public Var(String type, Value val, boolean constant) {
         this.type = type;

@@ -65,17 +65,4 @@ public class SocketPuddle {
                                             .set_pos(pos_start, pos_end)
                                             .set_context(ctx));
     }
-
-    public RTResult close(Position pos_start, Position pos_end, Context context) {
-        try {
-            inner.close();
-            SafeSocks.clientCodes.remove(id);
-        } catch (IOException e) {
-            return new RTResult().failure(RTError.Internal(
-                    pos_start, pos_end,
-                    e.toString(),
-                    context
-            ));
-        } return new RTResult().success(new Null());
-    }
 }

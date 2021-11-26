@@ -11,6 +11,7 @@ import lemon.jpizza.results.RTResult;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class ClassInstance extends Value {
     Position pos_start; Position pos_end;
     Context context;

@@ -10,7 +10,7 @@ import lemon.jpizza.results.RTResult;
 import java.util.List;
 
 public class BodyNode extends Node {
-    public List<Node> statements;
+    final public List<Node> statements;
 
     public BodyNode(List<Node> statements) {
         this.statements = statements;

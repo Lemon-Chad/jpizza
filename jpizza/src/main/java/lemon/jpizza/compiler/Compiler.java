@@ -25,7 +25,7 @@ public class Compiler {
 
     static record LocalToken(String name, int idx, int len) {}
     static class Local {
-        LocalToken name;
+        final LocalToken name;
         int depth;
 
         Local(LocalToken name, int depth) {
@@ -33,27 +33,24 @@ public class Compiler {
             this.depth = depth;
         }
 
-        public LocalToken name() {
-            return name;
-        }
     }
 
     static record Upvalue(int index, boolean isLocal) {}
 
-    Compiler enclosing;
+    final Compiler enclosing;
 
-    Local[] locals;
-    Local[] generics;
+    final Local[] locals;
+    final Local[] generics;
     int localCount;
     int scopeDepth;
 
-    JFunc function;
-    FunctionType type;
+    final JFunc function;
+    final FunctionType type;
 
     int continueTo;
-    List<Integer> breaks;
+    final List<Integer> breaks;
 
-    Upvalue[] upvalues;
+    final Upvalue[] upvalues;
 
     public Chunk chunk() {
         return this.function.chunk;

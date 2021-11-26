@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class Instance {
     public final JClass clazz;
-    public Map<String, ClassAttr> fields;
-    public Map<String, Value> methods;
+    public final Map<String, ClassAttr> fields;
+    public final Map<String, Value> methods;
 
     public Instance(JClass clazz) {
         this.clazz = clazz;
@@ -27,12 +27,6 @@ public class Instance {
             ));
         }
 
-    }
-
-    public Instance(JClass clazz, Map<String, ClassAttr> fields, Map<String, Value> methods) {
-        this.clazz = clazz;
-        this.fields = fields;
-        this.methods = methods;
     }
 
     public String type() {

@@ -22,10 +22,6 @@ public class DictNode extends Node {
         jptype = Constants.JPType.Dict;
     }
 
-    public Object get(Node key) {
-        return dict.get(key);
-    }
-
     public RTResult visit(Interpreter inter, Context context) {
         RTResult res = new RTResult();
         Dict dict = new Dict(new ConcurrentHashMap<>());

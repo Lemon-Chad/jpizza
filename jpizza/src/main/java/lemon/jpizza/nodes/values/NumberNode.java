@@ -11,13 +11,11 @@ import lemon.jpizza.Tokens;
 
 public class NumberNode extends ValueNode {
     public final double val;
-    public final boolean flt;
     public final boolean hex;
 
     public NumberNode(Token tok) {
         super(tok);
         val = (double) tok.value;
-        flt = tok.type == Tokens.TT.FLOAT;
         hex = false;
         jptype = Constants.JPType.Number;
     }
@@ -25,7 +23,6 @@ public class NumberNode extends ValueNode {
     public NumberNode(Token tok, boolean hex) {
         super(tok);
         val = (double) tok.value;
-        flt = tok.type == Tokens.TT.FLOAT;
         this.hex = hex;
         jptype = Constants.JPType.Number;
     }
@@ -34,7 +31,6 @@ public class NumberNode extends ValueNode {
         super(new Token(Tokens.TT.IDENTIFIER, "null", pos_start, pos_end));
         val = v;
         hex = true;
-        flt = false;
         jptype = Constants.JPType.Number;
     }
 

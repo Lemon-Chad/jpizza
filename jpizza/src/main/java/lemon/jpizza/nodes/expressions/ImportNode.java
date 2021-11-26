@@ -59,7 +59,7 @@ public class ImportNode extends Node {
                     .set_context(context);
         }
         else if (Constants.STANDLIBS.containsKey(fn)) {
-            Pair<ClassInstance, Error> pair = Shell.imprt(fn, Constants.STANDLIBS.get(fn), context, pos_start);
+            Pair<ClassInstance, Error> pair = Shell.imprt(fn, Constants.STANDLIBS.get(fn));
             if (pair.b != null) return res.failure(pair.b);
             imp = pair.a;
         }

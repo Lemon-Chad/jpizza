@@ -7,7 +7,7 @@ import java.util.List;
 
 public class JFunc implements Serializable {
     public int arity;
-    public Chunk chunk;
+    public final Chunk chunk;
     public String name;
     public List<String> returnType;
 

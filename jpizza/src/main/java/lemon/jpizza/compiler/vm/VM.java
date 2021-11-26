@@ -24,19 +24,19 @@ public class VM {
 
     private static record Traceback(String filename, String context, int offset) {}
 
-    Value[] stack;
+    final Value[] stack;
     int stackTop;
     int ip;
 
-    Stack<Traceback> tracebacks;
-    Map<String, Var> globals;
-    Stack<List<Value>> loopCache;
+    final Stack<Traceback> tracebacks;
+    final Map<String, Var> globals;
+    final Stack<List<Value>> loopCache;
 
     CallFrame frame;
-    CallFrame[] frames;
+    final CallFrame[] frames;
     int frameCount;
 
-    public boolean safe = false;
+    public final boolean safe = false;
     public boolean failed = false;
 
     public VM(JFunc function) {

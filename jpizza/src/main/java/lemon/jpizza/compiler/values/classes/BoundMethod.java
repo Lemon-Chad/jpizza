@@ -4,8 +4,8 @@ import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
 
 public class BoundMethod {
-    public JClosure closure;
-    public Value receiver;
+    public final JClosure closure;
+    public final Value receiver;
 
     public BoundMethod(JClosure closure, Value receiver) {
         this.closure = closure;

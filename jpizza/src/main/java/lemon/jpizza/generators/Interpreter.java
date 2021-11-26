@@ -157,7 +157,7 @@ public class Interpreter {
 
     public static RTResult getImprt(String path, String fn, Context context, Position pos_start, Position pos_end)
             throws IOException {
-        Pair<ClassInstance, Error> i = Shell.imprt(fn, Files.readString(Path.of(path)), context, pos_start);
+        Pair<ClassInstance, Error> i = Shell.imprt(fn, Files.readString(Path.of(path)));
         ClassInstance imp = i.a;
         Error error = i.b;
         if (error != null) return new RTResult().failure(error);

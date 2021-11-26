@@ -13,17 +13,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class Chunk implements Serializable {
-    List<Integer> code;
-    ValueArray constants;
-    List<FlatPosition> positions;
-    String source;
-
-    public Chunk() {
-        this.code = new ArrayList<>();
-        this.constants = new ValueArray();
-        this.positions = new ArrayList<>(Collections.singletonList(new FlatPosition(0, 0, 0)));
-        this.source = null;
-    }
+    final List<Integer> code;
+    final ValueArray constants;
+    final List<FlatPosition> positions;
+    final String source;
 
     public Chunk(String source) {
         this.code = new ArrayList<>();
@@ -59,12 +52,6 @@ public class Chunk implements Serializable {
         return Constants.indexToLine(source, getPosition(offset).index);
     }
 
-    public void free() {
-        code.clear();
-        constants.free();
-        positions.clear();
-    }
-
     public int addConstant(Value value) {
         return constants.write(value);
     }
@@ -79,18 +66,6 @@ public class Chunk implements Serializable {
 
     public ValueArray constants() {
         return constants;
-    }
-
-    public int length() {
-        return code.size();
-    }
-
-    public byte[] compile() throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(this);
-        oos.close();
-        return baos.toByteArray();
     }
 
 }

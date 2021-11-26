@@ -7,12 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JClosure implements Serializable {
-    public JFunc function;
+    public final JFunc function;
 
-    public List<Var> upvalues;
-    public int upvalueCount;
-
-    public boolean method = false;
+    public final List<Var> upvalues;
+    public final int upvalueCount;
 
     public JClosure(JFunc function) {
         this.function = function;
@@ -27,8 +25,6 @@ public class JClosure implements Serializable {
         function.isStatic = isStatic;
         function.isPrivate = isPrivate;
         function.owner = owner;
-
-        method = true;
     }
 
     public String toString() {
