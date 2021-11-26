@@ -2,6 +2,7 @@ package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
+import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.util.HashMap;
@@ -17,16 +18,19 @@ public class Instance {
         methods = clazz.methods;
 
         fields = new HashMap<>();
-        for (Map.Entry<String, ClassAttr> entry : clazz.attributes.entrySet()) {
+        copyAttributes(clazz.attributes, fields);
+    }
+
+    public static void copyAttributes(Map<String, ClassAttr> src, Map<String, ClassAttr> dst) {
+        for (Map.Entry<String, ClassAttr> entry : src.entrySet()) {
             ClassAttr value = entry.getValue();
-            fields.put(entry.getKey(), new ClassAttr(
+            dst.put(entry.getKey(), new ClassAttr(
                     value.val,
                     value.type,
                     value.isStatic,
                     value.isPrivate
             ));
         }
-
     }
 
     public String type() {
@@ -51,13 +55,20 @@ public class Instance {
         return null;
     }
 
-    public VMResult setField(String name, Value value, boolean internal) {
+    public NativeResult setField(String name, Value value, boolean internal) {
+        return setField(name, value, fields, false, internal);
+    }
+
+    public static NativeResult setField(String name, Value value, Map<String, ClassAttr> fields, boolean staticContext, boolean internal) {
         ClassAttr attr = fields.get(name);
-        if (attr != null && (!attr.isPrivate || internal)) {
+        if (attr != null && attr.isStatic == staticContext && (!attr.isPrivate || internal)) {
+            String type = value.type();
+            if (!attr.type.equals("any") && !attr.type.equals(type))
+                return NativeResult.Err("Type", "Expected " + attr.type + " but got " + type);
             attr.set(value);
-            return VMResult.OK;
+            return NativeResult.Ok();
         }
-        return VMResult.ERROR;
+        return NativeResult.Err("Scope", "Undefined attribute '" + name + "'");
     }
 
     public boolean hasField(String name) {

@@ -14,6 +14,7 @@ import lemon.jpizza.nodes.expressions.*;
 import lemon.jpizza.nodes.operations.BinOpNode;
 import lemon.jpizza.nodes.operations.UnaryOpNode;
 import lemon.jpizza.nodes.values.*;
+import lemon.jpizza.nodes.variables.AttrAccessNode;
 import lemon.jpizza.nodes.variables.VarAccessNode;
 
 import java.util.ArrayList;
@@ -290,6 +291,19 @@ public class Compiler {
             compile(node.class_tok);
             int constant = chunk().addConstant(new Value(node.attr_name_tok.value.toString()));
             emit(OpCode.Access, constant, node.pos_start, node.pos_end);
+        }
+
+        else if (statement instanceof AttrAssignNode) {
+            AttrAssignNode node = (AttrAssignNode) statement;
+            compile(node.value_node);
+            int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
+            emit(OpCode.SetAttr, constant, node.pos_start, node.pos_end);
+        }
+
+        else if (statement instanceof AttrAccessNode) {
+            AttrAccessNode node = (AttrAccessNode) statement;
+            int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
+            emit(OpCode.GetAttr, constant, node.pos_start, node.pos_end);
         }
 
         else
@@ -642,7 +656,10 @@ public class Compiler {
                 compileNull(node.attributes.get(i).pos_start, node.attributes.get(i).pos_end);
         }
 
+        if (node.parentToken != null) accessVariable(node.parentToken.value.toString(), node.parentToken.pos_start, node.parentToken.pos_end);
+
         emit(OpCode.Class, nameConstant, node.pos_start, node.pos_end);
+        emit(node.parentToken != null ? 1 : 0, node.pos_start, node.pos_end);
 
         emit(node.attributes.size(), node.pos_start, node.pos_end);
         for (AttrDeclareNode attr : node.attributes)

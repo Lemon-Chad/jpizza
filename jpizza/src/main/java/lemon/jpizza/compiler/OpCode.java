@@ -44,4 +44,6 @@ public class OpCode {
     public static final int Access = 40;
     public static final int Method = 41;
     public static final int MakeVar = 42;
+    public static final int SetAttr = 43;
+    public static final int GetAttr = 44;
 }

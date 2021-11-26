@@ -322,21 +322,9 @@ public class VM {
             case OpCode.GetGlobal -> {
                 String name = readString();
 
-                if (frame.bound != null) {
-                    if (frame.bound.isInstance) {
-                        Instance instance = frame.bound.asInstance();
-                        if (instance.has(name)) {
-                            push(instance.getField(name, true));
-                            yield VMResult.OK;
-                        }
-                    } else if (frame.bound.isClass) {
-                        JClass clazz = frame.bound.asClass();
-                        if (clazz.has(name)) {
-                            push(clazz.getField(name, true));
-                            yield VMResult.OK;
-                        }
-                    }
-                }
+                VMResult res = getBound(name, true);
+                if (res == VMResult.OK)
+                    yield VMResult.OK;
 
                 Var value = globals.get(name);
 
@@ -352,23 +340,9 @@ public class VM {
                 String name = readString();
                 Value value = peek(0);
 
-                if (frame.bound != null) {
-                    if (frame.bound.isInstance) {
-                        Instance instance = frame.bound.asInstance();
-                        if (instance.hasField(name)) {
-                            VMResult res = instance.setField(name, value, true);
-                            if (res == VMResult.OK)
-                                yield VMResult.OK;
-                        }
-                    } else if (frame.bound.isClass) {
-                        JClass clazz = frame.bound.asClass();
-                        if (clazz.hasField(name)) {
-                            VMResult res = clazz.setField(name, value, true);
-                            if (res == VMResult.OK)
-                                yield VMResult.OK;
-                        }
-                    }
-                }
+                VMResult res = setBound(name, value, true);
+                if (res == VMResult.OK)
+                    yield VMResult.OK;
 
                 Var var = globals.get(name);
                 if (var != null) {
@@ -379,6 +353,79 @@ public class VM {
                     yield VMResult.ERROR;
                 }
             }
+            default -> VMResult.OK;
+        };
+    }
+
+    VMResult getBound(String name, boolean suppress) {
+        if (frame.bound != null) {
+            if (frame.bound.isInstance) {
+                Instance instance = frame.bound.asInstance();
+                if (instance.has(name)) {
+                    push(instance.getField(name, true));
+                    return VMResult.OK;
+                }
+                else {
+                    if (!suppress)
+                        runtimeError("Scope", "Undefined attribute");
+                    return VMResult.ERROR;
+                }
+            } else if (frame.bound.isClass) {
+                JClass clazz = frame.bound.asClass();
+                if (clazz.has(name)) {
+                    push(clazz.getField(name, true));
+                    return VMResult.OK;
+                }
+                else {
+                    if (!suppress)
+                        runtimeError("Scope", "Undefined attribute");
+                    return VMResult.ERROR;
+                }
+            }
+            if (!suppress)
+                runtimeError("Scope", "Not in class or instance");
+            return VMResult.ERROR;
+        }
+        if (!suppress)
+            runtimeError("Scope", "Not in class or instance");
+        return VMResult.ERROR;
+    }
+
+    VMResult setBound(String name, Value value, boolean suppress) {
+        if (frame.bound != null) {
+            if (frame.bound.isInstance) {
+                Instance instance = frame.bound.asInstance();
+                return boundNeutral(suppress, instance.hasField(name), instance.setField(name, value, true));
+            } else if (frame.bound.isClass) {
+                JClass clazz = frame.bound.asClass();
+                return boundNeutral(suppress, clazz.hasField(name), clazz.setField(name, value, true));
+            }
+        }
+        if (!suppress)
+            runtimeError("Scope", "Not in class or instance");
+        return VMResult.ERROR;
+    }
+
+    VMResult boundNeutral(boolean suppress, boolean b, NativeResult nativeResult) {
+        if (b) {
+            if (nativeResult.ok())
+                return VMResult.OK;
+            else {
+                if (!suppress)
+                    runtimeError(nativeResult.name(), nativeResult.reason());
+                return VMResult.ERROR;
+            }
+        }
+
+        if (!suppress)
+            runtimeError("Scope", "Undefined attribute");
+        return VMResult.ERROR;
+    }
+
+    VMResult attrOps(int op) {
+        return switch (op) {
+            case OpCode.GetAttr -> getBound(readString(), false);
+            case OpCode.SetAttr -> setBound(readString(), pop(), false);
             default -> VMResult.OK;
         };
     }
@@ -798,6 +845,9 @@ public class VM {
                     yield VMResult.OK;
                 }
 
+                case OpCode.GetAttr,
+                        OpCode.SetAttr -> attrOps(instruction);
+
                 case OpCode.GetUpvalue,
                         OpCode.SetUpvalue -> upvalueOps(instruction);
 
@@ -824,6 +874,8 @@ public class VM {
 
                 case OpCode.Class -> {
                     String name = readString();
+                    boolean hasSuper = readByte() == 1;
+                    JClass superClass = hasSuper ? pop().asClass() : null;
 
                     int attributeCount = readByte();
                     Map<String, ClassAttr> attributes = new HashMap<>();
@@ -835,7 +887,8 @@ public class VM {
                         attributes.put(attrname, new ClassAttr(pop(), type, isstatic, isprivate));
                     }
 
-                    push(new Value(new JClass(name, attributes)));
+
+                    push(new Value(new JClass(name, attributes, superClass)));
                     yield VMResult.OK;
                 }
 

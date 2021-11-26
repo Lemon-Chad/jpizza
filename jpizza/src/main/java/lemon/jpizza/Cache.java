@@ -2,7 +2,6 @@ package lemon.jpizza;
 
 import lemon.jpizza.objects.Obj;
 
-// Cool!
 public class Cache {
     public final String funcName;
     public final Obj[] args;

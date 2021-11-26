@@ -2,22 +2,35 @@ package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
+import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static lemon.jpizza.compiler.values.classes.Instance.copyAttributes;
+
 public class JClass {
+    public final JClass superClass;
+
     public final String name;
     public final Map<String, ClassAttr> attributes;
-    public final Map<String, Value> methods;
+    public Map<String, Value> methods;
 
     public Value constructor;
 
-    public JClass(String name, Map<String, ClassAttr> attributes) {
+    public JClass(String name, Map<String, ClassAttr> attributes, JClass superClass) {
         this.name = name;
-        this.attributes = attributes;
+        this.attributes = new HashMap<>();
         this.methods = new HashMap<>();
+
+        this.superClass = superClass;
+        if (superClass != null) {
+            copyAttributes(superClass.attributes, this.attributes);
+            this.methods = superClass.methods;
+        }
+
+        this.attributes.putAll(attributes);
     }
 
     public String toString() {
@@ -44,13 +57,8 @@ public class JClass {
         return null;
     }
 
-    public VMResult setField(String name, Value value, boolean internal) {
-        ClassAttr attr = attributes.get(name);
-        if (attr != null && attr.isStatic && (!attr.isPrivate || internal)) {
-            attr.set(value);
-            return VMResult.OK;
-        }
-        return VMResult.ERROR;
+    public NativeResult setField(String name, Value value, boolean internal) {
+        return Instance.setField(name, value, attributes, true, internal);
     }
 
     public boolean hasField(String name) {
