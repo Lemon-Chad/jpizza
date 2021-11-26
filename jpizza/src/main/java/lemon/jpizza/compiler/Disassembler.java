@@ -76,7 +76,7 @@ public class Disassembler {
 
             case OpCode.Method -> {
                 constantInstruction("OP_METHOD", chunk, offset);
-                yield offset + 4;
+                yield offset + 5;
             }
 
             case OpCode.Access -> constantInstruction("OP_ACCESS", chunk, offset);

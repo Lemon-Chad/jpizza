@@ -3,7 +3,6 @@ package lemon.jpizza.compiler.values.classes;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.NativeResult;
-import lemon.jpizza.compiler.vm.VMResult;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +15,7 @@ public class JClass {
     public final String name;
     public final Map<String, ClassAttr> attributes;
     public Map<String, Value> methods;
+    public Map<String, Value> binMethods;
 
     public Value constructor;
 
@@ -23,11 +23,13 @@ public class JClass {
         this.name = name;
         this.attributes = new HashMap<>();
         this.methods = new HashMap<>();
+        this.binMethods = new HashMap<>();
 
         this.superClass = superClass;
         if (superClass != null) {
             copyAttributes(superClass.attributes, this.attributes);
             this.methods = superClass.methods;
+            this.binMethods = superClass.binMethods;
         }
 
         this.attributes.putAll(attributes);
@@ -40,6 +42,8 @@ public class JClass {
     public void addMethod(String name, Value value) {
         if (name.equals("<make>"))
             constructor = value;
+        else if (value.asClosure().function.isBin)
+            binMethods.put(name, value);
         else
             methods.put(name, value);
     }

@@ -14,6 +14,7 @@ public class JFunc implements Serializable {
     // Only if the function is a method
     public boolean isPrivate;
     public boolean isStatic;
+    public boolean isBin;
     public String owner;
 
     public int upvalueCount;

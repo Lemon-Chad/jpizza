@@ -262,24 +262,66 @@ public class VM {
         return frame.closure.function.chunk.getPosition(frame.ip - 1);
     }
 
+    VMResult runBin(String name, Value arg, Instance instance) {
+        return runBin(name, new Value[]{arg}, instance);
+    }
+
+    VMResult runBin(String name, Value[] args, Instance instance) {
+        Value method = instance.binMethods.get(name);
+
+        push(method);
+        for (int i = 0; i < args.length; i++) {
+            push(args[i]);
+        }
+
+        if (!callValue(method, args.length)) return VMResult.ERROR;
+
+        VMResult res = run();
+        return res != VMResult.ERROR ? VMResult.OK : VMResult.ERROR;
+    }
+
+    boolean canOverride(Value value, String name) {
+        return value.isInstance && value.asInstance().binMethods.containsKey(name);
+    }
+
     VMResult binary(int op) {
         Value b = pop();
         Value a = pop();
 
         switch (op) {
             case OpCode.Add -> {
-                if (a.isString) {
+                if (a.isString)
                     push(new Value(a.asString() + b.asString()));
-                }
-                else {
+                else if (canOverride(a, "add"))
+                    return runBin("add", b, a.asInstance());
+                else
                     push(new Value(a.asNumber() + b.asNumber()));
-                }
             }
-            case OpCode.Subtract -> push(new Value(a.asNumber() - b.asNumber()));
-            case OpCode.Multiply -> push(new Value(a.asNumber() * b.asNumber()));
-            case OpCode.Divide -> push(new Value(a.asNumber() / b.asNumber()));
-            case OpCode.Modulo -> push(new Value(a.asNumber() % b.asNumber()));
-            case OpCode.Power -> push(new Value(Math.pow(a.asNumber(), b.asNumber())));
+            case OpCode.Subtract -> {
+                if (canOverride(a, "sub"))
+                    return runBin("sub", b, a.asInstance());
+                push(new Value(a.asNumber() - b.asNumber()));
+            }
+            case OpCode.Multiply -> {
+                if (canOverride(a, "mul"))
+                    return runBin("mult", b, a.asInstance());
+                push(new Value(a.asNumber() * b.asNumber()));
+            }
+            case OpCode.Divide -> {
+                if (canOverride(a, "div"))
+                    return runBin("div", b, a.asInstance());
+                push(new Value(a.asNumber() / b.asNumber()));
+            }
+            case OpCode.Modulo -> {
+                if (canOverride(a, "mod"))
+                    return runBin("mod", b, a.asInstance());
+                push(new Value(a.asNumber() % b.asNumber()));
+            }
+            case OpCode.Power -> {
+                if (canOverride(a, "fastpow"))
+                    return runBin("fastpow", b, a.asInstance());
+                push(new Value(Math.pow(a.asNumber(), b.asNumber())));
+            }
         }
 
         return VMResult.OK;
@@ -435,9 +477,27 @@ public class VM {
         Value a = pop();
 
         switch (op) {
-            case OpCode.Equal -> push(new Value(a.equals(b)));
-            case OpCode.GreaterThan -> push(new Value(a.asNumber() > b.asNumber()));
-            case OpCode.LessThan -> push(new Value(a.asNumber() < b.asNumber()));
+            case OpCode.Equal -> {
+                if (canOverride(a, "eq")) {
+                    return runBin("eq", b, a.asInstance());
+                }
+                else if (canOverride(b, "eq")) {
+                    return runBin("eq", a, b.asInstance());
+                }
+                push(new Value(a.equals(b)));
+            }
+            case OpCode.GreaterThan -> {
+                if (canOverride(b, "lte")) {
+                    return runBin("lte", a, b.asInstance());
+                }
+                push(new Value(a.asNumber() > b.asNumber()));
+            }
+            case OpCode.LessThan -> {
+                if (canOverride(a, "lt")) {
+                    return runBin("lt", b, a.asInstance());
+                }
+                push(new Value(a.asNumber() < b.asNumber()));
+            }
         }
 
         return VMResult.OK;
@@ -604,6 +664,10 @@ public class VM {
         String name = readString();
         Value val = pop();
 
+        if (canOverride(val,  "access")) {
+            return runBin("access", new Value(name), val.asInstance());
+        }
+
         if (val.isInstance) {
             return access(val, val.asInstance(), name);
         }
@@ -622,6 +686,29 @@ public class VM {
 
     VMResult access(Value val, JClass clazz, String name) {
         return access(val, name, clazz.getField(name, false));
+    }
+
+    VMResult collections(int op) {
+        return switch (op) {
+            case OpCode.Get, OpCode.Index -> {
+                Value index = pop();
+                Value collection = pop();
+
+                if (collection.isList || collection.isString) {
+                    push(collection.asList().get(index.asNumber().intValue()));
+                }
+                else if (canOverride(collection, op == OpCode.Get ? "get" : "bracket")) {
+                    yield runBin(op == OpCode.Get ? "get" : "bracket", index, collection.asInstance());
+                }
+                else if (collection.isMap) {
+                    push(collection.asMap().get(index));
+                }
+
+                yield VMResult.OK;
+            }
+
+            default -> VMResult.OK;
+        };
     }
 
     private VMResult access(Value val, String name, Value member) {
@@ -707,9 +794,10 @@ public class VM {
 
         boolean isStatic = readByte() == 1;
         boolean isPrivate = readByte() == 1;
+        boolean isBin = readByte() == 1;
 
         JClosure method = val.asClosure();
-        method.asMethod(isStatic, isPrivate, clazz.name);
+        method.asMethod(isStatic, isPrivate, isBin, clazz.name);
 
         clazz.addMethod(name, val);
         pop();
@@ -737,7 +825,7 @@ public class VM {
                 case OpCode.Return -> {
                     Value result = pop();
                     frameCount--;
-                    if (frameCount == exitLevel) {
+                    if (frameCount == 0) {
                         yield VMResult.EXIT;
                     }
 
@@ -758,6 +846,10 @@ public class VM {
                     }
                     else {
                         push(result);
+                    }
+
+                    if (exitLevel == frameCount) {
+                        yield VMResult.EXIT;
                     }
 
                     yield VMResult.OK;
@@ -782,6 +874,9 @@ public class VM {
                 case OpCode.Equal,
                         OpCode.GreaterThan,
                         OpCode.LessThan -> comparison(instruction);
+
+                case OpCode.Get,
+                        OpCode.Index -> collections(instruction);
 
                 case OpCode.Pop -> {
                     pop();

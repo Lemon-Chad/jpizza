@@ -21,9 +21,10 @@ public class JClosure implements Serializable {
         }
     }
 
-    public void asMethod(boolean isStatic, boolean isPrivate, String owner) {
+    public void asMethod(boolean isStatic, boolean isPrivate, boolean isBin, String owner) {
         function.isStatic = isStatic;
         function.isPrivate = isPrivate;
+        function.isBin = isBin;
         function.owner = owner;
     }
 

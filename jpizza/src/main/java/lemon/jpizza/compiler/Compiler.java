@@ -389,6 +389,23 @@ public class Compiler {
 
     void compile(BinOpNode node) {
 
+        if (node.op_tok == Tokens.TT.AND) {
+            compile(node.left_node);
+            int jump = emitJump(OpCode.JumpIfFalse, node.left_node.pos_start, node.left_node.pos_end);
+            emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
+            compile(node.right_node);
+            patchJump(jump);
+            return;
+        }
+        else if (node.op_tok == Tokens.TT.OR) {
+            compile(node.left_node);
+            int jump = emitJump(OpCode.JumpIfTrue, node.left_node.pos_start, node.left_node.pos_end);
+            emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
+            compile(node.right_node);
+            patchJump(jump);
+            return;
+        }
+
         compile(node.left_node);
         compile(node.right_node);
         switch (node.op_tok) {
@@ -405,6 +422,9 @@ public class Compiler {
             case LT -> emit(OpCode.LessThan, node.pos_start, node.pos_end);
             case GTE -> emit(new int[]{ OpCode.LessThan, OpCode.Not }, node.pos_start, node.pos_end);
             case LTE -> emit(new int[]{ OpCode.GreaterThan, OpCode.Not }, node.pos_start, node.pos_end);
+
+            case LSQUARE -> emit(OpCode.Index, node.pos_start, node.pos_end);
+            case DOT -> emit(OpCode.Get, node.pos_start, node.pos_end);
 
             default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
@@ -710,6 +730,7 @@ public class Compiler {
                 nameConstant,
                 node.stat ? 1 : 0,
                 node.priv ? 1 : 0,
+                node.bin ? 1 : 0,
         }, node.pos_start, node.pos_end);
     }
 

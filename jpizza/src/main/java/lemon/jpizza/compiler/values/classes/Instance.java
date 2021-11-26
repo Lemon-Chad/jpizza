@@ -1,5 +1,6 @@
 package lemon.jpizza.compiler.values.classes;
 
+import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.NativeResult;
@@ -12,10 +13,12 @@ public class Instance {
     public final JClass clazz;
     public final Map<String, ClassAttr> fields;
     public final Map<String, Value> methods;
+    public final Map<String, Value> binMethods;
 
     public Instance(JClass clazz) {
         this.clazz = clazz;
         methods = clazz.methods;
+        binMethods = clazz.binMethods;
 
         fields = new HashMap<>();
         copyAttributes(clazz.attributes, fields);

@@ -247,6 +247,14 @@ public class Value implements Serializable {
         if (isList) {
             return list;
         }
+        else if (isString) {
+            String[] lis = string.split("");
+            List<Value> list = new ArrayList<>();
+            for (String s : lis) {
+                list.add(new Value(s));
+            }
+            return list;
+        }
         else if (this.isNull) {
             return new ArrayList<>();
         }
