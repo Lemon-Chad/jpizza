@@ -18,6 +18,6 @@ public class Var implements Serializable {
     }
 
     public String toString() {
-        return type + ":" + val;
+        return val + ":" + type;
     }
 }
