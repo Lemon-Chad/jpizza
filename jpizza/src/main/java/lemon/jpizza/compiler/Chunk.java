@@ -14,6 +14,7 @@ import java.util.List;
 
 public class Chunk implements Serializable {
     final List<Integer> code;
+    public int[] codeArray;
     final ValueArray constants;
     final List<FlatPosition> positions;
     final String source;
@@ -48,6 +49,14 @@ public class Chunk implements Serializable {
         return positions.get(positions.size() - 1);
     }
 
+    public void compile() {
+        codeArray = new int[code.size()];
+        for (int i = 0; i < code.size(); i++) {
+            codeArray[i] = code.get(i);
+        }
+        constants.compile();
+    }
+
     public int getLine(int offset) {
         return Constants.indexToLine(source, getPosition(offset).index);
     }
@@ -58,10 +67,6 @@ public class Chunk implements Serializable {
 
     public String source() {
         return source;
-    }
-
-    public List<Integer> code() {
-        return code;
     }
 
     public ValueArray constants() {

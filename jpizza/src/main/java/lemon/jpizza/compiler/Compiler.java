@@ -476,7 +476,7 @@ public class Compiler {
     void defineVariable(int global, List<String> type, boolean constant, Position start, Position end) {
         if (scopeDepth > 0) {
             markInitialized();
-            emit(OpCode.DefineLocal, localCount - 1, start, end);
+            emit(OpCode.DefineLocal, start, end);
             compileType(type, start, end);
             emit(constant ? 1 : 0, start, end);
             compileNull(start, end);

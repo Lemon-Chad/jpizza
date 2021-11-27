@@ -7,6 +7,7 @@ import java.util.List;
 public class ValueArray implements Serializable {
     public int length;
     public final List<Value> values;
+    public Value[] valuesArray;
 
     public ValueArray() {
         this.length = 0;
@@ -19,8 +20,7 @@ public class ValueArray implements Serializable {
         return length - 1;
     }
 
-    public void free() {
-        values.clear();
-        length = 0;
+    public void compile() {
+        valuesArray = values.toArray(new Value[0]);
     }
 }

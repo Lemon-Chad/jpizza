@@ -30,7 +30,9 @@ public class VM {
 
     final Stack<Traceback> tracebacks;
     final Map<String, Var> globals;
+
     final Stack<List<Value>> loopCache;
+    List<Value> currentLoop;
 
     CallFrame frame;
     final CallFrame[] frames;
@@ -48,7 +50,9 @@ public class VM {
 
         this.globals = new HashMap<>();
         this.tracebacks = new Stack<>();
+
         this.loopCache = new Stack<>();
+        this.currentLoop = null;
 
         this.frames = new CallFrame[FRAMES_MAX];
         this.frameCount = 0;
@@ -242,12 +246,12 @@ public class VM {
     }
 
     Value readConstant() {
-        return frame.closure.function.chunk.constants().values.get(readByte());
+        return frame.closure.function.chunk.constants().valuesArray[readByte()];
     }
 
     int readByte() {
         ip++;
-        return frame.closure.function.chunk.code().get(frame.ip++);
+        return frame.closure.function.chunk.codeArray[frame.ip++];
     }
 
     Value peek(int offset) {
@@ -439,10 +443,10 @@ public class VM {
         if (frame.bound != null) {
             if (frame.bound.isInstance) {
                 Instance instance = frame.bound.asInstance();
-                return boundNeutral(suppress, instance.hasField(name), instance.setField(name, value, true));
+                return boundNeutral(suppress, instance.setField(name, value, true));
             } else if (frame.bound.isClass) {
                 JClass clazz = frame.bound.asClass();
-                return boundNeutral(suppress, clazz.hasField(name), clazz.setField(name, value, true));
+                return boundNeutral(suppress, clazz.setField(name, value, true));
             }
         }
         if (!suppress)
@@ -450,7 +454,7 @@ public class VM {
         return VMResult.ERROR;
     }
 
-    VMResult boundNeutral(boolean suppress, boolean b, NativeResult nativeResult) {
+    VMResult boundNeutral(boolean suppress, NativeResult nativeResult) {
         if (nativeResult.ok())
             return VMResult.OK;
         else {
@@ -528,10 +532,7 @@ public class VM {
                 }
 
                 Value val = get(slot);
-                if (val.isVar)
-                    push(val.asVar().val);
-                else
-                    push(val);
+                push(val.asVar().val);
                 yield VMResult.OK;
             }
             case OpCode.SetLocal -> {
@@ -595,9 +596,18 @@ public class VM {
                 moveIP(-offset);
             }
 
-            case OpCode.StartCache -> loopCache.push(new ArrayList<>());
-            case OpCode.CollectLoop -> loopCache.peek().add(pop());
-            case OpCode.FlushLoop -> push(new Value(new ArrayList<>(loopCache.pop())));
+            case OpCode.StartCache -> {
+                currentLoop = new ArrayList<>();
+                loopCache.push(currentLoop);
+            }
+            case OpCode.CollectLoop -> currentLoop.add(pop());
+            case OpCode.FlushLoop -> {
+                push(new Value(loopCache.pop()));
+                if (loopCache.isEmpty())
+                    currentLoop = null;
+                else
+                    currentLoop = loopCache.peek();
+            }
         }
 
         return VMResult.OK;
