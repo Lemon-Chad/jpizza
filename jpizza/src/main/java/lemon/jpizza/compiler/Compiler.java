@@ -201,6 +201,7 @@ public class Compiler {
     public JFunc endCompiler() {
         if (Shell.logger.debug)
             Disassembler.disassembleChunk(chunk(), function.name != null ? function.name : "<script>");
+        function.chunk.compile();
         return function;
     }
 

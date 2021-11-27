@@ -271,7 +271,6 @@ public class Shell {
 
         Compiler compiler = new Compiler(FunctionType.Script, text);
         JFunc func = compiler.compileBlock(outNode);
-        func.chunk.compile();
 
         try {
             FileOutputStream fout;
