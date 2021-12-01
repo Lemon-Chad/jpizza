@@ -307,6 +307,9 @@ public class Compiler {
             emit(OpCode.GetAttr, constant, node.pos_start, node.pos_end);
         }
 
+        else if (statement instanceof SwitchNode)
+            compile((SwitchNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
     }
@@ -333,6 +336,53 @@ public class Compiler {
         markInitialized();
         function(FunctionType.Function, node);
         defineVariable(global, List.of("function"), false, node.pos_start, node.pos_end);
+    }
+
+    void compile(SwitchNode node) {
+        if (node.match) {
+            compileMatch(node);
+        }
+        else {
+            compileSwitch(node);
+        }
+    }
+
+    void compileSwitch(SwitchNode node) {
+        int[] jumps = new int[node.cases.size()];
+        for (int i = 0; i < jumps.length; i++) {
+            Case caze = node.cases.get(i);
+
+            compile(node.reference);
+            compile(caze.condition);
+            emit(OpCode.Equal, node.pos_start, node.pos_end);
+
+            jumps[i] = emitJump(OpCode.JumpIfTrue, node.pos_start, node.pos_end);
+            emit(OpCode.Pop, node.pos_start, node.pos_end);
+        }
+        int defaultJump = emitJump(OpCode.Jump, node.pos_start, node.pos_end);
+
+        for (int i = 0; i < jumps.length; i++) {
+            Case caze = node.cases.get(i);
+            int jump = jumps[i];
+
+            patchJump(jump);
+            emit(OpCode.Pop, node.pos_start, node.pos_end);
+            compile(caze.statements);
+        }
+
+        patchJump(defaultJump);
+        if (node.elseCase != null)
+            compile(node.elseCase.statements);
+
+        for (int brk : breaks)
+            patchJump(brk);
+
+        compileNull(node.pos_start, node.pos_end);
+
+    }
+
+    void compileMatch(SwitchNode node) {
+
     }
 
     void markInitialized() {

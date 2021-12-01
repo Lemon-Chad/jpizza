@@ -15,14 +15,14 @@ import lemon.jpizza.results.RTResult;
 import java.util.List;
 
 public class SwitchNode extends Node {
-    public final boolean autoreturn;
+    public final boolean match;
     public final List<Case> cases;
     public final ElseCase elseCase;
     public final Node reference;
 
-    public SwitchNode(Node ref, List<Case> css, ElseCase else_case, boolean autoret) {
+    public SwitchNode(Node ref, List<Case> css, ElseCase else_case, boolean isMatch) {
         elseCase = else_case;
-        autoreturn = autoret;
+        match = isMatch;
         cases = css;
         reference = ref;
         pos_start = (cases.size() > 0 ? cases.get(0).condition : ref).pos_start.copy();
@@ -70,7 +70,7 @@ public class SwitchNode extends Node {
             }
         }
 
-        if (autoreturn && entry > -1) {
+        if (match && entry > -1) {
             ret = res.register(inter.visit(cases.get(entry).statements, ctx));
             if (res.error != null) return res;
         }
@@ -87,7 +87,7 @@ public class SwitchNode extends Node {
             if (res.error != null) return res;
         }
 
-        return res.success(autoreturn ? ret : new Null());
+        return res.success(match ? ret : new Null());
     }
 
 }
