@@ -114,6 +114,8 @@ public class Disassembler {
                 yield offset;
             }
 
+            case OpCode.Null -> simpleInstruction("OP_NULL", offset);
+
             default -> {
                 Shell.logger.debug(String.format("Unknown opcode %d%n", instruction));
                 yield offset + 1;

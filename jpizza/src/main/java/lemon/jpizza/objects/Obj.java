@@ -45,7 +45,6 @@ public abstract class Obj implements Serializable {
     public abstract Obj number();
     public abstract Obj alist();
     public abstract Obj bool();
-    public abstract Obj anull();
     public abstract Obj function();
     public abstract Obj dictionary();
     public abstract Obj astring();

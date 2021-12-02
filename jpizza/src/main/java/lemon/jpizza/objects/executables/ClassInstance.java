@@ -244,21 +244,6 @@ public class ClassInstance extends Value {
         }
         return x;
     }
-    public Obj anull() {
-        RTResult res = new RTResult();
-        CMethod func = ctx.symbolTable.getbin("null");
-        if (func == null)
-            return new Null().set_context(context).set_pos(pos_start, pos_end);
-        Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.Null) {
-            if (res.error != null)
-                Shell.logger.warn(res.error.asString());
-            else
-                Shell.logger.warn("Mismatched type, expected null (" + ctx.displayName + "-" + func.name + ")");
-            return new Null().set_context(context).set_pos(pos_start, pos_end);
-        }
-        return x;
-    }
     public Obj function() {
         return this;
     }

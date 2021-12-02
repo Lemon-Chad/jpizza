@@ -3,10 +3,12 @@ package lemon.jpizza.compiler.values.classes;
 import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
+import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Instance {
@@ -80,5 +82,25 @@ public class Instance {
 
     public boolean has(String name) {
         return fields.containsKey(name) || methods.containsKey(name);
+    }
+
+    public Double asNumber() {
+        return 0.0;
+    }
+
+    public boolean asBool() {
+        return false;
+    }
+
+    public List<Value> asList() {
+        return List.of(new Value(this));
+    }
+
+    public Map<Value, Value> asMap() {
+        return Map.of(new Value("this"), new Value(this));
+    }
+
+    public JFunc asFunc() {
+        return new JFunc("pass;");
     }
 }

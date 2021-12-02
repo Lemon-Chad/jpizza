@@ -9,6 +9,7 @@ import lemon.jpizza.objects.Value;
 import lemon.jpizza.Token;
 import lemon.jpizza.Pair;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,8 +148,8 @@ public class Num extends Value {
                                         .set_pos(pos_start, pos_end); }
     public Obj type() { return new Str(hex ? "hex" : "num").set_context(context).set_pos(pos_start, pos_end); }
     public String toString() {
-        if (hex) return "0x" + Integer.toHexString(((Double) value).intValue());
-        else if (floating()) return String.valueOf(Double.valueOf(number).longValue());
+        if (hex) return "0x" + Integer.toHexString((int) number);
+        else if (!floating()) return String.valueOf(Double.valueOf(number).longValue());
         return String.valueOf(number);
     }
 

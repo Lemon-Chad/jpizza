@@ -132,6 +132,9 @@ public class Value implements Serializable {
         else if (isMap) {
             return (double) map.size();
         }
+        else if (isInstance) {
+            return instance.asNumber();
+        }
         return 0.0;
     }
 
@@ -154,6 +157,9 @@ public class Value implements Serializable {
         }
         else if (isMap) {
             return !map.isEmpty();
+        }
+        else if (isInstance) {
+            return instance.asBool();
         }
         return false;
     }
@@ -258,6 +264,9 @@ public class Value implements Serializable {
         else if (this.isNull) {
             return new ArrayList<>();
         }
+        else if (isInstance) {
+            return instance.asList();
+        }
         return new ArrayList<>(List.of(this));
     }
 
@@ -272,6 +281,9 @@ public class Value implements Serializable {
         else if (this.isNull) {
             return Map.of();
         }
+        else if (isInstance) {
+            return instance.asMap();
+        }
         return Map.of(this, this);
     }
 
@@ -282,12 +294,18 @@ public class Value implements Serializable {
         else if (this.isClosure) {
             return closure.function;
         }
+        else if (isInstance) {
+            return instance.asFunc();
+        }
         return null;
     }
 
     public JClosure asClosure() {
         if (isClosure) {
             return closure;
+        }
+        else if (isInstance) {
+            return new JClosure(instance.asFunc());
         }
         return null;
     }

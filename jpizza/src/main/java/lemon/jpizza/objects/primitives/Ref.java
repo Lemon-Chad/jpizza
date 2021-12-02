@@ -23,7 +23,6 @@ public class Ref extends Value {
     public Obj number() { return inner.number(); }
     public Obj alist() { return inner.alist(); }
     public Obj bool() { return inner.bool(); }
-    public Obj anull() { return inner.anull(); }
     public Obj function() { return inner.function(); }
     public Obj dictionary() { return inner.dictionary(); }
     public Obj astring() { return inner.astring(); }

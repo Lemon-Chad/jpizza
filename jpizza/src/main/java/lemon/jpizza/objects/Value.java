@@ -55,7 +55,6 @@ public class Value extends Obj {
     public Obj dictionary() { return this; }
     public Obj alist() { return this; }
     public Obj bool() { return this; }
-    public Obj anull() { return new Null().set_context(context).set_pos(pos_start, pos_end); }
     public Obj astring() { return new Str(toString()).set_context(context).set_pos(pos_start, pos_end); }
     public Obj function() { return this; }
     public Obj bytes() {

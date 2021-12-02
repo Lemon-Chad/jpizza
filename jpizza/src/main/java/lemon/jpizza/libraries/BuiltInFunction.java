@@ -55,6 +55,7 @@ public class BuiltInFunction extends Library {
             put("split", Arrays.asList("value", "splitter"));
             put("enumProps", Arrays.asList("prop", "enumChild"));
             put("log", Arrays.asList("value", "base"));
+            put("doubleStr", Arrays.asList("value", "place"));
             put("println", Collections.singletonList("value"));
             put("print", Collections.singletonList("value"));
             put("printback", Collections.singletonList("value"));
@@ -146,6 +147,20 @@ public class BuiltInFunction extends Library {
     }};
 
     public BuiltInFunction(String name) { super(name, "compiled"); }
+
+    public RTResult execute_doubleStr(Context execCtx) {
+        RTResult res = new RTResult();
+
+        Obj num = res.register(checkType(execCtx.symbolTable.get("value"), "num", Constants.JPType.Number));
+        if (res.error != null) return res;
+        double number = num.number;
+
+        Obj pre = res.register(checkPosInt(execCtx.symbolTable.get("place")));
+        if (res.error != null) return res;
+        double place = pre.number;
+
+        return res.success(new Str(String.format("%." + (int) place + "f", number)));
+    }
 
     public RTResult execute_escape(Context execCtx) {
         return new RTResult().success(

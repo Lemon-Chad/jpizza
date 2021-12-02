@@ -881,6 +881,11 @@ public class VM {
                         OpCode.GreaterThan,
                         OpCode.LessThan -> comparison(instruction);
 
+                case OpCode.Null -> {
+                    push(new Value());
+                    yield VMResult.OK;
+                }
+
                 case OpCode.Get,
                         OpCode.Index -> collections(instruction);
 

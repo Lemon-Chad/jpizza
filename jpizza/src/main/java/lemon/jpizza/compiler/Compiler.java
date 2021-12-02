@@ -419,8 +419,7 @@ public class Compiler {
     }
 
     void compileNull(Position start, Position end) {
-        int constant = chunk().addConstant(new Value());
-        emit(OpCode.Constant, constant, start, end);
+        emit(OpCode.Null, start, end);
     }
 
     void compileBoolean(boolean val, Position start, Position end) {
