@@ -116,6 +116,9 @@ public class Disassembler {
 
             case OpCode.Null -> simpleInstruction("OP_NULL", offset);
 
+            case OpCode.SetAttr -> byteInstruction("OP_SET_ATTR", chunk, offset);
+            case OpCode.GetAttr -> byteInstruction("OP_GET_ATTR", chunk, offset);
+
             default -> {
                 Shell.logger.debug(String.format("Unknown opcode %d%n", instruction));
                 yield offset + 1;

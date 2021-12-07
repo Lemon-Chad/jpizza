@@ -8,15 +8,16 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 public class ReturnNode extends Node {
     public final Node nodeToReturn;
 
-    public ReturnNode(Node n, Position ps, Position pe) {
+    public ReturnNode(Node n, @NotNull Position ps, @NotNull Position pe) {
         this(n, ps, pe, false);
     }
 
-    public ReturnNode(Node nodeToReturn, Position pos_start, Position pos_end, boolean newline) {
+    public ReturnNode(Node nodeToReturn, @NotNull Position pos_start, @NotNull Position pos_end, boolean newline) {
         this.nodeToReturn = nodeToReturn;
         this.pos_start = pos_start.copy(); this.pos_end = pos_end.copy();
         jptype = Constants.JPType.Return;

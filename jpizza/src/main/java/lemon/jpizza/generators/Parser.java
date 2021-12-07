@@ -960,6 +960,10 @@ Mixed_Snake_Case_Looks_Like_This"""
 
                 Pair<List<Token>, Error> ts = new Lexer("<fstring>", expr.toString()).make_tokens();
                 if (ts.b != null) return res.failure(ts.b);
+                for (Token tk : ts.a) {
+                    tk.pos_start.idx += tok.pos_start.idx + i;
+                    tk.pos_end.idx += tok.pos_start.idx + i;
+                }
                 Node r = res.register(new Parser(ts.a).statement());
                 if (res.error != null) return res;
                 node = new BinOpNode(node, addToken, r);

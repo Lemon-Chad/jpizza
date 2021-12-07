@@ -259,7 +259,7 @@ public class SockLib extends Library {
         double id = Math.random();
 
         ClientConn conn;
-        conn = new ClientConn(id, pos_start, pos_end, context);
+        conn = new ClientConn(pos_start, pos_end, context);
 
         RTError e = conn.conn(host, port);
         if (e != null) return new RTResult().failure(e);

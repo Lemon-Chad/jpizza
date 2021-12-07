@@ -1,6 +1,7 @@
 package lemon.jpizza.contextuals;
 
 import lemon.jpizza.Position;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 

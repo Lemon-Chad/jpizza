@@ -16,6 +16,7 @@ import lemon.jpizza.nodes.operations.UnaryOpNode;
 import lemon.jpizza.nodes.values.*;
 import lemon.jpizza.nodes.variables.AttrAccessNode;
 import lemon.jpizza.nodes.variables.VarAccessNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,13 +86,13 @@ public class Compiler {
         this.scopeDepth++;
     }
 
-    void endScope(Position start, Position end) {
+    void endScope(@NotNull Position start, @NotNull Position end) {
         destack(locals, start, end);
         destack(generics, start, end);
         scopeDepth--;
     }
 
-    void destack(Local[] locals, Position start, Position end) {
+    void destack(Local[] locals, @NotNull Position start, @NotNull Position end) {
         int offs = 0;
         while (localCount - offs > 0) {
             Local curr = locals[localCount - 1 - offs];
@@ -154,27 +155,27 @@ public class Compiler {
         return -1;
     }
 
-    void emit(int b, Position start, Position end) {
+    void emit(int b, @NotNull Position start, @NotNull Position end) {
         chunk().write(b, start.idx, end.idx - start.idx);
     }
 
-    void emit(int[] bs, Position start, Position end) {
+    void emit(int[] bs, @NotNull Position start, @NotNull Position end) {
         for (int b : bs) 
             chunk().write(b, start.idx, end.idx - start.idx);
     }
 
-    void emit(int op, int b, Position start, Position end) {
+    void emit(int op, int b, @NotNull Position start, @NotNull Position end) {
         chunk().write(op, start.idx, end.idx - start.idx);
         chunk().write(b, start.idx, end.idx - start.idx);
     }
 
-    int emitJump(int op, Position start, Position end) {
+    int emitJump(int op, @NotNull Position start, @NotNull Position end) {
         emit(op, start, end);
         emit(0xff, start, end);
         return chunk().code.size() - 1;
     }
 
-    void emitLoop(int loopStart, Position start, Position end) {
+    void emitLoop(int loopStart, @NotNull Position start, @NotNull Position end) {
         emit(OpCode.Loop, start, end);
 
         int offset = chunk().code.size() - loopStart + 1;
@@ -418,27 +419,26 @@ public class Compiler {
 
     }
 
-    void compileNull(Position start, Position end) {
+    void compileNull(@NotNull Position start, @NotNull Position end) {
         emit(OpCode.Null, start, end);
     }
 
-    void compileBoolean(boolean val, Position start, Position end) {
+    void compileBoolean(boolean val, @NotNull Position start, @NotNull Position end) {
         int constant = chunk().addConstant(new Value(val));
         emit(OpCode.Constant, constant, start, end);
     }
 
-    void compileNumber(double val, Position start, Position end) {
+    void compileNumber(double val, @NotNull Position start, @NotNull Position end) {
         int constant = chunk().addConstant(new Value(val));
         emit(OpCode.Constant, constant, start, end);
     }
 
-    void compileString(String val, Position start, Position end) {
+    void compileString(String val, @NotNull Position start, @NotNull Position end) {
         int constant = chunk().addConstant(new Value(val));
         emit(OpCode.Constant, constant, start, end);
     }
 
     void compile(BinOpNode node) {
-
         if (node.op_tok == Tokens.TT.AND) {
             compile(node.left_node);
             int jump = emitJump(OpCode.JumpIfFalse, node.left_node.pos_start, node.left_node.pos_end);
@@ -497,7 +497,7 @@ public class Compiler {
         accessVariable(name, node.pos_start, node.pos_end);
     }
 
-    void accessVariable(String name, Position start, Position end) {
+    void accessVariable(String name, @NotNull Position start, @NotNull Position end) {
         int arg = resolveLocal(name);
 
         if (arg != -1) {
@@ -523,7 +523,7 @@ public class Compiler {
         compileDecl(node.var_name_tok, List.of("<inferred>"), false, node.value_node, node.pos_start, node.pos_end);
     }
 
-    void defineVariable(int global, List<String> type, boolean constant, Position start, Position end) {
+    void defineVariable(int global, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
         if (scopeDepth > 0) {
             markInitialized();
             emit(OpCode.DefineLocal, start, end);
@@ -538,25 +538,25 @@ public class Compiler {
         emit(constant ? 1 : 0, start, end);
     }
 
-    void makeVar(int slot, List<String> type, boolean constant, Position start, Position end) {
+    void makeVar(int slot, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
         emit(OpCode.MakeVar, slot, start, end);
         compileType(type, start, end);
         emit(constant ? 1 : 0, start, end);
     }
 
-    void addLocal(String name, Position start, Position end) {
+    void addLocal(String name, @NotNull Position start, @NotNull Position end) {
         Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), scopeDepth);
 
         locals[localCount++] = local;
     }
 
-    void addGeneric(String name, Position start, Position end) {
+    void addGeneric(String name, @NotNull Position start, @NotNull Position end) {
         Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), scopeDepth);
 
         generics[localCount++] = local;
     }
 
-    void declareVariable(Token varNameTok, Position start, Position end) {
+    void declareVariable(Token varNameTok, @NotNull Position start, @NotNull Position end) {
         if (scopeDepth == 0)
             return;
 
@@ -564,7 +564,7 @@ public class Compiler {
         addLocal(name, start, end);
     }
 
-    int parseVariable(Token varNameTok, Position start, Position end) {
+    int parseVariable(Token varNameTok, @NotNull Position start, @NotNull Position end) {
         declareVariable(varNameTok, start, end);
         if (scopeDepth > 0)
             return 0;
@@ -572,13 +572,14 @@ public class Compiler {
         return chunk().addConstant(new Value(varNameTok.value.toString()));
     }
 
-    void compileDecl(Token varNameTok, List<String> type, boolean locked, Node value, Position start, Position end) {
+    void compileDecl(Token varNameTok, List<String> type, boolean locked, Node value,
+                     @NotNull Position start, @NotNull Position end) {
         int global = parseVariable(varNameTok, start, end);
         compile(value);
         defineVariable(global, type, locked, start, end);
     }
 
-    void compileAssign(Token varNameTok, Node value, Position start, Position end) {
+    void compileAssign(Token varNameTok, Node value, @NotNull Position start, @NotNull Position end) {
         String name = varNameTok.value.toString();
         int arg = resolveLocal(name);
 
@@ -697,11 +698,11 @@ public class Compiler {
         }
     }
 
-    void compileType(List<String> type, Position start, Position end) {
+    void compileType(List<String> type, @NotNull Position start, @NotNull Position end) {
         compileType(type, start, end, true);
     }
 
-    List<String> compileType(List<String> type, Position start, Position end, boolean emit) {
+    List<String> compileType(List<String> type, @NotNull Position start, @NotNull Position end, boolean emit) {
         List<String> compiled = new ArrayList<>();
         for (String t : type) {
             compiled.add(compileType(t));

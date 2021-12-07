@@ -8,6 +8,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Dict;
 import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DictNode extends Node {
     public final Map<Node, Node> dict;
 
-    public DictNode(Map<Node, Node> dict, Position pos_start, Position pos_end) {
+    public DictNode(Map<Node, Node> dict, @NotNull Position pos_start, @NotNull Position pos_end) {
         this.dict = dict;
         this.pos_start = pos_start.copy();
         this.pos_end = pos_end.copy();

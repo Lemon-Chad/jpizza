@@ -3,6 +3,7 @@ package lemon.jpizza.libraries.socks;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.Position;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -14,7 +15,7 @@ public class ServerConn extends GenConn {
 
     final double id;
 
-    public ServerConn(double iydee, Position ps, Position pe, Context ctx) {
+    public ServerConn(double iydee, @NotNull Position ps, @NotNull Position pe, Context ctx) {
         id = iydee;
         pos_start = ps; pos_end = pe;
         context = ctx;

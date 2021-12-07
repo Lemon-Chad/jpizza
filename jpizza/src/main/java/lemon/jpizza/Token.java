@@ -2,13 +2,15 @@ package lemon.jpizza;
 
 import java.io.Serializable;
 
+import org.jetbrains.annotations.NotNull;
+
 public class Token implements Serializable {
     public final Tokens.TT type;
     public final Object value;
     public Position pos_start;
     public Position pos_end;
 
-    public Token(Tokens.TT type, Object value, Position pos_start, Position pos_end) {
+    public Token(Tokens.TT type, Object value, @NotNull Position pos_start, @NotNull Position pos_end) {
         this.type = type;
         this.value = value;
 
@@ -18,7 +20,7 @@ public class Token implements Serializable {
         }
     }
 
-    public Token(Tokens.TT type, Position start_pos) {
+    public Token(Tokens.TT type, @NotNull Position start_pos) {
         this.type = type;
         this.value = null;
 
@@ -26,7 +28,7 @@ public class Token implements Serializable {
         this.pos_end = start_pos.copy().advance();
     }
 
-    public Token(Tokens.TT type, Position start_pos, Position end_pos) {
+    public Token(Tokens.TT type, @NotNull Position start_pos, @NotNull Position end_pos) {
         this.type = type;
         this.value = null;
 

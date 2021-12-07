@@ -11,6 +11,7 @@ import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.objects.Value;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -83,8 +84,8 @@ public class BaseFunction extends Value {
     }
 
     public static RTResult inferGenerics(List<Obj> args, List<List<String>> types, List<String> generics, HashMap<String, String> genericKey,
-                                         @SuppressWarnings("unused") Position pos_start,
-                                         @SuppressWarnings("unused") Position pos_end, Context ctx) {
+                                         @SuppressWarnings("unused") @NotNull Position pos_start,
+                                         @SuppressWarnings("unused") @NotNull Position pos_end, Context ctx) {
         RTResult res = new RTResult();
 
         int len = Math.min(args.size(), types.size());

@@ -9,6 +9,7 @@ import lemon.jpizza.objects.executables.*;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import static lemon.jpizza.Operations.*;
 
@@ -143,7 +144,7 @@ public class Interpreter {
         return new Pair<>(res, defaults);
     }
 
-    public static RTResult getThis(Object val, Context context, Position pos_start, Position pos_end) {
+    public static RTResult getThis(Object val, Context context, @NotNull Position pos_start, @NotNull Position pos_end) {
                 while (context.displayName.hashCode() != val.hashCode()) {
                     if (context.parent == null) return new RTResult().failure(RTError.Scope(
                             pos_start, pos_end,
@@ -155,7 +156,7 @@ public class Interpreter {
                         .set_context(context));
         }
 
-    public static RTResult getImprt(String path, String fn, Context context, Position pos_start, Position pos_end)
+    public static RTResult getImprt(String path, String fn, Context context, @NotNull Position pos_start, @NotNull Position pos_end)
             throws IOException {
         Pair<ClassInstance, Error> i = Shell.imprt(fn, Files.readString(Path.of(path)));
         ClassInstance imp = i.a;

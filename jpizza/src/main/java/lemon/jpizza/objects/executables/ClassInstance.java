@@ -8,6 +8,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.objects.Value;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -68,12 +69,11 @@ public class ClassInstance extends Value {
             );
     }
 
-    public Obj set_pos(Position pos_start, Position pos_end) {
+    public Obj set_pos(@NotNull Position pos_start, @NotNull Position pos_end) {
         this.pos_start = pos_start; this.pos_end = pos_end;
         return this;
     }
-    public Obj set_pos(Position pos_start) { return set_pos(pos_start, pos_start.copy().advance()); }
-    public Obj set_pos() { return set_pos(null, null); }
+    public Obj set_pos(@NotNull Position pos_start) { return set_pos(pos_start, pos_start.copy().advance()); }
 
     public Position get_start() { return pos_start; }
     public Position get_end() { return pos_end; }

@@ -4,8 +4,7 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.Position;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
-import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -25,7 +24,7 @@ public class ServerPuddle {
         return new ServerPuddle(port).id;
     }
 
-    public Pair<SocketPuddle, RTError> accept(Position pos_start, Position pos_end, Context context) {
+    public Pair<SocketPuddle, RTError> accept(@NotNull Position pos_start, @NotNull Position pos_end, Context context) {
         try {
             return new Pair<>(new SocketPuddle(inner.accept()), null);
         } catch (IOException e) {

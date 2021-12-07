@@ -8,6 +8,7 @@ import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 import lemon.jpizza.Tokens;
+import org.jetbrains.annotations.NotNull;
 
 public class NumberNode extends ValueNode {
     public final double val;
@@ -27,7 +28,7 @@ public class NumberNode extends ValueNode {
         jptype = Constants.JPType.Number;
     }
 
-    public NumberNode(int v, Position pos_start, Position pos_end) {
+    public NumberNode(int v, @NotNull Position pos_start, @NotNull Position pos_end) {
         super(new Token(Tokens.TT.IDENTIFIER, "null", pos_start, pos_end));
         val = v;
         hex = true;

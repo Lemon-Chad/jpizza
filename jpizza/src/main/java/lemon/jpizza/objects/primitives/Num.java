@@ -9,7 +9,6 @@ import lemon.jpizza.objects.Value;
 import lemon.jpizza.Token;
 import lemon.jpizza.Pair;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

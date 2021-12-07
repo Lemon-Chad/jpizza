@@ -294,18 +294,12 @@ public class Value implements Serializable {
         else if (this.isClosure) {
             return closure.function;
         }
-        else if (isInstance) {
-            return instance.asFunc();
-        }
         return null;
     }
 
     public JClosure asClosure() {
         if (isClosure) {
             return closure;
-        }
-        else if (isInstance) {
-            return new JClosure(instance.asFunc());
         }
         return null;
     }
@@ -409,5 +403,15 @@ public class Value implements Serializable {
 
     public List<String> asType() {
         return type;
+    }
+
+    public String toSafeString() {
+        if (isInstance) {
+            return instance.clazz.name;
+        }
+        else if (isVar) {
+            return var.val.toSafeString();
+        }
+        return toString();
     }
 }

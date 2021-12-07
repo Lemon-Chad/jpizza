@@ -1,10 +1,9 @@
 package lemon.jpizza.compiler.values.classes;
 
-import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
-import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.NativeResult;
+import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.util.HashMap;
@@ -16,11 +15,15 @@ public class Instance {
     public final Map<String, ClassAttr> fields;
     public final Map<String, Value> methods;
     public final Map<String, Value> binMethods;
+    public Value self;
+    final VM vm;
 
-    public Instance(JClass clazz) {
+    public Instance(JClass clazz, VM vm) {
         this.clazz = clazz;
         methods = clazz.methods;
         binMethods = clazz.binMethods;
+
+        this.vm = vm;
 
         fields = new HashMap<>();
         copyAttributes(clazz.attributes, fields);
@@ -38,13 +41,52 @@ public class Instance {
         }
     }
 
+    private String stringOp(String opName) {
+        String res = unfailableOp(opName, clazz.name, "String");
+        if (res == null)
+            res = vm.pop().asString();
+        return res;
+    }
+
     public String type() {
-        return clazz.name;
+        return stringOp("type");
     }
 
     @Override
     public String toString() {
-        return clazz.name;
+        return stringOp("string");
+    }
+
+    private <T> T _unfailableOp(String opName, T def, String type) {
+        Value val = binMethods.get(opName);
+        if (val != null) {
+            vm.push(val);
+            boolean worked = vm.call(val.asClosure(), 0, self);
+            if (!worked)
+                return def;
+
+            vm.frame = vm.frames[vm.frameCount - 1];
+            vm.frame.returnType = type;
+
+            VMResult res = vm.run();
+            if (res == VMResult.ERROR) {
+                vm.frameCount--;
+                vm.stackTop = vm.frame.slots;
+                vm.frame = vm.frames[vm.frameCount - 1];
+                return def;
+            }
+            else {
+                return null;
+            }
+        }
+        return def;
+    }
+
+    private <T> T unfailableOp(String opName, T def, String type) {
+        vm.safe = true;
+        T res = _unfailableOp(opName, def, type);
+        vm.safe = false;
+        return res;
     }
 
     public Value getField(String name, boolean internal) {
@@ -85,22 +127,32 @@ public class Instance {
     }
 
     public Double asNumber() {
-        return 0.0;
+        Double res = unfailableOp("number", 0.0, "num");
+        if (res == null)
+            res = vm.pop().asNumber();
+        return res;
     }
 
     public boolean asBool() {
-        return false;
+        Boolean res = unfailableOp("boolean", true, "bool");
+        if (res == null)
+            res = vm.pop().asBool();
+        return res;
     }
 
     public List<Value> asList() {
-        return List.of(new Value(this));
+        List<Value> res = unfailableOp("list", List.of(self), "list");
+        if (res == null)
+            res = vm.pop().asList();
+        return res;
     }
 
     public Map<Value, Value> asMap() {
-        return Map.of(new Value("this"), new Value(this));
-    }
-
-    public JFunc asFunc() {
-        return new JFunc("pass;");
+        Map<Value, Value> res = unfailableOp("map", Map.of(
+                self, self
+        ), "map");
+        if (res == null)
+            res = vm.pop().asMap();
+        return res;
     }
 }

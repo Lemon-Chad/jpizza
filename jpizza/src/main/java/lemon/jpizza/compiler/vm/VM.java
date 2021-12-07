@@ -25,7 +25,7 @@ public class VM {
     private static record Traceback(String filename, String context, int offset) {}
 
     final Value[] stack;
-    int stackTop;
+    public int stackTop;
     int ip;
 
     final Stack<Traceback> tracebacks;
@@ -34,11 +34,11 @@ public class VM {
     final Stack<List<Value>> loopCache;
     List<Value> currentLoop;
 
-    CallFrame frame;
-    final CallFrame[] frames;
-    int frameCount;
+    public CallFrame frame;
+    public final CallFrame[] frames;
+    public int frameCount;
 
-    public final boolean safe = false;
+    public boolean safe = false;
     public boolean failed = false;
 
     public VM(JFunc function) {
@@ -119,21 +119,6 @@ public class VM {
             list.set(index.asNumber(), value);
             return NativeResult.Ok();
         }, List.of("list", "any", "num"));
-        defineNative("size", (args) -> {
-            Value list = args[0];
-            return NativeResult.Ok(new Value(list.asList().size()));
-        }, List.of("list"));
-        defineNative("choose", (args) -> {
-            List<Value> list = args[0].asList();
-            int max = list.size() - 1;
-            int index = (int) (Math.random() * max);
-            return NativeResult.Ok(list.get(index));
-        }, List.of("list"));
-        defineNative("contains", (args) -> {
-            Value list = args[0];
-            Value val = args[1];
-            return NativeResult.Ok(new Value(list.asList().contains(val)));
-        }, List.of("list", "any"));
         defineNative("sublist", (args) -> {
             Value list = args[0];
             Value start = args[1];
@@ -152,12 +137,27 @@ public class VM {
 
             return NativeResult.Ok(new Value(String.join(str.asString(), strings)));
         }, List.of("str", "list"));
-        defineNative("indexOf", (args) -> {
+
+        defineNative("choose", args -> {
+            List<Value> list = args[0].asList();
+            int max = list.size() - 1;
+            int index = (int) (Math.random() * max);
+            return NativeResult.Ok(list.get(index));
+        }, 1);
+        defineNative("size", args -> {
+            Value list = args[0];
+            return NativeResult.Ok(new Value(list.asList().size()));
+        }, 1);
+        defineNative("contains", args -> {
+            Value list = args[0];
+            Value val = args[1];
+            return NativeResult.Ok(new Value(list.asList().contains(val)));
+        }, 2);
+        defineNative("indexOf", args -> {
             Value list = args[0];
             Value val = args[1];
             return NativeResult.Ok(new Value(list.asList().indexOf(val)));
-        }, List.of("list", "any"));
-
+        }, 2);
     }
 
     void defineNative(String name, JNative.Method method, int argc) {
@@ -181,16 +181,21 @@ public class VM {
         return this;
     }
 
+    private void popTraceback() {
+        System.out.println(tracebacks);
+        tracebacks.pop();
+    }
+
     void moveIP(int offset) {
         frame.ip += offset;
         ip += offset;
     }
 
-    void push(Value value) {
+    public void push(Value value) {
         stack[stackTop++] = value;
     }
 
-    Value pop() {
+    public Value pop() {
         return stack[--stackTop];
     }
 
@@ -203,6 +208,9 @@ public class VM {
         int len = position.len;
 
         String output = "";
+
+        Traceback bottom = tracebacks.get(0);
+
         if (!tracebacks.empty()) {
             String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►" : "--->";
 
@@ -225,6 +233,8 @@ public class VM {
         else {
             output = String.format("%s Error (Runtime): %s\n", message, reason);
         }
+
+        tracebacks.add(bottom);
 
         if (safe) {
             Shell.logger.warn(output);
@@ -351,13 +361,14 @@ public class VM {
                 String type = readType();
                 Value value = peek(0);
 
-
+                //noinspection DuplicatedCode
+                String valType = value.type();
                 if (type.equals("<inferred>"))
-                    type = value.type();
+                    type = valType;
 
                 boolean constant = readByte() == 1;
 
-                if (!type.equals("any") && !value.type().equals(type)) {
+                if (!type.equals("any") && !valType.equals(type)) {
                     runtimeError("Type", "Type mismatch");
                     yield VMResult.ERROR;
                 }
@@ -546,12 +557,14 @@ public class VM {
                 String type = readType();
                 Value val = pop();
 
+                //noinspection DuplicatedCode
+                String valType = val.type();
                 if (type.equals("<inferred>"))
-                    type = val.type();
+                    type = valType;
 
                 boolean constant = readByte() == 1;
 
-                if (!type.equals("any") && !val.type().equals(type)) {
+                if (!type.equals("any") && !valType.equals(type)) {
                     runtimeError("Type", "Type mismatch");
                     yield VMResult.ERROR;
                 }
@@ -749,8 +762,11 @@ public class VM {
     }
 
     boolean call(JClass clazz, int argCount) {
-        Instance instance = new Instance(clazz);
+        Instance instance = new Instance(clazz, this);
+
         Value value = new Value(instance);
+        instance.self = value;
+
         BoundMethod bound = new BoundMethod(clazz.constructor.asClosure(), value);
         return callValue(new Value(bound), argCount);
     }
@@ -759,7 +775,7 @@ public class VM {
         return call(closure, argCount, frame.bound);
     }
 
-    boolean call(JClosure closure, int argCount, Value binding) {
+    public boolean call(JClosure closure, int argCount, Value binding) {
         if (argCount != closure.function.arity) {
             runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
             return false;
@@ -818,7 +834,7 @@ public class VM {
                 Shell.logger.debug("          ");
                 for (int i = 0; i < stackTop; i++) {
                     Shell.logger.debug("[ ");
-                    Shell.logger.debug(stack[i]);
+                    Shell.logger.debug(stack[i].toSafeString());
                     Shell.logger.debug(" ]");
                 }
                 Shell.logger.debug("\n");
@@ -835,8 +851,9 @@ public class VM {
                         yield VMResult.EXIT;
                     }
 
-                    if (!frame.returnType.equals("any") && !result.type().equals(frame.returnType)) {
-                        runtimeError("Type", "Expected " + frame.returnType + " but got " + result.type());
+                    String type = result.type();
+                    if (!frame.returnType.equals("any") && !type.equals(frame.returnType)) {
+                        runtimeError("Type", "Expected " + frame.returnType + " but got " + type);
                         yield VMResult.ERROR;
                     }
 
@@ -845,7 +862,7 @@ public class VM {
 
                     stackTop = frame.slots;
                     frame = frames[frameCount - 1];
-                    tracebacks.pop();
+                    popTraceback();
 
                     if (isConstructor) {
                         push(bound);
@@ -918,7 +935,7 @@ public class VM {
                     yield VMResult.OK;
                 }
                 case OpCode.PopTraceback -> {
-                    tracebacks.pop();
+                    popTraceback();
                     yield VMResult.OK;
                 }
 

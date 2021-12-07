@@ -6,9 +6,9 @@ import lemon.jpizza.objects.primitives.Bytes;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.primitives.Bool;
-import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class Value extends Obj {
         set_pos(); set_context();
     }
 
-    public Obj set_pos(Position ps, Position pe) {
+    public Obj set_pos(@NotNull Position ps, @NotNull Position pe) {
         pos_start = ps; pos_end = pe;
         return this;
     }
@@ -38,7 +38,7 @@ public class Value extends Obj {
         this.pos_end = null;
         return this;
     }
-    public Obj set_pos(Position start_pos) { return set_pos(start_pos, start_pos.copy().advance()); }
+    public Obj set_pos(@NotNull Position start_pos) { return set_pos(start_pos, start_pos.copy().advance()); }
     public Obj set_context(Context ctx) {
         context = ctx;
         return this;

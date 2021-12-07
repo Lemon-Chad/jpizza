@@ -4,11 +4,12 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Shell;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.Position;
+import org.jetbrains.annotations.NotNull;
 
 public class RTError extends Error {
     final Context context;
 
-    public RTError(String name, Position pos_start, Position pos_end, String details, Context context) {
+    public RTError(String name, @NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         super(pos_start, pos_end, name, details);
         this.context = context;
     }
@@ -24,39 +25,39 @@ public class RTError extends Error {
                 );
     }
 
-    public static RTError Type(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Type(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Type", pos_start, pos_end, details, context);
     }
 
-    public static RTError Released(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Released(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Released", pos_start, pos_end, details, context);
     }
 
-    public static RTError Unresolved(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Unresolved(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Unresolved", pos_start, pos_end, details, context);
     }
 
-    public static RTError Publicity(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Publicity(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Publicity", pos_start, pos_end, details, context);
     }
 
     public interface ErrorMethod {
-        RTError build(Position pos_start, Position pos_end, String details, Context context);
+        RTError build(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context);
     }
 
     public interface ErrorDetails {
-        RTError build(Position pos_start, Position pos_end, Context context);
+        RTError build(@NotNull Position pos_start, @NotNull Position pos_end, Context context);
     }
 
     public static ErrorDetails makeDetails(ErrorMethod method, String details) {
-        return (Position pos_start, Position pos_end, Context context) -> method.build(pos_start, pos_end, details, context);
+        return (@NotNull Position pos_start, @NotNull Position pos_end, Context context) -> method.build(pos_start, pos_end, details, context);
     }
 
-    public static RTError OutOfBounds(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError OutOfBounds(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Out of Bounds", pos_start, pos_end, details, context);
     }
 
-    public static RTError Range(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Range(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Range", pos_start, pos_end, details, context);
     }
 
@@ -68,15 +69,15 @@ public class RTError extends Error {
         return new RTError("Imaginary File", pos_start, pos_end, details, context);
     }
 
-    public static RTError PathNotFound(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError PathNotFound(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Imaginary Path", pos_start, pos_end, details, context);
     }
 
-    public static RTError Init(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Init(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Initialization", pos_start, pos_end, details, context);
     }
 
-    public static RTError InvalidArgument(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError InvalidArgument(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Invalid Argument", pos_start, pos_end, details, context);
     }
 
@@ -84,45 +85,45 @@ public class RTError extends Error {
         return new RTError("Scope", pos_start, pos_end, details, context);
     }
 
-    public static RTError GenericCount(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError GenericCount(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Generic Count", pos_start, pos_end, details, context);
     }
 
-    public static RTError IllegalOperation(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError IllegalOperation(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Illegal Operation", pos_start, pos_end, details, context);
     }
 
-    public static RTError Assertion(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Assertion(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Assertion", pos_start, pos_end, details, context);
     }
 
-    public static RTError ArgumentCount(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError ArgumentCount(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Argument Count", pos_start, pos_end, details, context);
     }
 
-    public static RTError Conversion(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Conversion(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Type Conversion", pos_start, pos_end, details, context);
     }
 
-    public static RTError Interrupted(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Interrupted(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Interrupted Process", pos_start, pos_end, details, context);
     }
 
-    public static RTError Const(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Const(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Constant Reassignment", pos_start, pos_end, details, context);
     }
 
-    public static RTError MalformedData(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError MalformedData(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Malformed Data", pos_start, pos_end, details, context);
     }
 
-    public static RTError Formatting(Position pos_start, Position pos_end, String details, Context context) {
+    public static RTError Formatting(@NotNull Position pos_start, @NotNull Position pos_end, String details, Context context) {
         return new RTError("Formatting", pos_start, pos_end, details, context);
     }
 
     public String generateTraceback() {
         String result = "";
-        Position pos = pos_start.copy();
+        @NotNull Position pos = pos_start.copy();
         Context ctx = context;
 
         String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►" : "--->";

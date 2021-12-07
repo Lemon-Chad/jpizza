@@ -7,7 +7,7 @@ public class CallFrame {
     public final JClosure closure;
     public int ip;
     public final int slots;
-    public final String returnType;
+    public String returnType;
     public final Value bound;
 
     public CallFrame(JClosure closure, int ip, int slots, String returnType) {

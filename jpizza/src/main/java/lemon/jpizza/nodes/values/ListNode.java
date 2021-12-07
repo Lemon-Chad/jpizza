@@ -8,6 +8,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.PList;
 import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 public class ListNode extends Node {
     public final List<Node> elements;
 
-    public ListNode(List<Node> element_nodes, Position pos_start, Position pos_end) {
+    public ListNode(List<Node> element_nodes, @NotNull Position pos_start, @NotNull Position pos_end) {
         elements = element_nodes;
         this.pos_start = pos_start.copy(); this.pos_end = pos_end.copy();
         jptype = Constants.JPType.List;

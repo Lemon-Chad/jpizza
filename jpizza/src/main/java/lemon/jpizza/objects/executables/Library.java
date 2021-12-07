@@ -44,12 +44,6 @@ public class Library extends BaseFunction {
     // Functions
 
     public static RTResult checkType(Object obj, String expect, Constants.JPType type) {
-        if (obj == null)
-            return new RTResult().failure(RTError.Type(
-                    null, null,
-                    "Expected " + expect,
-                    null
-            ));
         Obj o = (Obj) obj;
         if (o.jptype != type) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
@@ -60,12 +54,6 @@ public class Library extends BaseFunction {
     }
 
     public static RTResult checkFunction(Object obj) {
-        if (obj == null)
-            return new RTResult().failure(RTError.Type(
-                    null, null,
-                    "Expected function",
-                    null
-            ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Function && o.jptype != Constants.JPType.CMethod)
             return new RTResult().failure(RTError.Type(
@@ -77,12 +65,6 @@ public class Library extends BaseFunction {
     }
 
     public static RTResult checkInt(Object obj) {
-        if (obj == null)
-            return new RTResult().failure(RTError.Type(
-                    null, null,
-                    "Expected an integer",
-                    null
-            ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Number || o.floating()) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
@@ -93,12 +75,6 @@ public class Library extends BaseFunction {
     }
 
     public static RTResult checkPosInt(Object obj) {
-        if (obj == null)
-            return new RTResult().failure(RTError.Type(
-                    null, null,
-                    "Expected a postive integer",
-                    null
-            ));
         Obj o = (Obj) obj;
         if (o.jptype != Constants.JPType.Number || o.floating() || o.number < 0)
             return new RTResult().failure(RTError.Type(

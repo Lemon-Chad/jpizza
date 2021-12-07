@@ -3,6 +3,7 @@ package lemon.jpizza;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -521,7 +522,7 @@ class SocketClient {
         return 0;
     }
 
-    public static String stringWithArrows(String text, Position pos_start, Position pos_end) {
+    public static String stringWithArrows(String text, @NotNull Position pos_start, @NotNull Position pos_end) {
         StringBuilder result = new StringBuilder();
 
         int idxStart = Math.max(0, text.lastIndexOf(splitter, pos_start.tidx));

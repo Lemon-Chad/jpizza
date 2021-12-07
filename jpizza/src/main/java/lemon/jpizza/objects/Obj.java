@@ -5,6 +5,7 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.List;
@@ -34,8 +35,8 @@ public abstract class Obj implements Serializable {
 
     public Object getValue() { return value; }
 
-    public abstract Obj set_pos(Position pos_start, Position pos_end);
-    public abstract Obj set_pos(Position pos_start);
+    public abstract Obj set_pos(@NotNull Position pos_start, @NotNull Position pos_end);
+    public abstract Obj set_pos(@NotNull Position pos_start);
     public abstract Obj set_pos();
 
     public abstract Position get_start();

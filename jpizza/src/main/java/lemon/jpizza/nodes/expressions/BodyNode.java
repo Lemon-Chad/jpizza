@@ -6,6 +6,7 @@ import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class BodyNode extends Node {
         this.pos_end = statements.get(statements.size() - 1).pos_end;
     }
 
-    public BodyNode(List<Node> statements, Position start, Position end) {
+    public BodyNode(List<Node> statements, @NotNull Position start, @NotNull Position end) {
         this.statements = statements;
         this.pos_start = start;
         this.pos_end = end;

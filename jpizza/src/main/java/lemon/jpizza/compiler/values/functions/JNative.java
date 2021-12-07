@@ -33,9 +33,11 @@ public class JNative {
         if (args.length != argc)
             return NativeResult.Err("Argument Count", "Expected " + argc + " arguments, got " + args.length);
 
-        for (int i = 0; i < argc; i++)
-            if (!types.get(i).equals("any") && !args[i].type().equals(types.get(i)))
-                return NativeResult.Err("Type", "Expected " + types.get(i) + " for argument " + i + ", got " + args[i].type());
+        for (int i = 0; i < argc; i++) {
+            String t = args[i].type();
+            if (!types.get(i).equals("any") && !t.equals(types.get(i)))
+                return NativeResult.Err("Type", "Expected " + types.get(i) + " for argument " + i + ", got " + t);
+        }
 
         return method.call(args);
     }

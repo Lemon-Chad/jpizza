@@ -15,4 +15,8 @@ public class FlatPosition implements Serializable {
         this.len = len;
         this.span = span;
     }
+
+    public String toString() {
+        return "(" + index + "," + len + ")";
+    }
 }

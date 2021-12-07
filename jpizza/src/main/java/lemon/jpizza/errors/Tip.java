@@ -2,11 +2,12 @@ package lemon.jpizza.errors;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Position;
+import org.jetbrains.annotations.NotNull;
 
 public class Tip extends Error {
     final String refactor;
 
-    public Tip(Position pos_start, Position pos_end, String details, String refactor) {
+    public Tip(@NotNull Position pos_start, @NotNull Position pos_end, String details, String refactor) {
         super(pos_start, pos_end, "Tip", details);
         this.refactor = refactor;
     }
