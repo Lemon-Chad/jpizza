@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Constants {
     public static final char[] NUMBERS = "0123456789".toCharArray();
-    public static final char[] NUMDOT = "0123456789.".toCharArray();
+    public static final char[] NUMDOT = "0123456789._".toCharArray();
     public static final char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static final char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();

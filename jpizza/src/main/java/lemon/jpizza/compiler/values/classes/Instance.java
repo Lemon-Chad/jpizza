@@ -155,4 +155,8 @@ public class Instance {
             res = vm.pop().asMap();
         return res;
     }
+
+    public Instance copy() {
+        return new Instance(clazz, vm);
+    }
 }

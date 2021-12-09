@@ -23,4 +23,14 @@ public class ValueArray implements Serializable {
     public void compile() {
         valuesArray = values.toArray(new Value[0]);
     }
+
+    public ValueArray copy() {
+        ValueArray copy = new ValueArray();
+        copy.length = length;
+        for (Value value : values) {
+            copy.values.add(value.copy());
+        }
+        copy.compile();
+        return copy;
+    }
 }

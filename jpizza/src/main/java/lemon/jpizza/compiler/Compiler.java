@@ -409,6 +409,7 @@ public class Compiler {
         JFunc function = compiler.endCompiler();
 
         function.name = node.var_name_tok.value.toString();
+        function.async = node.async;
         function.returnType = compileType(node.returnType, node.pos_start, node.pos_end, false);
 
         emit(OpCode.Closure, chunk().addConstant(new Value(function)), node.pos_start, node.pos_end);

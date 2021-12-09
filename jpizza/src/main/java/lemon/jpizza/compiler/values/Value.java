@@ -9,10 +9,7 @@ import lemon.jpizza.compiler.values.functions.JNative;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Value implements Serializable {
     protected double number;
@@ -413,5 +410,38 @@ public class Value implements Serializable {
             return var.val.toSafeString();
         }
         return toString();
+    }
+
+    public Value copy() {
+        if (isNumber) {
+            return new Value(number);
+        }
+        else if (isString) {
+            return new Value(string);
+        }
+        else if (isBool) {
+            return new Value(bool);
+        }
+        else if (isList) {
+            List<Value> list = new ArrayList<>();
+            for (Value value : this.list) {
+                list.add(value.copy());
+            }
+            return new Value(list);
+        }
+        else if (isMap) {
+            Map<Value, Value> map = new HashMap<>();
+            for (Map.Entry<Value, Value> entry : this.map.entrySet()) {
+                map.put(entry.getKey().copy(), entry.getValue().copy());
+            }
+            return new Value(map);
+        }
+        else if (isClass) {
+            return new Value(jClass.copy());
+        }
+        else if (isInstance) {
+            return new Value(instance.copy());
+        }
+        return this;
     }
 }

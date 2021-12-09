@@ -72,4 +72,10 @@ public class JClass {
     public boolean has(String name) {
         return attributes.containsKey(name) || methods.containsKey(name);
     }
+
+    public JClass copy() {
+        Map<String, ClassAttr> attrs = new HashMap<>();
+        copyAttributes(attributes, attrs);
+        return new JClass(name, attrs, superClass.copy());
+    }
 }

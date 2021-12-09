@@ -18,6 +18,7 @@ public class JFunc implements Serializable {
     public String owner;
 
     public int upvalueCount;
+    public boolean async;
 
     public JFunc(String source) {
         arity = 0;
@@ -31,6 +32,25 @@ public class JFunc implements Serializable {
         if (owner != null)
             return "<" + owner + "-method-" + name + ">";
         return "<function-" + name + ">";
+    }
+
+    public JFunc copy() {
+        JFunc copy = new JFunc(chunk.source());
+
+        copy.chunk.constants(chunk.constants().copy());
+        copy.chunk.codeArray = chunk.codeArray;
+        copy.chunk.positions = chunk.positions;
+
+        copy.arity = arity;
+        copy.name = name;
+        copy.returnType = returnType;
+        copy.isPrivate = isPrivate;
+        copy.isStatic = isStatic;
+        copy.isBin = isBin;
+        copy.owner = owner;
+        copy.upvalueCount = upvalueCount;
+        copy.async = async;
+        return copy;
     }
 
 }

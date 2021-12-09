@@ -20,7 +20,6 @@ import java.util.*;
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 64;
-    public static final int STACK_MAX = FRAMES_MAX * 256;
 
     private static record Traceback(String filename, String context, int offset) {}
 
@@ -73,7 +72,19 @@ public class VM {
             return NativeResult.Ok();
         }, 1);
 
+        defineNative("random", (args) -> NativeResult.Ok(new Value(Math.random())), 0);
+
+        defineNative("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), List.of("num"));
+
         defineNative("clock", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
+        defineNative("sleep", (args) -> {
+            try {
+                Thread.sleep(args[0].asNumber().intValue());
+            } catch (InterruptedException e) {
+                runtimeError("Internal", "Interrupted");
+            }
+            return NativeResult.Ok();
+        }, 1);
 
         // List Functions
         defineNative("append", (args) -> {
@@ -786,10 +797,19 @@ public class VM {
             return false;
         }
 
-        tracebacks.push(new Traceback(tracebacks.peek().filename, closure.function.name, 0));
+        Traceback traceback = new Traceback(tracebacks.peek().filename, closure.function.name, 0);
+        if (closure.function.async) {
+            VM thread = new VM(closure.function.copy());
+            thread.tracebacks.push(traceback);
+            Thread t = new Thread(thread::run);
+            t.start();
+        }
+        else {
+            tracebacks.push(traceback);
 
-        frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1,
-                readType(closure.function.returnType), binding);
+            frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1,
+                    readType(closure.function.returnType), binding);
+        }
         return true;
     }
 

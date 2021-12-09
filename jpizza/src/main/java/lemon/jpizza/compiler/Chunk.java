@@ -12,8 +12,8 @@ import java.util.List;
 public class Chunk implements Serializable {
     final List<Integer> code;
     public int[] codeArray;
-    final ValueArray constants;
-    final List<FlatPosition> positions;
+    ValueArray constants;
+    public List<FlatPosition> positions;
     final String source;
 
     public Chunk(String source) {
@@ -68,6 +68,9 @@ public class Chunk implements Serializable {
 
     public ValueArray constants() {
         return constants;
+    }
+    public void constants(ValueArray constants) {
+        this.constants = constants;
     }
 
 }

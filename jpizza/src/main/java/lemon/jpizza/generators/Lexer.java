@@ -230,6 +230,12 @@ public class Lexer {
         Position pos_start = pos.copy();
 
         while (currentChar != null && String.valueOf(NUMDOT).contains(currentChar)) {
+
+            if (currentChar.equals("_")) {
+                advance();
+                continue;
+            }
+
             if (currentChar.equals(".")) {
                 if (dot_count == 1)
                     break;
