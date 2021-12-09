@@ -246,6 +246,9 @@ public class Compiler {
         else if (statement instanceof VarAccessNode)
             compile((VarAccessNode) statement);
 
+        else if (statement instanceof AssertNode)
+            compile((AssertNode) statement);
+
         else if (statement instanceof ScopeNode)
             compile((ScopeNode) statement);
 
@@ -313,6 +316,11 @@ public class Compiler {
 
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(AssertNode node) {
+        compile(node.condition);
+        emit(OpCode.Assert, node.pos_start, node.pos_end);
     }
 
     void compile(ReturnNode node) {

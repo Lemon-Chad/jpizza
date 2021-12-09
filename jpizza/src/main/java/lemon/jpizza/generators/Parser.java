@@ -238,9 +238,12 @@ public class Parser {
         if (currentToken.matches(TT.KEYWORD, "return")) {
             res.registerAdvancement();
             advance();
-            Node expr = res.try_register(this.expr());
-            if (expr == null)
-                reverse(res.toReverseCount);
+            Node expr = null;
+            if (currentToken.type != TT.NEWLINE && currentToken.type != TT.INVISILINE) {
+                expr = res.register(this.expr());
+                if (res.error != null)
+                    return res;
+            }
             return res.success(new ReturnNode(expr, pos_start, currentToken.pos_end.copy()));
         }
         else if (currentToken.matches(TT.KEYWORD, "continue")) {

@@ -902,6 +902,15 @@ public class VM {
                     yield VMResult.OK;
                 }
 
+                case OpCode.Assert -> {
+                    Value value = pop();
+                    if (isFalsey(value) == 1) {
+                        runtimeError("Assertion", "Assertion failed");
+                        yield VMResult.ERROR;
+                    }
+                    yield VMResult.OK;
+                }
+
                 case OpCode.Add,
                         OpCode.Subtract,
                         OpCode.Multiply,

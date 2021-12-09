@@ -49,4 +49,5 @@ public class OpCode {
     public static final int Index = 45;
     public static final int Get = 46;
     public static final int Null = 47;
+    public static final int Assert = 48;
 }

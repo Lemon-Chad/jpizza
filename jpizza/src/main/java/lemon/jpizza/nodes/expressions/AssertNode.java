@@ -10,7 +10,7 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
 public class AssertNode extends Node {
-    final Node condition;
+    public final Node condition;
     public AssertNode(Node condition) {
         this.condition = condition;
         pos_start = condition.pos_start;
