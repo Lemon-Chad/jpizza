@@ -70,9 +70,6 @@ public class Instance {
 
             VMResult res = vm.run();
             if (res == VMResult.ERROR) {
-                vm.frameCount--;
-                vm.stackTop = vm.frame.slots;
-                vm.frame = vm.frames[vm.frameCount - 1];
                 return def;
             }
             else {

@@ -27,7 +27,7 @@ public class VM {
     public int stackTop;
     int ip;
 
-    final Stack<Traceback> tracebacks;
+    Stack<Traceback> tracebacks;
     final Map<String, Var> globals;
 
     final Stack<List<Value>> loopCache;
@@ -220,7 +220,9 @@ public class VM {
 
         String output = "";
 
-        Traceback bottom = tracebacks.get(0);
+        Stack<Traceback> copy = new Stack<>();
+        if (safe) for (Traceback traceback : tracebacks)
+            copy.push(traceback);
 
         if (!tracebacks.empty()) {
             String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►" : "--->";
@@ -245,7 +247,7 @@ public class VM {
             output = String.format("%s Error (Runtime): %s\n", message, reason);
         }
 
-        tracebacks.add(bottom);
+        tracebacks = copy;
 
         if (safe) {
             Shell.logger.warn(output);
@@ -1073,6 +1075,14 @@ public class VM {
                 return VMResult.OK;
             }
             else if (res == VMResult.ERROR) {
+                if (safe) {
+                    while (frameCount != exitLevel) {
+                        tracebacks.pop();
+                        frameCount--;
+                    }
+                    frame = frames[frameCount - 1];
+                    stackTop = frames[frameCount].slots;
+                }
                 return VMResult.ERROR;
             }
         }
