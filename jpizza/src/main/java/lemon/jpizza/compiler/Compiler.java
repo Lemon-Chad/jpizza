@@ -314,6 +314,9 @@ public class Compiler {
         else if (statement instanceof SwitchNode)
             compile((SwitchNode) statement);
 
+        else if (statement instanceof ThrowNode)
+            compile((ThrowNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
     }
@@ -321,6 +324,12 @@ public class Compiler {
     void compile(AssertNode node) {
         compile(node.condition);
         emit(OpCode.Assert, node.pos_start, node.pos_end);
+    }
+
+    void compile(ThrowNode node) {
+        compile(node.thrown);
+        compile(node.throwType);
+        emit(OpCode.Throw, node.pos_start, node.pos_end);
     }
 
     void compile(ReturnNode node) {

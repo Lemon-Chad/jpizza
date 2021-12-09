@@ -8,8 +8,8 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 
 public class ThrowNode extends Node {
-    final Node thrown;
-    final Node throwType;
+    public final Node thrown;
+    public final Node throwType;
 
     public ThrowNode(Node throwType, Node thrown) {
         this.thrown = thrown;

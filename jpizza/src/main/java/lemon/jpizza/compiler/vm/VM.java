@@ -911,6 +911,13 @@ public class VM {
                     yield VMResult.OK;
                 }
 
+                case OpCode.Throw -> {
+                    Value type = pop();
+                    Value reason = pop();
+                    runtimeError(type.asString(), reason.asString());
+                    yield VMResult.ERROR;
+                }
+
                 case OpCode.Add,
                         OpCode.Subtract,
                         OpCode.Multiply,
