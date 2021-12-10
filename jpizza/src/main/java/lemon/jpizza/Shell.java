@@ -114,9 +114,9 @@ public class Shell {
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    Pair<Obj, Error> res = runCompiled(fn, args[0]);
-                    if (res.b != null)
-                        Shell.logger.fail(res.b.asString());
+                    Error res = runCompiled(fn, args[0]);
+                    if (res != null)
+                        Shell.logger.fail(res.asString());
                 }
                 else {
                     Shell.logger.outln("File does not exist.");
@@ -264,13 +264,17 @@ public class Shell {
         return new Pair<>(result.value, result.error);
     }
 
-    public static Error compile(String fn, String text, String outpath) {
+    public static JFunc compile(String fn, String text) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
-        if (ast.b != null) return ast.b;
+        if (ast.b != null) return null;
         List<Node> outNode = ast.a;
 
         Compiler compiler = new Compiler(FunctionType.Script, text);
-        JFunc func = compiler.compileBlock(outNode);
+        return compiler.compileBlock(outNode);
+    }
+
+    public static Error compile(String fn, String text, String outpath) {
+        JFunc func = compile(fn, text);
 
         try {
             FileOutputStream fout;
@@ -290,21 +294,49 @@ public class Shell {
         return null;
     }
 
-    public static Pair<Obj, Error> runCompiled(String fn, String inpath) {
+    public static JFunc load(String inpath) {
         FileInputStream fis;
         try {
             fis = new FileInputStream(inpath);
         } catch (FileNotFoundException e) {
-            return new Pair<>(null, RTError.FileNotFound(null, null,
-                    "File does not exist!\n" + inpath, null));
+            Shell.logger.fail(RTError.FileNotFound(null, null,
+                    "File does not exist!\n" + inpath, null).asString());
+            return null;
         }
         try {
             ObjectInputStream ois = new ObjectInputStream(fis);
             Object ost = ois.readObject();
             ois.close();
             fis.close();
-            if (!(ost instanceof JFunc)) return new Pair<>(null, RTError.FileNotFound(null, null,
-                    "File is not JPizza bytecode!", null));
+
+            if (!(ost instanceof JFunc)) {
+                Shell.logger.fail(RTError.FileNotFound(null, null,
+                        "File is not JPizza bytecode!" + inpath, null).asString());
+                return null;
+            }
+
+            return (JFunc) ost;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Error runCompiled(String fn, String inpath) {
+        FileInputStream fis;
+        try {
+            fis = new FileInputStream(inpath);
+        } catch (FileNotFoundException e) {
+            return RTError.FileNotFound(null, null,
+                    "File does not exist!\n" + inpath, null);
+        }
+        try {
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            Object ost = ois.readObject();
+            ois.close();
+            fis.close();
+            if (!(ost instanceof JFunc)) return RTError.FileNotFound(null, null,
+                    "File is not JPizza bytecode!", null);
 
             JFunc func = (JFunc) ost;
             vm = new VM(func).trace(fn);
@@ -314,7 +346,7 @@ public class Shell {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return new Pair<>(null, null);
+        return null;
     }
 
     //Another public static 

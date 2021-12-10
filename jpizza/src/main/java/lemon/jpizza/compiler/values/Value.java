@@ -25,6 +25,7 @@ public class Value implements Serializable {
     protected Instance instance;
     protected List<String> type;
     protected BoundMethod boundMethod;
+    protected Namespace namespace;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -40,9 +41,15 @@ public class Value implements Serializable {
     public boolean isInstance = false;
     public boolean isType = false;
     public boolean isBoundMethod = false;
+    public boolean isNamespace = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(Namespace namespace) {
+        this.namespace = namespace;
+        this.isNamespace = true;
     }
 
     public Value(BoundMethod boundMethod) {
@@ -344,6 +351,9 @@ public class Value implements Serializable {
         else if (isInstance) {
             return instance.type();
         }
+        else if (isNamespace) {
+            return "namespace";
+        }
         return "void";
     }
 
@@ -397,6 +407,8 @@ public class Value implements Serializable {
     public Instance asInstance() {
         return instance;
     }
+
+    public Namespace asNamespace() { return namespace; }
 
     public List<String> asType() {
         return type;

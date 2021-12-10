@@ -1,12 +1,9 @@
 package lemon.jpizza.compiler;
 
-import lemon.jpizza.Position;
-import lemon.jpizza.Shell;
-import lemon.jpizza.Token;
-import lemon.jpizza.Tokens;
+import lemon.jpizza.*;
 import lemon.jpizza.cases.Case;
-import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.Value;
+import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.definitions.*;
@@ -18,6 +15,10 @@ import lemon.jpizza.nodes.variables.AttrAccessNode;
 import lemon.jpizza.nodes.variables.VarAccessNode;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -317,8 +318,61 @@ public class Compiler {
         else if (statement instanceof ThrowNode)
             compile((ThrowNode) statement);
 
+        else if (statement instanceof ImportNode)
+            compile((ImportNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(ImportNode node) {
+        String fn = node.file_name_tok.value.toString();
+        String chrDir = System.getProperty("user.dir");
+
+        String fileName = chrDir + "/" + fn;
+
+        String modPath = Shell.root + "/modules/" + fn;
+        String modFilePath = modPath + "/" + fn;
+
+        //noinspection ResultOfMethodCallIgnored
+        new File(Shell.root + "/modules").mkdirs();
+
+        JFunc imp = null;
+        try {
+            if (Constants.LIBRARIES.containsKey(fn))
+                imp = null;
+            else if (Constants.STANDLIBS.containsKey(fn))
+                imp = Shell.compile(fn, Constants.STANDLIBS.get(fn));
+            else if (Files.exists(Paths.get(modFilePath + ".jbox"))) {
+                imp = Shell.load(Files.readString(Paths.get(modFilePath + ".jbox")));
+            }
+            else if (Files.exists(Paths.get(fileName + ".jbox"))) {
+                imp = Shell.load(Files.readString(Paths.get(fileName + ".jbox")));
+            }
+            else if (Files.exists(Paths.get(fileName + ".devp"))) {
+                imp = Shell.compile(fn, Files.readString(Paths.get(fileName + ".devp")));
+            }
+            else if (Files.exists(Paths.get(modFilePath + ".devp"))) {
+                System.setProperty("user.dir", modPath + ".devp");
+                imp = Shell.compile(fn, Files.readString(Paths.get(modFilePath + ".devp")));
+                System.setProperty("user.dir", chrDir);
+            }
+            else Shell.logger.warn("Could not find module: " + fn);
+        } catch (IOException ignored) {
+            imp = null;
+            Shell.logger.warn("IOException while reading: " + fn);
+        }
+
+        if (imp != null) {
+            int addr = chunk().addConstant(new Value(imp));
+            emit(OpCode.Constant, addr, node.pos_start, node.pos_end);
+        }
+        else {
+            compileNull(node.pos_start, node.pos_end);
+        }
+
+        int constant = chunk().addConstant(new Value(fn));
+        emit(OpCode.Import, constant, node.pos_start, node.pos_end);
     }
 
     void compile(AssertNode node) {

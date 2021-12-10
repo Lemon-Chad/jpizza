@@ -33,6 +33,8 @@ public class VM {
     final Stack<List<Value>> loopCache;
     List<Value> currentLoop;
 
+    Map<String, Namespace> libraries;
+
     public CallFrame frame;
     public final CallFrame[] frames;
     public int frameCount;
@@ -41,6 +43,8 @@ public class VM {
     public boolean failed = false;
 
     public VM(JFunc function) {
+        Shell.logger.debug("VM created");
+
         this.ip = 0;
 
         this.stack = new Value[MAX_STACK_SIZE];
@@ -63,6 +67,8 @@ public class VM {
     }
 
     void setup() {
+        libraries = new HashMap<>();
+
         defineNative("print", (args) -> {
             Shell.logger.out(args[0]);
             return NativeResult.Ok();
@@ -75,16 +81,6 @@ public class VM {
         defineNative("random", (args) -> NativeResult.Ok(new Value(Math.random())), 0);
 
         defineNative("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), List.of("num"));
-
-        defineNative("clock", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
-        defineNative("sleep", (args) -> {
-            try {
-                Thread.sleep(args[0].asNumber().intValue());
-            } catch (InterruptedException e) {
-                runtimeError("Internal", "Interrupted");
-            }
-            return NativeResult.Ok();
-        }, 1);
 
         // List Functions
         defineNative("append", (args) -> {
@@ -169,6 +165,17 @@ public class VM {
             Value val = args[1];
             return NativeResult.Ok(new Value(list.asList().indexOf(val)));
         }, 2);
+
+        // Time library
+        defineNative("time", "epoch", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
+        defineNative("time", "halt", (args) -> {
+            try {
+                Thread.sleep(args[0].asNumber().intValue());
+            } catch (InterruptedException e) {
+                runtimeError("Internal", "Interrupted");
+            }
+            return NativeResult.Ok();
+        }, List.of("num"));
     }
 
     void defineNative(String name, JNative.Method method, int argc) {
@@ -176,6 +183,14 @@ public class VM {
                 "function",
                 new Value(new JNative(name, method, argc)),
                 false
+        ));
+    }
+
+    void defineNative(String library, String name, JNative.Method method, int argc) {
+        if (!libraries.containsKey(library))
+            libraries.put(library, new Namespace(library, new HashMap<>()));
+        libraries.get(library).addField(name, new Value(
+                new JNative(name, method, argc)
         ));
     }
 
@@ -187,13 +202,20 @@ public class VM {
         ));
     }
 
+    void defineNative(String library, String name, JNative.Method method, List<String> types) {
+        if (!libraries.containsKey(library))
+            libraries.put(library, new Namespace(library, new HashMap<>()));
+        libraries.get(library).addField(name, new Value(
+                new JNative(name, method, types.size(), types)
+        ));
+    }
+
     public VM trace(String name) {
         tracebacks.push(new Traceback(name, name, 0));
         return this;
     }
 
     private void popTraceback() {
-        System.out.println(tracebacks);
         tracebacks.pop();
     }
 
@@ -441,9 +463,23 @@ public class VM {
                         runtimeError("Scope", "Undefined attribute");
                     return VMResult.ERROR;
                 }
-            } else if (frame.bound.isClass) {
+            }
+            else if (frame.bound.isClass) {
                 JClass clazz = frame.bound.asClass();
                 Value field = clazz.getField(name, true);
+                if (field != null) {
+                    push(field);
+                    return VMResult.OK;
+                }
+                else {
+                    if (!suppress)
+                        runtimeError("Scope", "Undefined attribute");
+                    return VMResult.ERROR;
+                }
+            }
+            else if (frame.bound.isNamespace) {
+                Namespace ns = frame.bound.asNamespace();
+                Value field = ns.getField(name);
                 if (field != null) {
                     push(field);
                     return VMResult.OK;
@@ -706,10 +742,17 @@ public class VM {
         else if (val.isClass) {
             return access(val, val.asClass(), name);
         }
+        else if (val.isNamespace) {
+            return access(val, val.asNamespace(), name);
+        }
         else {
             runtimeError("Type", "Type " + val.type() + " does not have members");
             return VMResult.ERROR;
         }
+    }
+
+    VMResult access(Value val, Namespace namespace, String name) {
+        return access(val, name, namespace.getField(name));
     }
 
     VMResult access(Value val, Instance instance, String name) {
@@ -920,6 +963,40 @@ public class VM {
                     yield VMResult.ERROR;
                 }
 
+                case OpCode.Import -> {
+                    String name = readString();
+
+                    if (!peek(0).isFunc) {
+                        if (!libraries.containsKey(name)) {
+                            runtimeError("Import", "Library '" + name + "' not found");
+                            yield VMResult.ERROR;
+                        }
+                        globals.put(name, new Var(
+                                "namespace",
+                                new Value(libraries.get(name)),
+                                true
+                        ));
+                        yield VMResult.OK;
+                    }
+
+                    JFunc func = pop().asFunc();
+
+                    VM runner = new VM(func);
+                    runner.trace(name);
+                    VMResult importres = runner.run();
+                    if (importres == VMResult.ERROR) {
+                        yield VMResult.ERROR;
+                    }
+
+                    globals.put(name, new Var(
+                            "namespace",
+                            new Value(runner.asNamespace(name)),
+                            true
+                    ));
+                    push(new Value());
+                    yield VMResult.OK;
+                }
+
                 case OpCode.Add,
                         OpCode.Subtract,
                         OpCode.Multiply,
@@ -1072,6 +1149,7 @@ public class VM {
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
             };
             if (res == VMResult.EXIT) {
+                Shell.logger.debug("Exiting");
                 return VMResult.OK;
             }
             else if (res == VMResult.ERROR) {
@@ -1086,6 +1164,10 @@ public class VM {
                 return VMResult.ERROR;
             }
         }
+    }
+
+    public Namespace asNamespace(String name) {
+        return new Namespace(name, globals);
     }
 
 }
