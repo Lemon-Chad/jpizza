@@ -15,6 +15,14 @@ public class ClassAttr {
         this.isPrivate = isPrivate;
     }
 
+    public ClassAttr(Value val, String type) {
+        this(val, type, false, false);
+    }
+
+    public ClassAttr(Value val) {
+        this(val, "any");
+    }
+
     public void set(Value val) {
         this.val = val;
     }

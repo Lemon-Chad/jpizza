@@ -10,6 +10,8 @@ import lemon.jpizza.compiler.values.classes.BoundMethod;
 import lemon.jpizza.compiler.values.classes.ClassAttr;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.values.classes.JClass;
+import lemon.jpizza.compiler.values.enums.JEnum;
+import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
@@ -745,8 +747,22 @@ public class VM {
         else if (val.isNamespace) {
             return access(val, val.asNamespace(), name);
         }
+        else if (val.isEnumParent) {
+            return access(val, val.asEnum(), name);
+        }
         else {
             runtimeError("Type", "Type " + val.type() + " does not have members");
+            return VMResult.ERROR;
+        }
+    }
+
+    VMResult access(Value val, JEnum jEnum, String name) {
+        if (jEnum.has(name)) {
+            push(jEnum.get(name));
+            return VMResult.OK;
+        }
+        else {
+            runtimeError("Enum", "Enum " + val.type() + " does not have member " + name);
             return VMResult.ERROR;
         }
     }
@@ -813,8 +829,39 @@ public class VM {
             stack[stackTop - argCount - 1] = new Value(new Var("any", bound.receiver, true));
             return call(bound.closure, argCount, bound.receiver);
         }
+        else if (callee.isEnumChild) {
+            return call(callee.asEnumChild(), argCount);
+        }
         runtimeError("Type", "Can only call functions and classes");
         return false;
+    }
+
+    boolean call(JEnumChild child, int argCount) {
+        int argc = child.props.size();
+        String[] types = new String[argc];
+        for (int i = 0; i < argc; i++)
+            types[i] = readType(child.propTypes.get(i));
+
+        if (argCount != argc) {
+            runtimeError("Argument Count", "Expected " + argc + " but got " + argCount);
+            return false;
+        }
+
+        Value[] args = new Value[argCount];
+        for (int i = argCount - 1; i >= 0; i--)
+            args[i] = pop();
+
+        for (int i = 0; i < argc; i++) {
+            String type = args[i].type();
+            if (!types[i].equals("any") && !type.equals(types[i])) {
+                runtimeError("Type", "Expected " + types[i] + " but got " + type);
+                return false;
+            }
+        }
+
+        pop();
+        push(child.create(args, types, new String[0], this));
+        return true;
     }
 
     boolean call(JClass clazz, int argCount) {
@@ -995,6 +1042,17 @@ public class VM {
                             true
                     ));
                     push(new Value());
+                    yield VMResult.OK;
+                }
+
+                case OpCode.Enum -> {
+                    Value enumerator = readConstant();
+                    globals.put(enumerator.asEnum().name(), new Var(
+                            "Enum",
+                            enumerator,
+                            true
+                    ));
+                    push(enumerator);
                     yield VMResult.OK;
                 }
 

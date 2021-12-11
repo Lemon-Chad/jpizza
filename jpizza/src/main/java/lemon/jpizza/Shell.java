@@ -284,6 +284,7 @@ public class Shell {
             oos.close();
             fout.close();
         } catch (IOException e) {
+            e.printStackTrace();
             return RTError.Internal(
                     null, null,
                     "Could not write to file",

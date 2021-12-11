@@ -3,6 +3,8 @@ package lemon.jpizza.compiler.values;
 import lemon.jpizza.compiler.values.classes.BoundMethod;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.values.classes.JClass;
+import lemon.jpizza.compiler.values.enums.JEnum;
+import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
@@ -26,6 +28,8 @@ public class Value implements Serializable {
     protected List<String> type;
     protected BoundMethod boundMethod;
     protected Namespace namespace;
+    protected JEnum enumParent;
+    protected JEnumChild enumChild;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -42,9 +46,21 @@ public class Value implements Serializable {
     public boolean isType = false;
     public boolean isBoundMethod = false;
     public boolean isNamespace = false;
+    public boolean isEnumParent = false;
+    public boolean isEnumChild = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(JEnum enumParent) {
+        this.enumParent = enumParent;
+        this.isEnumParent = true;
+    }
+
+    public Value(JEnumChild enumChild) {
+        this.enumChild = enumChild;
+        this.isEnumChild = true;
     }
 
     public Value(Namespace namespace) {
@@ -220,6 +236,15 @@ public class Value implements Serializable {
         else if (isBoundMethod) {
             return boundMethod.toString();
         }
+        else if (isNamespace) {
+            return namespace.name();
+        }
+        else if (isEnumParent) {
+            return enumParent.name();
+        }
+        else if (isEnumChild) {
+            return enumChild.type() + "::" + enumChild.getValue();
+        }
         return "";
     }
 
@@ -250,7 +275,10 @@ public class Value implements Serializable {
         else if (this.isMap)
             return o.isMap && this.map.equals(o.map);
 
-        return false;
+        else if (this.isEnumChild)
+            return o.isEnumChild && this.enumChild.equals(o.enumChild);
+
+        return this == o;
     }
 
     public List<Value> asList() {
@@ -354,6 +382,12 @@ public class Value implements Serializable {
         else if (isNamespace) {
             return "namespace";
         }
+        else if (isEnumParent) {
+            return "Enum";
+        }
+        else if (isEnumChild) {
+            return enumChild.type();
+        }
         return "void";
     }
 
@@ -456,4 +490,13 @@ public class Value implements Serializable {
         }
         return this;
     }
+
+    public JEnumChild asEnumChild() {
+        return enumChild;
+    }
+
+    public JEnum asEnum() {
+        return enumParent;
+    }
+
 }

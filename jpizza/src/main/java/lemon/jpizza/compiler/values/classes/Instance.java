@@ -29,6 +29,10 @@ public class Instance {
         copyAttributes(clazz.attributes, fields);
     }
 
+    public Instance(String name, Map<String, ClassAttr> attrs, VM vm) {
+        this(new JClass(name, attrs, null), vm);
+    }
+
     public static void copyAttributes(Map<String, ClassAttr> src, Map<String, ClassAttr> dst) {
         for (Map.Entry<String, ClassAttr> entry : src.entrySet()) {
             ClassAttr value = entry.getValue();

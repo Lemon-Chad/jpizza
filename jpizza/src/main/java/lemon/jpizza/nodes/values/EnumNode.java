@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public class EnumNode extends ValueNode {
-    final List<EnumChild> children;
-    final boolean pub;
+    public final List<EnumChild> children;
+    public final boolean pub;
 
     public EnumNode(Token tok, List<EnumChild> children, boolean pub) {
         super(tok);

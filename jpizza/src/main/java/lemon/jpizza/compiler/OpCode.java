@@ -52,4 +52,5 @@ public class OpCode {
     public static final int Assert = 48;
     public static final int Throw = 49;
     public static final int Import = 50;
+    public static final int Enum = 51;
 }

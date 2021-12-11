@@ -90,9 +90,8 @@ public class EnumJChild extends Value {
         if (genericKey.size() > 0) {
             genericAddition.append("(");
             for (String key : generics) {
-                genericAddition.append(genericKey.get(key)).append(",");
+                genericAddition.append("(").append(genericKey.get(key)).append(")");
             }
-            genericAddition.setLength(genericAddition.length() - 1);
             genericAddition.append(")");
         }
 

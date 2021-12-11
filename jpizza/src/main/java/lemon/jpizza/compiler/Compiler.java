@@ -3,8 +3,11 @@ package lemon.jpizza.compiler;
 import lemon.jpizza.*;
 import lemon.jpizza.cases.Case;
 import lemon.jpizza.compiler.values.Value;
+import lemon.jpizza.compiler.values.enums.JEnum;
+import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
+import lemon.jpizza.generators.Parser;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.definitions.*;
 import lemon.jpizza.nodes.expressions.*;
@@ -19,10 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Compiler {
 
@@ -321,8 +321,32 @@ public class Compiler {
         else if (statement instanceof ImportNode)
             compile((ImportNode) statement);
 
+        else if (statement instanceof EnumNode)
+            compile((EnumNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(EnumNode node) {
+        Map<String, JEnumChild> children = new HashMap<>();
+
+        int argc = node.children.size();
+        for (int i = 0; i < argc; i++) {
+            Parser.EnumChild child = node.children.get(i);
+            children.put(child.token().value.toString(), new JEnumChild(
+                    i,
+                    child.params(),
+                    child.types(),
+                    child.generics()
+            ));
+        }
+
+        int constant = chunk().addConstant(new Value(new JEnum(
+                node.tok.value.toString(),
+                children
+        )));
+        emit(OpCode.Enum, constant, node.pos_start, node.pos_end);
     }
 
     void compile(ImportNode node) {
