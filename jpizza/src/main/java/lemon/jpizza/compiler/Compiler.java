@@ -373,6 +373,10 @@ public class Compiler {
 
         int constant = chunk().addConstant(new Value(fn));
         emit(OpCode.Import, constant, node.pos_start, node.pos_end);
+
+        if (node.as_tok != null)
+            constant = chunk().addConstant(new Value(node.as_tok.value.toString()));
+        emit(constant, node.pos_start, node.pos_end);
     }
 
     void compile(AssertNode node) {
