@@ -965,13 +965,14 @@ public class VM {
 
                 case OpCode.Import -> {
                     String name = readString();
+                    String varName = readString();
 
                     if (!peek(0).isFunc) {
                         if (!libraries.containsKey(name)) {
                             runtimeError("Import", "Library '" + name + "' not found");
                             yield VMResult.ERROR;
                         }
-                        globals.put(name, new Var(
+                        globals.put(varName, new Var(
                                 "namespace",
                                 new Value(libraries.get(name)),
                                 true
@@ -988,7 +989,7 @@ public class VM {
                         yield VMResult.ERROR;
                     }
 
-                    globals.put(name, new Var(
+                    globals.put(varName, new Var(
                             "namespace",
                             new Value(runner.asNamespace(name)),
                             true
