@@ -45,7 +45,7 @@ public class VM {
     public boolean failed = false;
 
     public VM(JFunc function) {
-        Shell.logger.debug("VM created");
+        Shell.logger.debug("VM create\n");
 
         this.ip = 0;
 
@@ -1208,7 +1208,7 @@ public class VM {
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
             };
             if (res == VMResult.EXIT) {
-                Shell.logger.debug("Exiting");
+                Shell.logger.debug("Exiting\n");
                 return VMResult.OK;
             }
             else if (res == VMResult.ERROR) {
