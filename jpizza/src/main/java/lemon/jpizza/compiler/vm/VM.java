@@ -16,7 +16,6 @@ import lemon.jpizza.compiler.values.classes.JClass;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
-import lemon.jpizza.compiler.headers.HeadCode;
 
 import java.util.*;
 
@@ -334,7 +333,7 @@ public class VM {
             push(args[i]);
         }
 
-        if (!callValue(method, args.length, args)) return VMResult.ERROR;
+        if (!callValue(method, args.length, args, new HashMap<>())) return VMResult.ERROR;
 
         VMResult res = run();
         return res != VMResult.ERROR ? VMResult.OK : VMResult.ERROR;
@@ -718,6 +717,7 @@ public class VM {
 
     VMResult call() {
         int argc = readByte();
+        int kwargc = readByte();
 
         Value[] args = new Value[argc];
         List<Value> argList = new ArrayList<>();
@@ -741,7 +741,14 @@ public class VM {
             }
         }
 
-        if (!callValue(peek(argCount), argCount, argList.toArray(new Value[0]))) {
+        Map<String, Value> kwargs = new HashMap<>();
+        for (int i = 0; i < kwargc; i++) {
+            String key = readString();
+            Value val = pop();
+            kwargs.put(key, val);
+        }
+
+        if (!callValue(peek(argCount), argCount, argList.toArray(new Value[0]), kwargs)) {
             return VMResult.ERROR;
         }
         frame = frames.peek();
@@ -940,20 +947,20 @@ public class VM {
         return VMResult.OK;
     }
 
-    boolean callValue(Value callee, int argCount, Value[] args) {
+    boolean callValue(Value callee, int argCount, Value[] args, Map<String, Value> kwargs) {
         if (callee.isNativeFunc) {
             return call(callee.asNative(), argCount, args);
         }
         else if (callee.isClosure) {
-            return call(callee.asClosure(), argCount, args);
+            return call(callee.asClosure(), argCount, args, kwargs);
         }
         else if (callee.isClass) {
-            return call(callee.asClass(), argCount, args);
+            return call(callee.asClass(), argCount, args, kwargs);
         }
         else if (callee.isBoundMethod) {
             BoundMethod bound = callee.asBoundMethod();
             stack.set(stack.count - argCount - 1, new Value(new Var("any", bound.receiver, true)));
-            return call(bound.closure, argCount, bound.receiver, args);
+            return call(bound.closure, argCount, bound.receiver, args, kwargs);
         }
         else if (callee.isEnumChild) {
             return call(callee.asEnumChild(), argCount);
@@ -990,21 +997,21 @@ public class VM {
         return true;
     }
 
-    boolean call(JClass clazz, int argCount, Value[] args) {
+    boolean call(JClass clazz, int argCount, Value[] args, Map<String, Value> kwargs) {
         Instance instance = new Instance(clazz, this);
 
         Value value = new Value(instance);
         instance.self = value;
 
         BoundMethod bound = new BoundMethod(clazz.constructor.asClosure(), value);
-        return callValue(new Value(bound), argCount, args);
+        return callValue(new Value(bound), argCount, args, kwargs);
     }
 
-    boolean call(JClosure closure, int argCount, Value[] args) {
-        return call(closure, argCount, frame.bound, args);
+    boolean call(JClosure closure, int argCount, Value[] args, Map<String, Value> kwargs) {
+        return call(closure, argCount, frame.bound, args, kwargs);
     }
 
-    public boolean call(JClosure closure, int argCount, Value binding, Value[] args) {
+    public boolean call(JClosure closure, int argCount, Value binding, Value[] args, Map<String, Value> kwargs) {
         if (frame.memoize) {
             Value val = memo.get(closure.function.name, args);
             if (val != null) {
@@ -1016,9 +1023,33 @@ public class VM {
             memo.stackCache(closure.function.name, args);
         }
 
-        if (argCount != closure.function.arity) {
+        List<Value> extraArgs = new ArrayList<>();
+        if (argCount < closure.function.arity) {
             runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
             return false;
+        }
+        else if (argCount > closure.function.arity) {
+            if (closure.function.args != null) {
+                List<Value> argsList = new ArrayList<>();
+                for (int i = closure.function.arity; i < argCount; i++)
+                    argsList.add(pop());
+                for (int i = argsList.size() - 1; i >= 0; i--)
+                    extraArgs.add(argsList.get(i));
+                push(new Value(extraArgs));
+            }
+            else {
+                runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
+                return false;
+            }
+        }
+
+        Map<Value, Value> keywordArgs = new HashMap<>();
+        if (closure.function.kwargs != null) {
+            for (Map.Entry<String, Value> entry : kwargs.entrySet()) {
+                String name = entry.getKey();
+                keywordArgs.put(new Value(name), entry.getValue());
+            }
+            push(new Value(keywordArgs));
         }
 
         Traceback traceback = new Traceback(tracebacks.peek().filename, closure.function.name, 0);
@@ -1031,9 +1062,14 @@ public class VM {
         else {
             tracebacks.push(traceback);
 
-            CallFrame newFrame = new CallFrame(closure, 0, stack.count - argCount - 1,
+            CallFrame newFrame = new CallFrame(closure, 0, stack.count
+                                                                  - closure.function.totarity
+                                                                  - 1,
                     readType(closure.function.returnType), binding);
+
+            // Inherited flags
             newFrame.memoize = frame.memoize;
+
             frames.push(newFrame);
         }
         return true;
@@ -1047,7 +1083,7 @@ public class VM {
             return false;
         }
 
-        stack.count -= argCount + 1;
+        stack.setTop(stack.count - argCount - 1);
         push(result.value());
         return true;
     }
@@ -1536,7 +1572,7 @@ public class VM {
 
             push(val);
 
-            boolean res = call(closure, 1, new Value[]{ val });
+            boolean res = call(closure, 1, new Value[]{ val }, new HashMap<>());
             if (!res) {
                 return VMResult.ERROR;
             }
@@ -1558,7 +1594,7 @@ public class VM {
             push(new Value(closure));
             push(val);
 
-            boolean res = call(closure, 1, new Value(clazz), new Value[]{ val });
+            boolean res = call(closure, 1, new Value(clazz), new Value[]{ val }, new HashMap<>());
             if (!res) {
                 return VMResult.ERROR;
             }
@@ -1572,13 +1608,13 @@ public class VM {
         int variable = readByte();
         int jump = readByte();
 
-        List<Value> vals = stack.get(iterated).asVar().val.asList();
+        List<Value> vals = get(iterated).asVar().val.asList();
         if (vals.size() == 0) {
             moveIP(jump);
             return VMResult.OK;
         }
 
-        stack.get(variable).asVar().val(vals.get(0));
+        get(variable).asVar().val(vals.get(0));
         vals.remove(0);
         return VMResult.OK;
     }

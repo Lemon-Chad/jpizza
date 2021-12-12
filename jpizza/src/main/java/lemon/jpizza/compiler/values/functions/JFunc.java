@@ -7,9 +7,15 @@ import java.util.List;
 
 public class JFunc implements Serializable {
     public int arity;
+    public int totarity;
     public final Chunk chunk;
     public String name;
     public List<String> returnType;
+
+    public String args;
+    public String kwargs;
+
+    public boolean catcher;
 
     // Only if the function is a method
     public boolean isPrivate;
@@ -22,6 +28,7 @@ public class JFunc implements Serializable {
 
     public JFunc(String source) {
         arity = 0;
+        totarity = 0;
         name = "";
         chunk = new Chunk(source);
 
@@ -42,6 +49,7 @@ public class JFunc implements Serializable {
         copy.chunk.positions = chunk.positions;
 
         copy.arity = arity;
+        copy.totarity = totarity;
         copy.name = name;
         copy.returnType = returnType;
         copy.isPrivate = isPrivate;
@@ -50,6 +58,9 @@ public class JFunc implements Serializable {
         copy.owner = owner;
         copy.upvalueCount = upvalueCount;
         copy.async = async;
+        copy.args = args;
+        copy.kwargs = kwargs;
+        copy.catcher = catcher;
         return copy;
     }
 

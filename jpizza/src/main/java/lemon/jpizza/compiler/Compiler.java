@@ -509,10 +509,19 @@ public class Compiler {
     void compile(CallNode node) {
         compile(node.nodeToCall);
         int argc = node.argNodes.size();
+        int kwargc = node.kwargs.size();
         for (Node arg : node.argNodes) {
             compile(arg);
         }
+        List<String> kwargNames = node.kwargs.keySet().stream().toList();
+        for (int i = kwargc - 1; i >= 0; i--) {
+            compile(node.kwargs.get(kwargNames.get(i)));
+        }
         emit(OpCode.Call, argc, node.pos_start, node.pos_end);
+        emit(kwargc, node.pos_start, node.pos_end);
+        for (int i = 0; i < kwargc; i++) {
+            emit(chunk().addConstant(new Value(kwargNames.get(i))), node.pos_start, node.pos_end);
+        }
     }
 
     void compile(FuncDefNode node) {
@@ -581,10 +590,25 @@ public class Compiler {
 
         for (int i = 0; i < node.arg_name_toks.size(); i++) {
             compiler.function.arity++;
+            compiler.function.totarity++;
             Token param = node.arg_name_toks.get(i);
             Token paramType = node.arg_type_toks.get(i);
             compiler.parseVariable(param, param.pos_start, param.pos_end);
             compiler.makeVar(compiler.localCount - 1, (List<String>) paramType.value, false, param.pos_start, param.pos_end);
+        }
+
+        if (node.argname != null) {
+            Token argNameToken = new Token(Tokens.TT.IDENTIFIER, node.argname, node.pos_start, node.pos_end);
+            compiler.function.totarity++;
+            compiler.parseVariable(argNameToken, argNameToken.pos_start, argNameToken.pos_end);
+            compiler.makeVar(compiler.localCount - 1, List.of("list"), false, argNameToken.pos_start, argNameToken.pos_end);
+        }
+
+        if (node.kwargname != null) {
+            Token kwargNameToken = new Token(Tokens.TT.IDENTIFIER, node.kwargname, node.pos_start, node.pos_end);
+            compiler.function.totarity++;
+            compiler.parseVariable(kwargNameToken, kwargNameToken.pos_start, kwargNameToken.pos_end);
+            compiler.makeVar(compiler.localCount - 1, List.of("dict"), false, kwargNameToken.pos_start, kwargNameToken.pos_end);
         }
 
         compiler.compile(node.body_node);
@@ -594,6 +618,11 @@ public class Compiler {
         function.name = node.var_name_tok.value.toString();
         function.async = node.async;
         function.returnType = compileType(node.returnType, node.pos_start, node.pos_end, false);
+
+        function.args = node.argname;
+        function.kwargs = node.kwargname;
+
+        function.catcher = node.catcher;
 
         emit(OpCode.Closure, chunk().addConstant(new Value(function)), node.pos_start, node.pos_end);
 
