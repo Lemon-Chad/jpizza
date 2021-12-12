@@ -15,9 +15,12 @@ public class ValueArray implements Serializable {
     }
 
     public int write(Value value) {
-        values.add(value);
-        length++;
-        return length - 1;
+        int index = values.indexOf(value);
+        if (index == -1) {
+            values.add(value);
+            index = length++;
+        }
+        return index;
     }
 
     public void compile() {

@@ -59,9 +59,19 @@ public class Disassembler {
                 int arg = chunk.code.get(offset + 1);
                 String type = chunk.constants.values.get(chunk.code.get(offset + 2)).asString();
                 String constant = chunk.code.get(offset + 3) == 1 ? "CONSTANT" : "MUTABLE";
-                Shell.logger.debug(String.format("%-16s %-16s %4d '%s'%n", constant, "OP_MAKE_VAR", arg, type));
+                Shell.logger.debug(String.format("%-16s %-16s %04d '%s'%n", constant, "OP_MAKE_VAR", arg, type));
                 yield offset + 4;
             }
+
+            case OpCode.Throw -> simpleInstruction("OP_THROW", offset);
+            case OpCode.Assert -> simpleInstruction("OP_ASSERT", offset);
+
+            case OpCode.Copy -> simpleInstruction("OP_COPY", offset);
+
+            case OpCode.MakeArray -> byteInstruction("OP_MAKE_ARRAY", chunk, offset);
+            case OpCode.MakeMap -> byteInstruction("OP_MAKE_MAP", chunk, offset);
+
+            case OpCode.Enum -> constantInstruction("OP_ENUM", chunk, offset);
 
             case OpCode.GetUpvalue -> byteInstruction("OP_GET_UPVALUE", chunk, offset);
             case OpCode.SetUpvalue -> byteInstruction("OP_SET_UPVALUE", chunk, offset);
@@ -99,7 +109,7 @@ public class Disassembler {
             case OpCode.Closure -> {
                 offset++;
                 int constant = chunk.code.get(offset++);
-                Shell.logger.debug(String.format("%-16s %4d ", "OP_CLOSURE", constant));
+                Shell.logger.debug(String.format("%-16s %04d ", "OP_CLOSURE", constant));
                 Shell.logger.debug(chunk.constants.values.get(constant));
                 Shell.logger.debug("\n");
 
@@ -121,6 +131,29 @@ public class Disassembler {
 
             case OpCode.Import -> constantInstruction("OP_IMPORT", chunk, offset);
 
+            case OpCode.BitAnd -> simpleInstruction("OP_BIT_AND", offset);
+            case OpCode.BitOr -> simpleInstruction("OP_BIT_OR", offset);
+            case OpCode.BitXor -> simpleInstruction("OP_BIT_XOR", offset);
+            case OpCode.BitCompl -> simpleInstruction("OP_BIT_NOT", offset);
+            case OpCode.LeftShift -> simpleInstruction("OP_BIT_SHIFT_LEFT", offset);
+            case OpCode.RightShift -> simpleInstruction("OP_BIT_SHIFT_RIGHT", offset);
+            case OpCode.SignRightShift -> simpleInstruction("OP_BIT_SHIFT_RIGHT_SIGNED", offset);
+
+            case OpCode.Spread -> simpleInstruction("OP_SPREAD", offset);
+
+            case OpCode.Get -> simpleInstruction("OP_GET", offset);
+            case OpCode.Index -> simpleInstruction("OP_INDEX", offset);
+
+            case OpCode.Iter -> {
+                int slot = chunk.code.get(offset + 1);
+                int slot2 = chunk.code.get(offset + 2);
+                int jump = chunk.code.get(offset + 3);
+
+                Shell.logger.debug(String.format("%-16s %04d %04d %04d -> %04d\n", "OP_ITER", slot, slot2, offset, offset + jump));
+
+                yield offset + 4;
+            }
+
             default -> {
                 Shell.logger.debug(String.format("Unknown opcode %d%n", instruction));
                 yield offset + 1;
@@ -135,7 +168,7 @@ public class Disassembler {
     
     static int constantInstruction(String name, Chunk chunk, int offset) {
         int constant = chunk.code.get(offset + 1);
-        Shell.logger.debug(String.format("%-16s %4d '", name, constant));
+        Shell.logger.debug(String.format("%-16s %04d '", name, constant));
         Shell.logger.debug(chunk.constants.values.get(constant));
         Shell.logger.debug("'\n");
         return offset + 2;
@@ -143,7 +176,7 @@ public class Disassembler {
     
     static int byteInstruction(String name, Chunk chunk, int offset) {
         int local = chunk.code.get(offset + 1);
-        Shell.logger.debug(String.format("%-16s %4d%n", name, local));
+        Shell.logger.debug(String.format("%-16s %04d%n", name, local));
         return offset + 2;
     }
 
@@ -154,7 +187,7 @@ public class Disassembler {
         if (isLocal)
             Shell.logger.debug(String.format("%-16s %-16s '%s'%n", constant, name, type));
         else
-            Shell.logger.debug(String.format("%-16s %-16s %4d '%s' : '%s'%n", constant, name, arg,
+            Shell.logger.debug(String.format("%-16s %-16s %04d '%s' : '%s'%n", constant, name, arg,
                     chunk.constants.values.get(arg), type));
         return offset + 3 + (!isLocal ? 1 : 0);
     }
@@ -162,7 +195,7 @@ public class Disassembler {
     static int jumpInstruction(String name, int sign, Chunk chunk, int offset) {
         int jump = sign * chunk.code.get(offset + 1);
 
-        Shell.logger.debug(String.format("%-16s %4d -> %04d%n", name, offset, offset + 2 + jump));
+        Shell.logger.debug(String.format("%-16s %04d -> %04d%n", name, offset, offset + 2 + jump));
         
         return offset + 2;
     }
@@ -171,7 +204,7 @@ public class Disassembler {
         int constant = chunk.code.get(offset + 1);
         int jump = chunk.code.get(offset + 2);
 
-        Shell.logger.debug(String.format("%-16s %4d '%s' %04d -> %04d%n", "OP_FOR", constant, chunk.constants.values.get(constant), offset + 3, offset + 3 + jump));
+        Shell.logger.debug(String.format("%-16s %04d '%s' %04d -> %04d%n", "OP_FOR", constant, chunk.constants.values.get(constant), offset + 3, offset + 3 + jump));
         return offset + 3;
     }
 }

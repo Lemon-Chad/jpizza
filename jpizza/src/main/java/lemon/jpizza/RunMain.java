@@ -1,5 +1,7 @@
 package lemon.jpizza;
 
+import lemon.jpizza.errors.Error;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,13 +12,17 @@ public class RunMain {
 
         String text = Files.readString(Path.of("main.devp"));
 
-        var res = Shell.compile("main.devp", text, "main.jbox");
-        if (res != null) {
-            Shell.logger.fail(res.asString());
+        Error e = Shell.compile("main.devp", text, "main.jbox");
+        if (e != null) {
+            Shell.logger.fail(e.asString());
             return;
         }
         double start = System.currentTimeMillis();
-        Shell.runCompiled("main.jbox", "main.jbox");
+        e = Shell.runCompiled("main.jbox", "main.jbox");
+        if (e != null) {
+            Shell.logger.fail(e.asString());
+            return;
+        }
         double end = System.currentTimeMillis();
         Shell.logger.outln("Time: " + (end - start) + "ms");
 

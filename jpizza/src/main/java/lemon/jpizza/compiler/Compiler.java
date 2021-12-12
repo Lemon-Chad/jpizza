@@ -7,6 +7,7 @@ import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
+import lemon.jpizza.errors.Error;
 import lemon.jpizza.generators.Parser;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.definitions.*;
@@ -324,8 +325,19 @@ public class Compiler {
         else if (statement instanceof EnumNode)
             compile((EnumNode) statement);
 
+        else if (statement instanceof IterNode)
+            compile((IterNode) statement);
+
+        else if (statement instanceof SpreadNode)
+            compile((SpreadNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(SpreadNode node) {
+        compile(node.internal);
+        emit(OpCode.Spread, node.pos_start, node.pos_end);
     }
 
     void compile(EnumNode node) {
@@ -365,8 +377,12 @@ public class Compiler {
         try {
             if (Constants.LIBRARIES.containsKey(fn))
                 imp = null;
-            else if (Constants.STANDLIBS.containsKey(fn))
-                imp = Shell.compile(fn, Constants.STANDLIBS.get(fn));
+            else if (Constants.STANDLIBS.containsKey(fn)) {
+                Pair<JFunc, Error> res = Shell.compile(fn, Constants.STANDLIBS.get(fn));
+                if (res.b != null)
+                    Shell.logger.warn(res.b.asString());
+                imp = res.a;
+            }
             else if (Files.exists(Paths.get(modFilePath + ".jbox"))) {
                 imp = Shell.load(Files.readString(Paths.get(modFilePath + ".jbox")));
             }
@@ -374,11 +390,17 @@ public class Compiler {
                 imp = Shell.load(Files.readString(Paths.get(fileName + ".jbox")));
             }
             else if (Files.exists(Paths.get(fileName + ".devp"))) {
-                imp = Shell.compile(fn, Files.readString(Paths.get(fileName + ".devp")));
+                Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(fileName + ".devp")));
+                if (res.b != null)
+                    Shell.logger.warn(res.b.asString());
+                imp = res.a;
             }
             else if (Files.exists(Paths.get(modFilePath + ".devp"))) {
                 System.setProperty("user.dir", modPath + ".devp");
-                imp = Shell.compile(fn, Files.readString(Paths.get(modFilePath + ".devp")));
+                Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(modFilePath + ".devp")));
+                if (res.b != null)
+                    Shell.logger.warn(res.b.asString());
+                imp = res.a;
                 System.setProperty("user.dir", chrDir);
             }
             else Shell.logger.warn("Could not find module: " + fn);
@@ -426,9 +448,11 @@ public class Compiler {
 
     void compile(CallNode node) {
         compile(node.nodeToCall);
-        for (Node arg : node.argNodes)
+        int argc = node.argNodes.size();
+        for (Node arg : node.argNodes) {
             compile(arg);
-        emit(OpCode.Call, node.argNodes.size(), node.pos_start, node.pos_end);
+        }
+        emit(OpCode.Call, argc, node.pos_start, node.pos_end);
     }
 
     void compile(FuncDefNode node) {
@@ -576,6 +600,13 @@ public class Compiler {
             case LSQUARE -> emit(OpCode.Index, node.pos_start, node.pos_end);
             case DOT -> emit(OpCode.Get, node.pos_start, node.pos_end);
 
+            case BITAND -> emit(OpCode.BitAnd, node.pos_start, node.pos_end);
+            case BITOR -> emit(OpCode.BitOr, node.pos_start, node.pos_end);
+            case BITXOR -> emit(OpCode.BitXor, node.pos_start, node.pos_end);
+            case LEFTSHIFT -> emit(OpCode.LeftShift, node.pos_start, node.pos_end);
+            case RIGHTSHIFT -> emit(OpCode.RightShift, node.pos_start, node.pos_end);
+            case SIGNRIGHTSHIFT -> emit(OpCode.SignRightShift, node.pos_start, node.pos_end);
+
             default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
     }
@@ -588,6 +619,7 @@ public class Compiler {
             case NOT -> emit(OpCode.Not, node.pos_start, node.pos_end);
             case INCR -> emit(OpCode.Increment, node.pos_start, node.pos_end);
             case DECR -> emit(OpCode.Decrement, node.pos_start, node.pos_end);
+            case BITCOMPL -> emit(OpCode.BitCompl, node.pos_start, node.pos_end);
             default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
     }
@@ -929,8 +961,7 @@ public class Compiler {
         beginScope();
 
         String name = node.var_name_tok.value.toString();
-        compileDecl(node.var_name_tok, List.of("num"), false, node.start_value_node, node.pos_start, node.pos_end);
-        emit(OpCode.Pop, node.pos_start, node.pos_end);
+        copyVar(node.var_name_tok, "num", node.start_value_node);
 
         int firstSkip = emitJump(OpCode.Jump, node.start_value_node.pos_start, node.start_value_node.pos_end);
 
@@ -963,6 +994,58 @@ public class Compiler {
         else {
             emit(OpCode.FlushLoop, node.pos_start, node.pos_end);
         }
+    }
+
+    void compile(IterNode node) {
+        if (!node.retnull) emit(OpCode.StartCache, node.pos_start, node.pos_end);
+        beginScope();
+
+        String name = node.var_name_tok.value.toString();
+        copyVar(new Token(
+                Tokens.TT.IDENTIFIER,
+                "@" + name,
+                node.var_name_tok.pos_start,
+                node.var_name_tok.pos_end
+        ), "list", node.iterable_node);
+        compileDecl(node.var_name_tok,
+                List.of("any"),
+                false,
+                new NullNode(new Token(
+                        Tokens.TT.IDENTIFIER,
+                        "null",
+                        node.var_name_tok.pos_start,
+                        node.var_name_tok.pos_end
+                )), node.var_name_tok.pos_start, node.var_name_tok.pos_end);
+        emit(OpCode.Pop, node.pos_start, node.pos_end);
+
+        int loopStart = chunk().code.size();
+
+        emit(OpCode.Iter, node.pos_start, node.pos_end);
+        emit(resolveLocal("@" + name), resolveLocal(name), node.pos_start, node.pos_end);
+
+        emit(0xff, node.pos_start, node.pos_end);
+        int jump = chunk().code.size() - 1;
+
+        loopBody(node.body_node, node.retnull, loopStart);
+
+        int offset = chunk().code.size() - jump - 1;
+        chunk().code.set(jump, offset);
+        endScope(node.pos_start, node.pos_end);
+
+        if (node.retnull) {
+            compileNull(node.pos_start, node.pos_end);
+        }
+        else {
+            emit(OpCode.FlushLoop, node.pos_start, node.pos_end);
+        }
+    }
+
+    void copyVar(Token varNameTok, String type, Node startValueNode) {
+        int global = parseVariable(varNameTok, varNameTok.pos_start, varNameTok.pos_end);
+        compile(startValueNode);
+        emit(OpCode.Copy, startValueNode.pos_start, startValueNode.pos_end);
+        defineVariable(global, List.of(type), false, varNameTok.pos_start, startValueNode.pos_end);
+        emit(OpCode.Pop, startValueNode.pos_start, startValueNode.pos_end);
     }
 
     void compile(ListNode node) {

@@ -12,10 +12,7 @@ import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.values.classes.JClass;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
-import lemon.jpizza.compiler.values.functions.JClosure;
-import lemon.jpizza.compiler.values.functions.JFunc;
-import lemon.jpizza.compiler.values.functions.JNative;
-import lemon.jpizza.compiler.values.functions.NativeResult;
+import lemon.jpizza.compiler.values.functions.*;
 
 import java.util.*;
 
@@ -707,7 +704,26 @@ public class VM {
     }
 
     VMResult call() {
-        int argCount = readByte();
+        int argc = readByte();
+
+        Value[] args = new Value[argc];
+        for (int i = argc - 1; i >= 0; i--)
+            args[i] = pop();
+
+        int argCount = 0;
+        for (Value arg : args) {
+            if (arg.isSpread) {
+                Spread spread = arg.asSpread();
+                for (Value val : spread.values)
+                    push(val);
+                argCount += spread.values.size();
+            }
+            else {
+                push(arg);
+                argCount++;
+            }
+        }
+
         if (!callValue(peek(argCount), argCount)) {
             return VMResult.ERROR;
         }
@@ -800,6 +816,74 @@ public class VM {
 
             default -> VMResult.OK;
         };
+    }
+
+    interface BitCall {
+        long call(long left, long right);
+    }
+
+    double bitOp(double left, double right, BitCall call) {
+        long power = 0;
+        while (left % 1 != 0 || right % 1 != 0) {
+            left *= 10;
+            right *= 10;
+            power++;
+        }
+        return call.call((long) left, (long) right) / Math.pow(10, power);
+    }
+
+    VMResult bitOps(int instruction) {
+        switch (instruction) {
+            case OpCode.BitAnd -> {
+                Value b = pop();
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), b.asNumber(), (left, right) -> left & right)
+                ));
+            }
+            case OpCode.BitOr -> {
+                Value b = pop();
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), b.asNumber(), (left, right) -> left | right)
+                ));
+            }
+            case OpCode.BitXor -> {
+                Value b = pop();
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), b.asNumber(), (left, right) -> left ^ right)
+                ));
+            }
+            case OpCode.LeftShift -> {
+                Value b = pop();
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), b.asNumber(), (left, right) -> left << right)
+                ));
+            }
+            case OpCode.RightShift -> {
+                Value b = pop();
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), b.asNumber(), (left, right) -> left >>> right)
+                ));
+            }
+            case OpCode.SignRightShift -> {
+                Value b = pop();
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), b.asNumber(), (left, right) -> left >> right)
+                ));
+            }
+            case OpCode.BitCompl -> {
+                Value a = pop();
+                push(new Value(
+                        bitOp(a.asNumber(), 0, (left, right) -> ~left)
+                ));
+            }
+        }
+        return VMResult.OK;
     }
 
     private VMResult access(Value val, String name, Value member) {
@@ -1056,6 +1140,18 @@ public class VM {
                     yield VMResult.OK;
                 }
 
+                case OpCode.Copy -> {
+                    push(pop().copy());
+                    yield VMResult.OK;
+                }
+
+                case OpCode.Iter -> iter();
+
+                case OpCode.Spread -> {
+                    push(new Value(new Spread(pop().asList())));
+                    yield VMResult.OK;
+                }
+
                 case OpCode.Add,
                         OpCode.Subtract,
                         OpCode.Multiply,
@@ -1148,6 +1244,14 @@ public class VM {
                 case OpCode.GetUpvalue,
                         OpCode.SetUpvalue -> upvalueOps(instruction);
 
+                case OpCode.BitAnd,
+                        OpCode.BitOr,
+                        OpCode.BitXor,
+                        OpCode.LeftShift,
+                        OpCode.RightShift,
+                        OpCode.SignRightShift,
+                        OpCode.BitCompl -> bitOps(instruction);
+
                 case OpCode.MakeArray -> {
                     int count = readByte();
                     List<Value> array = new ArrayList<>();
@@ -1223,6 +1327,22 @@ public class VM {
                 return VMResult.ERROR;
             }
         }
+    }
+
+    VMResult iter() {
+        int iterated = readByte();
+        int variable = readByte();
+        int jump = readByte();
+
+        List<Value> vals = stack[iterated].asVar().val.asList();
+        if (vals.size() == 0) {
+            moveIP(jump);
+            return VMResult.OK;
+        }
+
+        stack[variable].asVar().val(vals.get(0));
+        vals.remove(0);
+        return VMResult.OK;
     }
 
     public Namespace asNamespace(String name) {

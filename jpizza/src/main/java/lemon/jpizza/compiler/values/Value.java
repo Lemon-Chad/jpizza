@@ -8,6 +8,7 @@ import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
+import lemon.jpizza.compiler.values.functions.Spread;
 import lemon.jpizza.compiler.vm.VMResult;
 
 import java.io.Serializable;
@@ -30,6 +31,7 @@ public class Value implements Serializable {
     protected Namespace namespace;
     protected JEnum enumParent;
     protected JEnumChild enumChild;
+    protected Spread spread;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -48,9 +50,15 @@ public class Value implements Serializable {
     public boolean isNamespace = false;
     public boolean isEnumParent = false;
     public boolean isEnumChild = false;
+    public boolean isSpread = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(Spread spread) {
+        this.spread = spread;
+        this.isSpread = true;
     }
 
     public Value(JEnum enumParent) {
@@ -497,6 +505,10 @@ public class Value implements Serializable {
 
     public JEnum asEnum() {
         return enumParent;
+    }
+
+    public Spread asSpread() {
+        return spread;
     }
 
 }

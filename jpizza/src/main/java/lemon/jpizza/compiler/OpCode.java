@@ -53,4 +53,14 @@ public class OpCode {
     public static final int Throw = 49;
     public static final int Import = 50;
     public static final int Enum = 51;
+    public static final int BitAnd = 52;
+    public static final int BitOr = 53;
+    public static final int BitXor = 54;
+    public static final int BitCompl = 55;
+    public static final int LeftShift = 56;
+    public static final int RightShift = 57;
+    public static final int SignRightShift = 58;
+    public static final int Copy = 59;
+    public static final int Iter = 60;
+    public static final int Spread = 61;
 }

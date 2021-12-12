@@ -264,17 +264,19 @@ public class Shell {
         return new Pair<>(result.value, result.error);
     }
 
-    public static JFunc compile(String fn, String text) {
+    public static Pair<JFunc, Error> compile(String fn, String text) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
-        if (ast.b != null) return null;
+        if (ast.b != null) return new Pair<>(null, ast.b);
         List<Node> outNode = ast.a;
 
         Compiler compiler = new Compiler(FunctionType.Script, text);
-        return compiler.compileBlock(outNode);
+        return new Pair<>(compiler.compileBlock(outNode), null);
     }
 
     public static Error compile(String fn, String text, String outpath) {
-        JFunc func = compile(fn, text);
+        Pair<JFunc, Error> res = compile(fn, text);
+        if (res.b != null) return res.b;
+        JFunc func = res.a;
 
         try {
             FileOutputStream fout;
