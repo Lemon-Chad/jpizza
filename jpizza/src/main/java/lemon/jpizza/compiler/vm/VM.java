@@ -742,11 +742,11 @@ public class VM {
         switch (op) {
             case OpCode.GetUpvalue -> {
                 int slot = readByte();
-                push(frame.closure.upvalues.get(slot).val);
+                push(frame.closure.upvalues[slot].val);
             }
             case OpCode.SetUpvalue -> {
                 int slot = readByte();
-                return set(frame.closure.upvalues.get(slot), peek(0));
+                return set(frame.closure.upvalues[slot], peek(0));
             }
         }
 
@@ -1082,6 +1082,39 @@ public class VM {
         };
     }
 
+    VMResult freeOps(int op) {
+        return switch (op) {
+            case OpCode.DropGlobal -> {
+                String name = readString();
+                if (globals.containsKey(name)) {
+                    globals.remove(name);
+                    yield VMResult.OK;
+                }
+                else {
+                    runtimeError("Scope", "No such global: " + name);
+                    yield VMResult.ERROR;
+                }
+            }
+            case OpCode.DropLocal -> {
+                int slot = readByte();
+                if (slot + frame.slots == stackTop - 1) {
+                    stackTop--;
+                }
+                stack[slot + frame.slots] = null;
+                yield VMResult.OK;
+            }
+            case OpCode.DropUpvalue -> {
+                int slot = readByte();
+                if (slot == frame.closure.upvalueCount - 1) {
+                    frame.closure.upvalueCount--;
+                }
+                frame.closure.upvalues[slot] = null;
+                yield VMResult.OK;
+            }
+            default -> throw new IllegalArgumentException("Invalid free op: " + op);
+        };
+    }
+
     public VMResult run() {
         frame = frames[frameCount - 1];
         int exitLevel = frameCount - 1;
@@ -1091,7 +1124,7 @@ public class VM {
                 Shell.logger.debug("          ");
                 for (int i = 0; i < stackTop; i++) {
                     Shell.logger.debug("[ ");
-                    Shell.logger.debug(stack[i].toSafeString());
+                    Shell.logger.debug(stack[i] == null ? "{ dropped }" : stack[i].toSafeString());
                     Shell.logger.debug(" ]");
                 }
                 Shell.logger.debug("\n");
@@ -1298,9 +1331,9 @@ public class VM {
                         int isLocal = readByte();
                         int index = readByte();
                         if (isLocal == 1)
-                            closure.upvalues.set(i, captureUpvalue(frame.slots + index));
+                            closure.upvalues[i] = captureUpvalue(frame.slots + index);
                         else
-                            closure.upvalues.set(i, frame.closure.upvalues.get(index));
+                            closure.upvalues[i] = frame.closure.upvalues[index];
                     }
 
                     yield VMResult.OK;
@@ -1400,6 +1433,10 @@ public class VM {
                 }
 
                 case OpCode.Access -> access();
+
+                case OpCode.DropGlobal,
+                        OpCode.DropLocal,
+                        OpCode.DropUpvalue -> freeOps(instruction);
 
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
             };

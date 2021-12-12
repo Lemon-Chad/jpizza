@@ -146,6 +146,10 @@ public class Disassembler {
             case OpCode.RightShift -> simpleInstruction("OP_BIT_SHIFT_RIGHT", offset);
             case OpCode.SignRightShift -> simpleInstruction("OP_BIT_SHIFT_RIGHT_SIGNED", offset);
 
+            case OpCode.DropGlobal -> constantInstruction("OP_DROP_GLOBAL", chunk, offset);
+            case OpCode.DropLocal -> byteInstruction("OP_DROP_LOCAL", chunk, offset);
+            case OpCode.DropUpvalue -> byteInstruction("OP_DROP_UPVALUE", chunk, offset);
+
             case OpCode.Spread -> simpleInstruction("OP_SPREAD", offset);
 
             case OpCode.Get -> simpleInstruction("OP_GET", offset);

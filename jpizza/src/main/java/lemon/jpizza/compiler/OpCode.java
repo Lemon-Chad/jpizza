@@ -70,4 +70,7 @@ public class OpCode {
     public static final int FromBytes = 66;
     public static final int NullErr = 67;
     public static final int Chain = 68;
+    public static final int DropLocal = 69;
+    public static final int DropGlobal = 70;
+    public static final int DropUpvalue = 71;
 }

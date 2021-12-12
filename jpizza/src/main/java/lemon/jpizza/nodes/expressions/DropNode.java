@@ -8,7 +8,7 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 public class DropNode extends Node {
-    final Token varTok;
+    public final Token varTok;
 
     public DropNode(Token varTok) {
         pos_start = varTok.pos_start; pos_end = varTok.pos_end;

@@ -9,16 +9,13 @@ import java.util.List;
 public class JClosure implements Serializable {
     public final JFunc function;
 
-    public final List<Var> upvalues;
-    public final int upvalueCount;
+    public final Var[] upvalues;
+    public int upvalueCount;
 
     public JClosure(JFunc function) {
         this.function = function;
         this.upvalueCount = function.upvalueCount;
-        this.upvalues = new ArrayList<>();
-        for (int i = 0; i < upvalueCount; i++) {
-            upvalues.add(null);
-        }
+        this.upvalues = new Var[upvalueCount];
     }
 
     public void asMethod(boolean isStatic, boolean isPrivate, boolean isBin, String owner) {

@@ -347,6 +347,9 @@ public class Compiler {
         else if (statement instanceof DynAssignNode)
             compile((DynAssignNode) statement);
 
+        else if (statement instanceof DropNode)
+            compile((DropNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
     }
@@ -701,6 +704,31 @@ public class Compiler {
             arg = chunk().addConstant(new Value(name));
             emit(OpCode.GetGlobal, arg, start, end);
         }
+    }
+
+    void compile(DropNode node) {
+        String name = node.varTok.value.toString();
+        if (macros.containsKey(name)) {
+            macros.remove(name);
+            return;
+        }
+
+        int arg = resolveLocal(name);
+
+        if (arg != -1) {
+            locals[arg] = null;
+            emit(OpCode.DropLocal, arg, node.pos_start, node.pos_end);
+        }
+        else if ((arg = resolveUpvalue(name)) != -1) {
+            upvalues[arg] = null;
+            emit(OpCode.DropUpvalue, arg, node.pos_start, node.pos_end);
+        }
+        else {
+            arg = chunk().addConstant(new Value(name));
+            emit(OpCode.DropGlobal, arg, node.pos_start, node.pos_end);
+        }
+
+        compileNull(node.pos_start, node.pos_end);
     }
 
     void compile(VarAssignNode node) {
