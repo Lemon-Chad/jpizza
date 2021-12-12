@@ -56,6 +56,8 @@ public class Compiler {
 
     final Upvalue[] upvalues;
 
+    Map<String, Node> macros;
+
     public Chunk chunk() {
         return this.function.chunk;
     }
@@ -82,6 +84,8 @@ public class Compiler {
 
         this.continueTo = 0;
         this.breaks = new ArrayList<>();
+
+        this.macros = new HashMap<>();
     }
 
     void beginScope() {
@@ -340,8 +344,19 @@ public class Compiler {
         else if (statement instanceof SpreadNode)
             compile((SpreadNode) statement);
 
+        else if (statement instanceof DynAssignNode)
+            compile((DynAssignNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(DynAssignNode node) {
+        macros.put(
+                node.var_name_tok.value.toString(),
+                node.value_node
+        );
+        compileNull(node.pos_start, node.pos_end);
     }
 
     void compile(BytesNode node) {
@@ -669,6 +684,11 @@ public class Compiler {
     }
 
     void accessVariable(String name, @NotNull Position start, @NotNull Position end) {
+        if (macros.containsKey(name)) {
+            compile(macros.get(name));
+            return;
+        }
+
         int arg = resolveLocal(name);
 
         if (arg != -1) {
