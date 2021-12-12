@@ -2,6 +2,7 @@ package lemon.jpizza.compiler;
 
 import lemon.jpizza.*;
 import lemon.jpizza.cases.Case;
+import lemon.jpizza.compiler.headers.HeadCode;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
@@ -297,6 +298,9 @@ public class Compiler {
         else if (statement instanceof ClassDefNode)
             compile((ClassDefNode) statement);
 
+        else if (statement instanceof UseNode)
+            compile((UseNode) statement);
+
         else if (statement instanceof ContinueNode)
             emitLoop(continueTo, statement.pos_start, statement.pos_end);
 
@@ -352,6 +356,20 @@ public class Compiler {
 
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(UseNode node) {
+        emit(OpCode.Header, node.pos_start, node.pos_end);
+        emit(switch (node.useToken.value.toString()) {
+            case "memoize"  -> HeadCode.Memoize;
+            case "func"     -> HeadCode.SetMainFunction;
+            case "object"   -> HeadCode.SetMainClass;
+            default         -> -1;
+        }, node.args.size(), node.pos_start, node.pos_end);
+        for (Token arg : node.args) {
+            int constant = chunk().addConstant(new Value(arg.value.toString()));
+            emit(constant, arg.pos_start, arg.pos_end);
+        }
     }
 
     void compile(DynAssignNode node) {

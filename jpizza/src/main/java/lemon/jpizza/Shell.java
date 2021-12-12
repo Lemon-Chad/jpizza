@@ -114,7 +114,7 @@ public class Shell {
                     String[] dsfn = getFNDirs(dir);
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
-                    Error res = runCompiled(fn, args[0]);
+                    Error res = runCompiled(fn, args[0], args);
                     if (res != null)
                         Shell.logger.fail(res.asString());
                 }
@@ -325,7 +325,7 @@ public class Shell {
         return null;
     }
 
-    public static Error runCompiled(String fn, String inpath) {
+    public static Error runCompiled(String fn, String inpath, String[] args) {
         FileInputStream fis;
         try {
             fis = new FileInputStream(inpath);
@@ -345,6 +345,7 @@ public class Shell {
             vm = new VM(func).trace(fn);
 
             vm.run();
+            vm.finish(args);
 
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

@@ -109,7 +109,8 @@ public class SysLib extends Library {
         String envVar = System.getenv(execCtx.symbolTable.get("variableName").toString());
         if (envVar == null){
             return new RTResult().success(new Bool(false));
-        }else{
+        }
+        else{
             return new RTResult().success(new Bool(true));
         }
     }
@@ -117,7 +118,8 @@ public class SysLib extends Library {
         String envVar = System.getenv(execCtx.symbolTable.get("variableName").toString());
         if (envVar == null){
             return new RTResult().failure(RTError.Scope(pos_start, pos_end, "Variable Does Not Exist", context));
-        }else{
+        }
+        else{
             return new RTResult().success(new Str(envVar));
         }
     }
@@ -126,7 +128,8 @@ public class SysLib extends Library {
         String envVar = System.getProperty(execCtx.symbolTable.get("prop").toString());
         if (envVar == null){
             return new RTResult().failure(RTError.Scope(pos_start, pos_end, "Property Does Not Exist", context));
-        }else{
+        }
+        else{
             return new RTResult().success(new Str(envVar));
         }
     }

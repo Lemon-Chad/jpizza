@@ -66,11 +66,11 @@ public class Instance {
         Value val = binMethods.get(opName);
         if (val != null) {
             vm.push(val);
-            boolean worked = vm.call(val.asClosure(), 0, self);
+            boolean worked = vm.call(val.asClosure(), 0, self, new Value[0]);
             if (!worked)
                 return def;
 
-            vm.frame = vm.frames[vm.frameCount - 1];
+            vm.frame = vm.frames.peek();
             vm.frame.returnType = type;
 
             VMResult res = vm.run();

@@ -73,4 +73,5 @@ public class OpCode {
     public static final int DropLocal = 69;
     public static final int DropGlobal = 70;
     public static final int DropUpvalue = 71;
+    public static final int Header = 72;
 }

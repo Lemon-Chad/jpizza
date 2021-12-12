@@ -224,7 +224,14 @@ public class Value implements Serializable {
             return "";
         }
         else if (isNumber) {
-            if (Math.floor(number) == number) {
+            if (number == Double.MAX_VALUE) {
+                return "Infinity";
+            }
+            else if (number == Double.MIN_VALUE) {
+                return "-Infinity";
+            }
+
+            if (Math.floor(number) == number && number < Long.MAX_VALUE && number > Long.MIN_VALUE) {
                 return String.valueOf((long) number);
             }
             return String.valueOf(number);
@@ -536,7 +543,7 @@ public class Value implements Serializable {
             return instance.clazz.name;
         }
         else if (isVar) {
-            return var.val.toSafeString();
+            return var.toString();
         }
         return toString();
     }

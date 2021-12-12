@@ -4,7 +4,10 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.Disassembler;
 import lemon.jpizza.compiler.FlatPosition;
+import lemon.jpizza.compiler.JStack;
 import lemon.jpizza.compiler.OpCode;
+import lemon.jpizza.compiler.headers.HeadCode;
+import lemon.jpizza.compiler.headers.Memo;
 import lemon.jpizza.compiler.values.*;
 import lemon.jpizza.compiler.values.classes.BoundMethod;
 import lemon.jpizza.compiler.values.classes.ClassAttr;
@@ -13,17 +16,17 @@ import lemon.jpizza.compiler.values.classes.JClass;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
+import lemon.jpizza.compiler.headers.HeadCode;
 
 import java.util.*;
 
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
-    public static final int FRAMES_MAX = 64;
+    public static final int FRAMES_MAX = 256;
 
     private static record Traceback(String filename, String context, int offset) {}
 
-    final Value[] stack;
-    public int stackTop;
+    final JStack<Value> stack;
     int ip;
 
     Stack<Traceback> tracebacks;
@@ -35,8 +38,12 @@ public class VM {
     Map<String, Namespace> libraries;
 
     public CallFrame frame;
-    public final CallFrame[] frames;
-    public int frameCount;
+    public final JStack<CallFrame> frames;
+
+    static Memo memo = new Memo();
+
+    String mainFunction;
+    String mainClass;
 
     public boolean safe = false;
     public boolean failed = false;
@@ -50,8 +57,7 @@ public class VM {
 
         this.ip = 0;
 
-        this.stack = new Value[MAX_STACK_SIZE];
-        this.stackTop = 0;
+        this.stack = new JStack<>(MAX_STACK_SIZE);
         push(new Value(function));
 
         this.globals = new HashMap<>();
@@ -60,11 +66,10 @@ public class VM {
         this.loopCache = new Stack<>();
         this.currentLoop = null;
 
-        this.frames = new CallFrame[FRAMES_MAX];
-        this.frameCount = 0;
+        this.frames = new JStack<>(FRAMES_MAX);
 
         this.frame = new CallFrame(new JClosure(function), 0, 0, "void");
-        frames[frameCount++] = frame;
+        frames.push(frame);
 
         setup();
     }
@@ -228,11 +233,11 @@ public class VM {
     }
 
     public void push(Value value) {
-        stack[stackTop++] = value;
+        stack.push(value);
     }
 
     public Value pop() {
-        return stack[--stackTop];
+        return stack.pop();
     }
 
     protected void runtimeError(String message, String reason) {
@@ -288,8 +293,8 @@ public class VM {
     }
 
     void resetStack() {
-        stackTop = 0;
-        frameCount = 0;
+        stack.clear();
+        frames.clear();
     }
 
     String readString() {
@@ -306,7 +311,7 @@ public class VM {
     }
 
     Value peek(int offset) {
-        return stack[stackTop - 1 - offset];
+        return stack.peek(offset);
     }
 
     int isFalsey(Value value) {
@@ -329,7 +334,7 @@ public class VM {
             push(args[i]);
         }
 
-        if (!callValue(method, args.length)) return VMResult.ERROR;
+        if (!callValue(method, args.length, args)) return VMResult.ERROR;
 
         VMResult res = run();
         return res != VMResult.ERROR ? VMResult.OK : VMResult.ERROR;
@@ -510,7 +515,8 @@ public class VM {
             if (frame.bound.isInstance) {
                 Instance instance = frame.bound.asInstance();
                 return boundNeutral(suppress, instance.setField(name, value, true));
-            } else if (frame.bound.isClass) {
+            }
+            else if (frame.bound.isClass) {
                 JClass clazz = frame.bound.asClass();
                 return boundNeutral(suppress, clazz.setField(name, value, true));
             }
@@ -570,7 +576,7 @@ public class VM {
     }
 
     Value get(int index) {
-        return stack[index + frame.slots];
+        return stack.get(index + frame.slots);
     }
 
     VMResult set(Var var, Value val) {
@@ -592,7 +598,7 @@ public class VM {
         return switch (op) {
             case OpCode.GetLocal -> {
                 int slot = readByte();
-                if (stackTop - slot <= 0) {
+                if (stack.count - slot <= 0) {
                     runtimeError("Scope", "Undefined variable");
                     yield VMResult.ERROR;
                 }
@@ -714,6 +720,7 @@ public class VM {
         int argc = readByte();
 
         Value[] args = new Value[argc];
+        List<Value> argList = new ArrayList<>();
         for (int i = argc - 1; i >= 0; i--)
             args[i] = pop();
 
@@ -721,20 +728,23 @@ public class VM {
         for (Value arg : args) {
             if (arg.isSpread) {
                 Spread spread = arg.asSpread();
-                for (Value val : spread.values)
+                for (Value val : spread.values) {
                     push(val);
+                    argList.add(val);
+                }
                 argCount += spread.values.size();
             }
             else {
                 push(arg);
+                argList.add(arg);
                 argCount++;
             }
         }
 
-        if (!callValue(peek(argCount), argCount)) {
+        if (!callValue(peek(argCount), argCount, argList.toArray(new Value[0]))) {
             return VMResult.ERROR;
         }
-        frame = frames[frameCount - 1];
+        frame = frames.peek();
         return VMResult.OK;
     }
 
@@ -930,20 +940,20 @@ public class VM {
         return VMResult.OK;
     }
 
-    boolean callValue(Value callee, int argCount) {
+    boolean callValue(Value callee, int argCount, Value[] args) {
         if (callee.isNativeFunc) {
-            return call(callee.asNative(), argCount);
+            return call(callee.asNative(), argCount, args);
         }
         else if (callee.isClosure) {
-            return call(callee.asClosure(), argCount);
+            return call(callee.asClosure(), argCount, args);
         }
         else if (callee.isClass) {
-            return call(callee.asClass(), argCount);
+            return call(callee.asClass(), argCount, args);
         }
         else if (callee.isBoundMethod) {
             BoundMethod bound = callee.asBoundMethod();
-            stack[stackTop - argCount - 1] = new Value(new Var("any", bound.receiver, true));
-            return call(bound.closure, argCount, bound.receiver);
+            stack.set(stack.count - argCount - 1, new Value(new Var("any", bound.receiver, true)));
+            return call(bound.closure, argCount, bound.receiver, args);
         }
         else if (callee.isEnumChild) {
             return call(callee.asEnumChild(), argCount);
@@ -980,28 +990,34 @@ public class VM {
         return true;
     }
 
-    boolean call(JClass clazz, int argCount) {
+    boolean call(JClass clazz, int argCount, Value[] args) {
         Instance instance = new Instance(clazz, this);
 
         Value value = new Value(instance);
         instance.self = value;
 
         BoundMethod bound = new BoundMethod(clazz.constructor.asClosure(), value);
-        return callValue(new Value(bound), argCount);
+        return callValue(new Value(bound), argCount, args);
     }
 
-    boolean call(JClosure closure, int argCount) {
-        return call(closure, argCount, frame.bound);
+    boolean call(JClosure closure, int argCount, Value[] args) {
+        return call(closure, argCount, frame.bound, args);
     }
 
-    public boolean call(JClosure closure, int argCount, Value binding) {
-        if (argCount != closure.function.arity) {
-            runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
-            return false;
+    public boolean call(JClosure closure, int argCount, Value binding, Value[] args) {
+        if (frame.memoize) {
+            Value val = memo.get(closure.function.name, args);
+            if (val != null) {
+                for (int i = 0; i <= argCount; i++)
+                    pop();
+                push(val);
+                return true;
+            }
+            memo.stackCache(closure.function.name, args);
         }
 
-        if (frameCount == FRAMES_MAX) {
-            runtimeError("Stack", "Stack overflow");
+        if (argCount != closure.function.arity) {
+            runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
             return false;
         }
 
@@ -1015,27 +1031,29 @@ public class VM {
         else {
             tracebacks.push(traceback);
 
-            frames[frameCount++] = new CallFrame(closure, 0, stackTop - argCount - 1,
+            CallFrame newFrame = new CallFrame(closure, 0, stack.count - argCount - 1,
                     readType(closure.function.returnType), binding);
+            newFrame.memoize = frame.memoize;
+            frames.push(newFrame);
         }
         return true;
     }
 
-    boolean call(JNative nativeFunc, int argCount) {
-        NativeResult result = nativeFunc.call(Arrays.copyOfRange(stack, stackTop - argCount, stackTop));
+    boolean call(JNative nativeFunc, int argCount, Value[] args) {
+        NativeResult result = nativeFunc.call(args);
 
         if (!result.ok()) {
             runtimeError(result.name(), result.reason());
             return false;
         }
 
-        stackTop -= argCount + 1;
+        stack.count -= argCount + 1;
         push(result.value());
         return true;
     }
 
     Var captureUpvalue(int slot) {
-        return stack[slot].asVar();
+        return stack.get(slot).asVar();
     }
 
     void defineMethod(String name) {
@@ -1097,10 +1115,10 @@ public class VM {
             }
             case OpCode.DropLocal -> {
                 int slot = readByte();
-                if (slot + frame.slots == stackTop - 1) {
-                    stackTop--;
+                if (slot + frame.slots == stack.count - 1) {
+                    stack.count--;
                 }
-                stack[slot + frame.slots] = null;
+                stack.set(slot + frame.slots, null);
                 yield VMResult.OK;
             }
             case OpCode.DropUpvalue -> {
@@ -1116,15 +1134,15 @@ public class VM {
     }
 
     public VMResult run() {
-        frame = frames[frameCount - 1];
-        int exitLevel = frameCount - 1;
+        frame = frames.peek();
+        int exitLevel = frames.count - 1;
 
         while (true) {
             if (Shell.logger.debug) {
                 Shell.logger.debug("          ");
-                for (int i = 0; i < stackTop; i++) {
+                for (int i = 0; i < stack.count; i++) {
                     Shell.logger.debug("[ ");
-                    Shell.logger.debug(stack[i] == null ? "{ dropped }" : stack[i].toSafeString());
+                    Shell.logger.debug(stack.get(i) == null ? "{ dropped }" : stack.get(i).toSafeString());
                     Shell.logger.debug(" ]");
                 }
                 Shell.logger.debug("\n");
@@ -1136,8 +1154,8 @@ public class VM {
             VMResult res = switch (instruction) {
                 case OpCode.Return -> {
                     Value result = pop();
-                    frameCount--;
-                    if (frameCount == 0) {
+                    frames.pop();
+                    if (frames.count == 0) {
                         yield VMResult.EXIT;
                     }
 
@@ -1150,8 +1168,8 @@ public class VM {
                     boolean isConstructor = frame.closure.function.name.equals("<make>");
                     Value bound = frame.bound;
 
-                    stackTop = frame.slots;
-                    frame = frames[frameCount - 1];
+                    stack.setTop(frame.slots);
+                    frame = frames.peek();
                     popTraceback();
 
                     if (isConstructor) {
@@ -1159,9 +1177,12 @@ public class VM {
                     }
                     else {
                         push(result);
+                        if (frame.memoize) {
+                            memo.storeCache(result);
+                        }
                     }
 
-                    if (exitLevel == frameCount) {
+                    if (exitLevel == frames.count) {
                         yield VMResult.EXIT;
                     }
 
@@ -1356,8 +1377,8 @@ public class VM {
                 case OpCode.NullErr -> {
                     boolean bit = readByte() == 1;
                     if (bit) {
-                        nehStack[nehStackTop++] = frameCount;
-                        neh = frameCount;
+                        nehStack[nehStackTop++] = frames.count;
+                        neh = frames.count;
                     }
                     else {
                         neh = nehStack[--nehStackTop];
@@ -1428,7 +1449,7 @@ public class VM {
                     String type = readType();
                     boolean constant = readByte() == 1;
 
-                    stack[frame.slots + slot] = new Value(new Var(type, get(slot), constant));
+                    stack.set(frame.slots + slot, new Value(new Var(type, get(slot), constant)));
                     yield VMResult.OK;
                 }
 
@@ -1438,6 +1459,8 @@ public class VM {
                         OpCode.DropLocal,
                         OpCode.DropUpvalue -> freeOps(instruction);
 
+                case OpCode.Header -> header();
+
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
             };
             if (res == VMResult.EXIT) {
@@ -1446,26 +1469,102 @@ public class VM {
             }
             else if (res == VMResult.ERROR) {
                 if (nehStackTop > 0) {
-                    while (frameCount > neh) {
+                    while (frames.count > neh) {
                         tracebacks.pop();
-                        frameCount--;
+                        frames.count--;
                     }
-                    frame = frames[frameCount - 1];
-                    stackTop = frames[frameCount].slots;
+                    frame = frames.peek();
+                    stack.setTop(frames.peek(-1).slots);
                     push(new Value());
                     continue;
                 }
                 if (safe) {
-                    while (frameCount > exitLevel) {
+                    while (frames.count > exitLevel) {
                         tracebacks.pop();
-                        frameCount--;
+                        frames.count--;
                     }
-                    frame = frames[frameCount - 1];
-                    stackTop = frames[frameCount].slots;
+                    frame = frames.peek();
+                    stack.setTop(frames.peek(-1).slots);
                 }
                 return VMResult.ERROR;
             }
         }
+    }
+
+    VMResult header() {
+        int command = readByte();
+        int argc = readByte();
+        String[] args = new String[argc];
+        for (int i = 0; i < argc; i++)
+            args[i] = readString();
+
+        int rArgc = switch (command) {
+            case HeadCode.Memoize -> 0;
+            case HeadCode.SetMainClass, HeadCode.SetMainFunction -> 1;
+            default -> -1;
+        };
+        if (argc != rArgc) {
+            runtimeError("Argument Count", "Expected " + rArgc + " arguments, got " + argc);
+            return VMResult.ERROR;
+        }
+
+        switch (command) {
+            case HeadCode.Memoize -> frame.memoize = true;
+            case HeadCode.SetMainFunction -> mainFunction = args[0];
+            case HeadCode.SetMainClass -> mainClass = args[0];
+        }
+
+        push(new Value());
+        return VMResult.OK;
+    }
+
+    public VMResult finish(String[] args) {
+        List<Value> argsV = new ArrayList<>();
+        for (String arg : args) {
+            argsV.add(new Value(arg));
+        }
+        Value val = new Value(argsV);
+
+        if (mainFunction != null) {
+            Var var = globals.get(mainFunction);
+            if (var == null || !var.val.isClosure) {
+                runtimeError("Scope", "Main function not found");
+            }
+
+            JClosure closure = var.val.asClosure();
+            push(new Value(closure));
+
+            push(val);
+
+            boolean res = call(closure, 1, new Value[]{ val });
+            if (!res) {
+                return VMResult.ERROR;
+            }
+            return run();
+        }
+        else if (mainClass != null) {
+            Var var = globals.get(mainClass);
+            if (var == null || !var.val.isClass) {
+                runtimeError("Scope", "Main class not found");
+            }
+
+            JClass clazz = var.val.asClass();
+            Value method = clazz.getField("main", true);
+            if (method == null || !method.isClosure) {
+                runtimeError("Scope", "Main method not found");
+            }
+            JClosure closure = method.asClosure();
+
+            push(new Value(closure));
+            push(val);
+
+            boolean res = call(closure, 1, new Value(clazz), new Value[]{ val });
+            if (!res) {
+                return VMResult.ERROR;
+            }
+            return run();
+        }
+        return VMResult.OK;
     }
 
     VMResult iter() {
@@ -1473,13 +1572,13 @@ public class VM {
         int variable = readByte();
         int jump = readByte();
 
-        List<Value> vals = stack[iterated].asVar().val.asList();
+        List<Value> vals = stack.get(iterated).asVar().val.asList();
         if (vals.size() == 0) {
             moveIP(jump);
             return VMResult.OK;
         }
 
-        stack[variable].asVar().val(vals.get(0));
+        stack.get(variable).asVar().val(vals.get(0));
         vals.remove(0);
         return VMResult.OK;
     }
