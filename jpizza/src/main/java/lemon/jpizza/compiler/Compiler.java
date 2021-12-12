@@ -609,6 +609,14 @@ public class Compiler {
             emit(OpCode.SetRef, node.pos_start, node.pos_end);
             return;
         }
+        else if (node.op_tok == Tokens.TT.BITE) {
+            emit(OpCode.NullErr, 1, node.pos_start, node.pos_end);
+            compile(node.left_node);
+            compile(node.right_node);
+            emit(OpCode.Chain, node.pos_start, node.pos_end);
+            emit(OpCode.NullErr, 0, node.pos_start, node.pos_end);
+            return;
+        }
 
         compile(node.left_node);
         compile(node.right_node);

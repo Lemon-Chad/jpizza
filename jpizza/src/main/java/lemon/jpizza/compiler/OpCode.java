@@ -68,4 +68,6 @@ public class OpCode {
     public static final int SetRef = 64;
     public static final int ToBytes = 65;
     public static final int FromBytes = 66;
+    public static final int NullErr = 67;
+    public static final int Chain = 68;
 }

@@ -161,6 +161,8 @@ public class Disassembler {
                 yield offset + 4;
             }
 
+            case OpCode.NullErr -> byteInstruction("OP_NULL_ERR", chunk, offset);
+
             default -> {
                 Shell.logger.debug(String.format("Unknown opcode %d%n", instruction));
                 yield offset + 1;

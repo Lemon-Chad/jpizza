@@ -41,6 +41,10 @@ public class VM {
     public boolean safe = false;
     public boolean failed = false;
 
+    int[] nehStack = new int[FRAMES_MAX];
+    int nehStackTop = 0;
+    int neh = 0;
+
     public VM(JFunc function) {
         Shell.logger.debug("VM create\n");
 
@@ -236,6 +240,9 @@ public class VM {
     }
 
     protected void runtimeError(String message, String reason, FlatPosition position) {
+        if (nehStackTop > 0)
+            return;
+
         int idx = position.index;
         int len = position.len;
 
@@ -1313,6 +1320,30 @@ public class VM {
                         OpCode.SignRightShift,
                         OpCode.BitCompl -> bitOps(instruction);
 
+                case OpCode.NullErr -> {
+                    boolean bit = readByte() == 1;
+                    if (bit) {
+                        nehStack[nehStackTop++] = frameCount;
+                        neh = frameCount;
+                    }
+                    else {
+                        neh = nehStack[--nehStackTop];
+                    }
+                    yield VMResult.OK;
+                }
+
+                case OpCode.Chain -> {
+                    Value b = pop();
+                    Value a = pop();
+                    if (a.isNull) {
+                        push(b);
+                    }
+                    else {
+                        push(a);
+                    }
+                    yield VMResult.OK;
+                }
+
                 case OpCode.MakeArray -> {
                     int count = readByte();
                     List<Value> array = new ArrayList<>();
@@ -1377,8 +1408,18 @@ public class VM {
                 return VMResult.OK;
             }
             else if (res == VMResult.ERROR) {
+                if (nehStackTop > 0) {
+                    while (frameCount > neh) {
+                        tracebacks.pop();
+                        frameCount--;
+                    }
+                    frame = frames[frameCount - 1];
+                    stackTop = frames[frameCount].slots;
+                    push(new Value());
+                    continue;
+                }
                 if (safe) {
-                    while (frameCount != exitLevel) {
+                    while (frameCount > exitLevel) {
                         tracebacks.pop();
                         frameCount--;
                     }
