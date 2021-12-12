@@ -32,6 +32,7 @@ public class Value implements Serializable {
     protected JEnum enumParent;
     protected JEnumChild enumChild;
     protected Spread spread;
+    protected Value ref;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -51,9 +52,15 @@ public class Value implements Serializable {
     public boolean isEnumParent = false;
     public boolean isEnumChild = false;
     public boolean isSpread = false;
+    public boolean isRef = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(Value value) {
+        this.ref = value;
+        this.isRef = true;
     }
 
     public Value(Spread spread) {
@@ -163,6 +170,9 @@ public class Value implements Serializable {
         else if (isInstance) {
             return instance.asNumber();
         }
+        else if (isRef) {
+            return ref.asNumber();
+        }
         return 0.0;
     }
 
@@ -188,6 +198,9 @@ public class Value implements Serializable {
         }
         else if (isInstance) {
             return instance.asBool();
+        }
+        else if (isRef) {
+            return ref.asBool();
         }
         return false;
     }
@@ -253,6 +266,9 @@ public class Value implements Serializable {
         else if (isEnumChild) {
             return enumChild.type() + "::" + enumChild.getValue();
         }
+        else if (isRef) {
+            return ref.asString();
+        }
         return "";
     }
 
@@ -307,10 +323,16 @@ public class Value implements Serializable {
         else if (isInstance) {
             return instance.asList();
         }
+        else if (isRef) {
+            return ref.asList();
+        }
         return new ArrayList<>(List.of(this));
     }
 
     public Var asVar() {
+        if (isRef) {
+            return ref.asVar();
+        }
         return var;
     }
 
@@ -324,6 +346,9 @@ public class Value implements Serializable {
         else if (isInstance) {
             return instance.asMap();
         }
+        else if (isRef) {
+            return ref.asMap();
+        }
         return Map.of(this, this);
     }
 
@@ -334,6 +359,9 @@ public class Value implements Serializable {
         else if (this.isClosure) {
             return closure.function;
         }
+        else if (isRef) {
+            return ref.asFunc();
+        }
         return null;
     }
 
@@ -341,12 +369,18 @@ public class Value implements Serializable {
         if (isClosure) {
             return closure;
         }
+        else if (isRef) {
+            return ref.asClosure();
+        }
         return null;
     }
 
     public JClass asClass() {
         if (isClass) {
             return jClass;
+        }
+        else if (isRef) {
+            return ref.asClass();
         }
         return null;
     }
@@ -358,6 +392,9 @@ public class Value implements Serializable {
     public BoundMethod asBoundMethod() {
         if (isBoundMethod) {
             return boundMethod;
+        }
+        else if (isRef) {
+            return ref.asBoundMethod();
         }
         return null;
     }
@@ -447,12 +484,26 @@ public class Value implements Serializable {
     }
 
     public Instance asInstance() {
+        if (isRef) {
+            return ref.asInstance();
+        }
         return instance;
     }
 
-    public Namespace asNamespace() { return namespace; }
+    public Namespace asNamespace() {
+        if (isRef) {
+            return ref.asNamespace();
+        }
+        return namespace;
+    }
 
     public List<String> asType() {
+        if (isRef) {
+            List<String> type = ref.asType();
+            type.add(0, "[");
+            type.add("]");
+            return type;
+        }
         return type;
     }
 
@@ -500,15 +551,28 @@ public class Value implements Serializable {
     }
 
     public JEnumChild asEnumChild() {
+        if (isRef) {
+            return ref.asEnumChild();
+        }
         return enumChild;
     }
 
     public JEnum asEnum() {
+        if (isRef) return ref.asEnum();
         return enumParent;
     }
 
     public Spread asSpread() {
+        if (isRef) return ref.asSpread();
         return spread;
+    }
+
+    public Value asRef() {
+        return ref;
+    }
+
+    public void setRef(Value value) {
+        ref = value;
     }
 
 }

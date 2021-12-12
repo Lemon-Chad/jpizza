@@ -9,7 +9,7 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
 public class RefNode extends Node {
-    final Node inner;
+    public final Node inner;
     public RefNode(Node inner) {
         this.inner = inner;
         pos_start = inner.pos_start; pos_end = inner.pos_end;

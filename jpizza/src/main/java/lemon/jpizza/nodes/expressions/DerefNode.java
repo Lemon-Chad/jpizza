@@ -10,7 +10,7 @@ import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
 public class DerefNode extends Node {
-    final Node ref;
+    public final Node ref;
     public DerefNode(Node ref) {
         this.ref = ref;
 

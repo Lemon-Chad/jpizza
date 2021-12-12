@@ -63,4 +63,7 @@ public class OpCode {
     public static final int Copy = 59;
     public static final int Iter = 60;
     public static final int Spread = 61;
+    public static final int Ref = 62;
+    public static final int Deref = 63;
+    public static final int SetRef = 64;
 }

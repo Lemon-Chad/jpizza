@@ -1021,6 +1021,36 @@ public class VM {
         pop();
     }
 
+    VMResult refOps(int op) {
+        return switch (op) {
+            case OpCode.Ref -> {
+                push(new Value(pop()));
+                yield VMResult.OK;
+            }
+
+            case OpCode.Deref -> {
+                if (!peek(0).isRef) {
+                    runtimeError("Type", "Can't dereference non-ref");
+                    yield VMResult.ERROR;
+                }
+                push(pop().asRef());
+                yield VMResult.OK;
+            }
+
+            case OpCode.SetRef -> {
+                if (!peek(0).isRef) {
+                    runtimeError("Type", "Can't set non-ref");
+                    yield VMResult.ERROR;
+                }
+                pop().setRef(pop());
+                push(new Value());
+                yield VMResult.OK;
+            }
+
+            default -> throw new IllegalArgumentException("Invalid ref op: " + op);
+        };
+    }
+
     public VMResult run() {
         frame = frames[frameCount - 1];
         int exitLevel = frameCount - 1;
@@ -1151,6 +1181,10 @@ public class VM {
                     push(new Value(new Spread(pop().asList())));
                     yield VMResult.OK;
                 }
+
+                case OpCode.Ref,
+                        OpCode.Deref,
+                        OpCode.SetRef -> refOps(instruction);
 
                 case OpCode.Add,
                         OpCode.Subtract,

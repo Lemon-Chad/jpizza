@@ -269,6 +269,12 @@ public class Compiler {
         else if (statement instanceof LetNode)
             compile((LetNode) statement);
 
+        else if (statement instanceof RefNode)
+            compile((RefNode) statement);
+
+        else if (statement instanceof DerefNode)
+            compile((DerefNode) statement);
+
         else if (statement instanceof FuncDefNode)
             compile((FuncDefNode) statement);
 
@@ -333,6 +339,16 @@ public class Compiler {
 
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(DerefNode node) {
+        compile(node.ref);
+        emit(OpCode.Deref, node.pos_start, node.pos_end);
+    }
+
+    void compile(RefNode node) {
+        compile(node.inner);
+        emit(OpCode.Ref, node.pos_start, node.pos_end);
     }
 
     void compile(SpreadNode node) {
@@ -577,6 +593,12 @@ public class Compiler {
             emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
             compile(node.right_node);
             patchJump(jump);
+            return;
+        }
+        else if (node.op_tok == Tokens.TT.EQ) {
+            compile(node.right_node);
+            compile(node.left_node);
+            emit(OpCode.SetRef, node.pos_start, node.pos_end);
             return;
         }
 
@@ -984,16 +1006,7 @@ public class Compiler {
         patchJump(firstSkip);
         loopBody(node.body_node, node.retnull, loopStart);
 
-        int offset = chunk().code.size() - jump - 1;
-        chunk().code.set(jump, offset);
-        endScope(node.pos_start, node.pos_end);
-
-        if (node.retnull) {
-            compileNull(node.pos_start, node.pos_end);
-        }
-        else {
-            emit(OpCode.FlushLoop, node.pos_start, node.pos_end);
-        }
+        endIter(node.pos_start, node.pos_end, node.retnull, jump);
     }
 
     void compile(IterNode node) {
@@ -1028,15 +1041,19 @@ public class Compiler {
 
         loopBody(node.body_node, node.retnull, loopStart);
 
+        endIter(node.pos_start, node.pos_end, node.retnull, jump);
+    }
+
+    void endIter(Position start, Position end, boolean retnull, int jump) {
         int offset = chunk().code.size() - jump - 1;
         chunk().code.set(jump, offset);
-        endScope(node.pos_start, node.pos_end);
+        endScope(start, end);
 
-        if (node.retnull) {
-            compileNull(node.pos_start, node.pos_end);
+        if (retnull) {
+            compileNull(start, end);
         }
         else {
-            emit(OpCode.FlushLoop, node.pos_start, node.pos_end);
+            emit(OpCode.FlushLoop, start, end);
         }
     }
 
