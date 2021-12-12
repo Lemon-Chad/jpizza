@@ -746,6 +746,31 @@ public class VM {
         return VMResult.OK;
     }
 
+    VMResult byteOps(int op) {
+        return switch (op) {
+            case OpCode.ToBytes -> {
+                push(new Value(pop().asBytes()));
+                yield VMResult.OK;
+            }
+            case OpCode.FromBytes -> {
+                if (!peek(0).isBytes) {
+                    runtimeError("Type", "Expected bytes");
+                    yield VMResult.ERROR;
+                }
+                NativeResult res = Value.fromByte(pop().asBytes());
+                if (res.ok()) {
+                    push(res.value());
+                    yield VMResult.OK;
+                }
+                else {
+                    runtimeError(res.name(), res.reason());
+                    yield VMResult.ERROR;
+                }
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + op);
+        };
+    }
+
     VMResult access() {
         String name = readString();
         Value val = pop();
@@ -1042,8 +1067,7 @@ public class VM {
                     runtimeError("Type", "Can't set non-ref");
                     yield VMResult.ERROR;
                 }
-                pop().setRef(pop());
-                push(new Value());
+                push(pop().setRef(pop()));
                 yield VMResult.OK;
             }
 
@@ -1197,6 +1221,9 @@ public class VM {
                         OpCode.Decrement,
                         OpCode.Negate,
                         OpCode.Not -> unary(instruction);
+
+                case OpCode.FromBytes,
+                        OpCode.ToBytes -> byteOps(instruction);
 
                 case OpCode.Equal,
                         OpCode.GreaterThan,

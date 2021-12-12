@@ -66,4 +66,6 @@ public class OpCode {
     public static final int Ref = 62;
     public static final int Deref = 63;
     public static final int SetRef = 64;
+    public static final int ToBytes = 65;
+    public static final int FromBytes = 66;
 }

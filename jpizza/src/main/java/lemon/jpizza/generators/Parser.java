@@ -155,15 +155,7 @@ public class Parser {
         } return res;
     }
 
-    private static class TokenMatcher {
-        final TT type;
-        final String value;
-
-        public TokenMatcher(TT type, String value) {
-            this.type = type;
-            this.value = value;
-        }
-    }
+    private record TokenMatcher(TT type, String value) {}
 
     public ParseResult<Node> statements(TT end) {
         return statements(Collections.singletonList(new TokenMatcher(end, null)));

@@ -1,16 +1,19 @@
 package lemon.jpizza.compiler.values;
 
+import lemon.jpizza.Constants;
 import lemon.jpizza.compiler.values.classes.BoundMethod;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.values.classes.JClass;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
-import lemon.jpizza.compiler.values.functions.JClosure;
-import lemon.jpizza.compiler.values.functions.JFunc;
-import lemon.jpizza.compiler.values.functions.JNative;
-import lemon.jpizza.compiler.values.functions.Spread;
+import lemon.jpizza.compiler.values.functions.*;
 import lemon.jpizza.compiler.vm.VMResult;
+import lemon.jpizza.errors.RTError;
+import lemon.jpizza.objects.Obj;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.*;
 
@@ -33,6 +36,7 @@ public class Value implements Serializable {
     protected JEnumChild enumChild;
     protected Spread spread;
     protected Value ref;
+    protected byte[] bytes;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -53,9 +57,15 @@ public class Value implements Serializable {
     public boolean isEnumChild = false;
     public boolean isSpread = false;
     public boolean isRef = false;
+    public boolean isBytes = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(byte[] bytes) {
+        this.bytes = bytes;
+        this.isBytes = true;
     }
 
     public Value(Value value) {
@@ -269,6 +279,14 @@ public class Value implements Serializable {
         else if (isRef) {
             return ref.asString();
         }
+        else if (isBytes) {
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < bytes.length; i++)
+                sb.append(bytes[i]).append(", ");
+
+            return "{ " + sb + "len=" + bytes.length + " }";
+        }
         return "";
     }
 
@@ -433,6 +451,12 @@ public class Value implements Serializable {
         else if (isEnumChild) {
             return enumChild.type();
         }
+        else if (isRef) {
+            return "[" + ref.type() + "]";
+        }
+        else if (isBytes) {
+            return "bytearray";
+        }
         return "void";
     }
 
@@ -571,8 +595,114 @@ public class Value implements Serializable {
         return ref;
     }
 
-    public void setRef(Value value) {
+    public Value setRef(Value value) {
         ref = value;
+        return this;
+    }
+
+    public byte[] asBytes() {
+        if (isInstance)
+            return instance.asBytes();
+        else if (isBytes)
+            return bytes;
+        return Constants.objToBytes(asObject());
+    }
+
+    public static Value fromObject(Object object) {
+        if (object instanceof Double) {
+            return new Value((Double) object);
+        }
+        else if (object instanceof String) {
+            return new Value((String) object);
+        }
+        else if (object instanceof Boolean) {
+            return new Value((Boolean) object);
+        }
+        else if (object instanceof List) {
+            List<Value> list = new ArrayList<>();
+            for (Object o : (List<Object>) object) {
+                list.add(fromObject(o));
+            }
+            return new Value(list);
+        }
+        else if (object instanceof Map) {
+            Map<Value, Value> map = new HashMap<>();
+            for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) object).entrySet()) {
+                map.put(fromObject(entry.getKey()), fromObject(entry.getValue()));
+            }
+            return new Value(map);
+        }
+        else if (object instanceof JClass) {
+            return new Value((JClass) object);
+        }
+        else if (object instanceof Instance) {
+            return new Value((Instance) object);
+        }
+        else if (object instanceof JEnumChild) {
+            return new Value((JEnumChild) object);
+        }
+        else if (object instanceof JEnum) {
+            return new Value((JEnum) object);
+        }
+        else if (object instanceof Spread) {
+            return new Value((Spread) object);
+        }
+        else if (object instanceof Value) {
+            return (Value) object;
+        }
+        else if (object instanceof byte[]) {
+            return new Value((byte[]) object);
+        }
+        return new Value();
+    }
+
+    public static NativeResult fromByte(byte[] bytes) {
+        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+        try {
+            ObjectInputStream is = new ObjectInputStream(in);
+            Object obj = is.readObject();
+            return NativeResult.Ok(Value.fromObject(obj));
+        } catch (IOException | ClassNotFoundException e) {
+            return NativeResult.Err("Internal", "Internal byte error: " + e);
+        }
+    }
+
+    public Object asObject() {
+        if (isInstance)
+            return instance;
+        else if (isClass)
+            return jClass;
+        else if (isEnumParent)
+            return enumParent;
+        else if (isEnumChild)
+            return enumChild;
+        else if (isSpread)
+            return spread;
+        else if (isRef)
+            return ref.asObject();
+        else if (isBytes)
+            return bytes;
+        else if (isString)
+            return string;
+        else if (isNumber)
+            return number;
+        else if (isBool)
+            return bool;
+        else if (isList) {
+            List<Object> list = new ArrayList<>();
+            for (Value value : this.list) {
+                list.add(value.asObject());
+            }
+            return list;
+        }
+        else if (isMap) {
+            Map<Object, Object> map = new HashMap<>();
+            for (Map.Entry<Value, Value> entry : this.map.entrySet()) {
+                map.put(entry.getKey().asObject(), entry.getValue().asObject());
+            }
+            return map;
+        }
+        return null;
     }
 
 }

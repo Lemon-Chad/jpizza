@@ -299,6 +299,9 @@ public class Compiler {
         else if (statement instanceof BreakNode)
             breaks.add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
 
+        else if (statement instanceof BytesNode)
+            compile((BytesNode) statement);
+
         else if (statement instanceof ClaccessNode) {
             ClaccessNode node = (ClaccessNode) statement;
             compile(node.class_tok);
@@ -339,6 +342,11 @@ public class Compiler {
 
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(BytesNode node) {
+        compile(node.toBytes);
+        emit(OpCode.ToBytes, node.pos_start, node.pos_end);
     }
 
     void compile(DerefNode node) {
@@ -642,6 +650,7 @@ public class Compiler {
             case INCR -> emit(OpCode.Increment, node.pos_start, node.pos_end);
             case DECR -> emit(OpCode.Decrement, node.pos_start, node.pos_end);
             case BITCOMPL -> emit(OpCode.BitCompl, node.pos_start, node.pos_end);
+            case QUEBACK -> emit(OpCode.FromBytes, node.pos_start, node.pos_end);
             default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
     }

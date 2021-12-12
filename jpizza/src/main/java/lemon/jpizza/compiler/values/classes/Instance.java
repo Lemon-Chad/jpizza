@@ -1,5 +1,6 @@
 package lemon.jpizza.compiler.values.classes;
 
+import lemon.jpizza.Constants;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.NativeResult;
@@ -119,14 +120,6 @@ public class Instance {
         return NativeResult.Err("Scope", "Undefined attribute '" + name + "'");
     }
 
-    public boolean hasField(String name) {
-        return fields.containsKey(name);
-    }
-
-    public boolean has(String name) {
-        return fields.containsKey(name) || methods.containsKey(name);
-    }
-
     public Double asNumber() {
         Double res = unfailableOp("number", 0.0, "num");
         if (res == null)
@@ -159,5 +152,12 @@ public class Instance {
 
     public Instance copy() {
         return new Instance(clazz, vm);
+    }
+
+    public byte[] asBytes() {
+        byte[] res = unfailableOp("bytes", Constants.objToBytes(self.asObject()), "bytes");
+        if (res == null)
+            res = vm.pop().asBytes();
+        return res;
     }
 }

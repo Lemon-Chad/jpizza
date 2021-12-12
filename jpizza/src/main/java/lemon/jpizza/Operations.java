@@ -8,7 +8,6 @@ public class Operations {
         BITXOR,
         LEFTSHIFT,
         RIGHTSHIFT,
-        FROMBYTE,
         SIGNRIGHTSHIFT,
         BRACKET,
         NUMBER,

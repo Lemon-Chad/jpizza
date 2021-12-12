@@ -76,6 +76,13 @@ public class Disassembler {
             case OpCode.GetUpvalue -> byteInstruction("OP_GET_UPVALUE", chunk, offset);
             case OpCode.SetUpvalue -> byteInstruction("OP_SET_UPVALUE", chunk, offset);
 
+            case OpCode.FromBytes -> simpleInstruction("OP_FROM_BYTES", offset);
+            case OpCode.ToBytes -> simpleInstruction("OP_TO_BYTES", offset);
+
+            case OpCode.Deref -> simpleInstruction("OP_DEREF", offset);
+            case OpCode.Ref -> simpleInstruction("OP_REF", offset);
+            case OpCode.SetRef -> simpleInstruction("OP_SET_REF", offset);
+
             case OpCode.GetGeneric -> byteInstruction("OP_GET_GENERIC", chunk, offset);
 
             case OpCode.Jump -> jumpInstruction("OP_JUMP", 1, chunk, offset);
