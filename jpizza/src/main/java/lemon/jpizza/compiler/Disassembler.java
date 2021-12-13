@@ -27,6 +27,23 @@ public class Disassembler {
             case OpCode.Return -> simpleInstruction("OP_RETURN", offset);
             case OpCode.Pop -> simpleInstruction("OP_POP", offset);
 
+            case OpCode.Header -> {
+                int constant = chunk.code.get(offset + 1);
+                int args = chunk.code.get(offset + 2);
+                Shell.logger.debug(String.format("%-16s %04d %04d%n", "OP_HEADER", constant, args));
+                yield offset + 3 + args;
+            }
+
+            case OpCode.Destruct -> {
+                int count = chunk.code.get(offset + 1);
+                if (count == -1) {
+                    Shell.logger.debug(String.format("%-16s %-16s%n", "OP_DESTRUCT", "GLOB"));
+                    yield offset + 2;
+                }
+                Shell.logger.debug(String.format("%-16s %04d%n", "OP_DESTRUCT", count));
+                yield offset + 2 + count;
+            }
+
             case OpCode.Constant -> constantInstruction("OP_CONSTANT", chunk, offset);
             case OpCode.SetGlobal -> constantInstruction("OP_SET_GLOBAL", chunk, offset);
             case OpCode.GetGlobal -> constantInstruction("OP_GET_GLOBAL", chunk, offset);

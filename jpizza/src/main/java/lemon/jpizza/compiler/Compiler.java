@@ -354,8 +354,20 @@ public class Compiler {
         else if (statement instanceof DropNode)
             compile((DropNode) statement);
 
+        else if (statement instanceof DestructNode)
+            compile((DestructNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(DestructNode node) {
+        compile(node.target);
+        emit(OpCode.Destruct, node.glob ? -1 : node.subs.size(), node.pos_start, node.pos_end);
+        if (!node.glob) for (Token sub : node.subs) {
+            String name = sub.value.toString();
+            emit(chunk().addConstant(new Value(name)), sub.pos_start, sub.pos_end);
+        }
     }
 
     void compile(UseNode node) {

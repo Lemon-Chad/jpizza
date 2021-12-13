@@ -19,9 +19,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class DestructNode extends Node {
-    final Node target;
-    List<Token> subs = new ArrayList<>();
-    boolean glob = false;
+    public final Node target;
+    public List<Token> subs = new ArrayList<>();
+    public boolean glob = false;
 
     public DestructNode(Node tar) {
         target = tar;

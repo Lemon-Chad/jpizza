@@ -1254,11 +1254,13 @@ public class VM {
                             runtimeError("Import", "Library '" + name + "' not found");
                             yield VMResult.ERROR;
                         }
+                        Value lib = new Value(libraries.get(name));
                         globals.put(varName, new Var(
                                 "namespace",
-                                new Value(libraries.get(name)),
+                                lib,
                                 true
                         ));
+                        push(lib);
                         yield VMResult.OK;
                     }
 
@@ -1271,12 +1273,13 @@ public class VM {
                         yield VMResult.ERROR;
                     }
 
+                    Value space = new Value(runner.asNamespace(name));
                     globals.put(varName, new Var(
                             "namespace",
-                            new Value(runner.asNamespace(name)),
+                            space,
                             true
                     ));
-                    push(new Value());
+                    push(space);
                     yield VMResult.OK;
                 }
 
@@ -1495,6 +1498,8 @@ public class VM {
                         OpCode.DropLocal,
                         OpCode.DropUpvalue -> freeOps(instruction);
 
+                case OpCode.Destruct -> destruct();
+
                 case OpCode.Header -> header();
 
                 default -> throw new RuntimeException("Unknown opcode: " + instruction);
@@ -1525,6 +1530,29 @@ public class VM {
                 return VMResult.ERROR;
             }
         }
+    }
+
+    VMResult destruct() {
+        Namespace v = pop().asNamespace();
+        int args = readByte();
+        if (args == -1) {
+            globals.putAll(v.values());
+            return VMResult.OK;
+        }
+        String[] names = new String[args];
+        for (int i = 0; i < args; i++)
+            names[i] = readString();
+        Map<String, Var> values = v.values();
+        for (String name : names) {
+            if (values.containsKey(name)) {
+                globals.put(name, values.get(name));
+            }
+            else {
+                runtimeError("Scope", "Undefined field: " + name);
+                return VMResult.ERROR;
+            }
+        }
+        return VMResult.OK;
     }
 
     VMResult header() {
