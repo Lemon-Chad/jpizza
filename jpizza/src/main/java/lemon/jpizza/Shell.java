@@ -4,6 +4,7 @@ import lemon.jpizza.compiler.Compiler;
 import lemon.jpizza.compiler.FunctionType;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
+import lemon.jpizza.compiler.vm.VMResult;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.Error;
@@ -344,7 +345,8 @@ public class Shell {
             JFunc func = (JFunc) ost;
             vm = new VM(func).trace(fn);
 
-            vm.run();
+            VMResult res = vm.run();
+            if (res == VMResult.ERROR) return null;
             vm.finish(args);
 
         } catch (IOException | ClassNotFoundException e) {

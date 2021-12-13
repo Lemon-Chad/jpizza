@@ -38,7 +38,7 @@ public class Chunk implements Serializable {
     public FlatPosition getPosition(int offset) {
         int i = 0;
         for (FlatPosition pos : positions) {
-            if (i + pos.span > offset) {
+            if (i + pos.span >= offset) {
                 return pos;
             }
             i += pos.span;

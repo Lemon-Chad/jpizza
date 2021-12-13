@@ -129,7 +129,13 @@ public class Disassembler {
                 yield end + totalAttributeOffset;
             }
 
-            case OpCode.Call -> byteInstruction("OP_CALL", chunk, offset);
+            case OpCode.Call -> {
+                int argCount = chunk.code.get(offset + 1);
+                int kwargCount = chunk.code.get(offset + 2);
+                int genericCount = chunk.code.get(offset + 3);
+                Shell.logger.debug(String.format("%-16s %04d %04d %04d%n", "OP_CALL", argCount, kwargCount, genericCount));
+                yield offset + 4;
+            }
             case OpCode.Closure -> {
                 offset++;
                 int constant = chunk.code.get(offset++);

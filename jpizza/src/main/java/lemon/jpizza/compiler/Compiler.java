@@ -529,10 +529,16 @@ public class Compiler {
         for (int i = kwargc - 1; i >= 0; i--) {
             compile(node.kwargs.get(kwargNames.get(i)));
         }
-        emit(OpCode.Call, argc, node.pos_start, node.pos_end);
-        emit(kwargc, node.pos_start, node.pos_end);
+        emit(new int[]{
+                OpCode.Call,
+                argc, kwargc,
+                node.generics.size()
+        }, node.pos_start, node.pos_end);
         for (int i = 0; i < kwargc; i++) {
             emit(chunk().addConstant(new Value(kwargNames.get(i))), node.pos_start, node.pos_end);
+        }
+        for (Token generic : node.generics) {
+            compileType((List<String>) generic.value, generic.pos_start, generic.pos_end);
         }
     }
 
@@ -600,13 +606,35 @@ public class Compiler {
 
         compiler.beginScope();
 
+        List<String> genericNames = new ArrayList<>();
+        for (int i = 0; i < node.generic_toks.size(); i++) {
+            compiler.function.totarity++;
+            compiler.function.genericArity++;
+
+            Token generic = node.generic_toks.get(i);
+            compiler.addGeneric(generic.value.toString(), generic.pos_start, generic.pos_end);
+
+            genericNames.add(generic.value.toString());
+        }
+        List<String> retype = compiler.compileType(node.returnType, node.pos_start, node.pos_end, false);
+
         for (int i = 0; i < node.arg_name_toks.size(); i++) {
             compiler.function.arity++;
             compiler.function.totarity++;
+
             Token param = node.arg_name_toks.get(i);
             Token paramType = node.arg_type_toks.get(i);
+            List<String> rawType = (List<String>) paramType.value;
+
             compiler.parseVariable(param, param.pos_start, param.pos_end);
-            compiler.makeVar(compiler.localCount - 1, (List<String>) paramType.value, false, param.pos_start, param.pos_end);
+            compiler.makeVar(compiler.localCount - 1, rawType, false, param.pos_start, param.pos_end);
+
+            if (rawType.size() == 1 && genericNames.contains(rawType.get(0))) {
+                compiler.function.genericSlots.add(genericNames.indexOf(rawType.get(0)));
+            }
+            else {
+                compiler.function.genericSlots.add(-1);
+            }
         }
 
         if (node.argname != null) {
@@ -629,7 +657,7 @@ public class Compiler {
 
         function.name = node.var_name_tok.value.toString();
         function.async = node.async;
-        function.returnType = compileType(node.returnType, node.pos_start, node.pos_end, false);
+        function.returnType = retype;
 
         function.args = node.argname;
         function.kwargs = node.kwargname;
@@ -832,6 +860,7 @@ public class Compiler {
         Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), scopeDepth);
 
         generics[localCount++] = local;
+        locals[localCount - 1] = local;
     }
 
     void declareVariable(Token varNameTok, @NotNull Position start, @NotNull Position end) {

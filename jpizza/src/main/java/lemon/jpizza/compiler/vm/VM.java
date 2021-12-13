@@ -2,10 +2,7 @@ package lemon.jpizza.compiler.vm;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.Shell;
-import lemon.jpizza.compiler.Disassembler;
-import lemon.jpizza.compiler.FlatPosition;
-import lemon.jpizza.compiler.JStack;
-import lemon.jpizza.compiler.OpCode;
+import lemon.jpizza.compiler.*;
 import lemon.jpizza.compiler.headers.HeadCode;
 import lemon.jpizza.compiler.headers.Memo;
 import lemon.jpizza.compiler.values.*;
@@ -23,7 +20,7 @@ public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 256;
 
-    private static record Traceback(String filename, String context, int offset) {}
+    private static record Traceback(String filename, String context, int offset, Chunk chunk) {}
 
     final JStack<Value> stack;
     int ip;
@@ -218,7 +215,7 @@ public class VM {
     }
 
     public VM trace(String name) {
-        tracebacks.push(new Traceback(name, name, 0));
+        tracebacks.push(new Traceback(name, name, 0, frame.closure.function.chunk));
         return this;
     }
 
@@ -263,7 +260,7 @@ public class VM {
             Traceback last = tracebacks.peek();
             while (!tracebacks.empty()) {
                 Traceback top = tracebacks.pop();
-                int line = Constants.indexToLine(frame.closure.function.chunk.source(), top.offset);
+                int line = Constants.indexToLine(top.chunk.source(), top.chunk.getPosition(top.offset).index);
                 output = String.format("  %s  File %s, line %s, in %s\n%s", arrow, top.filename, line + 1, top.context, output);
             }
             output = "Traceback (most recent call last):\n" + output;
@@ -333,7 +330,7 @@ public class VM {
             push(args[i]);
         }
 
-        if (!callValue(method, args.length, args, new HashMap<>())) return VMResult.ERROR;
+        if (!callValue(method, args, new HashMap<>(), new String[0])) return VMResult.ERROR;
 
         VMResult res = run();
         return res != VMResult.ERROR ? VMResult.OK : VMResult.ERROR;
@@ -650,7 +647,7 @@ public class VM {
             // @SLOT = Generic type slot
             if (raw.startsWith("@")) {
                 int slot = Integer.parseInt(raw.substring(1));
-                sb.append(get(slot).asString());
+                sb.append(get(slot).asVar().val.asString());
             }
             else {
                 sb.append(raw);
@@ -718,11 +715,22 @@ public class VM {
     VMResult call() {
         int argc = readByte();
         int kwargc = readByte();
+        int genc = readByte();
+
+        String[] kwargKeys = new String[kwargc];
+        for (int i = 0; i < kwargc; i++)
+            kwargKeys[i] = readString();
 
         Value[] args = new Value[argc];
         List<Value> argList = new ArrayList<>();
         for (int i = argc - 1; i >= 0; i--)
             args[i] = pop();
+
+        String[] generics = new String[genc];
+        for (int i = 0; i < genc; i++) {
+            generics[i] = readType();
+            push(new Value(new Var("String", new Value(generics[i]), true)));
+        }
 
         int argCount = 0;
         for (Value arg : args) {
@@ -742,13 +750,13 @@ public class VM {
         }
 
         Map<String, Value> kwargs = new HashMap<>();
-        for (int i = 0; i < kwargc; i++) {
-            String key = readString();
-            Value val = pop();
-            kwargs.put(key, val);
-        }
+        for (String key : kwargKeys)
+            kwargs.put(key, pop());
 
-        if (!callValue(peek(argCount), argCount, argList.toArray(new Value[0]), kwargs)) {
+        // Stack:
+        // [GENERICS] [ARGUMENTS]
+
+        if (!callValue(peek(argCount + generics.length), argList.toArray(new Value[0]), kwargs, generics)) {
             return VMResult.ERROR;
         }
         frame = frames.peek();
@@ -947,23 +955,23 @@ public class VM {
         return VMResult.OK;
     }
 
-    boolean callValue(Value callee, int argCount, Value[] args, Map<String, Value> kwargs) {
+    boolean callValue(Value callee, Value[] args, Map<String, Value> kwargs, String[] generics) {
         if (callee.isNativeFunc) {
-            return call(callee.asNative(), argCount, args);
+            return call(callee.asNative(), args);
         }
         else if (callee.isClosure) {
-            return call(callee.asClosure(), argCount, args, kwargs);
+            return call(callee.asClosure(), args, kwargs, generics);
         }
         else if (callee.isClass) {
-            return call(callee.asClass(), argCount, args, kwargs);
+            return call(callee.asClass(), args, kwargs, generics);
         }
         else if (callee.isBoundMethod) {
             BoundMethod bound = callee.asBoundMethod();
-            stack.set(stack.count - argCount - 1, new Value(new Var("any", bound.receiver, true)));
-            return call(bound.closure, argCount, bound.receiver, args, kwargs);
+            stack.set(stack.count - args.length - 1, new Value(new Var("any", bound.receiver, true)));
+            return call(bound.closure, bound.receiver, args, kwargs, generics);
         }
         else if (callee.isEnumChild) {
-            return call(callee.asEnumChild(), argCount);
+            return call(callee.asEnumChild(), args.length);
         }
         runtimeError("Type", "Can only call functions and classes");
         return false;
@@ -997,25 +1005,25 @@ public class VM {
         return true;
     }
 
-    boolean call(JClass clazz, int argCount, Value[] args, Map<String, Value> kwargs) {
+    boolean call(JClass clazz, Value[] args, Map<String, Value> kwargs, String[] generics) {
         Instance instance = new Instance(clazz, this);
 
         Value value = new Value(instance);
         instance.self = value;
 
         BoundMethod bound = new BoundMethod(clazz.constructor.asClosure(), value);
-        return callValue(new Value(bound), argCount, args, kwargs);
+        return callValue(new Value(bound), args, kwargs, generics);
     }
 
-    boolean call(JClosure closure, int argCount, Value[] args, Map<String, Value> kwargs) {
-        return call(closure, argCount, frame.bound, args, kwargs);
+    boolean call(JClosure closure, Value[] args, Map<String, Value> kwargs, String[] generics) {
+        return call(closure, frame.bound, args, kwargs, generics);
     }
 
-    public boolean call(JClosure closure, int argCount, Value binding, Value[] args, Map<String, Value> kwargs) {
+    public boolean call(JClosure closure, Value binding, Value[] args, Map<String, Value> kwargs, String[] generics) {
         if (frame.memoize) {
             Value val = memo.get(closure.function.name, args);
             if (val != null) {
-                for (int i = 0; i <= argCount; i++)
+                for (int i = 0; i <= args.length; i++)
                     pop();
                 push(val);
                 return true;
@@ -1023,22 +1031,59 @@ public class VM {
             memo.stackCache(closure.function.name, args);
         }
 
+        if (generics.length != closure.function.genericArity) {
+            boolean fail = true;
+            if (generics.length == 0) {
+                // Try to infer generics
+                String[] inferred = new String[closure.function.genericArity];
+                int totalInferred = 0;
+                for (int i = 0; i < closure.function.arity; i++) {
+                    int slot = closure.function.genericSlots.get(i);
+                    if (slot != -1 && inferred[slot] == null) {
+                        inferred[slot] = args[i].type();
+                        totalInferred++;
+                    }
+                }
+                if (totalInferred == closure.function.genericArity) {
+                    fail = false;
+                    generics = inferred;
+
+                    // Move arguments out of the way
+                    for (int i = 0; i < args.length; i++)
+                        pop();
+
+                    // Insert inferred arguments
+                    for (String type : generics)
+                        push(new Value(new Var("String", new Value(type), true)));
+
+                    // Re-add arguments
+                    for (Value arg : args)
+                        push(arg);
+
+                }
+            }
+            if (fail) {
+                runtimeError("Generic Count", "Expected " + closure.function.genericArity + " but got " + generics.length);
+                return false;
+            }
+        }
+
         List<Value> extraArgs = new ArrayList<>();
-        if (argCount < closure.function.arity) {
-            runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
+        if (args.length < closure.function.arity) {
+            runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + args.length);
             return false;
         }
-        else if (argCount > closure.function.arity) {
+        else if (args.length > closure.function.arity) {
             if (closure.function.args != null) {
                 List<Value> argsList = new ArrayList<>();
-                for (int i = closure.function.arity; i < argCount; i++)
+                for (int i = closure.function.arity; i < args.length; i++)
                     argsList.add(pop());
                 for (int i = argsList.size() - 1; i >= 0; i--)
                     extraArgs.add(argsList.get(i));
                 push(new Value(extraArgs));
             }
             else {
-                runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + argCount);
+                runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + args.length);
                 return false;
             }
         }
@@ -1052,7 +1097,7 @@ public class VM {
             push(new Value(keywordArgs));
         }
 
-        Traceback traceback = new Traceback(tracebacks.peek().filename, closure.function.name, 0);
+        Traceback traceback = new Traceback(tracebacks.peek().filename, closure.function.name, frame.ip - 1, frame.closure.function.chunk);
         if (closure.function.async) {
             VM thread = new VM(closure.function.copy());
             thread.tracebacks.push(traceback);
@@ -1065,17 +1110,20 @@ public class VM {
             CallFrame newFrame = new CallFrame(closure, 0, stack.count
                                                                   - closure.function.totarity
                                                                   - 1,
-                    readType(closure.function.returnType), binding);
+                    null, binding);
 
             // Inherited flags
             newFrame.memoize = frame.memoize;
 
             frames.push(newFrame);
+
+            frame = newFrame;
+            frame.returnType = readType(closure.function.returnType);
         }
         return true;
     }
 
-    boolean call(JNative nativeFunc, int argCount, Value[] args) {
+    boolean call(JNative nativeFunc, Value[] args) {
         NativeResult result = nativeFunc.call(args);
 
         if (!result.ok()) {
@@ -1083,7 +1131,7 @@ public class VM {
             return false;
         }
 
-        stack.setTop(stack.count - argCount - 1);
+        stack.setTop(stack.count - args.length - 1);
         push(result.value());
         return true;
     }
@@ -1362,7 +1410,7 @@ public class VM {
                         filename = tracebacks.peek().filename;
                     }
 
-                    tracebacks.push(new Traceback(filename, name, idx));
+                    tracebacks.push(new Traceback(filename, name, idx, frame.closure.function.chunk));
                     yield VMResult.OK;
                 }
                 case OpCode.PopTraceback -> {
@@ -1488,7 +1536,14 @@ public class VM {
                     String type = readType();
                     boolean constant = readByte() == 1;
 
-                    stack.set(frame.slots + slot, new Value(new Var(type, get(slot), constant)));
+                    Value at = get(slot);
+                    String atType = at.type();
+                    if (!type.equals("any") && !atType.equals(type)) {
+                        runtimeError("Type", "Expected type " + type + " but got " + atType);
+                        yield VMResult.ERROR;
+                    }
+
+                    stack.set(frame.slots + slot, new Value(new Var(type, at, constant)));
                     yield VMResult.OK;
                 }
 
@@ -1582,7 +1637,7 @@ public class VM {
         return VMResult.OK;
     }
 
-    public VMResult finish(String[] args) {
+    public void finish(String[] args) {
         List<Value> argsV = new ArrayList<>();
         for (String arg : args) {
             argsV.add(new Value(arg));
@@ -1600,11 +1655,11 @@ public class VM {
 
             push(val);
 
-            boolean res = call(closure, 1, new Value[]{ val }, new HashMap<>());
+            boolean res = call(closure, new Value[]{ val }, new HashMap<>(), new String[0]);
             if (!res) {
-                return VMResult.ERROR;
+                return;
             }
-            return run();
+            run();
         }
         else if (mainClass != null) {
             Var var = globals.get(mainClass);
@@ -1622,13 +1677,12 @@ public class VM {
             push(new Value(closure));
             push(val);
 
-            boolean res = call(closure, 1, new Value(clazz), new Value[]{ val }, new HashMap<>());
+            boolean res = call(closure, new Value(clazz), new Value[]{ val }, new HashMap<>(), new String[0]);
             if (!res) {
-                return VMResult.ERROR;
+                return;
             }
-            return run();
+            run();
         }
-        return VMResult.OK;
     }
 
     VMResult iter() {

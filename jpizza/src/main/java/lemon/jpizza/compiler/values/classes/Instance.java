@@ -66,7 +66,7 @@ public class Instance {
         Value val = binMethods.get(opName);
         if (val != null) {
             vm.push(val);
-            boolean worked = vm.call(val.asClosure(), 0, self, new Value[0], new HashMap<>());
+            boolean worked = vm.call(val.asClosure(), self, new Value[0], new HashMap<>(), new String[0]);
             if (!worked)
                 return def;
 

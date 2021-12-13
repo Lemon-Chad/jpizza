@@ -3,14 +3,18 @@ package lemon.jpizza.compiler.values.functions;
 import lemon.jpizza.compiler.Chunk;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class JFunc implements Serializable {
     public int arity;
+    public int genericArity;
     public int totarity;
     public final Chunk chunk;
     public String name;
     public List<String> returnType;
+
+    public List<Integer> genericSlots;
 
     public String args;
     public String kwargs;
@@ -29,10 +33,12 @@ public class JFunc implements Serializable {
     public JFunc(String source) {
         arity = 0;
         totarity = 0;
+        genericArity = 0;
         name = "";
         chunk = new Chunk(source);
 
         upvalueCount = 0;
+        genericSlots = new ArrayList<>();
     }
 
     public String toString() {
@@ -50,6 +56,7 @@ public class JFunc implements Serializable {
 
         copy.arity = arity;
         copy.totarity = totarity;
+        copy.genericArity = genericArity;
         copy.name = name;
         copy.returnType = returnType;
         copy.isPrivate = isPrivate;
@@ -61,6 +68,7 @@ public class JFunc implements Serializable {
         copy.args = args;
         copy.kwargs = kwargs;
         copy.catcher = catcher;
+        copy.genericSlots = genericSlots;
         return copy;
     }
 
