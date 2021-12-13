@@ -1,6 +1,7 @@
 package lemon.jpizza.compiler.values.functions;
 
 import lemon.jpizza.compiler.Chunk;
+import lemon.jpizza.compiler.values.Value;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -29,11 +30,14 @@ public class JFunc implements Serializable {
 
     public int upvalueCount;
     public boolean async;
+    public List<Value> defaults;
+    public int defaultCount;
 
     public JFunc(String source) {
         arity = 0;
         totarity = 0;
         genericArity = 0;
+        defaultCount = 0;
         name = "";
         chunk = new Chunk(source);
 
@@ -55,6 +59,7 @@ public class JFunc implements Serializable {
         copy.chunk.positions = chunk.positions;
 
         copy.arity = arity;
+        copy.defaults = defaults;
         copy.totarity = totarity;
         copy.genericArity = genericArity;
         copy.name = name;

@@ -664,7 +664,12 @@ public class Compiler {
 
         function.catcher = node.catcher;
 
-        emit(OpCode.Closure, chunk().addConstant(new Value(function)), node.pos_start, node.pos_end);
+        for (Node defaultValue : node.defaults) {
+            if (defaultValue != null)
+                compile(defaultValue);
+        }
+
+        emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(function)), node.defaultCount }, node.pos_start, node.pos_end);
 
         for (int i = 0; i < function.upvalueCount; i++)
             emit(compiler.upvalues[i].isLocal ? 1 : 0, compiler.upvalues[i].index,

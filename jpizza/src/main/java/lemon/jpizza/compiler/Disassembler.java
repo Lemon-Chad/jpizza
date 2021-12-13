@@ -100,8 +100,6 @@ public class Disassembler {
             case OpCode.Ref -> simpleInstruction("OP_REF", offset);
             case OpCode.SetRef -> simpleInstruction("OP_SET_REF", offset);
 
-            case OpCode.GetGeneric -> byteInstruction("OP_GET_GENERIC", chunk, offset);
-
             case OpCode.Jump -> jumpInstruction("OP_JUMP", 1, chunk, offset);
             case OpCode.JumpIfFalse -> jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
             case OpCode.JumpIfTrue -> jumpInstruction("OP_JUMP_IF_TRUE", 1, chunk, offset);
@@ -139,7 +137,8 @@ public class Disassembler {
             case OpCode.Closure -> {
                 offset++;
                 int constant = chunk.code.get(offset++);
-                Shell.logger.debug(String.format("%-16s %04d ", "OP_CLOSURE", constant));
+                int defaults = chunk.code.get(offset++);
+                Shell.logger.debug(String.format("%-16s %04d %04d ", "OP_CLOSURE", constant, defaults));
                 Shell.logger.debug(chunk.constants.values.get(constant));
                 Shell.logger.debug("\n");
 

@@ -411,7 +411,7 @@ public class VM {
                 boolean constant = readByte() == 1;
 
                 if (!type.equals("any") && !valType.equals(type)) {
-                    runtimeError("Type", "Type mismatch");
+                    runtimeError("Type", "Expected " + type + " but got " + valType);
                     yield VMResult.ERROR;
                 }
 
@@ -622,7 +622,7 @@ public class VM {
                 boolean constant = readByte() == 1;
 
                 if (!type.equals("any") && !valType.equals(type)) {
-                    runtimeError("Type", "Type mismatch");
+                    runtimeError("Type", "Expected type " + type + ", got " + valType);
                     yield VMResult.ERROR;
                 }
 
@@ -1070,8 +1070,12 @@ public class VM {
 
         List<Value> extraArgs = new ArrayList<>();
         if (args.length < closure.function.arity) {
-            runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + args.length);
-            return false;
+            if (args.length + closure.function.defaultCount < closure.function.arity) {
+                runtimeError("Argument Count", "Expected " + closure.function.arity + " but got " + args.length);
+                return false;
+            }
+            for (int i = args.length; i < closure.function.arity; i++)
+                push(closure.function.defaults.get(i));
         }
         else if (args.length > closure.function.arity) {
             if (closure.function.args != null) {
@@ -1432,7 +1436,16 @@ public class VM {
                 case OpCode.Call -> call();
                 case OpCode.Closure -> {
                     JFunc func = readConstant().asFunc();
+                    int defaultCount = readByte();
                     JClosure closure = new JClosure(func);
+
+                    Value[] defaults = new Value[func.arity];
+                    for (int i = func.arity - 1; i >= func.arity - defaultCount; i--) {
+                        defaults[i] = pop();
+                        func.defaultCount++;
+                    }
+                    func.defaults = new ArrayList<>(Arrays.asList(defaults));
+
                     push(new Value(closure));
 
                     for (int i = 0; i < closure.upvalueCount; i++) {

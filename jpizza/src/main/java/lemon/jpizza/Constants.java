@@ -364,7 +364,6 @@ class SocketClient {
     }};
 
     public static int indexToLine(String code, int index) {
-        System.out.println(index);
         return code.substring(0, index).split("\n").length - 1;
     }
 
