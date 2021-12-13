@@ -8,14 +8,15 @@ import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
 import lemon.jpizza.compiler.vm.VMResult;
-import lemon.jpizza.errors.RTError;
-import lemon.jpizza.objects.Obj;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Value implements Serializable {
     protected double number;
@@ -37,6 +38,7 @@ public class Value implements Serializable {
     protected Spread spread;
     protected Value ref;
     protected byte[] bytes;
+    protected Result res;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -58,9 +60,15 @@ public class Value implements Serializable {
     public boolean isSpread = false;
     public boolean isRef = false;
     public boolean isBytes = false;
+    public boolean isRes = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(Result res) {
+        this.res = res;
+        this.isRes = true;
     }
 
     public Value(byte[] bytes) {
@@ -183,6 +191,9 @@ public class Value implements Serializable {
         else if (isRef) {
             return ref.asNumber();
         }
+        else if (isRes) {
+            return res.isError() ? 0.0 : 1.0;
+        }
         return 0.0;
     }
 
@@ -212,6 +223,9 @@ public class Value implements Serializable {
         else if (isRef) {
             return ref.asBool();
         }
+        else if (isRes) {
+            return !res.isError();
+        }
         return false;
     }
 
@@ -240,11 +254,36 @@ public class Value implements Serializable {
             return String.valueOf(bool);
         }
         else if (isList) {
-            return Arrays.deepToString(list.toArray());
+            StringBuilder result = new StringBuilder("[");
+            list.forEach(k -> {
+                if (k.isString) {
+                    result.append('"').append(k.string).append('"');
+                } else {
+                    result.append(k.asString());
+                }
+                result.append(", ");
+            });
+            if (result.length() > 1) {
+                result.setLength(result.length() - 2);
+            } result.append("]");
+            return result.toString();
         }
         else if (isMap) {
             StringBuilder result = new StringBuilder("{");
-            map.forEach((k, v) -> result.append(k).append(": ").append(v).append(", "));
+            map.forEach((k, v) -> {
+                if (k.isString) {
+                    result.append('"').append(k.string).append('"');
+                } else {
+                    result.append(k.asString());
+                }
+                result.append(": ");
+                if (v.isString) {
+                    result.append('"').append(v.string).append('"');
+                } else {
+                    result.append(v.asString());
+                }
+                result.append(", ");
+            });
             if (result.length() > 1) {
                 result.setLength(result.length() - 2);
             } result.append("}");
@@ -293,6 +332,14 @@ public class Value implements Serializable {
                 sb.append(bytes[i]).append(", ");
 
             return "{ " + sb + "len=" + bytes.length + " }";
+        }
+        else if (isRes) {
+            if (res.isError()) {
+                return String.format("(\"%s\" : \"%s\")", res.getErrorMessage(), res.getErrorReason());
+            }
+            else {
+                return String.format("(%s)", res.getValue());
+            }
         }
         return "";
     }
@@ -351,6 +398,14 @@ public class Value implements Serializable {
         else if (isRef) {
             return ref.asList();
         }
+        else if (isRes) {
+            if (res.isError()) {
+                return List.of(new Value(res.getErrorMessage()), new Value(res.getErrorReason()));
+            }
+            else {
+                return List.of(new Value(res.getValue()));
+            }
+        }
         return new ArrayList<>(List.of(this));
     }
 
@@ -373,6 +428,12 @@ public class Value implements Serializable {
         }
         else if (isRef) {
             return ref.asMap();
+        }
+        else if (isRes) {
+            return Map.of(new Value("success"), new Value(res.getValue()), new Value("error"),
+                    new Value(res.isError() ? List.of(new Value(res.getErrorMessage()),
+                                                      new Value(res.getErrorReason()))
+                                            : new ArrayList<>()));
         }
         return Map.of(this, this);
     }
@@ -464,6 +525,9 @@ public class Value implements Serializable {
         else if (isBytes) {
             return "bytearray";
         }
+        else if (isRes) {
+            return "catcher";
+        }
         return "void";
     }
 
@@ -519,6 +583,10 @@ public class Value implements Serializable {
             return ref.asInstance();
         }
         return instance;
+    }
+
+    public Result asRes() {
+        return res;
     }
 
     public Namespace asNamespace() {
@@ -709,7 +777,7 @@ public class Value implements Serializable {
             }
             return map;
         }
-        return null;
+        return this;
     }
 
 }

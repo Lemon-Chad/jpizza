@@ -1,6 +1,7 @@
 package lemon.jpizza.compiler.vm;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.Pair;
 import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.*;
 import lemon.jpizza.compiler.headers.HeadCode;
@@ -14,7 +15,9 @@ import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
@@ -30,6 +33,8 @@ public class VM {
 
     final Stack<List<Value>> loopCache;
     List<Value> currentLoop;
+
+    Pair<String, String> lastError;
 
     Map<String, Namespace> libraries;
 
@@ -170,6 +175,24 @@ public class VM {
             return NativeResult.Ok(new Value(list.asList().indexOf(val)));
         }, 2);
 
+        // Results
+        defineNative("ok", args -> NativeResult.Ok(new Value(args[0].asBool())), List.of("catcher"));
+        defineNative("resolve", args -> {
+            if (!args[0].asBool())
+                return NativeResult.Err("Unresolved", "Unresolved error in catcher");
+            return NativeResult.Ok(args[0].asRes().getValue());
+        }, List.of("catcher"));
+        defineNative("catch", args -> {
+            if (!args[0].asBool())
+                return NativeResult.Ok(new Value(args[0].asList()));
+            return NativeResult.Ok();
+        }, List.of("catcher"));
+        defineNative("fail", args -> {
+            if (args[0].asBool())
+                return NativeResult.Ok();
+            return NativeResult.Err("Released", args[0].toString());
+        }, List.of("catcher"));
+
         // Time library
         defineNative("time", "epoch", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
         defineNative("time", "halt", (args) -> {
@@ -240,18 +263,25 @@ public class VM {
         runtimeError(message, reason, currentPos());
     }
 
+    Stack<Traceback> copyTracebacks() {
+        Stack<Traceback> copy = new Stack<>();
+        for (Traceback traceback : tracebacks)
+            copy.push(traceback);
+        return copy;
+    }
+
     protected void runtimeError(String message, String reason, FlatPosition position) {
         if (nehStackTop > 0)
             return;
+
+        lastError = new Pair<>(message, reason);
 
         int idx = position.index;
         int len = position.len;
 
         String output = "";
 
-        Stack<Traceback> copy = new Stack<>();
-        if (safe) for (Traceback traceback : tracebacks)
-            copy.push(traceback);
+        Stack<Traceback> copy = copyTracebacks();
 
         if (!tracebacks.empty()) {
             String arrow = Shell.fileEncoding.equals("UTF-8") ? "╰──►" : "--->";
@@ -282,6 +312,17 @@ public class VM {
             Shell.logger.warn(output);
         }
         else {
+            while (frames.count > 0) {
+                CallFrame frame = frames.pop();
+                Traceback traceback = copy.pop();
+                if (frame.catchError) {
+                    frames.push(frame);
+                    copy.push(traceback);
+                    tracebacks = copy;
+                    this.frame = frame;
+                    return;
+                }
+            }
             Shell.logger.fail(output);
             resetStack();
         }
@@ -1119,6 +1160,9 @@ public class VM {
             // Inherited flags
             newFrame.memoize = frame.memoize;
 
+            // General flags
+            newFrame.catchError = closure.function.catcher;
+
             frames.push(newFrame);
 
             frame = newFrame;
@@ -1242,6 +1286,7 @@ public class VM {
             VMResult res = switch (instruction) {
                 case OpCode.Return -> {
                     Value result = pop();
+                    if (frame.catchError) result = new Value(new Result(result));
                     frames.pop();
                     if (frames.count == 0) {
                         yield VMResult.EXIT;
@@ -1577,6 +1622,27 @@ public class VM {
                 return VMResult.OK;
             }
             else if (res == VMResult.ERROR) {
+                if (frame.catchError) {
+                    frames.pop();
+                    if (frames.count == 0) {
+                        return VMResult.OK;
+                    }
+
+                    stack.setTop(frame.slots);
+                    frame = frames.peek();
+                    popTraceback();
+
+                    Value result = new Value(new Result(lastError.a, lastError.b));
+                    push(result);
+                    if (frame.memoize) {
+                        memo.storeCache(result);
+                    }
+
+                    if (exitLevel == frames.count) {
+                        return VMResult.OK;
+                    }
+                    continue;
+                }
                 if (nehStackTop > 0) {
                     while (frames.count > neh) {
                         tracebacks.pop();

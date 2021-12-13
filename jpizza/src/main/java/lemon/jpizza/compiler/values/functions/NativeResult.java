@@ -20,8 +20,8 @@ public class NativeResult {
         this.value = null;
 
         this.isException = true;
-        this.exceptionMessage = name;
-        this.exceptionName = reason;
+        this.exceptionName = name;
+        this.exceptionMessage = reason;
     }
 
     public static NativeResult Err(String name, String reason) {

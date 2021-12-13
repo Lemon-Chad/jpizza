@@ -22,8 +22,12 @@ public class Logger {
         tips = false;
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public String ots(Object text) {
+        return ots(text, false);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    public String ots(Object text, boolean stringInner) {
         if (text instanceof PList) {
             StringBuilder sb = new StringBuilder();
             List<Obj> l = ((Obj) text).list;
@@ -75,7 +79,7 @@ public class Logger {
                     if (i >= omitt && i < l.size() - omitt) {
                         if (i == omitt + 1) sb.append("..., ");
                     }
-                    else sb.append(ots(l.get(i))).append(", ");
+                    else sb.append(ots(l.get(i), true)).append(", ");
 
                 return "[ " + sb + "len=" + l.size() + " ]";
             }
@@ -88,13 +92,16 @@ public class Logger {
                     if (i >= omitt && i < keys.length - omitt) {
                         if (i == omitt + 1) sb.append("..., ");
                     }
-                    else sb.append(ots(keys[i])).append(": ")
-                            .append(ots(d.get(keys[i]))).append(", ");
+                    else sb.append(ots(keys[i], true)).append(": ")
+                            .append(ots(d.get(keys[i]), true)).append(", ");
 
                 return "{ " + sb + "len=" + keys.length + " }";
             }
             else if (val.isNull) {
                 return "null";
+            }
+            else if (val.isString && stringInner) {
+                return "\"" + val.asString() + "\"";
             }
             return val.asString();
         }
