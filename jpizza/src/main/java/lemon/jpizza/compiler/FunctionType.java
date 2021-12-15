@@ -5,4 +5,5 @@ public enum FunctionType {
     Script,
     Method,
     Constructor,
+    Scope,
 }

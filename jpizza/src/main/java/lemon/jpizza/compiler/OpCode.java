@@ -23,7 +23,6 @@ public class OpCode {
     public static final int GetLocal = 19;
     public static final int SetLocal = 20;
     public static final int PushTraceback = 21;
-    public static final int PopTraceback = 22;
     public static final int Jump = 23;
     public static final int JumpIfFalse = 24;
     public static final int JumpIfTrue = 25;

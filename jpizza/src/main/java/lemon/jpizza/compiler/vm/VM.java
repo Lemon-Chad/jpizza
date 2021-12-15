@@ -7,15 +7,11 @@ import lemon.jpizza.compiler.*;
 import lemon.jpizza.compiler.headers.HeadCode;
 import lemon.jpizza.compiler.headers.Memo;
 import lemon.jpizza.compiler.values.*;
-import lemon.jpizza.compiler.values.classes.BoundMethod;
-import lemon.jpizza.compiler.values.classes.ClassAttr;
-import lemon.jpizza.compiler.values.classes.Instance;
-import lemon.jpizza.compiler.values.classes.JClass;
+import lemon.jpizza.compiler.values.classes.*;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -288,8 +284,13 @@ public class VM {
 
             // Generate traceback
             Traceback last = tracebacks.peek();
+            while (last == null) {
+                tracebacks.pop();
+                last = tracebacks.peek();
+            }
             while (!tracebacks.empty()) {
                 Traceback top = tracebacks.pop();
+                if (top == null) continue;
                 int line = Constants.indexToLine(top.chunk.source(), top.chunk.getPosition(top.offset).index);
                 output = String.format("  %s  File %s, line %s, in %s\n%s", arrow, top.filename, line + 1, top.context, output);
             }
@@ -1152,23 +1153,38 @@ public class VM {
         else {
             tracebacks.push(traceback);
 
-            CallFrame newFrame = new CallFrame(closure, 0, stack.count
-                                                                  - closure.function.totarity
-                                                                  - 1,
-                    null, binding);
-
-            // Inherited flags
-            newFrame.memoize = frame.memoize;
-
-            // General flags
-            newFrame.catchError = closure.function.catcher;
-
-            frames.push(newFrame);
-
-            frame = newFrame;
-            frame.returnType = readType(closure.function.returnType);
+            addFrame(closure, stack.count - closure.function.totarity - 1, binding);
         }
         return true;
+    }
+
+    void addFrame(JClosure closure, int slots, Value binding) {
+        CallFrame newFrame = new CallFrame(closure, 0, slots, null, binding);
+
+        // Inherited flags
+        newFrame.memoize = frame.memoize;
+
+        // General flags
+        newFrame.catchError = closure.function.catcher;
+
+        frames.push(newFrame);
+
+        frame = newFrame;
+        frame.returnType = readType(closure.function.returnType);
+    }
+
+    void addFrame(JClosure closure, int slots, Value binding, String returnType, int ip) {
+        CallFrame newFrame = new CallFrame(closure, ip, slots, returnType, binding);
+
+        // Inherited flags
+        newFrame.memoize = frame.memoize;
+
+        // General flags
+        newFrame.catchError = closure.function.catcher;
+
+        frames.push(newFrame);
+
+        frame = newFrame;
     }
 
     boolean call(JNative nativeFunc, Value[] args) {
@@ -1287,7 +1303,7 @@ public class VM {
                 case OpCode.Return -> {
                     Value result = pop();
                     if (frame.catchError) result = new Value(new Result(result));
-                    frames.pop();
+                    CallFrame oldFrame = frames.pop();
                     if (frames.count == 0) {
                         yield VMResult.EXIT;
                     }
@@ -1317,6 +1333,10 @@ public class VM {
 
                     if (exitLevel == frames.count) {
                         yield VMResult.EXIT;
+                    }
+
+                    if (oldFrame.addPeek) {
+                        frame.ip = oldFrame.ip;
                     }
 
                     yield VMResult.OK;
@@ -1448,22 +1468,25 @@ public class VM {
                         OpCode.DefineLocal -> localOps(instruction);
 
                 case OpCode.PushTraceback -> {
-                    String name = readString();
-                    int idx = currentPos().index;
-
-                    String filename;
-                    if (tracebacks.empty()) {
-                        filename = "";
+                    int next = readByte();
+                    if (next == -1) {
+                        tracebacks.push(null);
                     }
                     else {
-                        filename = tracebacks.peek().filename;
-                    }
+                        String name = frame.closure.function.chunk.constants().valuesArray[next].asString();
+                        int idx = currentPos().index;
 
-                    tracebacks.push(new Traceback(filename, name, idx, frame.closure.function.chunk));
-                    yield VMResult.OK;
-                }
-                case OpCode.PopTraceback -> {
-                    popTraceback();
+                        String filename;
+                        if (tracebacks.empty()) {
+                            filename = "";
+                        } else {
+                            filename = tracebacks.peek().filename;
+                        }
+
+                        tracebacks.push(new Traceback(filename, name, idx, frame.closure.function.chunk));
+                    }
+                    addFrame(frame.closure, frame.slots, frame.bound, "any", frame.ip);
+                    frame.addPeek = true;
                     yield VMResult.OK;
                 }
 
@@ -1483,6 +1506,8 @@ public class VM {
                     JFunc func = readConstant().asFunc();
                     int defaultCount = readByte();
                     JClosure closure = new JClosure(func);
+
+                    if (func.name == null) func.name = tracebacks.peek().context;
 
                     Value[] defaults = new Value[func.arity];
                     for (int i = func.arity - 1; i >= func.arity - defaultCount; i--) {

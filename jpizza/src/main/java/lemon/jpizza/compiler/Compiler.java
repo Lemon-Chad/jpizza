@@ -543,10 +543,15 @@ public class Compiler {
     }
 
     void compile(FuncDefNode node) {
-        int global = parseVariable(node.var_name_tok, node.pos_start, node.pos_end);
-        markInitialized();
+        int global = -1;
+        if (node.var_name_tok != null) {
+            global = parseVariable(node.var_name_tok, node.pos_start, node.pos_end);
+            markInitialized();
+        }
         function(FunctionType.Function, node);
-        defineVariable(global, List.of("function"), false, node.pos_start, node.pos_end);
+        if (node.var_name_tok != null) {
+            defineVariable(global, List.of("function"), false, node.pos_start, node.pos_end);
+        }
     }
 
     void compile(SwitchNode node) {
@@ -655,7 +660,7 @@ public class Compiler {
         compiler.emit(OpCode.Return, node.body_node.pos_start, node.body_node.pos_end);
         JFunc function = compiler.endCompiler();
 
-        function.name = node.var_name_tok.value.toString();
+        function.name = node.var_name_tok != null ? node.var_name_tok.value.toString() : "<anonymous>";
         function.async = node.async;
         function.returnType = retype;
 
@@ -910,20 +915,19 @@ public class Compiler {
     }
 
     void compile(ScopeNode node) {
-        beginScope();
+        Compiler scope = new Compiler(this, FunctionType.Scope, chunk().source);
 
-        boolean hasName = node.scopeName != null;
-        if (hasName) {
-            int arg = chunk().addConstant(new Value(node.scopeName));
-            emit(OpCode.PushTraceback, arg, node.pos_start, node.pos_end);
-        }
+        scope.beginScope();
+        scope.compile(node.statements);
+        scope.emit(OpCode.Return, node.pos_start, node.pos_end);
+        scope.endScope(node.pos_start, node.pos_end);
 
-        compile(node.statements);
+        JFunc func = scope.endCompiler();
+        func.name = node.scopeName;
+        func.returnType = List.of("any");
 
-        if (hasName)
-            emit(OpCode.PopTraceback, node.pos_start, node.pos_end);
+        emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(func)), 0, OpCode.Call, 0, 0, 0 }, node.pos_start, node.pos_end);
 
-        endScope(node.pos_start, node.pos_end);
     }
 
     void compile(QueryNode node) {

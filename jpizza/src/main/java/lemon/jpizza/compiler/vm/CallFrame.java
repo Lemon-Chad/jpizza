@@ -11,6 +11,7 @@ public class CallFrame {
     public final Value bound;
     public boolean memoize = false;
     public boolean catchError = false;
+    public boolean addPeek = false;
 
     public CallFrame(JClosure closure, int ip, int slots, String returnType) {
         this(closure, ip, slots, returnType, null);

@@ -1,4 +1,7 @@
-package lemon.jpizza.compiler.values;
+package lemon.jpizza.compiler.values.classes;
+
+import lemon.jpizza.compiler.values.Value;
+import lemon.jpizza.compiler.values.Var;
 
 import java.util.Map;
 

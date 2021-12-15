@@ -4,6 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.compiler.values.classes.BoundMethod;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.values.classes.JClass;
+import lemon.jpizza.compiler.values.classes.Namespace;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
