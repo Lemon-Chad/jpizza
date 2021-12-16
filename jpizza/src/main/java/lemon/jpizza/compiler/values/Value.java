@@ -40,6 +40,8 @@ public class Value implements Serializable {
     protected Value ref;
     protected byte[] bytes;
     protected Result res;
+    protected String patternBinding;
+    protected Pattern pattern;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -62,9 +64,16 @@ public class Value implements Serializable {
     public boolean isRef = false;
     public boolean isBytes = false;
     public boolean isRes = false;
+    public boolean isPatternBinding = false;
+    public boolean isPattern = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(Pattern pattern) {
+        this.pattern = pattern;
+        this.isPattern = true;
     }
 
     public Value(Result res) {
@@ -80,6 +89,14 @@ public class Value implements Serializable {
     public Value(Value value) {
         this.ref = value;
         this.isRef = true;
+    }
+
+    public static Value patternBinding(String patternBinding) {
+        Value value = new Value();
+        value.patternBinding = patternBinding;
+        value.isPatternBinding = true;
+        value.isNull = false;
+        return value;
     }
 
     public Value(Spread spread) {
@@ -341,6 +358,19 @@ public class Value implements Serializable {
             else {
                 return String.format("(%s)", res.getValue());
             }
+        }
+        else if (isPatternBinding) {
+            return "{ pattern: " + patternBinding + " }";
+        }
+        else if (isPattern) {
+            StringBuilder sb = new StringBuilder(pattern.value.toString() + " { ");
+            for (Map.Entry<String, Value> entry : pattern.cases.entrySet()) {
+                sb.append(entry.getKey()).append(": ").append(entry.getValue().asString()).append(", ");
+            }
+            for (Map.Entry<String, String> entry : pattern.matches.entrySet()) {
+                sb.append(entry.getKey()).append(": ").append(entry.getValue()).append(", ");
+            }
+            return sb + "}";
         }
         return "";
     }
@@ -781,4 +811,11 @@ public class Value implements Serializable {
         return this;
     }
 
+    public String asPatternBinding() {
+        return patternBinding;
+    }
+
+    public Pattern asPattern() {
+        return pattern;
+    }
 }

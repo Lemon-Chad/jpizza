@@ -588,6 +588,10 @@ public class VM {
 
         switch (op) {
             case OpCode.Equal -> {
+                if (b.isPattern) {
+                    return matchPattern(a, b.asPattern());
+                }
+
                 if (canOverride(a, "eq")) {
                     return runBin("eq", b, a.asInstance());
                 }
@@ -610,6 +614,48 @@ public class VM {
             }
         }
 
+        return VMResult.OK;
+    }
+
+    private VMResult matchPattern(Value a, Pattern asPattern) {
+        if (!a.isInstance) {
+            push(new Value(false));
+            return VMResult.OK;
+        }
+
+        Instance instance = a.asInstance();
+        if (!instance.instanceOf(asPattern.value)) {
+            push(new Value(false));
+            return VMResult.OK;
+        }
+
+        for (Map.Entry<String, Value> entry : asPattern.cases.entrySet()) {
+            Value val = instance.getField(entry.getKey(), false);
+            if (val == null) {
+                push(new Value(false));
+                return VMResult.OK;
+            }
+            else if (!val.equals(entry.getValue())) {
+                push(new Value(false));
+                return VMResult.OK;
+            }
+        }
+
+        for (String binding : asPattern.keys) {
+            Value val = instance.getField(binding, false);
+            if (val == null) {
+                runtimeError("Scope", "Undefined attribute");
+                return VMResult.ERROR;
+            }
+            else {
+                push(new Value(new Var(
+                        "any",
+                        val,
+                        false
+                )));
+            }
+        }
+        push(new Value(true));
         return VMResult.OK;
     }
 
@@ -1281,6 +1327,41 @@ public class VM {
         };
     }
 
+    VMResult pattern(int op) {
+        return switch (op) {
+            case OpCode.PatternVars -> {
+                push(Value.patternBinding(readString()));
+                yield VMResult.OK;
+            }
+            case OpCode.Pattern -> {
+                int fieldCount = readByte();
+
+                Map<String, Value> cases = new HashMap<>();
+                Map<String, String> matches = new HashMap<>();
+                List<String> keys = new ArrayList<>();
+                for (int i = 0; i < fieldCount; i++) {
+                    String name = readString();
+                    Value val = pop();
+
+                    if (val.isPatternBinding) {
+                        matches.put(name, val.asPatternBinding());
+                        keys.add(0, name);
+                    }
+                    else {
+                        cases.put(name, val);
+                    }
+                }
+
+                Value pattern = pop();
+
+                push(new Value(new Pattern(pattern, cases, keys.toArray(new String[0]), matches)));
+
+                yield VMResult.OK;
+            }
+            default -> throw new IllegalArgumentException("How did you get here?");
+        };
+    }
+
     public VMResult run() {
         frame = frames.peek();
         int exitLevel = frames.count - 1;
@@ -1355,6 +1436,9 @@ public class VM {
                     yield VMResult.OK;
                 }
 
+                case OpCode.Pattern,
+                        OpCode.PatternVars -> pattern(instruction);
+
                 case OpCode.Throw -> {
                     Value type = pop();
                     Value reason = pop();
@@ -1408,6 +1492,19 @@ public class VM {
                             true
                     ));
                     push(enumerator);
+
+                    boolean isPublic = readByte() == 1;
+                    if (isPublic) {
+                        JEnum enumObj = enumerator.asEnum();
+                        for (Map.Entry<String, JEnumChild> name : enumObj.children().entrySet()) {
+                                globals.put(name.getKey(), new Var(
+                                        enumObj.name(),
+                                        new Value(name.getValue()),
+                                        true
+                                ));
+                        }
+                    }
+
                     yield VMResult.OK;
                 }
 
@@ -1693,6 +1790,7 @@ public class VM {
 
     VMResult destruct() {
         Namespace v = pop().asNamespace();
+        push(new Value());
         int args = readByte();
         if (args == -1) {
             globals.putAll(v.values());

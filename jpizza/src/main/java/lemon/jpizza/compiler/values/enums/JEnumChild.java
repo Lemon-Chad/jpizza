@@ -46,6 +46,10 @@ public class JEnumChild implements Serializable {
         return parent.name();
     }
 
+    public JEnum getParent() {
+        return parent;
+    }
+
     public Value create(Value[] args, String[] types, String[] resolvedGenerics, VM vm) {
         Map<String, ClassAttr> fields = new HashMap<>();
         for (int i = 0; i < props.size(); i++) {
@@ -56,6 +60,7 @@ public class JEnumChild implements Serializable {
         }
 
         fields.put("$child", new ClassAttr(new Value(value)));
+        fields.put("$parent", new ClassAttr(new Value(parent)));
 
         StringBuilder type = new StringBuilder(parent.name());
         if (generics.size() > 0) {

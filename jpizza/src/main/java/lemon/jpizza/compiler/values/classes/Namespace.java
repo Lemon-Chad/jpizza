@@ -21,7 +21,8 @@ public record Namespace(String name,
     }
 
     public Value getField(String name) {
-        return values.get(name).val;
+        Var x = values.get(name);
+        return x != null ? x.val : null;
     }
 
     public void addField(String name, Value val) {

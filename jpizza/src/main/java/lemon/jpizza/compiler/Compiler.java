@@ -44,6 +44,8 @@ public class Compiler {
 
     final Compiler enclosing;
 
+    boolean inPattern = false;
+
     final Local[] locals;
     final Local[] generics;
     int localCount;
@@ -54,6 +56,8 @@ public class Compiler {
 
     int continueTo;
     final List<Integer> breaks;
+
+    final List<String> globals;
 
     final Upvalue[] upvalues;
 
@@ -73,6 +77,7 @@ public class Compiler {
 
         this.locals = new Local[VM.MAX_STACK_SIZE];
         this.generics = new Local[VM.MAX_STACK_SIZE];
+        this.globals = new ArrayList<>();
 
         this.upvalues = new Upvalue[256];
 
@@ -357,8 +362,27 @@ public class Compiler {
         else if (statement instanceof DestructNode)
             compile((DestructNode) statement);
 
+        else if (statement instanceof PatternNode)
+            compile((PatternNode) statement);
+
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(PatternNode node) {
+        compile(node.accessNode);
+        inPattern = true;
+        Token[] keySet = node.patterns.keySet().toArray(new Token[0]);
+        for (Token token : keySet) {
+            compile(node.patterns.get(token));
+        }
+        inPattern = false;
+        emit(OpCode.Pattern, keySet.length, node.pos_start, node.pos_end);
+        for (int i = keySet.length - 1; i >= 0; i--) {
+            Token token = keySet[i];
+            int constant = chunk().addConstant(new Value(token.value.toString()));
+            emit(constant, token.pos_start, token.pos_end);
+        }
     }
 
     void compile(DestructNode node) {
@@ -430,7 +454,7 @@ public class Compiler {
                 node.tok.value.toString(),
                 children
         )));
-        emit(OpCode.Enum, constant, node.pos_start, node.pos_end);
+        emit(new int[]{ OpCode.Enum, constant, node.pub ? 1 : 0 }, node.pos_start, node.pos_end);
     }
 
     void compile(ImportNode node) {
@@ -555,12 +579,13 @@ public class Compiler {
     }
 
     void compile(SwitchNode node) {
-        if (node.match) {
-            compileMatch(node);
-        }
-        else {
-            compileSwitch(node);
-        }
+        wrapScope(compiler -> {
+            if (node.match)
+                compiler.compileMatch(node);
+            else
+                compiler.compileSwitch(node);
+        },
+        null, node.pos_start, node.pos_end);
     }
 
     void compileSwitch(SwitchNode node) {
@@ -598,6 +623,32 @@ public class Compiler {
     }
 
     void compileMatch(SwitchNode node) {
+        int[] jumps = new int[node.cases.size()];
+        for (int i = 0; i < jumps.length; i++) {
+            Case caze = node.cases.get(i);
+            compile(node.reference);
+            compile(caze.condition);
+            emit(OpCode.Equal, node.pos_start, node.pos_end);
+            int jump = emitJump(OpCode.JumpIfFalse, node.pos_start, node.pos_end);
+            emit(OpCode.Pop, node.pos_start, node.pos_end);
+            compile(caze.statements);
+            jumps[i] = emitJump(OpCode.Jump, node.pos_start, node.pos_end);
+            patchJump(jump);
+            emit(OpCode.Pop, node.pos_start, node.pos_end);
+        }
+
+        if (node.elseCase != null) {
+            compile(node.elseCase.statements);
+        }
+        else {
+            compileNull(node.pos_start, node.pos_end);
+        }
+
+        for (int jump : jumps)
+            patchJump(jump);
+
+        for (int brk : breaks)
+            patchJump(brk);
 
     }
 
@@ -797,6 +848,11 @@ public class Compiler {
         else if ((arg = resolveUpvalue(name)) != -1) {
             emit(OpCode.GetUpvalue, arg, start, end);
         }
+        else if (inPattern && !globals.contains(name)) {
+            arg = chunk().addConstant(new Value(name));
+            addLocal(name, start, end);
+            emit(OpCode.PatternVars, arg, start, end);
+        }
         else {
             arg = chunk().addConstant(new Value(name));
             emit(OpCode.GetGlobal, arg, start, end);
@@ -849,6 +905,7 @@ public class Compiler {
             return;
         }
 
+        globals.add(chunk().constants.values.get(global).asString());
         emit(OpCode.DefineGlobal, global, start, end);
         compileType(type, start, end);
         emit(constant ? 1 : 0, start, end);
@@ -914,20 +971,31 @@ public class Compiler {
         }
     }
 
-    void compile(ScopeNode node) {
+    interface CompilerWrapped {
+        void compile(Compiler compiler);
+    }
+
+    <T> void wrapScope(CompilerWrapped method, String scopeName, Position start, Position end) {
         Compiler scope = new Compiler(this, FunctionType.Scope, chunk().source);
 
         scope.beginScope();
-        scope.compile(node.statements);
-        scope.emit(OpCode.Return, node.pos_start, node.pos_end);
-        scope.endScope(node.pos_start, node.pos_end);
+        method.compile(scope);
+        scope.emit(OpCode.Return, start, end);
+        scope.endScope(start, end);
 
         JFunc func = scope.endCompiler();
-        func.name = node.scopeName;
+        func.name = scopeName;
         func.returnType = List.of("any");
 
-        emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(func)), 0, OpCode.Call, 0, 0, 0 }, node.pos_start, node.pos_end);
+        emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(func)), 0 }, start, end);
+        for (int i = 0; i < func.upvalueCount; i++)
+            emit(scope.upvalues[i].isLocal ? 1 : 0, scope.upvalues[i].index,
+                    start, end);
+        emit(new int[]{ OpCode.Call, 0, 0, 0 }, start, end);
+    }
 
+    void compile(ScopeNode node) {
+        wrapScope(compiler -> compiler.compile(node.statements), node.scopeName, node.pos_start, node.pos_end);
     }
 
     void compile(QueryNode node) {

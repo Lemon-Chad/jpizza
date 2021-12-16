@@ -53,6 +53,17 @@ public class Instance {
         return res;
     }
 
+    public boolean instanceOf(Value value) {
+        if (value.isEnumChild && hasField("$child") && hasField("$child")) {
+            return value.asEnumChild().getValue() == fields.get("$child").val.asNumber().intValue() &&
+                    value.asEnumChild().getParent() == fields.get("$parent").val.asEnum();
+        }
+        else if (value.isClass) {
+            return clazz == value.asClass();
+        }
+        return false;
+    }
+
     public String type() {
         return stringOp("type");
     }
@@ -159,5 +170,9 @@ public class Instance {
         if (res == null)
             res = vm.pop().asBytes();
         return res;
+    }
+
+    public boolean hasField(String key) {
+        return fields.containsKey(key);
     }
 }

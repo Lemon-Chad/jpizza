@@ -27,6 +27,14 @@ public class Disassembler {
             case OpCode.Return -> simpleInstruction("OP_RETURN", offset);
             case OpCode.Pop -> simpleInstruction("OP_POP", offset);
 
+            case OpCode.PatternVars -> constantInstruction("OP_PATTERN_VARS", chunk, offset);
+
+            case OpCode.Pattern -> {
+                int args = chunk.code.get(offset + 1);
+                Shell.logger.debug(String.format("%-16s %04d%n", "OP_PATTERN", args));
+                yield offset + 2 + args;
+            }
+
             case OpCode.Header -> {
                 int constant = chunk.code.get(offset + 1);
                 int args = chunk.code.get(offset + 2);
@@ -87,7 +95,12 @@ public class Disassembler {
             case OpCode.MakeArray -> byteInstruction("OP_MAKE_ARRAY", chunk, offset);
             case OpCode.MakeMap -> byteInstruction("OP_MAKE_MAP", chunk, offset);
 
-            case OpCode.Enum -> constantInstruction("OP_ENUM", chunk, offset);
+            case OpCode.Enum -> {
+                int constant = chunk.code.get(offset + 1);
+                int isPublic = chunk.code.get(offset + 2);
+                Shell.logger.debug(String.format("%-16s %-16s %-16s %n", "OP_ENUM", isPublic == 1 ? "PUBLIC" : "", chunk.constants.values.get(constant)));
+                yield offset + 3;
+            }
 
             case OpCode.GetUpvalue -> byteInstruction("OP_GET_UPVALUE", chunk, offset);
             case OpCode.SetUpvalue -> byteInstruction("OP_SET_UPVALUE", chunk, offset);
@@ -157,7 +170,12 @@ public class Disassembler {
             case OpCode.SetAttr -> byteInstruction("OP_SET_ATTR", chunk, offset);
             case OpCode.GetAttr -> byteInstruction("OP_GET_ATTR", chunk, offset);
 
-            case OpCode.Import -> constantInstruction("OP_IMPORT", chunk, offset);
+            case OpCode.Import -> {
+                int fromConstant = chunk.code.get(offset + 1);
+                int asConstant = chunk.code.get(offset + 2);
+                Shell.logger.debug(String.format("%-16s %-16s as %-16s", "OP_IMPORT", chunk.constants.values.get(fromConstant), chunk.constants.values.get(asConstant)));
+                yield offset + 3;
+            }
 
             case OpCode.BitAnd -> simpleInstruction("OP_BIT_AND", offset);
             case OpCode.BitOr -> simpleInstruction("OP_BIT_OR", offset);
