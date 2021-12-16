@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 public class JEnumChild implements Serializable {
     final int value;
@@ -20,12 +21,20 @@ public class JEnumChild implements Serializable {
     public final List<String> props;
     public final List<List<String>> propTypes;
     public final List<String> generics;
+    public final List<Integer> genericSlots;
+    
+    public final int arity;
+    public final int genericArity;
 
-    public JEnumChild(int value, List<String> props, List<List<String>> propTypes, List<String> generics) {
+    public JEnumChild(int value, List<String> props, List<List<String>> propTypes, List<String> generics, List<Integer> genericSlots) {
         this.value = value;
         this.props = props;
         this.propTypes = propTypes;
         this.generics = generics;
+        this.genericSlots = genericSlots;
+
+        this.arity = props.size();
+        this.genericArity = generics.size();
 
         this.asValue = new Value(this);
     }

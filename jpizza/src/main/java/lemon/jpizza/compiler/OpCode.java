@@ -75,4 +75,5 @@ public class OpCode {
     public static final int Header = 0x47;
     public static final int Destruct = 0x48;
     public static final int PatternVars = 0x49;
+    public static final int ClassGeneric = 0x4A;
 }

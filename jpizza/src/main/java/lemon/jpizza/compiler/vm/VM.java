@@ -87,6 +87,8 @@ public class VM {
 
         defineNative("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), List.of("num"));
 
+        defineNative("type", (args) -> NativeResult.Ok(new Value(args[0].type())), 1);
+
         // List Functions
         defineNative("append", (args) -> {
             Value list = args[0];
@@ -736,10 +738,16 @@ public class VM {
             if (raw.startsWith("@")) {
                 int slot = Integer.parseInt(raw.substring(1));
                 sb.append(get(slot).asVar().val.asString());
+                continue;
             }
-            else {
-                sb.append(raw);
+            else if (frame.bound != null && frame.bound.isInstance) {
+                String gen = frame.bound.asInstance().getGeneric(raw);
+                if (gen != null) {
+                    sb.append(gen);
+                    continue;
+                }
             }
+            sb.append(raw);
         }
 
         // ['MyCool', '(', '@1', ')', 'Type'] -> MyCool(GenericAtSlot1)Type
@@ -1059,17 +1067,14 @@ public class VM {
             return call(bound.closure, bound.receiver, args, kwargs, generics);
         }
         else if (callee.isEnumChild) {
-            return call(callee.asEnumChild(), args.length);
+            return call(callee.asEnumChild(), generics, args.length);
         }
         runtimeError("Type", "Can only call functions and classes");
         return false;
     }
 
-    boolean call(JEnumChild child, int argCount) {
-        int argc = child.props.size();
-        String[] types = new String[argc];
-        for (int i = 0; i < argc; i++)
-            types[i] = readType(child.propTypes.get(i));
+    boolean call(JEnumChild child, String[] generics, int argCount) {
+        int argc = child.arity;
 
         if (argCount != argc) {
             runtimeError("Argument Count", "Expected " + argc + " but got " + argCount);
@@ -1080,6 +1085,37 @@ public class VM {
         for (int i = argCount - 1; i >= 0; i--)
             args[i] = pop();
 
+        if (generics.length != child.genericArity) {
+            if ((generics = inferGenerics(
+                generics,
+                child.genericArity,
+                argCount,
+                child.genericSlots,
+                args
+            )) == null) return false;
+        }
+    
+
+        List<String>[] gTypes = new ArrayList[argc];
+        for (int i = 0; i < argc; i++) {
+            List<String> pretype = child.propTypes.get(i);
+            List<String> newType = new ArrayList<>();
+            for (String t : pretype) {
+                int idx = child.generics.indexOf(t);
+                if (idx != -1) {
+                    newType.add(generics[idx]);
+                }
+                else {
+                    newType.add(t);
+                }
+            }
+            gTypes[i] = newType;
+        }
+
+        String[] types = new String[argc];
+        for (int i = 0; i < argc; i++)
+            types[i] = readType(gTypes[i]);
+        
         for (int i = 0; i < argc; i++) {
             String type = args[i].type();
             if (!types[i].equals("any") && !type.equals(types[i])) {
@@ -1089,7 +1125,7 @@ public class VM {
         }
 
         pop();
-        push(child.create(args, types, new String[0], this));
+        push(child.create(args, types, generics, this));
         return true;
     }
 
@@ -1099,12 +1135,59 @@ public class VM {
         Value value = new Value(instance);
         instance.self = value;
 
-        BoundMethod bound = new BoundMethod(clazz.constructor.asClosure(), value);
+        JClosure closure = clazz.constructor.asClosure();
+        if (generics.length != closure.function.genericArity) {
+            if ((generics = inferGenerics(
+                generics, 
+                closure.function.genericArity, 
+                closure.function.arity, 
+                closure.function.genericSlots, 
+                args
+            )) == null) return false;
+
+            // Move arguments out of the way
+            for (int i = 0; i < args.length; i++)
+                pop();
+
+            // Insert inferred arguments
+            for (String type : generics)
+                push(new Value(new Var("String", new Value(type), true)));
+
+            // Re-add arguments
+            for (Value arg : args)
+                push(arg);
+        }
+
+        for (int i = 0; i < closure.function.genericArity; i++) {
+            instance.putGeneric(clazz.generic_toks.get(i).value.toString())
+        }
+
+        BoundMethod bound = new BoundMethod(closure, value);
         return callValue(new Value(bound), args, kwargs, generics);
     }
 
     boolean call(JClosure closure, Value[] args, Map<String, Value> kwargs, String[] generics) {
         return call(closure, frame.bound, args, kwargs, generics);
+    }
+
+    public String[] inferGenerics(String[] generics, int genericArity, int arity, List<Integer> genericSlots, Value[] args) {
+        if (generics.length == 0) {
+            // Try to infer generics
+            String[] inferred = new String[genericArity];
+            int totalInferred = 0;
+            for (int i = 0; i < arity; i++) {
+                int slot = genericSlots.get(i);
+                if (slot != -1 && inferred[slot] == null) {
+                    inferred[slot] = args[i].type();
+                    totalInferred++;
+                }
+            }
+            if (totalInferred == genericArity) {
+                return inferred;
+            }
+        }
+        runtimeError("Generic Count", "Expected " + genericArity + " but got " + generics.length);
+        return null;
     }
 
     public boolean call(JClosure closure, Value binding, Value[] args, Map<String, Value> kwargs, String[] generics) {
@@ -1120,40 +1203,25 @@ public class VM {
         }
 
         if (generics.length != closure.function.genericArity) {
-            boolean fail = true;
-            if (generics.length == 0) {
-                // Try to infer generics
-                String[] inferred = new String[closure.function.genericArity];
-                int totalInferred = 0;
-                for (int i = 0; i < closure.function.arity; i++) {
-                    int slot = closure.function.genericSlots.get(i);
-                    if (slot != -1 && inferred[slot] == null) {
-                        inferred[slot] = args[i].type();
-                        totalInferred++;
-                    }
-                }
-                if (totalInferred == closure.function.genericArity) {
-                    fail = false;
-                    generics = inferred;
+            if ((generics = inferGenerics(
+                generics, 
+                closure.function.genericArity, 
+                closure.function.arity, 
+                closure.function.genericSlots, 
+                args
+            )) == null) return false;
 
-                    // Move arguments out of the way
-                    for (int i = 0; i < args.length; i++)
-                        pop();
+            // Move arguments out of the way
+            for (int i = 0; i < args.length; i++)
+                pop();
 
-                    // Insert inferred arguments
-                    for (String type : generics)
-                        push(new Value(new Var("String", new Value(type), true)));
+            // Insert inferred arguments
+            for (String type : generics)
+                push(new Value(new Var("String", new Value(type), true)));
 
-                    // Re-add arguments
-                    for (Value arg : args)
-                        push(arg);
-
-                }
-            }
-            if (fail) {
-                runtimeError("Generic Count", "Expected " + closure.function.genericArity + " but got " + generics.length);
-                return false;
-            }
+            // Re-add arguments
+            for (Value arg : args)
+                push(arg);
         }
 
         List<Value> extraArgs = new ArrayList<>();
@@ -1684,6 +1752,16 @@ public class VM {
                     }
                     push(new Value(map));
                     yield VMResult.OK;
+                }
+
+                case OpCode.ClassGeneric -> {
+                    if (frame.bound != null && frame.bound.isInstance) {
+                        Instance instance = frame.bound.asInstance();
+                        instance.putGeneric(readString(), pop());
+                        yield VMResult.OK;
+                    }
+                    runtimeError("Scope", "Not in instance, most likely a compile error");
+                    yield VMResult.ERROR;
                 }
 
                 case OpCode.Class -> {

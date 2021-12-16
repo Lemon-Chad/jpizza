@@ -442,11 +442,22 @@ public class Compiler {
         int argc = node.children.size();
         for (int i = 0; i < argc; i++) {
             Parser.EnumChild child = node.children.get(i);
+
+            List<Integer> genericSlots = new ArrayList<>();
+            for (List<String> rawType : child.types())
+                if (rawType.size() == 1 && child.generics().contains(rawType.get(0))) {
+                    genericSlots.add(child.generics().indexOf(rawType.get(0)));
+                }
+                else {
+                    genericSlots.add(-1);
+                }
+
             children.put(child.token().value.toString(), new JEnumChild(
                     i,
                     child.params(),
                     child.types(),
-                    child.generics()
+                    child.generics(),
+                    genericSlots
             ));
         }
 
@@ -658,6 +669,10 @@ public class Compiler {
     }
 
     void function(FunctionType type, FuncDefNode node) {
+        function(type, node, c -> {}, c -> {});
+    }
+
+    void function(FunctionType type, FuncDefNode node, CompilerWrapped pre, CompilerWrapped post) {
         Compiler compiler = new Compiler(this, type, chunk().source);
 
         compiler.beginScope();
@@ -707,8 +722,12 @@ public class Compiler {
             compiler.makeVar(compiler.localCount - 1, List.of("dict"), false, kwargNameToken.pos_start, kwargNameToken.pos_end);
         }
 
+        pre.compile(compiler);
         compiler.compile(node.body_node);
+        post.compile(compiler);
+
         compiler.emit(OpCode.Return, node.body_node.pos_start, node.body_node.pos_end);
+
         JFunc function = compiler.endCompiler();
 
         function.name = node.var_name_tok != null ? node.var_name_tok.value.toString() : "<anonymous>";
@@ -730,7 +749,6 @@ public class Compiler {
         for (int i = 0; i < function.upvalueCount; i++)
             emit(compiler.upvalues[i].isLocal ? 1 : 0, compiler.upvalues[i].index,
                     node.pos_start, node.pos_end);
-
     }
 
     void compileNull(@NotNull Position start, @NotNull Position end) {
@@ -1111,12 +1129,25 @@ public class Compiler {
                 compileNull(node.attributes.get(i).pos_start, node.attributes.get(i).pos_end);
         }
 
+        for (int i = 0; i < node.generic_toks.size(); i++)
+            compileNull(node.pos_start, node.pos_end);
+
         if (node.parentToken != null) accessVariable(node.parentToken.value.toString(), node.parentToken.pos_start, node.parentToken.pos_end);
 
         emit(OpCode.Class, nameConstant, node.pos_start, node.pos_end);
         emit(node.parentToken != null ? 1 : 0, node.pos_start, node.pos_end);
 
-        emit(node.attributes.size(), node.pos_start, node.pos_end);
+        emit(node.attributes.size() + node.generic_toks.size(), node.pos_start, node.pos_end);
+
+        for (Token tok : node.generic_toks) 
+            compile(new AttrDeclareNode(
+                tok,
+                List.of("String"),
+                false,
+                true,
+                null
+            ));
+
         for (AttrDeclareNode attr : node.attributes)
             compile(attr);
 
@@ -1143,22 +1174,38 @@ public class Compiler {
                 false,
                 node.argname,
                 node.kwargname
-        ), true);
+        ), true, node.generic_toks);
 
         emit(OpCode.Pop, node.pos_start, node.pos_end);
         compileNull(node.pos_start, node.pos_end);
     }
 
     void compile(MethDefNode node) {
-        compile(node, false);
+        compile(node, false, null);
     }
 
-    void compile(MethDefNode node, boolean isConstructor) {
+    void compile(MethDefNode node, boolean isConstructor, List<Token> genericToks) {
         String name = node.var_name_tok.value.toString();
         int nameConstant = chunk().addConstant(new Value(name));
 
         FunctionType type = isConstructor ? FunctionType.Constructor : FunctionType.Method;
-        function(type, node.asFuncDef());
+
+        function(type, node.asFuncDef(), 
+        (compiler) -> {
+            if (isConstructor) for (Token tok : genericToks) {
+                compiler.compile(new VarAccessNode(tok));
+                compiler.emit(OpCode.ClassGeneric, chunk().addConstant(new Value(tok.value.toString())), tok.pos_start, tok.pos_end);
+            }
+        },
+        (compiler) -> {
+            if (isConstructor) for (Token tok : genericToks) {
+                compiler.compile(new AttrAssignNode(
+                    tok,
+                    new VarAccessNode(tok)
+                ));
+            }
+        });
+        
 
         emit(new int[]{
                 OpCode.Method,

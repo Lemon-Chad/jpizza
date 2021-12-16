@@ -18,11 +18,13 @@ public class Instance {
     public final Map<String, Value> binMethods;
     public Value self;
     final VM vm;
+    final Map<String, String> generics;
 
     public Instance(JClass clazz, VM vm) {
         this.clazz = clazz;
         methods = clazz.methods;
         binMethods = clazz.binMethods;
+        generics = new HashMap<>();
 
         this.vm = vm;
 
@@ -44,6 +46,14 @@ public class Instance {
                     value.isPrivate
             ));
         }
+    }
+
+    public void putGeneric(String key, Value val) {
+        generics.put(key, val.asString());
+    }
+
+    public String getGeneric(String key) {
+        return generics.get(key);
     }
 
     private String stringOp(String opName) {
