@@ -8,7 +8,7 @@ public class CallFrame {
     public int ip;
     public final int slots;
     public String returnType;
-    public final Value bound;
+    public Value bound;
     public boolean memoize = false;
     public boolean catchError = false;
     public boolean addPeek = false;

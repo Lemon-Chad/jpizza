@@ -5,6 +5,7 @@ import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.NativeResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static lemon.jpizza.compiler.values.classes.Instance.copyAttributes;
@@ -16,10 +17,12 @@ public class JClass {
     public final Map<String, ClassAttr> attributes;
     public Map<String, Value> methods;
     public Map<String, Value> binMethods;
+    public List<String> generics;
 
     public Value constructor;
 
-    public JClass(String name, Map<String, ClassAttr> attributes, JClass superClass) {
+    public JClass(String name, Map<String, ClassAttr> attributes,
+                  List<String> generics, JClass superClass) {
         this.name = name;
         this.attributes = new HashMap<>();
         this.methods = new HashMap<>();
@@ -33,6 +36,7 @@ public class JClass {
         }
 
         this.attributes.putAll(attributes);
+        this.generics = generics;
     }
 
     public String toString() {
@@ -76,6 +80,6 @@ public class JClass {
     public JClass copy() {
         Map<String, ClassAttr> attrs = new HashMap<>();
         copyAttributes(attributes, attrs);
-        return new JClass(name, attrs, superClass.copy());
+        return new JClass(name, attrs, generics, superClass.copy());
     }
 }

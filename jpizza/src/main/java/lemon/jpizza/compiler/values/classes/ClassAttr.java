@@ -2,21 +2,25 @@ package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.compiler.values.Value;
 
+import java.util.List;
+
 public class ClassAttr {
     public Value val;
-    public final String type;
+    public String type;
+    public final List<String> rawType;
     public final boolean isStatic;
     public final boolean isPrivate;
 
-    public ClassAttr(Value val, String type, boolean isStatic, boolean isPrivate) {
+    public ClassAttr(Value val, String type, List<String> rawType, boolean isStatic, boolean isPrivate) {
         this.val = val;
         this.type = type;
         this.isStatic = isStatic;
         this.isPrivate = isPrivate;
+        this.rawType = rawType;
     }
 
     public ClassAttr(Value val, String type) {
-        this(val, type, false, false);
+        this(val, type, List.of(type), false, false);
     }
 
     public ClassAttr(Value val) {

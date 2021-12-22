@@ -1151,6 +1151,10 @@ public class Compiler {
         for (AttrDeclareNode attr : node.attributes)
             compile(attr);
 
+        emit(node.generic_toks.size(), node.pos_start, node.pos_end);
+        for (Token tok : node.generic_toks)
+            emit(chunk().addConstant(new Value(tok.value.toString())), node.pos_start, node.pos_end);
+
         defineVariable(nameConstant, List.of("recipe"), true, node.pos_start, node.pos_end);
 
         for (MethDefNode method : node.methods)
@@ -1190,21 +1194,16 @@ public class Compiler {
 
         FunctionType type = isConstructor ? FunctionType.Constructor : FunctionType.Method;
 
-        function(type, node.asFuncDef(), 
-        (compiler) -> {
-            if (isConstructor) for (Token tok : genericToks) {
-                compiler.compile(new VarAccessNode(tok));
-                compiler.emit(OpCode.ClassGeneric, chunk().addConstant(new Value(tok.value.toString())), tok.pos_start, tok.pos_end);
-            }
-        },
-        (compiler) -> {
-            if (isConstructor) for (Token tok : genericToks) {
-                compiler.compile(new AttrAssignNode(
-                    tok,
-                    new VarAccessNode(tok)
-                ));
-            }
-        });
+        function(type, node.asFuncDef(),
+                (compiler) -> {
+                    if (isConstructor) for (Token tok : genericToks) {
+                        compiler.compile(new AttrAssignNode(
+                            tok,
+                            new VarAccessNode(tok)
+                        ));
+                    }
+                },
+                (compiler) -> {});
         
 
         emit(new int[]{

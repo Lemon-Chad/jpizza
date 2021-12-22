@@ -7,6 +7,7 @@ import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.compiler.vm.VMResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class Instance {
     }
 
     public Instance(String name, Map<String, ClassAttr> attrs, VM vm) {
-        this(new JClass(name, attrs, null), vm);
+        this(new JClass(name, attrs, new ArrayList<>(), null), vm);
     }
 
     public static void copyAttributes(Map<String, ClassAttr> src, Map<String, ClassAttr> dst) {
@@ -42,14 +43,15 @@ public class Instance {
             dst.put(entry.getKey(), new ClassAttr(
                     value.val,
                     value.type,
+                    value.rawType,
                     value.isStatic,
                     value.isPrivate
             ));
         }
     }
 
-    public void putGeneric(String key, Value val) {
-        generics.put(key, val.asString());
+    public void putGeneric(String key, String val) {
+        generics.put(key, val);
     }
 
     public String getGeneric(String key) {
