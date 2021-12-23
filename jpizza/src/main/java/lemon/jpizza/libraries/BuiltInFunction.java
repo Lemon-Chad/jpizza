@@ -60,7 +60,6 @@ public class BuiltInFunction extends Library {
             put("print", Collections.singletonList("value"));
             put("printback", Collections.singletonList("value"));
             put("type", Collections.singletonList("value"));
-            put("value", Collections.singletonList("value"));
             put("sim", Collections.singletonList("value"));
             put("escape", Collections.singletonList("value"));
             put("unescape", Collections.singletonList("value"));

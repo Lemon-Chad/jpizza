@@ -2,6 +2,7 @@ package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.Constants;
 import lemon.jpizza.compiler.values.Value;
+import lemon.jpizza.compiler.values.Var;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VM;
@@ -88,7 +89,11 @@ public class Instance {
     private <T> T _unfailableOp(String opName, T def, String type) {
         Value val = binMethods.get(opName);
         if (val != null) {
-            vm.push(val);
+            vm.push(new Value(new Var(
+                    "any",
+                    self,
+                    true
+            )));
             boolean worked = vm.call(val.asClosure(), self, new Value[0], new HashMap<>(), new String[0]);
             if (!worked)
                 return def;

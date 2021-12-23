@@ -75,5 +75,6 @@ public class OpCode {
     public static final int Header = 0x47;
     public static final int Destruct = 0x48;
     public static final int PatternVars = 0x49;
-    public static final int BoundTypes = 0x4A;
+    public static final int IncrNullErr = 0x4A;
+    public static final int Extend = 0x4B;
 }

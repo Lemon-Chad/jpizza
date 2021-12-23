@@ -642,7 +642,7 @@ public class Value implements Serializable {
             return instance.clazz.name;
         }
         else if (isVar) {
-            return var.toString();
+            return var.toSafeString();
         }
         return toString();
     }
@@ -817,5 +817,30 @@ public class Value implements Serializable {
 
     public Pattern asPattern() {
         return pattern;
+    }
+
+    public Value shallowCopy() {
+        if (isNumber) {
+            return new Value(number);
+        }
+        else if (isString) {
+            return new Value(string);
+        }
+        else if (isBool) {
+            return new Value(bool);
+        }
+        else if (isList) {
+            return new Value(new ArrayList<>(list));
+        }
+        else if (isMap) {
+            return new Value(new HashMap<>(map));
+        }
+        else if (isClass) {
+            return new Value(jClass.copy());
+        }
+        else if (isInstance) {
+            return new Value(instance.copy());
+        }
+        return this;
     }
 }

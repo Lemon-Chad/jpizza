@@ -510,6 +510,7 @@ class SocketClient {
         Res,
         Assert,
         Spread,
+        Decorator
     }
 
     public static int nonWhitespace(String string){

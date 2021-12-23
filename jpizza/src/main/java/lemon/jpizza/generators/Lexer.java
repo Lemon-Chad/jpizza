@@ -4,6 +4,7 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.Position;
 import lemon.jpizza.Token;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 
@@ -143,19 +144,10 @@ public class Lexer {
         boolean escaped = false;
         advance();
 
-        Map<String, String> escapeCharacters = new HashMap<>() {{
-            put("n", "\n");
-            put("t", "\t");
-        }};
-
         while (currentChar != null && (!currentChar.equals(q) || escaped)) {
             if (escaped) {
-                if (escapeCharacters.containsKey(currentChar)) {
-                    string.append(escapeCharacters.get(currentChar));
-                }
-                else {
-                    string.append("\\").append(currentChar);
-                } escaped = false;
+                string.append(StringEscapeUtils.unescapeJava("\\" + currentChar));
+                escaped = false;
             }
             else if (currentChar.equals("\\")) {
                 escaped = true;

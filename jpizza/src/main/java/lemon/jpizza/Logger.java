@@ -9,6 +9,7 @@ import lemon.jpizza.objects.primitives.PList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 public class Logger {
     boolean log = true;
@@ -16,6 +17,7 @@ public class Logger {
     public final boolean debug = false;
     final int omitt = 5;
     final int tape = 40;
+    final Scanner scanner = new Scanner(System.in);
 
     public void reset() {
         log = true;
@@ -159,4 +161,9 @@ public class Logger {
         if (debug)
             System.out.print(Chalk.on(ots(val)).magenta());
     }
+
+    public String in() {
+        return scanner.nextLine();
+    }
+
 }

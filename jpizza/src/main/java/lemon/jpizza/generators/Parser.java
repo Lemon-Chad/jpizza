@@ -810,6 +810,34 @@ Mixed_Snake_Case_Looks_Like_This"""
                 default -> {
                 }
             }
+        else if (currentToken.type == TT.DIV) {
+            // Decorator
+            // /decorator/ fn abc { xyz; }
+            advance();
+            res.registerAdvancement();
+            Node decorator = res.register(factor());
+            if (res.error != null) return res;
+            if (currentToken.type != TT.DIV) return res.failure(Error.ExpectedCharError(
+                    currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                    "Expected closing slash"
+            ));
+            res.registerAdvancement();
+            advance();
+            Node fn = res.register(statement());
+            if (res.error != null) return res;
+            Token name;
+            if (fn.jptype == Constants.JPType.FuncDef)
+                name = ((FuncDefNode) fn).var_name_tok;
+            else if (fn.jptype == Constants.JPType.ClassDef)
+                name = ((ClassDefNode) fn).class_name_tok;
+            else if (fn.jptype == Constants.JPType.Decorator)
+                name = ((DecoratorNode) fn).name;
+            else return res.failure(Error.InvalidSyntax(
+                    fn.pos_start.copy(), fn.pos_end.copy(),
+                    "Object is not decorable"
+            ));
+            return res.success(new DecoratorNode(decorator, fn, name));
+        }
         else if (Arrays.asList(TT.INT, TT.FLOAT).contains(tok.type)) {
             res.registerAdvancement(); advance();
             if (currentToken.type == TT.IDENTIFIER) {
@@ -2603,8 +2631,8 @@ while (false) {
                                 args.generics,
                                 stat,
                                 priv,
-                                argTKs.argname,
-                                argTKs.kwargname
+                                args.argname,
+                                args.kwargname
                         ).setCatcher(isCatcher)); break;
                     case OPEN:
                          nodeToReturn = res.register(this.block(false));
@@ -2623,8 +2651,8 @@ while (false) {
                                  args.generics,
                                  stat,
                                  priv,
-                                 argTKs.argname,
-                                 argTKs.kwargname
+                                 args.argname,
+                                 args.kwargname
                          ).setCatcher(isCatcher)); break;
                     default:
                         return res.failure(Error.ExpectedCharError(

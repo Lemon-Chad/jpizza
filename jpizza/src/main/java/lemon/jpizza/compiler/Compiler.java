@@ -104,8 +104,13 @@ public class Compiler {
         scopeDepth--;
     }
 
-    void destack(Local[] locals, @NotNull Position start, @NotNull Position end) {
+    int destack(Local[] locals, @NotNull Position start, @NotNull Position end, boolean getint) {
+        if (!getint)
+            throw new RuntimeException("Not implemented");
+
         int offs = 0;
+        int count = 0;
+        int localCount = this.localCount;
         while (localCount - offs > 0) {
             Local curr = locals[localCount - 1 - offs];
             if (curr == null) {
@@ -115,6 +120,15 @@ public class Compiler {
             if (curr.depth != scopeDepth) {
                 break;
             }
+            count++;
+            localCount--;
+        }
+        return count;
+    }
+
+    void destack(Local[] locals, @NotNull Position start, @NotNull Position end) {
+        int count = destack(locals, start, end, true);
+        for (int i = 0; i < count; i++) {
             emit(OpCode.Pop, start, end);
             localCount--;
         }
@@ -165,6 +179,13 @@ public class Compiler {
         }
 
         return -1;
+    }
+
+    void patchBreaks() {
+        for (int i : breaks) {
+            patchJump(i);
+        }
+        breaks.clear();
     }
 
     void emit(int b, @NotNull Position start, @NotNull Position end) {
@@ -221,6 +242,12 @@ public class Compiler {
     void compile(Node statement) {
         if (statement instanceof BinOpNode)
             compile((BinOpNode) statement);
+
+        if (statement instanceof ExtendNode)
+            compile((ExtendNode) statement);
+
+        else if (statement instanceof DecoratorNode)
+            compile((DecoratorNode) statement);
 
         else if (statement instanceof UnaryOpNode)
             compile((UnaryOpNode) statement);
@@ -306,11 +333,15 @@ public class Compiler {
         else if (statement instanceof UseNode)
             compile((UseNode) statement);
 
-        else if (statement instanceof ContinueNode)
+        else if (statement instanceof ContinueNode) {
+            compileNull(statement.pos_start, statement.pos_end);
             emitLoop(continueTo, statement.pos_start, statement.pos_end);
+        }
 
-        else if (statement instanceof BreakNode)
+        else if (statement instanceof BreakNode) {
+            compileNull(statement.pos_start, statement.pos_end);
             breaks.add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
+        }
 
         else if (statement instanceof BytesNode)
             compile((BytesNode) statement);
@@ -367,6 +398,33 @@ public class Compiler {
 
         else
             throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
+    }
+
+    void compile(ExtendNode node) {
+        emit(OpCode.Extend, chunk().addConstant(new Value(node.file_name_tok.value.toString())), node.pos_start, node.pos_end);
+    }
+
+    void compile(DecoratorNode node) {
+        compile(node.decorated);
+        compile(node.decorator);
+        emit(new int[]{
+                OpCode.Call,
+                1, 0,
+                0
+        }, node.pos_start, node.pos_end);
+        String name = node.name.value.toString();
+        int arg = resolveLocal(name);
+
+        if (arg != -1) {
+            emit(OpCode.SetLocal, arg, node.pos_start, node.pos_end);
+        }
+        else if ((arg = resolveUpvalue(name)) != -1) {
+            emit(OpCode.SetUpvalue, arg, node.pos_start, node.pos_end);
+        }
+        else {
+            arg = chunk().addConstant(new Value(name));
+            emit(OpCode.SetGlobal, arg, node.pos_start, node.pos_end);
+        }
     }
 
     void compile(PatternNode node) {
@@ -554,7 +612,6 @@ public class Compiler {
     }
 
     void compile(CallNode node) {
-        compile(node.nodeToCall);
         int argc = node.argNodes.size();
         int kwargc = node.kwargs.size();
         for (Node arg : node.argNodes) {
@@ -564,6 +621,7 @@ public class Compiler {
         for (int i = kwargc - 1; i >= 0; i--) {
             compile(node.kwargs.get(kwargNames.get(i)));
         }
+        compile(node.nodeToCall);
         emit(new int[]{
                 OpCode.Call,
                 argc, kwargc,
@@ -626,8 +684,7 @@ public class Compiler {
         if (node.elseCase != null)
             compile(node.elseCase.statements);
 
-        for (int brk : breaks)
-            patchJump(brk);
+        patchBreaks();
 
         compileNull(node.pos_start, node.pos_end);
 
@@ -658,9 +715,7 @@ public class Compiler {
         for (int jump : jumps)
             patchJump(jump);
 
-        for (int brk : breaks)
-            patchJump(brk);
-
+        patchBreaks();
     }
 
     void markInitialized() {
@@ -796,6 +851,7 @@ public class Compiler {
         else if (node.op_tok == Tokens.TT.BITE) {
             emit(OpCode.NullErr, 1, node.pos_start, node.pos_end);
             compile(node.left_node);
+            emit(OpCode.IncrNullErr, node.pos_start, node.pos_end);
             compile(node.right_node);
             emit(OpCode.Chain, node.pos_start, node.pos_end);
             emit(OpCode.NullErr, 0, node.pos_start, node.pos_end);
@@ -904,22 +960,34 @@ public class Compiler {
 
     void compile(VarAssignNode node) {
         if (node.defining)
-            compileDecl(node.var_name_tok, node.type, node.locked, node.value_node, node.pos_start, node.pos_end);
+            compileDecl(node.var_name_tok,
+                    node.type, node.locked, node.value_node,
+                    node.min != null ? node.min : Integer.MIN_VALUE,
+                    node.max != null ? node.max : Integer.MAX_VALUE,
+                    node.pos_start, node.pos_end);
         else
             compileAssign(node.var_name_tok, node.value_node, node.pos_start, node.pos_end);
     }
 
     void compile(LetNode node) {
-        compileDecl(node.var_name_tok, List.of("<inferred>"), false, node.value_node, node.pos_start, node.pos_end);
+        compileDecl(node.var_name_tok, List.of("<inferred>"), false, node.value_node, Integer.MIN_VALUE, Integer.MAX_VALUE, node.pos_start, node.pos_end);
     }
 
     void defineVariable(int global, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
+        defineVariable(global, type, constant, Integer.MIN_VALUE, Integer.MAX_VALUE, start, end);
+    }
+
+    void defineVariable(int global, List<String> type, boolean constant, int min, int max, @NotNull Position start, @NotNull Position end) {
+        boolean usesRange = min != Integer.MIN_VALUE || max != Integer.MAX_VALUE;
         if (scopeDepth > 0) {
             markInitialized();
             emit(OpCode.DefineLocal, start, end);
             compileType(type, start, end);
             emit(constant ? 1 : 0, start, end);
-            compileNull(start, end);
+            emit(usesRange ? 1 : 0, start, end);
+            if (usesRange) {
+                emit(min, max, start, end);
+            }
             return;
         }
 
@@ -927,6 +995,10 @@ public class Compiler {
         emit(OpCode.DefineGlobal, global, start, end);
         compileType(type, start, end);
         emit(constant ? 1 : 0, start, end);
+        emit(usesRange ? 1 : 0, start, end);
+        if (usesRange) {
+            emit(min, max, start, end);
+        }
     }
 
     void makeVar(int slot, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
@@ -965,10 +1037,10 @@ public class Compiler {
     }
 
     void compileDecl(Token varNameTok, List<String> type, boolean locked, Node value,
-                     @NotNull Position start, @NotNull Position end) {
-        int global = parseVariable(varNameTok, start, end);
+                     int min, int max, @NotNull Position start, @NotNull Position end) {
         compile(value);
-        defineVariable(global, type, locked, start, end);
+        int global = parseVariable(varNameTok, start, end);
+        defineVariable(global, type, locked, min, max, start, end);
     }
 
     void compileAssign(Token varNameTok, Node value, @NotNull Position start, @NotNull Position end) {
@@ -993,7 +1065,7 @@ public class Compiler {
         void compile(Compiler compiler);
     }
 
-    <T> void wrapScope(CompilerWrapped method, String scopeName, Position start, Position end) {
+    void wrapScope(CompilerWrapped method, String scopeName, Position start, Position end) {
         Compiler scope = new Compiler(this, FunctionType.Scope, chunk().source);
 
         scope.beginScope();
@@ -1074,7 +1146,6 @@ public class Compiler {
 
         beginScope();
         compile(body);
-        endScope(body.pos_start, body.pos_end);
 
         if (returnsNull) {
             emit(OpCode.Pop, body.pos_start, body.pos_end);
@@ -1083,11 +1154,17 @@ public class Compiler {
             emit(OpCode.CollectLoop, body.pos_start, body.pos_end);
         }
 
+        int popCount = destack(locals, body.pos_start, body.pos_end, true) + destack(generics, body.pos_start, body.pos_end, true);
+
+        endScope(body.pos_start, body.pos_end);
         emitLoop(loopStart, body.pos_start, body.pos_end);
+        int pastJump = emitJump(OpCode.Jump, body.pos_start, body.pos_end);
 
         continueTo = 0;
-        for (int i : breaks)
-            patchJump(i);
+        patchBreaks();
+        for (int i = 0; i < popCount; i++)
+            emit(OpCode.Pop, body.pos_start, body.pos_end);
+        patchJump(pastJump);
     }
 
     String compileType(String type) {
@@ -1203,8 +1280,8 @@ public class Compiler {
                         ));
                     }
                 },
-                (compiler) -> {});
-        
+                (compiler) -> {}
+        );
 
         emit(new int[]{
                 OpCode.Method,
@@ -1233,14 +1310,15 @@ public class Compiler {
 
         if (!node.retnull) emit(OpCode.StartCache, node.pos_start, node.pos_end);
 
+        int skipFirst = isDoWhile ? emitJump(OpCode.Jump, node.pos_start, node.pos_end) : -1;
         int loopStart = chunk().code.size();
 
-        int jump = -1;
-        if (!isDoWhile) {
-            compile(node.condition_node);
-            jump = emitJump(OpCode.JumpIfFalse, node.condition_node.pos_start, node.condition_node.pos_end);
-            emit(OpCode.Pop, node.body_node.pos_start, node.body_node.pos_end);
-        }
+        compile(node.condition_node);
+        int jump = emitJump(OpCode.JumpIfFalse, node.condition_node.pos_start, node.condition_node.pos_end);
+        emit(OpCode.Pop, node.body_node.pos_start, node.body_node.pos_end);
+
+        if (isDoWhile)
+            patchJump(skipFirst);
 
         loopBody(node.body_node, node.retnull, loopStart);
         patchJump(jump);
@@ -1304,7 +1382,9 @@ public class Compiler {
                         "null",
                         node.var_name_tok.pos_start,
                         node.var_name_tok.pos_end
-                )), node.var_name_tok.pos_start, node.var_name_tok.pos_end);
+                )),
+                Integer.MIN_VALUE, Integer.MAX_VALUE,
+                node.var_name_tok.pos_start, node.var_name_tok.pos_end);
         emit(OpCode.Pop, node.pos_start, node.pos_end);
 
         int loopStart = chunk().code.size();

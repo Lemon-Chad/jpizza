@@ -46,7 +46,7 @@ println(`5 >= 3 => ${5 >= 3}`);
 println(`5 <= 3 => ${5 <= 3}`);
 println(`A == B => ${"A" == "B"}`);
 println(`A == A => ${"A" == "A"}`);
-println(`A != B => ${"A" == "B"}`);
+println(`A != B => ${"A" != "B"}`);
 
 printTape("BITWISE OPERATIONS");
 println(`3 ~> 2 = ${3 ~> 2}`);
@@ -319,17 +319,37 @@ println("ok!");
 
 <<
 
+
+fn myCoolDecorator<func> {
+    fn inner<x> {
+        println(x);
+        var r => func(x);
+        println(r);
+        return r;
+    }
+    return inner;
+}
+
+/myCoolDecorator/
 fn myCoolFunc<x> -> x + 1;
 
-preprocess(myCoolFunc, !<x> -> println(x)); <> Assigns a preprocessor that prints the argument passed into it.
-postprocess(myCoolFunc, !<_, r> {
-  println(r);
-  return r;
-}); <> Assigns a postprocessor that prints the parent's return value before returning it.
+fn offsetDecorator<x> {
+    fn middle<func> {
+        fn inner<y> {
+            return func(y) + x;
+        }
+        return inner;
+    }
+    return middle;
+}
 
-<> Even though processors can be chained, I chose not to for readability in this example.
+/offsetDecorator(5)/
+fn myCoolerFunc<x> -> x + 1;
+
+<> Applies the given decorator
 
 myCoolFunc(5);
+println(myCoolerFunc(5));
 
 printTape("ENUMERATORS");
 
@@ -504,7 +524,7 @@ class Matrix {
     }
 
     mthd bin sub<other> {
-        return this + (-other);
+        return this + (other * -1);
     }
 
     mthd det<vector=null> {

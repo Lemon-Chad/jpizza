@@ -6,7 +6,7 @@ import lemon.jpizza.compiler.values.functions.JClosure;
 public class CallFrame {
     public final JClosure closure;
     public int ip;
-    public final int slots;
+    public int slots;
     public String returnType;
     public Value bound;
     public boolean memoize = false;

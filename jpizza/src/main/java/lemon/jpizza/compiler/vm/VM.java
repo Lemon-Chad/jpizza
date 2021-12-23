@@ -12,6 +12,14 @@ import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
@@ -45,9 +53,7 @@ public class VM {
     public boolean safe = false;
     public boolean failed = false;
 
-    int[] nehStack = new int[FRAMES_MAX];
-    int nehStackTop = 0;
-    int neh = 0;
+    JStack<Pair<Integer, Integer>> nehStack = new JStack<>(FRAMES_MAX);
 
     public VM(JFunc function) {
         Shell.logger.debug("VM create\n");
@@ -73,134 +79,7 @@ public class VM {
 
     void setup() {
         libraries = new HashMap<>();
-
-        defineNative("print", (args) -> {
-            Shell.logger.out(args[0]);
-            return NativeResult.Ok();
-        }, 1);
-        defineNative("println", (args) -> {
-            Shell.logger.outln(args[0]);
-            return NativeResult.Ok();
-        }, 1);
-
-        defineNative("random", (args) -> NativeResult.Ok(new Value(Math.random())), 0);
-
-        defineNative("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), List.of("num"));
-
-        defineNative("type", (args) -> NativeResult.Ok(new Value(args[0].type())), 1);
-
-        // List Functions
-        defineNative("append", (args) -> {
-            Value list = args[0];
-            Value value = args[1];
-
-            list.append(value);
-            return NativeResult.Ok();
-        }, List.of("list", "any"));
-        defineNative("remove", (args) -> {
-            Value list = args[0];
-            Value value = args[1];
-
-            list.remove(value);
-            return NativeResult.Ok();
-        }, List.of("list", "any"));
-        defineNative("pop", (args) -> {
-            Value list = args[0];
-            Value index = args[1];
-
-            return NativeResult.Ok(list.pop(index.asNumber()));
-        }, List.of("list", "num"));
-        defineNative("extend", (args) -> {
-            Value list = args[0];
-            Value other = args[1];
-
-            list.add(other);
-            return NativeResult.Ok();
-        }, List.of("list", "list"));
-        defineNative("insert", (args) -> {
-            Value list = args[0];
-            Value index = args[2];
-            Value value = args[1];
-
-            list.insert(index.asNumber(), value);
-            return NativeResult.Ok();
-        }, List.of("list", "any", "num"));
-        defineNative("setIndex", (args) -> {
-            Value list = args[0];
-            Value index = args[2];
-            Value value = args[1];
-
-            list.set(index.asNumber(), value);
-            return NativeResult.Ok();
-        }, List.of("list", "any", "num"));
-        defineNative("sublist", (args) -> {
-            Value list = args[0];
-            Value start = args[1];
-            Value end = args[2];
-
-            return NativeResult.Ok(new Value(list.asList().subList(start.asNumber().intValue(),
-                    end.asNumber().intValue())));
-        }, List.of("list", "num", "num"));
-        defineNative("join", (args) -> {
-            Value str = args[0];
-            Value list = args[1];
-
-            List<String> strings = new ArrayList<>();
-            for (Value val : list.asList())
-                strings.add(val.asString());
-
-            return NativeResult.Ok(new Value(String.join(str.asString(), strings)));
-        }, List.of("str", "list"));
-
-        defineNative("choose", args -> {
-            List<Value> list = args[0].asList();
-            int max = list.size() - 1;
-            int index = (int) (Math.random() * max);
-            return NativeResult.Ok(list.get(index));
-        }, 1);
-        defineNative("size", args -> {
-            Value list = args[0];
-            return NativeResult.Ok(new Value(list.asList().size()));
-        }, 1);
-        defineNative("contains", args -> {
-            Value list = args[0];
-            Value val = args[1];
-            return NativeResult.Ok(new Value(list.asList().contains(val)));
-        }, 2);
-        defineNative("indexOf", args -> {
-            Value list = args[0];
-            Value val = args[1];
-            return NativeResult.Ok(new Value(list.asList().indexOf(val)));
-        }, 2);
-
-        // Results
-        defineNative("ok", args -> NativeResult.Ok(new Value(args[0].asBool())), List.of("catcher"));
-        defineNative("resolve", args -> {
-            if (!args[0].asBool())
-                return NativeResult.Err("Unresolved", "Unresolved error in catcher");
-            return NativeResult.Ok(args[0].asRes().getValue());
-        }, List.of("catcher"));
-        defineNative("catch", args -> {
-            if (!args[0].asBool())
-                return NativeResult.Ok(new Value(args[0].asList()));
-            return NativeResult.Ok();
-        }, List.of("catcher"));
-        defineNative("fail", args -> {
-            if (args[0].asBool())
-                return NativeResult.Ok();
-            return NativeResult.Err("Released", args[0].toString());
-        }, List.of("catcher"));
-
-        // Time library
-        defineNative("time", "epoch", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
-        defineNative("time", "halt", (args) -> {
-            try {
-                Thread.sleep(args[0].asNumber().intValue());
-            } catch (InterruptedException e) {
-                runtimeError("Internal", "Interrupted");
-            }
-            return NativeResult.Ok();
-        }, List.of("num"));
+        LibraryManager.Setup(this);
     }
 
     void defineNative(String name, JNative.Method method, int argc) {
@@ -211,7 +90,7 @@ public class VM {
         ));
     }
 
-    void defineNative(String library, String name, JNative.Method method, int argc) {
+    public void defineNative(String library, String name, JNative.Method method, int argc) {
         if (!libraries.containsKey(library))
             libraries.put(library, new Namespace(library, new HashMap<>()));
         libraries.get(library).addField(name, new Value(
@@ -227,7 +106,7 @@ public class VM {
         ));
     }
 
-    void defineNative(String library, String name, JNative.Method method, List<String> types) {
+    public void defineNative(String library, String name, JNative.Method method, List<String> types) {
         if (!libraries.containsKey(library))
             libraries.put(library, new Namespace(library, new HashMap<>()));
         libraries.get(library).addField(name, new Value(
@@ -269,7 +148,7 @@ public class VM {
     }
 
     protected void runtimeError(String message, String reason, FlatPosition position) {
-        if (nehStackTop > 0)
+        if (nehStack.count > 0)
             return;
 
         lastError = new Pair<>(message, reason);
@@ -374,7 +253,8 @@ public class VM {
             push(args[i]);
         }
 
-        if (!callValue(method, args, new HashMap<>(), new String[0])) return VMResult.ERROR;
+        BoundMethod bound = new BoundMethod(method.asClosure(), instance.self);
+        if (!callValue(new Value(bound), args, new HashMap<>(), new String[0])) return VMResult.ERROR;
 
         VMResult res = run();
         return res != VMResult.ERROR ? VMResult.OK : VMResult.ERROR;
@@ -392,6 +272,11 @@ public class VM {
             case OpCode.Add -> {
                 if (a.isString)
                     push(new Value(a.asString() + b.asString()));
+                else if (a.isList) {
+                    List<Value> list = new ArrayList<>(a.asList());
+                    list.addAll(b.asList());
+                    push(new Value(list));
+                }
                 else if (canOverride(a, "add"))
                     return runBin("add", b, a.asInstance());
                 else
@@ -404,13 +289,31 @@ public class VM {
             }
             case OpCode.Multiply -> {
                 if (canOverride(a, "mul"))
-                    return runBin("mult", b, a.asInstance());
-                push(new Value(a.asNumber() * b.asNumber()));
+                    return runBin("mul", b, a.asInstance());
+                if (a.isString) {
+                    push(new Value(a.asString().repeat(b.asNumber().intValue())));
+                }
+                else if (a.isList) {
+                    List<Value> repeated = new ArrayList<>();
+                    List<Value> list = a.asList();
+                    for (int i = 0; i < b.asNumber().intValue(); i++)
+                        repeated.addAll(list);
+                    push(new Value(repeated));
+                }
+                else {
+                    push(new Value(a.asNumber() * b.asNumber()));
+                }
             }
             case OpCode.Divide -> {
                 if (canOverride(a, "div"))
                     return runBin("div", b, a.asInstance());
-                push(new Value(a.asNumber() / b.asNumber()));
+                else if (a.isList) {
+                    List<Value> list = new ArrayList<>(a.asList());
+                    list.remove(b);
+                    push(new Value(list));
+                }
+                else
+                    push(new Value(a.asNumber() / b.asNumber()));
             }
             case OpCode.Modulo -> {
                 if (canOverride(a, "mod"))
@@ -459,7 +362,15 @@ public class VM {
                     yield VMResult.ERROR;
                 }
 
-                globals.put(name, new Var(type, value, constant));
+                boolean usesRange = readByte() == 1;
+                int min = Integer.MIN_VALUE;
+                int max = Integer.MAX_VALUE;
+                if (usesRange) {
+                    min = readByte();
+                    max = readByte();
+                }
+
+                globals.put(name, new Var(type, value, constant, min, max));
                 yield VMResult.OK;
             }
             case OpCode.GetGlobal -> {
@@ -670,6 +581,19 @@ public class VM {
             runtimeError("Scope", "Cannot reassign constant");
             return VMResult.ERROR;
         }
+        if (var.min != Integer.MIN_VALUE || var.max != Integer.MAX_VALUE) {
+            if (val.isNumber) {
+                double d = val.asNumber();
+                if (d < var.min || d > var.max) {
+                    runtimeError("Range", "Value out of range");
+                    return VMResult.ERROR;
+                }
+            }
+            else {
+                runtimeError("Range", "Value out of range");
+                return VMResult.ERROR;
+            }
+        }
         String type = val.type();
         if (!"any".equals(var.type) && !type.equals(var.type)) {
             runtimeError("Type",
@@ -711,13 +635,22 @@ public class VM {
 
                 boolean constant = readByte() == 1;
 
+                boolean usesRange = readByte() == 1;
+                int min = Integer.MIN_VALUE;
+                int max = Integer.MAX_VALUE;
+                if (usesRange) {
+                    min = readByte();
+                    max = readByte();
+                }
+
                 if (!type.equals("any") && !valType.equals(type)) {
                     runtimeError("Type", "Expected type " + type + ", got " + valType);
                     yield VMResult.ERROR;
                 }
 
-                Var var = new Var(type, val, constant);
+                Var var = new Var(type, val, constant, min, max);
                 push(new Value(var));
+                push(val);
 
                 yield VMResult.OK;
             }
@@ -804,19 +737,18 @@ public class VM {
     }
 
     VMResult forLoop() {
-        Value step = pop();
+        double step = pop().asNumber();
         double end = pop().asNumber();
 
         int slot = readByte();
         int jump = readByte();
 
-        Var var = get(slot).asVar();
-        VMResult res = var.val.add(step);
-        if (res != VMResult.OK)
-            return res;
+        get(slot).asVar().val(
+                new Value(get(slot).asVar().val.asNumber() + step)
+        );
 
-        double i = var.val.asNumber();
-        moveIP(jump * (((i >= end && step.asNumber() >= 1) || (i <= end && step.asNumber() < 1)) ? 1 : 0));
+        double i = get(slot).asVar().val.asNumber();
+        moveIP(jump * (((i >= end && step >= 0) || (i <= end && step < 0)) ? 1 : 0));
 
         return VMResult.OK;
     }
@@ -917,13 +849,30 @@ public class VM {
                 Value collection = pop();
 
                 if (collection.isList || collection.isString) {
-                    push(collection.asList().get(index.asNumber().intValue()));
+                    List<Value> list = collection.asList();
+                    int idx = index.asNumber().intValue();
+                    if (idx >= list.size()) {
+                        runtimeError("Index", "Index out of bounds");
+                        yield VMResult.ERROR;
+                    }
+                    else if (idx < 0) {
+                        idx += list.size();
+                        if (idx < 0) {
+                            runtimeError("Index", "Index out of bounds");
+                            yield VMResult.ERROR;
+                        }
+                    }
+                    push(list.get(idx));
                 }
                 else if (canOverride(collection, op == OpCode.Get ? "get" : "bracket")) {
                     yield runBin(op == OpCode.Get ? "get" : "bracket", index, collection.asInstance());
                 }
                 else if (collection.isMap) {
-                    push(collection.asMap().get(index));
+                    push(collection.asMap().getOrDefault(index, new Value()));
+                }
+                else {
+                    runtimeError("Type", "Type " + collection.type() + " does not have members");
+                    yield VMResult.ERROR;
                 }
 
                 yield VMResult.OK;
@@ -1018,14 +967,18 @@ public class VM {
         int kwargc = readByte();
         int genc = readByte();
 
-        String[] kwargKeys = new String[kwargc];
+        Value callee = pop();
+
+        Map<String, Value> kwargs = new HashMap<>();
         for (int i = 0; i < kwargc; i++)
-            kwargKeys[i] = readString();
+            kwargs.put(readString(), pop());
 
         Value[] args = new Value[argc];
         List<Value> argList = new ArrayList<>();
         for (int i = argc - 1; i >= 0; i--)
             args[i] = pop();
+
+        push(callee);
 
         String[] generics = new String[genc];
         for (int i = 0; i < genc; i++) {
@@ -1033,7 +986,6 @@ public class VM {
             push(new Value(new Var("String", new Value(generics[i]), true)));
         }
 
-        int argCount = 0;
         for (Value arg : args) {
             if (arg.isSpread) {
                 Spread spread = arg.asSpread();
@@ -1041,30 +993,24 @@ public class VM {
                     push(val);
                     argList.add(val);
                 }
-                argCount += spread.values.size();
             }
             else {
                 push(arg);
                 argList.add(arg);
-                argCount++;
             }
         }
 
-        Map<String, Value> kwargs = new HashMap<>();
-        for (String key : kwargKeys)
-            kwargs.put(key, pop());
-
         // Stack:
-        // [GENERICS] [ARGUMENTS]
+        // [CALLEE] [GENERICS] [ARGUMENTS] [KWARGS]
 
-        if (!callValue(peek(argCount + generics.length), argList.toArray(new Value[0]), kwargs, generics)) {
+        if (!callValue(callee, argList.toArray(new Value[0]), kwargs, generics)) {
             return VMResult.ERROR;
         }
         frame = frames.peek();
         return VMResult.OK;
     }
 
-    boolean callValue(Value callee, Value[] args, Map<String, Value> kwargs, String[] generics) {
+    public boolean callValue(Value callee, Value[] args, Map<String, Value> kwargs, String[] generics) {
         if (callee.isNativeFunc) {
             return call(callee.asNative(), args);
         }
@@ -1380,7 +1326,7 @@ public class VM {
             case OpCode.DropLocal -> {
                 int slot = readByte();
                 if (slot + frame.slots == stack.count - 1) {
-                    stack.count--;
+                    stack.pop();
                 }
                 stack.set(slot + frame.slots, null);
                 yield VMResult.OK;
@@ -1503,6 +1449,7 @@ public class VM {
                         runtimeError("Assertion", "Assertion failed");
                         yield VMResult.ERROR;
                     }
+                    push(value);
                     yield VMResult.OK;
                 }
 
@@ -1554,6 +1501,41 @@ public class VM {
                     yield VMResult.OK;
                 }
 
+                case OpCode.Extend -> {
+                    String fn = readString();
+
+                    String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
+                    String modPath = Shell.root + "/extensions/" + fn;
+                    String modFilePath = modPath + "/" + fn + ".jar";
+
+                    //noinspection ResultOfMethodCallIgnored
+                    new File(Shell.root + "/extensions").mkdirs();
+
+                    try {
+                        URL[] urls;
+                        if (Files.exists(Paths.get(modFilePath))) {
+                            urls = new URL[]{new URL("file://" + modFilePath)};
+                        }
+                        else if (Files.exists(Paths.get(file_name))) {
+                            urls = new URL[]{new URL("file://" + file_name)};
+                        }
+                        else {
+                            runtimeError("Imaginary File", "File '" + fn + "' not found");
+                            yield VMResult.ERROR;
+                        }
+                        ClassLoader cl = new URLClassLoader(urls);
+                        Class<?> loadedClass = cl.loadClass("jpext." + fn);
+                        Constructor<?> constructor = loadedClass.getConstructor(VM.class);
+                        Object loadedObject = constructor.newInstance(this);
+                        loadedClass.getMethod("setup").invoke(loadedObject);
+                    } catch (Exception e) {
+                        runtimeError("Internal", "Failed to load extension: " + fn);
+                        yield VMResult.ERROR;
+                    }
+
+                    yield VMResult.OK;
+                }
+
                 case OpCode.Enum -> {
                     Value enumerator = readConstant();
                     globals.put(enumerator.asEnum().name(), new Var(
@@ -1579,7 +1561,7 @@ public class VM {
                 }
 
                 case OpCode.Copy -> {
-                    push(pop().copy());
+                    push(pop().shallowCopy());
                     yield VMResult.OK;
                 }
 
@@ -1714,11 +1696,11 @@ public class VM {
                 case OpCode.NullErr -> {
                     boolean bit = readByte() == 1;
                     if (bit) {
-                        nehStack[nehStackTop++] = frames.count;
-                        neh = frames.count;
+                        Pair<Integer, Integer> pair = new Pair<>(frames.count, stack.count);
+                        nehStack.push(pair);
                     }
                     else {
-                        neh = nehStack[--nehStackTop];
+                        nehStack.pop();
                     }
                     yield VMResult.OK;
                 }
@@ -1732,6 +1714,11 @@ public class VM {
                     else {
                         push(a);
                     }
+                    yield VMResult.OK;
+                }
+
+                case OpCode.IncrNullErr -> {
+                    nehStack.peek().b++;
                     yield VMResult.OK;
                 }
 
@@ -1842,20 +1829,21 @@ public class VM {
                     }
                     continue;
                 }
-                if (nehStackTop > 0) {
-                    while (frames.count > neh) {
+                if (nehStack.count > 0) {
+                    Pair<Integer, Integer> neh = nehStack.peek();
+                    while (frames.count > neh.a) {
                         tracebacks.pop();
-                        frames.count--;
+                        frames.pop();
                     }
                     frame = frames.peek();
-                    stack.setTop(frames.peek(-1).slots);
+                    stack.setTop(neh.b);
                     push(new Value());
                     continue;
                 }
                 if (safe) {
                     while (frames.count > exitLevel) {
                         tracebacks.pop();
-                        frames.count--;
+                        frames.pop();
                     }
                     frame = frames.peek();
                     stack.setTop(frames.peek(-1).slots);

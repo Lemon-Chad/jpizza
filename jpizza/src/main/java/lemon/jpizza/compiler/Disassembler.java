@@ -27,6 +27,8 @@ public class Disassembler {
             case OpCode.Return -> simpleInstruction("OP_RETURN", offset);
             case OpCode.Pop -> simpleInstruction("OP_POP", offset);
 
+            case OpCode.Extend -> constantInstruction("OP_EXTEND", chunk, offset);
+
             case OpCode.PatternVars -> constantInstruction("OP_PATTERN_VARS", chunk, offset);
 
             case OpCode.Pattern -> {
@@ -34,6 +36,8 @@ public class Disassembler {
                 Shell.logger.debug(String.format("%-16s %04d%n", "OP_PATTERN", args));
                 yield offset + 2 + args;
             }
+
+            case OpCode.IncrNullErr -> simpleInstruction("OP_INCR_NULL_ERR", offset);
 
             case OpCode.Header -> {
                 int constant = chunk.code.get(offset + 1);
@@ -223,7 +227,7 @@ public class Disassembler {
     static int constantInstruction(String name, Chunk chunk, int offset) {
         int constant = chunk.code.get(offset + 1);
         Shell.logger.debug(String.format("%-16s %04d '", name, constant));
-        Shell.logger.debug(chunk.constants.values.get(constant));
+        Shell.logger.debug(chunk.constants.values. get(constant));
         Shell.logger.debug("'\n");
         return offset + 2;
     }
@@ -236,14 +240,17 @@ public class Disassembler {
 
     static int declInstruction(String name, Chunk chunk, int offset, boolean isLocal) {
         int arg = !isLocal ? chunk.code.get(offset + 1) : 0;
-        String type = chunk.constants.values.get(chunk.code.get(offset + 1 + (!isLocal ? 1 : 0))).asString();
-        String constant = chunk.code.get(offset + 2 + (!isLocal ? 1 : 0)) == 1 ? "CONSTANT" : "MUTABLE";
+        int localOffset = !isLocal ? 1 : 0;
+        String type = chunk.constants.values.get(chunk.code.get(offset + 1 + localOffset)).asString();
+        String constant = chunk.code.get(offset + 2 + localOffset) == 1 ? "CONSTANT" : "MUTABLE";
+        boolean hasRange = chunk.code.get(offset + 3 + localOffset) == 1;
+
         if (isLocal)
             Shell.logger.debug(String.format("%-16s %-16s '%s'%n", constant, name, type));
         else
             Shell.logger.debug(String.format("%-16s %-16s %04d '%s' : '%s'%n", constant, name, arg,
                     chunk.constants.values.get(arg), type));
-        return offset + 3 + (!isLocal ? 1 : 0);
+        return offset + 4 + localOffset + (hasRange ? 2 : 0);
     }
     
     static int jumpInstruction(String name, int sign, Chunk chunk, int offset) {
