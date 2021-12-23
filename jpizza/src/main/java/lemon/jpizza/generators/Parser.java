@@ -47,6 +47,9 @@ public class Parser {
     }
 
     static NamingConvention getConvention(String name) {
+        if (name.equals("_"))
+            return NamingConvention.None;
+
         int uppercase = 0;
         int lowercase = 0;
 

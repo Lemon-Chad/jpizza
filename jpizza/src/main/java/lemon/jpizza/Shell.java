@@ -79,7 +79,7 @@ public class Shell {
         }
         globalSymbolTable.define("CMDARGS", cmdargs);
 
-        if (args.length != 2) {
+        if (args.length != 2 && args.length > 0) {
             if (args[0].equals("help")) {
                 Shell.logger.outln("""
                         jpizza        ->   Open venv
@@ -136,24 +136,6 @@ public class Shell {
                     String fn = dsfn[0]; String newDir = dsfn[1];
                     System.setProperty("user.dir", newDir);
                     switch (args[1]) {
-                        case "--debug" -> {
-                            Pair<List<Node>, Error> res = getAst(args[0], scrpt);
-                            if (res.b != null) {
-                                Error e = res.b;
-                                String message = String.format("%s: %s", e.error_name, e.details);
-                                logger.enableLogging();
-                                logger.outln(String.format("{\"lines\": [%s, %s], \"cols\": [%s, %s], \"msg\": \"%s\"}",
-                                        e.pos_start.ln, e.pos_end.ln,
-                                        e.pos_start.col, e.pos_end.col,
-                                        message));
-                            }
-                            else {
-                                logger.enableLogging();
-                                logger.outln("{}");
-                            }
-                            logger.disableLogging();
-                            return;
-                        }
                         case "--compile" -> {
                             Error res = compile(fn, scrpt,
                                     newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox");
@@ -188,22 +170,12 @@ public class Shell {
             if (input.equals("quit;"))
                 break;
            //  compile("<shell>", input, "shell.jbox");
-            Pair<Obj, Error> a = run("<shell>", input, true);
+            Pair<JFunc, Error> a = compile("<shell>", input);
             if (a.b != null) {
                 Shell.logger.fail(a.b.asString());
             }
             else {
-                List<Obj> results = a.a.list;
-                if (results.size() > 0) {
-                    StringBuilder out = new StringBuilder();
-                    for (Obj result : results) {
-                        if (result != null && result.jptype != Constants.JPType.Null)
-                            out.append(Shell.logger.ots(result)).append(", ");
-                    }
-                    if (out.length() > 0) out.setLength(out.length() - 2);
-                    Shell.logger.outln(out.toString());
-                }
-                a.a = null;
+                runCompiled("<shell>", a.a, new String[]{"<shell>"});
             }
         }
         in.close();

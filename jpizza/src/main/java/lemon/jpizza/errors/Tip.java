@@ -15,7 +15,7 @@ public class Tip extends Error {
     public String asString() {
         if (pos_start == null || pos_end == null) return String.format("%s: %s", error_name, details);
         return String.format(
-                    "%s: %s\nFile %s, line %s\n%s\nExample: %s\n",
+                    "%s: %s\nFile %s, line %s\n%s\nExample: \n%s\n",
                     error_name, details,
                     pos_start.fn, pos_start.ln + 1,
                     Constants.stringWithArrows(pos_start.ftext, pos_start, pos_end),

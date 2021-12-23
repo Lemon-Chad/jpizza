@@ -189,7 +189,13 @@ public class LibraryManager {
                 (args) -> NativeResult.Ok(new Value(String.format("%." + args[1].asNumber().intValue(), args[0].asNumber()))),
                 List.of("num", "num"));
         defineNative("parseNum",
-                (args) -> NativeResult.Ok(new Value(Double.parseDouble(args[0].asString()))),
+                (args) -> {
+                    try {
+                        return NativeResult.Ok(new Value(Double.parseDouble(args[0].asString())));
+                    } catch (NumberFormatException e) {
+                        return NativeResult.Err("Number Format", "Could not parse number");
+                    }
+                },
                 List.of("String"));
 
         // Random Functions
@@ -281,6 +287,12 @@ public class LibraryManager {
 
             return NativeResult.Ok(new Value(String.join(str.asString(), strings)));
         }, List.of("String", "list"));
+        defineNative("replace", (args) -> {
+            String str = args[0].asString();
+            String old = args[1].asString();
+            String newStr = args[2].asString();
+            return NativeResult.Ok(new Value(str.replace(old, newStr)));
+        }, List.of("String", "String", "String"));
         defineNative("escape",
                 (args) -> NativeResult.Ok(new Value(StringEscapeUtils.unescapeJava(args[0].asString()))),
                 List.of("String"));

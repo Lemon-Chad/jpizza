@@ -243,7 +243,7 @@ public class Compiler {
         if (statement instanceof BinOpNode)
             compile((BinOpNode) statement);
 
-        if (statement instanceof ExtendNode)
+        else if (statement instanceof ExtendNode)
             compile((ExtendNode) statement);
 
         else if (statement instanceof DecoratorNode)
