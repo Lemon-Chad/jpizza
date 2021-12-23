@@ -26,6 +26,7 @@ import java.util.List;
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 256;
+    public String version = "2.0.0";
 
     private static record Traceback(String filename, String context, int offset, Chunk chunk) {}
 

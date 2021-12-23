@@ -41,17 +41,17 @@ public class FileLib extends Library {
         }});
     }
 
-    public RTResult execute_deleteFile(Context execCtx){
+    public RTResult execute_deleteFile(Context execCtx) {
         RTResult res = new RTResult();
         Obj value = ((Obj) execCtx.symbolTable.get("file")).astring();
         Obj d = res.register(getdirectory(value, execCtx));
         if (res.error != null) return res;
         String dir = d.string;
-        if(!Files.exists(Path.of(dir))){
+        if(!Files.exists(Path.of(dir))) {
             return new RTResult().failure(RTError.FileNotFound(value.get_start(), value.get_end(), "File not found", execCtx));
         }
         boolean isDirectory = Files.isDirectory(Path.of(dir));
-        if(isDirectory){
+        if(isDirectory) {
             try {
                 FileUtils.deleteDirectory(new File(dir));
                 return new RTResult().success(new Bool(true));
@@ -59,9 +59,9 @@ public class FileLib extends Library {
             catch(IOException e) {
                 return new RTResult().failure(RTError.Internal(value.get_start(), value.get_end(), "Java IOException " + e, execCtx));
             }
-            }
-        else{
-            try{
+        }
+        else {
+            try {
                 FileUtils.delete(new File(dir));
                 return new RTResult().success(new Bool(true));
             }
