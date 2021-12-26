@@ -11,6 +11,7 @@ import lemon.jpizza.errors.Error;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.generators.Lexer;
+import lemon.jpizza.generators.Optimizer;
 import lemon.jpizza.generators.Parser;
 import lemon.jpizza.libraries.*;
 import lemon.jpizza.libraries.httpretzel.HTTPretzel;
@@ -18,6 +19,7 @@ import lemon.jpizza.libraries.jdraw.JDraw;
 import lemon.jpizza.libraries.pdl.SafeSocks;
 import lemon.jpizza.libraries.socks.SockLib;
 import lemon.jpizza.nodes.Node;
+import lemon.jpizza.nodes.TreePrinter;
 import lemon.jpizza.nodes.expressions.BodyNode;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.ClassInstance;
@@ -192,7 +194,9 @@ public class Shell {
         ParseResult<Node> ast = parser.parse();
         if (ast.error != null)
             return new Pair<>(null, ast.error);
-        return new Pair<>(((BodyNode)ast.node).statements, null);
+        Shell.logger.debug(TreePrinter.print(ast.node));
+        BodyNode body = (BodyNode) Optimizer.optimize(ast.node);
+        return new Pair<>(body.statements, null);
     }
 
     public static Pair<Obj, Error> run(String fn, String text, boolean log) {

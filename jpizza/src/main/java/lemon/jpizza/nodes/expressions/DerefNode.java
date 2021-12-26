@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.errors.RTError;
@@ -9,13 +9,15 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
+import java.util.List;
+
 public class DerefNode extends Node {
     public final Node ref;
     public DerefNode(Node ref) {
         this.ref = ref;
 
         pos_start = ref.pos_start; pos_end = ref.pos_end;
-        jptype = Constants.JPType.Deref;
+        jptype = JPType.Deref;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -29,4 +31,18 @@ public class DerefNode extends Node {
         return res.success(pair.a);
     }
 
+    @Override
+    public Node optimize() {
+        return new DerefNode(ref.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(ref);
+    }
+
+    @Override
+    public String visualize() {
+        return "*Ref";
+    }
 }

@@ -1,12 +1,14 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
+
+import java.util.List;
 
 public class DynAssignNode extends Node {
     public final Token var_name_tok;
@@ -17,7 +19,7 @@ public class DynAssignNode extends Node {
         this.value_node = value_node;
 
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = Constants.JPType.DynAssign;
+        jptype = JPType.DynAssign;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -30,4 +32,18 @@ public class DynAssignNode extends Node {
         return res.success(new Null());
     }
 
+    @Override
+    public Node optimize() {
+        return new DynAssignNode(var_name_tok, value_node.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(value_node);
+    }
+
+    @Override
+    public String visualize() {
+        return "macro";
+    }
 }

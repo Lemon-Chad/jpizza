@@ -213,8 +213,7 @@ public class Parser {
             statements.set(statements.size() - 1, new ReturnNode(
                     prevStatement,
                     prevStatement.pos_start,
-                    prevStatement.pos_end,
-                    true
+                    prevStatement.pos_end
             ));
         } advance();
         return res.success(new BodyNode(statements));
@@ -829,11 +828,11 @@ Mixed_Snake_Case_Looks_Like_This"""
             Node fn = res.register(statement());
             if (res.error != null) return res;
             Token name;
-            if (fn.jptype == Constants.JPType.FuncDef)
+            if (fn.jptype == JPType.FuncDef)
                 name = ((FuncDefNode) fn).var_name_tok;
-            else if (fn.jptype == Constants.JPType.ClassDef)
+            else if (fn.jptype == JPType.ClassDef)
                 name = ((ClassDefNode) fn).class_name_tok;
-            else if (fn.jptype == Constants.JPType.Decorator)
+            else if (fn.jptype == JPType.Decorator)
                 name = ((DecoratorNode) fn).name;
             else return res.failure(Error.InvalidSyntax(
                     fn.pos_start.copy(), fn.pos_end.copy(),
@@ -1664,7 +1663,7 @@ match (a) {
                 advance();
                 res.registerAdvancement();
             }
-            if (op_tok == TT.DOT && right.jptype == Constants.JPType.Call) {
+            if (op_tok == TT.DOT && right.jptype == JPType.Call) {
                 CallNode call = (CallNode) right;
                 call.argNodes.add(0, left);
                 left = call;
@@ -1882,14 +1881,14 @@ match (a) {
         if (res.error != null)
             return res;
 
-        if (condition.jptype == Constants.JPType.Boolean && ((BooleanNode) condition).val) {
+        if (condition.jptype == JPType.Boolean && ((BooleanNode) condition).val) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                     "Redundant conditional", """
 if (true)
     println("This runs no matter what");""")
                     .asString());
         }
-        else if (condition.jptype == Constants.JPType.Boolean) {
+        else if (condition.jptype == JPType.Boolean) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                     "Conditional will never run", """
 if (false)
@@ -2186,7 +2185,7 @@ if (false)
 
         Node condition = res.register(getClosing());
         if (res.error != null) return res;
-        if (condition.jptype == Constants.JPType.Boolean) {
+        if (condition.jptype == JPType.Boolean) {
             if (((BooleanNode) condition).val) {
                 Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
                         "Can be changed to a generic loop", """
@@ -2450,7 +2449,7 @@ while (false) {
                         argTKs.kwargname
                 ).setCatcher(isCatcher);
 
-                if (nodeToReturn.jptype == Constants.JPType.List && ((ListNode) nodeToReturn).elements.size() == 1) {
+                if (nodeToReturn.jptype == JPType.List && ((ListNode) nodeToReturn).elements.size() == 1) {
                     Shell.logger.tip(new Tip(funcNode.pos_start, funcNode.pos_end,
                                         "Can be refactored to use arrow syntax", "fn addOne<x> -> x + 1;")
                                         .asString());

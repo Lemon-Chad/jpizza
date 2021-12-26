@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -14,6 +14,7 @@ import lemon.jpizza.Token;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ForNode extends Node {
     public final Token var_name_tok;
@@ -33,7 +34,7 @@ public class ForNode extends Node {
         this.retnull = retnull;
 
         pos_start = var_name_tok.pos_start.copy(); pos_end = body_node.pos_end.copy();
-        jptype = Constants.JPType.For;
+        jptype = JPType.For;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -41,7 +42,7 @@ public class ForNode extends Node {
 
         Obj startNode = res.register(inter.visit(start_value_node, context));
         if (res.shouldReturn()) return res;
-        if (startNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
+        if (startNode.jptype != JPType.Number) return res.failure(RTError.Type(
                 startNode.pos_start, startNode.pos_end,
                 "Start must be an integer",
                 context
@@ -49,7 +50,7 @@ public class ForNode extends Node {
         double start = startNode.number;
         Obj endNode = res.register(inter.visit(end_value_node, context));
         if (res.shouldReturn()) return res;
-        if (endNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
+        if (endNode.jptype != JPType.Number) return res.failure(RTError.Type(
                 endNode.pos_start, endNode.pos_end,
                 "End must be an integer",
                 context
@@ -61,7 +62,7 @@ public class ForNode extends Node {
         if (step_value_node != null) {
             Obj stepNode = res.register(inter.visit(step_value_node, context));
             if (res.shouldReturn()) return res;
-            if (stepNode.jptype != Constants.JPType.Number) return res.failure(RTError.Type(
+            if (stepNode.jptype != JPType.Number) return res.failure(RTError.Type(
                     stepNode.pos_start, stepNode.pos_end,
                     "Step must be an integer",
                     context
@@ -113,4 +114,24 @@ public class ForNode extends Node {
         return res.success(lst);
     }
 
+    @Override
+    public Node optimize() {
+        Node start = start_value_node.optimize();
+        Node end = end_value_node.optimize();
+        Node step = null;
+        if (step_value_node != null)
+            step = step_value_node.optimize();
+        Node body = body_node.optimize();
+        return new ForNode(var_name_tok, start, end, step, body, retnull);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Arrays.asList(start_value_node, end_value_node, step_value_node, body_node);
+    }
+
+    @Override
+    public String visualize() {
+        return "for(" + var_name_tok.value + ")";
+    }
 }

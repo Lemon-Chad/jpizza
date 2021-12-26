@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.Obj;
@@ -69,7 +69,7 @@ public class SysLib extends Library {
     public RTResult execute_executeFloor(Context execCtx) throws IOException, InterruptedException {
         RTResult res = new RTResult();
 
-        Obj list = res.register(checkType(execCtx.symbolTable.get("cmd"), "list", Constants.JPType.List));
+        Obj list = res.register(checkType(execCtx.symbolTable.get("cmd"), "list", JPType.List));
         if (res.error != null) return res;
         List<Obj> args = list.list;
 

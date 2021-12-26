@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.Error;
@@ -150,7 +150,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_doubleStr(Context execCtx) {
         RTResult res = new RTResult();
 
-        Obj num = res.register(checkType(execCtx.symbolTable.get("value"), "num", Constants.JPType.Number));
+        Obj num = res.register(checkType(execCtx.symbolTable.get("value"), "num", JPType.Number));
         if (res.error != null) return res;
         double number = num.number;
 
@@ -176,9 +176,9 @@ public class BuiltInFunction extends Library {
     public RTResult execute_preprocess(Context execCtx) {
         RTResult res = new RTResult();
         Obj par = res.register(checkType(execCtx.symbolTable.get("processed"),
-                "function", Constants.JPType.Function));
+                "function", JPType.Function));
         Obj proc = res.register(checkType(execCtx.symbolTable.get("preprocessor"),
-                "function", Constants.JPType.Function));
+                "function", JPType.Function));
         if (res.error != null) return res;
         return res.success(((Function) par).addPreProcessor((Function) proc));
     }
@@ -186,16 +186,16 @@ public class BuiltInFunction extends Library {
     public RTResult execute_postprocess(Context execCtx) {
         RTResult res = new RTResult();
         Obj par = res.register(checkType(execCtx.symbolTable.get("processed"),
-                "function", Constants.JPType.Function));
+                "function", JPType.Function));
         Obj proc = res.register(checkType(execCtx.symbolTable.get("postprocessor"),
-                "function", Constants.JPType.Function));
+                "function", JPType.Function));
         if (res.error != null) return res;
         return res.success(((Function) par).addPostProcessor((Function) proc));
     }
 
     public RTResult execute_fail(Context execCtx) {
         Obj r = (Obj) execCtx.symbolTable.get("res");
-        if (r.jptype != Constants.JPType.Res) return new RTResult().success(new Null());
+        if (r.jptype != JPType.Res) return new RTResult().success(new Null());
         Result res = (Result) r;
         if (res.ok())
             return new RTResult().success(new Null());
@@ -220,8 +220,8 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_log(Context execCtx) {
         RTResult res = new RTResult();
-        Obj v = res.register(checkType(execCtx.symbolTable.get("value"), "number", Constants.JPType.Number));
-        Obj b = res.register(checkType(execCtx.symbolTable.get("base"), "number", Constants.JPType.Number));
+        Obj v = res.register(checkType(execCtx.symbolTable.get("value"), "number", JPType.Number));
+        Obj b = res.register(checkType(execCtx.symbolTable.get("base"), "number", JPType.Number));
         if (res.error != null) return res;
 
         double value = v.number;
@@ -232,7 +232,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_catch(Context execCtx) {
         Obj r = (Obj) execCtx.symbolTable.get("res");
-        if (r.jptype != Constants.JPType.Res)
+        if (r.jptype != JPType.Res)
             return new RTResult().failure(RTError.Type(
                     r.get_start(), r.get_end(),
                     "Expected catcher type",
@@ -244,7 +244,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_ok(Context execCtx) {
         Obj r = (Obj) execCtx.symbolTable.get("res");
-        if (r.jptype != Constants.JPType.Res)
+        if (r.jptype != JPType.Res)
             return new RTResult().failure(RTError.Type(
                     r.get_start(), r.get_end(),
                     "Expected catcher type",
@@ -256,7 +256,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_resolve(Context execCtx) {
         Obj r = (Obj) execCtx.symbolTable.get("res");
-        if (r.jptype != Constants.JPType.Res)
+        if (r.jptype != JPType.Res)
             return new RTResult().failure(RTError.Type(
                     r.get_start(), r.get_end(),
                     "Expected catcher type",
@@ -274,7 +274,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_indexOf(Context execCtx) {
         RTResult res = new RTResult();
-        Obj lst = res.register(checkType(execCtx.symbolTable.get("value"), "list", Constants.JPType.List));
+        Obj lst = res.register(checkType(execCtx.symbolTable.get("value"), "list", JPType.List));
         if (res.error != null) return res;
         Obj item = (Obj) execCtx.symbolTable.get("item");
         return res.success(new Num(lst.list.indexOf(item)));
@@ -282,7 +282,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_parseNum(Context execCtx) {
         RTResult res = new RTResult();
-        Obj str = res.register(checkType(execCtx.symbolTable.get("str"), "String", Constants.JPType.String));
+        Obj str = res.register(checkType(execCtx.symbolTable.get("str"), "String", JPType.String));
         if (res.error != null) return res;
         try {
             return res.success(new Num(Double.parseDouble(str.string)));
@@ -298,13 +298,13 @@ public class BuiltInFunction extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));
-        if (o.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(RTError.Type(
+        if (o.jptype != JPType.ClassInstance) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected class instance",
                 execCtx
         ));
         Obj acc = ((Obj) execCtx.symbolTable.get("value"));
-        if (acc.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (acc.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 acc.get_start(), acc.get_end(),
                 "Expected String",
                 execCtx
@@ -319,13 +319,13 @@ public class BuiltInFunction extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_hasattr(Context execCtx) {
         Obj o = ((Obj) execCtx.symbolTable.get("instance"));
-        if (o.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(RTError.Type(
+        if (o.jptype != JPType.ClassInstance) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected class instance",
                 execCtx
         ));
         Obj acc = ((Obj) execCtx.symbolTable.get("value"));
-        if (acc.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (acc.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 acc.get_start(), acc.get_end(),
                 "Expected String",
                 execCtx
@@ -336,7 +336,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_byter(Context execCtx) {
         Obj bytelist = ((Obj) execCtx.symbolTable.get("value")).alist();
-        if (bytelist.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (bytelist.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 bytelist.get_start(), bytelist.get_end(),
                 "Expected list",
                 execCtx
@@ -345,7 +345,7 @@ public class BuiltInFunction extends Library {
         byte[] bytes = new byte[prelst.size()];
         for (int i = 0; i < prelst.size(); i++) {
             Obj n = prelst.get(i).number();
-            if (n.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+            if (n.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                     bytelist.get_start(), bytelist.get_end(),
                     "Expected byte",
                     execCtx
@@ -376,9 +376,9 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_replace(Context execCtx) {
         RTResult res = new RTResult();
-        Obj s = res.register(checkType(execCtx.symbolTable.get("str"), "String", Constants.JPType.String));
-        Obj o = res.register(checkType(execCtx.symbolTable.get("old"), "String", Constants.JPType.String));
-        Obj n = res.register(checkType(execCtx.symbolTable.get("new"), "String", Constants.JPType.String));
+        Obj s = res.register(checkType(execCtx.symbolTable.get("str"), "String", JPType.String));
+        Obj o = res.register(checkType(execCtx.symbolTable.get("old"), "String", JPType.String));
+        Obj n = res.register(checkType(execCtx.symbolTable.get("new"), "String", JPType.String));
         if (res.error != null) return res;
         return res.success(new Str(s.toString().replace(o.toString(), n.toString())));
     }
@@ -386,12 +386,12 @@ public class BuiltInFunction extends Library {
     public RTResult execute_enumProps(Context execCtx) {
         Obj p = (Obj) execCtx.symbolTable.get("prop");
         Obj ec = (Obj) execCtx.symbolTable.get("enumChild");
-        if (p.jptype != Constants.JPType.ClassInstance) return new RTResult().failure(RTError.Type(
+        if (p.jptype != JPType.ClassInstance) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected prop",
                 execCtx
         ));
-        if (ec.jptype != Constants.JPType.EnumChild) return new RTResult().failure(RTError.Type(
+        if (ec.jptype != JPType.EnumChild) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected enum child",
                 execCtx
@@ -415,7 +415,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_floating(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
-        if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (num.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
@@ -440,7 +440,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_round(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
-        if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (num.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
@@ -468,7 +468,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_floor(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
-        if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (num.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
@@ -480,7 +480,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_ceil(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
-        if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (num.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
@@ -492,7 +492,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_abs(Context execCtx) {
         Obj num = ((Obj) execCtx.symbolTable.get("value")).number();
-        if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (num.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 num.get_start(), num.get_end(),
                 "Argument must be a number",
                 execCtx
@@ -505,7 +505,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_run(Context execCtx) {
         RTResult res = new RTResult();
         Obj fln = (Obj) execCtx.symbolTable.get("fn");
-        if (fln.jptype != Constants.JPType.String) return res.failure(RTError.Type(
+        if (fln.jptype != JPType.String) return res.failure(RTError.Type(
                 fln.get_start(), fln.get_end(),
                 "Argument must be a string",
                 execCtx
@@ -541,7 +541,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_size(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("value")).alist();
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -556,7 +556,7 @@ public class BuiltInFunction extends Library {
         Obj item = ((Obj) execCtx.symbolTable.get("item"));
         RTResult e = isInt(index, execCtx);
         if (e.error != null) return e;
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -577,7 +577,7 @@ public class BuiltInFunction extends Library {
         Obj item = ((Obj) execCtx.symbolTable.get("item"));
         RTResult e = isInt(index, execCtx);
         if (e.error != null) return e;
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -628,7 +628,7 @@ public class BuiltInFunction extends Library {
 
         Obj start = res.register(checkPosInt(_start));
         Obj end = res.register(checkPosInt(_end));
-        Obj val = res.register(checkType(_val, "list", Constants.JPType.List));
+        Obj val = res.register(checkType(_val, "list", JPType.List));
 
         if (res.error != null) return res;
 
@@ -653,7 +653,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_split(Context execCtx) {
         Obj string = ((Obj) execCtx.symbolTable.get("value")).astring();
         Obj splitter = ((Obj) execCtx.symbolTable.get("splitter")).astring();
-        if (string.jptype != Constants.JPType.String || splitter.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (string.jptype != JPType.String || splitter.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a string",
                 execCtx
@@ -705,7 +705,7 @@ public class BuiltInFunction extends Library {
         StringBuilder sb = new StringBuilder();
         String string = execCtx.symbolTable.get("string").toString();
 
-        Obj val = res.register(checkType(execCtx.symbolTable.get("list"), "list", Constants.JPType.List));
+        Obj val = res.register(checkType(execCtx.symbolTable.get("list"), "list", JPType.List));
         if (res.error != null) return res;
         List<Obj> it = val.list;
 
@@ -773,7 +773,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_sim(Context execCtx) {
         Obj in = ((Obj) execCtx.symbolTable.get("value")).astring();
-        if (in.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (in.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 in.get_start(), in.get_end(),
                 "Expected string input",
                 execCtx
@@ -794,7 +794,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult execute_choose(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("value")).alist();
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -805,7 +805,7 @@ public class BuiltInFunction extends Library {
     }
 
     private RTResult isInt(Obj num, Context execCtx) {
-        if (num.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (num.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a number",
                 execCtx
@@ -839,8 +839,8 @@ public class BuiltInFunction extends Library {
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
         Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
-        res.register(checkType(b, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
+        res.register(checkType(b, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -857,8 +857,8 @@ public class BuiltInFunction extends Library {
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
         Obj b = ((Obj) execCtx.symbolTable.get("b")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
-        res.register(checkType(b, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
+        res.register(checkType(b, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -874,7 +874,7 @@ public class BuiltInFunction extends Library {
 
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -889,7 +889,7 @@ public class BuiltInFunction extends Library {
 
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -904,7 +904,7 @@ public class BuiltInFunction extends Library {
 
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -919,7 +919,7 @@ public class BuiltInFunction extends Library {
 
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -934,7 +934,7 @@ public class BuiltInFunction extends Library {
 
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -949,7 +949,7 @@ public class BuiltInFunction extends Library {
 
         Obj a = ((Obj) execCtx.symbolTable.get("a")).number();
 
-        res.register(checkType(a, "number", Constants.JPType.Number));
+        res.register(checkType(a, "number", JPType.Number));
         if (res.error != null) return res;
 
         double x = a.number;
@@ -978,7 +978,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_append(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
         Obj value = (Obj) execCtx.symbolTable.get("value");
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -991,7 +991,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_remove(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -1004,7 +1004,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_contains(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -1015,7 +1015,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_pop(Context execCtx) {
         Obj list = ((Obj) execCtx.symbolTable.get("list")).alist();
         Obj value = ((Obj) execCtx.symbolTable.get("value")).number();
-        if (list.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (list.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -1030,7 +1030,7 @@ public class BuiltInFunction extends Library {
     public RTResult execute_extend(Context execCtx) {
         Obj listA = ((Obj) execCtx.symbolTable.get("listA")).alist();
         Obj listB = ((Obj) execCtx.symbolTable.get("listB")).alist();
-        if (listA.jptype != Constants.JPType.List || listB.jptype != Constants.JPType.List) return new RTResult().failure(RTError.Type(
+        if (listA.jptype != JPType.List || listB.jptype != JPType.List) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a list",
                 execCtx
@@ -1042,7 +1042,7 @@ public class BuiltInFunction extends Library {
 
     public RTResult keyInDict(Context execCtx, Obj dict) {
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
-        if (dict.jptype != Constants.JPType.Dict) return new RTResult().failure(RTError.Type(
+        if (dict.jptype != JPType.Dict) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a dict",
                 execCtx
@@ -1075,7 +1075,7 @@ public class BuiltInFunction extends Library {
         Obj dict = ((Obj) execCtx.symbolTable.get("dict")).dictionary();
         Obj key = ((Obj) execCtx.symbolTable.get("key"));
         Obj value = ((Obj) execCtx.symbolTable.get("value"));
-        if (dict.jptype != Constants.JPType.Dict) return new RTResult().failure(RTError.Type(
+        if (dict.jptype != JPType.Dict) return new RTResult().failure(RTError.Type(
                 pos_start, pos_end,
                 "Argument must be a dictionary",
                 execCtx

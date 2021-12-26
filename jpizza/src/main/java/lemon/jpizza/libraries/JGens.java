@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.objects.executables.Library;
@@ -31,9 +31,9 @@ public class JGens extends Library {
     public Pair<Pair<Point3, Num[]>, Error> getRange(Context execCtx) {
         RTResult res = new RTResult();
 
-        Obj s = res.register(checkType(execCtx.symbolTable.get("start"), "number", Constants.JPType.Number));
-        Obj e = res.register(checkType(execCtx.symbolTable.get("stop"), "number", Constants.JPType.Number));
-        Obj sp = res.register(checkType(execCtx.symbolTable.get("step"), "number", Constants.JPType.Number));
+        Obj s = res.register(checkType(execCtx.symbolTable.get("start"), "number", JPType.Number));
+        Obj e = res.register(checkType(execCtx.symbolTable.get("stop"), "number", JPType.Number));
+        Obj sp = res.register(checkType(execCtx.symbolTable.get("step"), "number", JPType.Number));
 
         if (res.error != null) return new Pair<>(null, res.error);
 
@@ -63,8 +63,8 @@ public class JGens extends Library {
         var r = getRange(execCtx);
         if (r.b != null) return res.failure(r.b);
 
-        Obj s = res.register(checkType(execCtx.symbolTable.get("slope"), "number", Constants.JPType.Number));
-        Obj y = res.register(checkType(execCtx.symbolTable.get("y-inter"), "number", Constants.JPType.Number));
+        Obj s = res.register(checkType(execCtx.symbolTable.get("slope"), "number", JPType.Number));
+        Obj y = res.register(checkType(execCtx.symbolTable.get("y-inter"), "number", JPType.Number));
         if (res.error != null) return res;
         double m = s.number;
         double b = y.number;
@@ -83,9 +83,9 @@ public class JGens extends Library {
         var r = getRange(execCtx);
         if (r.b != null) return res.failure(r.b);
 
-        Obj A = res.register(checkType(execCtx.symbolTable.get("a"), "number", Constants.JPType.Number));
-        Obj B = res.register(checkType(execCtx.symbolTable.get("b"), "number", Constants.JPType.Number));
-        Obj C = res.register(checkType(execCtx.symbolTable.get("c"), "number", Constants.JPType.Number));
+        Obj A = res.register(checkType(execCtx.symbolTable.get("a"), "number", JPType.Number));
+        Obj B = res.register(checkType(execCtx.symbolTable.get("b"), "number", JPType.Number));
+        Obj C = res.register(checkType(execCtx.symbolTable.get("c"), "number", JPType.Number));
         if (res.error != null) return res;
         double a = A.number;
         double b = B.number;

@@ -35,4 +35,22 @@ public class BodyNode extends Node {
         }
         return res.success(new Null());
     }
+
+    @Override
+    public Node optimize() {
+        for (int i = 0; i < statements.size(); i++) {
+            statements.set(i, statements.get(i).optimize());
+        }
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return statements;
+    }
+
+    @Override
+    public String visualize() {
+        return "< body >";
+    }
 }

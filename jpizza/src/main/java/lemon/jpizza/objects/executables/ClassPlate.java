@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Tokens.TT;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -54,7 +54,7 @@ public class ClassPlate extends Value {
             if (attributes[i].isstatic) staticAttrs.put(attributes[i].name, attributes[i]);
 
         set_pos(); set_context();
-        jptype = Constants.JPType.ClassPlate;
+        jptype = JPType.ClassPlate;
     }
 
     // Functions
@@ -107,7 +107,7 @@ public class ClassPlate extends Value {
     // Methods
 
     public RTResult access(Obj o) {
-        if (o.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (o.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected String",
                 o.get_ctx()

@@ -1,12 +1,14 @@
 package lemon.jpizza.nodes.values;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
+
+import java.util.List;
 
 
 public class BytesNode extends Node {
@@ -15,7 +17,7 @@ public class BytesNode extends Node {
     public BytesNode(Node toBytes) {
         this.toBytes = toBytes;
         this.pos_start = toBytes.pos_start.copy(); this.pos_end = toBytes.pos_end.copy();
-        jptype = Constants.JPType.Bytes;
+        jptype = JPType.Bytes;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -25,7 +27,7 @@ public class BytesNode extends Node {
         if (res.error != null) return res;
 
         Obj bytearrq = toBytes.bytes();
-        if (bytearrq.jptype != Constants.JPType.Bytes) return res.failure(RTError.Conversion(
+        if (bytearrq.jptype != JPType.Bytes) return res.failure(RTError.Conversion(
                 bytearrq.get_start(), bytearrq.get_end(),
                 "Object has no {BYTE-ARRAY} form",
                 context
@@ -34,4 +36,18 @@ public class BytesNode extends Node {
         return new RTResult().success(bytearrq);
     }
 
+    @Override
+    public Node optimize() {
+        return new BytesNode(toBytes.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(toBytes);
+    }
+
+    @Override
+    public String visualize() {
+        return "@";
+    }
 }

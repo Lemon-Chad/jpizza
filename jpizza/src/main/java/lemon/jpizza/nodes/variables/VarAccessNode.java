@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.variables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -10,13 +10,15 @@ import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.List;
+
 public class VarAccessNode extends Node {
     public final Token var_name_tok;
 
     public VarAccessNode(Token var_name_tok) {
         this.var_name_tok = var_name_tok;
         pos_start = var_name_tok.pos_start.copy(); pos_end = var_name_tok.pos_end.copy();
-        jptype = Constants.JPType.VarAccess;
+        jptype = JPType.VarAccess;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -46,4 +48,18 @@ public class VarAccessNode extends Node {
         return res.success(val);
     }
 
+    @Override
+    public Node optimize() {
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of();
+    }
+
+    @Override
+    public String visualize() {
+        return var_name_tok.value.toString();
+    }
 }

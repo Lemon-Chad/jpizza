@@ -7,6 +7,8 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
+import java.util.List;
+
 public class ScopeNode extends Node {
     public final Node statements;
     public final String scopeName;
@@ -33,5 +35,20 @@ public class ScopeNode extends Node {
             return res;
         }
         return res.success(res.funcReturn != null ? res.funcReturn : new Null());
+    }
+
+    @Override
+    public Node optimize() {
+        return new ScopeNode(scopeName, statements.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(statements);
+    }
+
+    @Override
+    public String visualize() {
+        return "scope" + (scopeName == null ? "" : "[" + scopeName + "]");
     }
 }

@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Position;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -23,7 +23,7 @@ public class BaseFunction extends Value {
     public BaseFunction(String name) {
         super();
         this.name = name != null ? name : "<anonymous>";
-        jptype = Constants.JPType.BaseFunction;
+        jptype = JPType.BaseFunction;
     }
 
     // Functions
@@ -65,7 +65,7 @@ public class BaseFunction extends Value {
             }
 
             Obj oType = arg.type().astring();
-            if (oType.jptype != Constants.JPType.String) return res.failure(RTError.Type(
+            if (oType.jptype != JPType.String) return res.failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     "Type is not a string",
                     arg.get_ctx()

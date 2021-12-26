@@ -7,6 +7,8 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 
+import java.util.List;
+
 public class ThrowNode extends Node {
     public final Node thrown;
     public final Node throwType;
@@ -36,4 +38,18 @@ public class ThrowNode extends Node {
         ));
     }
 
+    @Override
+    public Node optimize() {
+        return new ThrowNode(throwType.optimize(), thrown.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(throwType, thrown);
+    }
+
+    @Override
+    public String visualize() {
+        return "throw";
+    }
 }

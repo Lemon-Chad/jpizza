@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
@@ -24,7 +24,7 @@ public class WhileNode extends Node {
         this.retnull = retnull;
         this.conLast = conLast;
         pos_start = condition_node.pos_start.copy(); pos_end = body_node.pos_end.copy();
-        jptype = Constants.JPType.While;
+        jptype = JPType.While;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -63,4 +63,23 @@ public class WhileNode extends Node {
                 .set_pos(pos_start, pos_end));
     }
 
+    @Override
+    public Node optimize() {
+        Node condition = condition_node.optimize();
+        Node body = body_node.optimize();
+        return new WhileNode(condition, body, retnull, conLast);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> children = new ArrayList<>();
+        children.add(condition_node);
+        children.add(body_node);
+        return children;
+    }
+
+    @Override
+    public String visualize() {
+        return "while";
+    }
 }

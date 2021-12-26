@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.generators.Interpreter;
@@ -32,7 +32,7 @@ public class CMethod extends Function {
         this.isprivate = priv;
         this.argname = argname;
         this.kwargname = kwargname;
-        jptype = Constants.JPType.CMethod;
+        jptype = JPType.CMethod;
     }
 
     // Functions

@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class ExtendNode extends Node {
     public final Token file_name_tok;
@@ -25,7 +26,7 @@ public class ExtendNode extends Node {
         this.file_name_tok = file_name_tok;
 
         pos_start = file_name_tok.pos_start.copy(); pos_end = file_name_tok.pos_end.copy();
-        jptype = Constants.JPType.Import;
+        jptype = JPType.Import;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -86,4 +87,18 @@ public class ExtendNode extends Node {
         }
     }
 
+    @Override
+    public Node optimize() {
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of();
+    }
+
+    @Override
+    public String visualize() {
+        return "extend " + file_name_tok.value;
+    }
 }

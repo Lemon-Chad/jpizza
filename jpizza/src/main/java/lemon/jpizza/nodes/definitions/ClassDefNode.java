@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -50,7 +50,7 @@ public class ClassDefNode extends Node {
         this.kwargname = kwargname;
 
         parentToken = pTK;
-        jptype = Constants.JPType.ClassDef;
+        jptype = JPType.ClassDef;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -95,7 +95,7 @@ public class ClassDefNode extends Node {
             ClassPlate parent = null;
             if (parentToken != null) {
                 Obj p = (Obj) context.symbolTable.get(parentToken.value.toString());
-                if (p == null || p.jptype != Constants.JPType.ClassPlate) return res.failure(RTError.Scope(
+                if (p == null || p.jptype != JPType.ClassPlate) return res.failure(RTError.Scope(
                         parentToken.pos_start, parentToken.pos_end,
                         "Parent does not exist",
                         context
@@ -109,4 +109,37 @@ public class ClassDefNode extends Node {
 
             return res.success(classValue);
         }
+
+    @Override
+    public Node optimize() {
+        List<AttrDeclareNode> optimizedAttributes = new ArrayList<>();
+        for (AttrDeclareNode attr : attributes) {
+            optimizedAttributes.add((AttrDeclareNode) attr.optimize());
+        }
+        Node optimizedMake = make_node.optimize();
+        List<MethDefNode> optimizedMethods = new ArrayList<>();
+        for (MethDefNode method : methods) {
+            optimizedMethods.add((MethDefNode) method.optimize());
+        }
+        List<Node> optimizedDefaults = new ArrayList<>();
+        for (Node default_ : defaults) {
+            optimizedDefaults.add(default_.optimize());
+        }
+        return new ClassDefNode(class_name_tok, optimizedAttributes, arg_name_toks, arg_type_toks,
+                optimizedMake, optimizedMethods, pos_end, optimizedDefaults, defaults.size(),
+                parentToken, generic_toks, argname, kwargname);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> children = new ArrayList<>(attributes);
+        children.add(make_node);
+        children.addAll(methods);
+        return children;
+    }
+
+    @Override
+    public String visualize() {
+        return "class " + class_name_tok.value;
+    }
 }

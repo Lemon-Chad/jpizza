@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.values;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Token;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -16,6 +16,7 @@ import lemon.jpizza.objects.executables.EnumJChild;
 import lemon.jpizza.results.RTResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PatternNode extends Node {
@@ -27,13 +28,13 @@ public class PatternNode extends Node {
         this.patterns = patterns;
 
         pos_start = accessNode.pos_start; pos_end = accessNode.pos_end;
-        jptype = Constants.JPType.Pattern;
+        jptype = JPType.Pattern;
     }
 
     public RTResult compare(Interpreter inter, Context context, Obj contrast) {
         RTResult res = new RTResult();
 
-        if (contrast.jptype != Constants.JPType.ClassInstance) return res.success(new Bool(false));
+        if (contrast.jptype != JPType.ClassInstance) return res.success(new Bool(false));
         ClassInstance other = (ClassInstance) contrast;
 
         Obj cls = res.register(inter.visit(accessNode, context));
@@ -46,7 +47,7 @@ public class PatternNode extends Node {
         for (Map.Entry<Token, Node> entry : patterns.entrySet()) {
             Obj val = res.register(inter.visit(entry.getValue(), context));
             if (res.error != null) {
-                if (entry.getValue().jptype == Constants.JPType.VarAccess && res.error.error_name.equals("Scope")) {
+                if (entry.getValue().jptype == JPType.VarAccess && res.error.error_name.equals("Scope")) {
                     substitutes.put(entry.getKey(), ((VarAccessNode) entry.getValue()).var_name_tok.value.toString());
                     res.error = null;
                     continue;
@@ -115,5 +116,23 @@ public class PatternNode extends Node {
         }
 
         return res.success(new Bool(true));
+    }
+
+    @Override
+    public Node optimize() {
+        accessNode.optimize();
+        for (Node node : patterns.values())
+            node.optimize();
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(accessNode);
+    }
+
+    @Override
+    public String visualize() {
+        return "Pattern";
     }
 }

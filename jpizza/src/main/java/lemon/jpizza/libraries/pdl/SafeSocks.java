@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries.pdl;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Pair;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.Error;
@@ -126,7 +126,7 @@ public class SafeSocks extends Library {
         if (pair.b != null) return res.failure(pair.b);
         SocketData data = pair.a;
 
-        Obj bytes = res.register(checkType(execCtx.symbolTable.get("bytes"), "bytearray", Constants.JPType.Bytes));
+        Obj bytes = res.register(checkType(execCtx.symbolTable.get("bytes"), "bytearray", JPType.Bytes));
         if (res.error != null) return res;
         return data.puddle.write(bytes, data.offset, data.len, pos_start, pos_end, context);
     }

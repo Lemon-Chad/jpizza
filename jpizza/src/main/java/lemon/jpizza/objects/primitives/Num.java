@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.NumberNode;
 import lemon.jpizza.objects.executables.Function;
@@ -22,7 +22,7 @@ public class Num extends Value {
 
         hex = false;
 
-        jptype = Constants.JPType.Number;
+        jptype = JPType.Number;
     }
 
     public Num(double v, boolean hex) {
@@ -31,13 +31,13 @@ public class Num extends Value {
 
         this.hex = hex;
 
-        jptype = Constants.JPType.Number;
+        jptype = JPType.Number;
     }
 
     // Methods
 
     public Pair<Obj, RTError> add(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -47,7 +47,7 @@ public class Num extends Value {
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> mod(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -57,7 +57,7 @@ public class Num extends Value {
                 .set_context(context), null);
     }
     public Pair<Obj, RTError> sub(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -66,7 +66,7 @@ public class Num extends Value {
         return new Pair<>(new Num(number - other.number, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> mul(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -75,7 +75,7 @@ public class Num extends Value {
         return new Pair<>(new Num(number * other.number, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> div(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -90,7 +90,7 @@ public class Num extends Value {
         return new Pair<>(new Num(number / other.number, hex).set_context(context), null);
     }
     public Pair<Obj, RTError> fastpow(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -100,7 +100,7 @@ public class Num extends Value {
     }
     public Pair<Obj, RTError> lt(Obj other) {
         if (other
-                .jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+                .jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -108,7 +108,7 @@ public class Num extends Value {
         return new Pair<>(new Bool(number < other.number).set_context(context), null);
     }
     public Pair<Obj, RTError> lte(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "Expected number",
                 context
@@ -120,7 +120,7 @@ public class Num extends Value {
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.Number) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.Number) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(this.number == o.number), null);
     }
 

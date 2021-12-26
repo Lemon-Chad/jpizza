@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.values;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.primitives.Ref;
@@ -8,12 +8,14 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
+import java.util.List;
+
 public class RefNode extends Node {
     public final Node inner;
     public RefNode(Node inner) {
         this.inner = inner;
         pos_start = inner.pos_start; pos_end = inner.pos_end;
-        jptype = Constants.JPType.Ref;
+        jptype = JPType.Ref;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -25,4 +27,18 @@ public class RefNode extends Node {
         return res.success(new Ref(inner).set_pos(pos_start, pos_end).set_context(context));
     }
 
+    @Override
+    public Node optimize() {
+        return new RefNode(inner.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(inner);
+    }
+
+    @Override
+    public String visualize() {
+        return "&Ref";
+    }
 }

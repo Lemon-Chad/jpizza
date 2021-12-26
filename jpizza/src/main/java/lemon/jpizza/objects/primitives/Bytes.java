@@ -1,14 +1,11 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.*;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.NullNode;
 import lemon.jpizza.objects.executables.Function;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.Value;
-import lemon.jpizza.Pair;
-import lemon.jpizza.Token;
-import lemon.jpizza.Tokens;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,7 +19,7 @@ public class Bytes extends Value {
         super(null);
         this.arr = arr;
 
-        jptype = Constants.JPType.Bytes;
+        jptype = JPType.Bytes;
     }
 
     // Functions

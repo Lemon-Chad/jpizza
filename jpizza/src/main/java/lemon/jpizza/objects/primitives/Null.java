@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.NullNode;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Null extends Value {
-    public Null() { super(null); jptype = Constants.JPType.Null; }
+    public Null() { super(null); jptype = JPType.Null; }
 
     // Functions
 
@@ -32,7 +32,7 @@ public class Null extends Value {
     public Obj alist() { return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end); }
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.Null) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.Null) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(true), null);
     }
 

@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.StringNode;
@@ -18,7 +18,7 @@ public class Str extends Value {
     public Str(String value) {
         super(value);
         string = value;
-        jptype = Constants.JPType.String;
+        jptype = JPType.String;
     }
 
     // Functions
@@ -49,7 +49,7 @@ public class Str extends Value {
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.String) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.String) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(this.string.equals(o.string)), null);
     }
 

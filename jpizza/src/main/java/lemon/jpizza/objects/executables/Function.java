@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -43,7 +43,7 @@ public class Function extends BaseFunction {
         this.argTypes = argTypes != null ? argTypes : new ArrayList<>();
         this.returnType = returnType;
         this.defaults = defaults;
-        jptype = Constants.JPType.Function;
+        jptype = JPType.Function;
     }
 
     public Function(String name, Node bodyNode, List<String> argNames, List<List<String>> argTypes, List<String> returnType,
@@ -59,7 +59,7 @@ public class Function extends BaseFunction {
         this.async = false; this.autoreturn = true;
         this.returnType = returnType;
         this.defaults = defaults;
-        jptype = Constants.JPType.Function;
+        jptype = JPType.Function;
     }
 
     public Function(String name, Node bodyNode, List<String> argNames) {
@@ -77,7 +77,7 @@ public class Function extends BaseFunction {
         }
         this.returnType = Collections.singletonList("any");
         this.async = false; this.autoreturn = true;
-        jptype = Constants.JPType.Function;
+        jptype = JPType.Function;
     }
 
     // Functions
@@ -221,7 +221,7 @@ public class Function extends BaseFunction {
         String returnType = execCtx.symbolTable.getType(this.returnType);
         if (!returnType.equals("any")) {
             Obj type = retValue.type().astring();
-            if (type.jptype != Constants.JPType.String) return res.failure(RTError.Type(
+            if (type.jptype != JPType.String) return res.failure(RTError.Type(
                     get_start(), get_end(),
                     "Return value type is not a String",
                     get_ctx()

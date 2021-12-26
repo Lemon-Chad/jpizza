@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.DictNode;
@@ -18,11 +18,11 @@ public class Dict extends Value {
     public Dict(Map<Obj, Obj> value) {
         super(new ConcurrentHashMap<>(value));
         map = (ConcurrentHashMap<Obj, Obj>) this.value;
-        jptype = Constants.JPType.Dict;
+        jptype = JPType.Dict;
     }
     public Dict(ConcurrentHashMap<Obj, Obj> value) {
         super(value);
-        jptype = Constants.JPType.Dict;
+        jptype = JPType.Dict;
         map = value;
     }
 
@@ -67,7 +67,7 @@ public class Dict extends Value {
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.Dict) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.Dict) return new Pair<>(new Bool(false), null);
         if (o.map.size() != this.map.size()) return new Pair<>(new Bool(false), null);
         List<Obj> okeys = new ArrayList<>(o.map.keySet());
         for (Obj key: map.keySet()) {

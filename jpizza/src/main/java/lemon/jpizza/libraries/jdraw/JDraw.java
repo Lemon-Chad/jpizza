@@ -1,6 +1,7 @@
 package lemon.jpizza.libraries.jdraw;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.Error;
@@ -204,7 +205,7 @@ public class JDraw extends Library {
     public static Pair<Integer[], Error> getColor(Object col) {
         RTResult res = new RTResult();
 
-        Obj lis = res.register(checkType(col, "list", Constants.JPType.List));
+        Obj lis = res.register(checkType(col, "list", JPType.List));
         if (res.error != null) return new Pair<>(null, res.error);
 
         List<Obj> list = lis.list;
@@ -452,7 +453,7 @@ public class JDraw extends Library {
         res.register(isInit());
         if (res.error != null) return res;
 
-        Obj lx = res.register(checkType(execCtx.symbolTable.get("points"), "list", Constants.JPType.List));
+        Obj lx = res.register(checkType(execCtx.symbolTable.get("points"), "list", JPType.List));
         if (res.error != null) return res;
         List<Obj> lst = lx.list;
 
@@ -460,7 +461,7 @@ public class JDraw extends Library {
         for (int i = 0; i < lst.size(); i++) {
             Obj p = lst.get(i);
 
-            res.register(checkType(p, "list", Constants.JPType.List));
+            res.register(checkType(p, "list", JPType.List));
             if (res.error != null) return res;
             List<Obj> pL = p.list;
 
@@ -561,7 +562,7 @@ public class JDraw extends Library {
         if (res.error != null) return res;
 
         Obj value = ((Obj) execCtx.symbolTable.get("value")).bool();
-        if (value.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
+        if (value.jptype != JPType.Boolean) return res.failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected bool",
                 execCtx
@@ -575,7 +576,7 @@ public class JDraw extends Library {
         RTResult res = new RTResult();
 
         Obj value = ((Obj) execCtx.symbolTable.get("value")).bool();
-        if (value.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
+        if (value.jptype != JPType.Boolean) return res.failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected bool",
                 execCtx
@@ -659,7 +660,7 @@ public class JDraw extends Library {
         if (col.b != null) return res.failure(col.b);
         Color color = new Color(col.a[0], col.a[1], col.a[2]);
 
-        Obj txt = res.register(checkType(execCtx.symbolTable.get("txt"), "String", Constants.JPType.String));
+        Obj txt = res.register(checkType(execCtx.symbolTable.get("txt"), "String", JPType.String));
         if (res.error != null) return res;
         String msg = txt.string;
 
@@ -670,7 +671,7 @@ public class JDraw extends Library {
     public Pair<Point, Error> extractPoint(Obj var) {
         RTResult res = new RTResult();
 
-        res.register(checkType(var, "list", Constants.JPType.List));
+        res.register(checkType(var, "list", JPType.List));
         if (res.error != null) return new Pair<>(null, res.error);
 
         if (var.list.size() != 2) return new Pair<>(null, RTError.Type(
@@ -883,7 +884,7 @@ public class JDraw extends Library {
 
         Obj fnef = (Obj) execCtx.symbolTable.get("extension");
         if (!(fnef instanceof Null)) {
-            res.register(checkType(fnef, "list", Constants.JPType.List));
+            res.register(checkType(fnef, "list", JPType.List));
             if (res.error != null) return res;
             List<Obj> dat = fnef.list;
 

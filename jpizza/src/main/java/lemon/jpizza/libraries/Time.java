@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -30,7 +30,7 @@ public class Time extends Library {
     public RTResult execute_halt(Context execCtx) {
         Obj value = (Obj) execCtx.symbolTable.get("ms");
         value = value.number();
-        if (value.jptype != Constants.JPType.Number) return new RTResult().failure(RTError.Type(
+        if (value.jptype != JPType.Number) return new RTResult().failure(RTError.Type(
                 pos_start.copy(), pos_end.copy(),
                 "Argument must be a number",
                 execCtx
@@ -51,7 +51,7 @@ public class Time extends Library {
         Obj value = (Obj) execCtx.symbolTable.get("func");
         RTResult res = new RTResult();
         value = value.function();
-        if (value.jptype != Constants.JPType.Function) return new RTResult().failure(RTError.Type(
+        if (value.jptype != JPType.Function) return new RTResult().failure(RTError.Type(
                 pos_start.copy(), pos_end.copy(),
                 "Argument must be a function",
                 execCtx

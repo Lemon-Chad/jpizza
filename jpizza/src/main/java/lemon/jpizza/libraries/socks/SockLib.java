@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries.socks;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.Pair;
 import lemon.jpizza.errors.RTError;
@@ -54,7 +54,7 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newServer(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || p.floating()) return new RTResult().failure(RTError.Type(
+        if (p.jptype != JPType.Number || p.floating()) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
@@ -85,7 +85,7 @@ public class SockLib extends Library {
 
     public Pair< ServerSocket, RTError > getServer(Context execCtx) {
         Obj serv = (Obj) execCtx.symbolTable.get("server");
-        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (serv.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 serv.get_start(), serv.get_end(),
                 "Expected a number",
                 serv.get_ctx()
@@ -104,7 +104,7 @@ public class SockLib extends Library {
     }
     public Pair< ServerConn, RTError > getServerConn(Context execCtx) {
         Obj serv = (Obj) execCtx.symbolTable.get("client");
-        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (serv.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 serv.get_start(), serv.get_end(),
                 "Expected a number",
                 serv.get_ctx()
@@ -236,7 +236,7 @@ public class SockLib extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_newClient(Context execCtx) {
         Obj p = ((Obj) execCtx.symbolTable.get("port")).number();
-        if (p.jptype != Constants.JPType.Number || p.floating()) return new RTResult().failure(RTError.Type(
+        if (p.jptype != JPType.Number || p.floating()) return new RTResult().failure(RTError.Type(
                 p.get_start(), p.get_end(),
                 "Expected integer",
                 p.get_ctx()
@@ -249,7 +249,7 @@ public class SockLib extends Library {
         ));
 
         Obj h = ((Obj) execCtx.symbolTable.get("host")).astring();
-        if (h.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (h.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 h.get_start(), h.get_end(),
                 "Expected sString",
                 h.get_ctx()
@@ -270,7 +270,7 @@ public class SockLib extends Library {
 
     public Pair< ClientConn, RTError > getConn(Context execCtx) {
         Obj serv = (Obj) execCtx.symbolTable.get("client");
-        if (serv.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (serv.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 serv.get_start(), serv.get_end(),
                 "Expected a number",
                 serv.get_ctx()

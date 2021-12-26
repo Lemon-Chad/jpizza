@@ -1,8 +1,6 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
-import lemon.jpizza.Shell;
-import lemon.jpizza.Tokens;
+import lemon.jpizza.*;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -10,7 +8,6 @@ import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.*;
 import lemon.jpizza.results.RTResult;
-import lemon.jpizza.Token;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -26,7 +23,7 @@ public class Library extends BaseFunction {
     public Library(String name, String libname) {
         super(name);
         this.libname = libname;
-        jptype = Constants.JPType.Library;
+        jptype = JPType.Library;
     }
 
     public List<Obj> valList() {
@@ -43,7 +40,7 @@ public class Library extends BaseFunction {
 
     // Functions
 
-    public static RTResult checkType(Object obj, String expect, Constants.JPType type) {
+    public static RTResult checkType(Object obj, String expect, JPType type) {
         Obj o = (Obj) obj;
         if (o.jptype != type) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
@@ -55,7 +52,7 @@ public class Library extends BaseFunction {
 
     public static RTResult checkFunction(Object obj) {
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Function && o.jptype != Constants.JPType.CMethod)
+        if (o.jptype != JPType.Function && o.jptype != JPType.CMethod)
             return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected function",
@@ -66,7 +63,7 @@ public class Library extends BaseFunction {
 
     public static RTResult checkInt(Object obj) {
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || o.floating()) return new RTResult().failure(RTError.Type(
+        if (o.jptype != JPType.Number || o.floating()) return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected an integer",
                 o.get_ctx()
@@ -76,7 +73,7 @@ public class Library extends BaseFunction {
 
     public static RTResult checkPosInt(Object obj) {
         Obj o = (Obj) obj;
-        if (o.jptype != Constants.JPType.Number || o.floating() || o.number < 0)
+        if (o.jptype != JPType.Number || o.floating() || o.number < 0)
             return new RTResult().failure(RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected a postive integer",

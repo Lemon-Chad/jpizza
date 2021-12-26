@@ -2,7 +2,7 @@ package lemon.jpizza.libraries.httpretzel;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.executables.Function;
@@ -107,7 +107,7 @@ public class JHandle implements HttpHandler {
             logError(exchange, outputStream);
             return;
         }
-        res.register(Library.checkType(response, "dictionary", Constants.JPType.Dict));
+        res.register(Library.checkType(response, "dictionary", JPType.Dict));
 
         if (res.error != null) {
             logError(exchange, outputStream);
@@ -130,7 +130,7 @@ public class JHandle implements HttpHandler {
         }
         Obj header = pr.a;
 
-        if (code.jptype != Constants.JPType.Number) {
+        if (code.jptype != JPType.Number) {
             res.failure(RTError.Type(
                     code.get_start(), code.get_end(),
                     "Expected number",
@@ -139,7 +139,7 @@ public class JHandle implements HttpHandler {
             logError(exchange, outputStream);
             return;
         }
-        if (header.jptype != Constants.JPType.String) {
+        if (header.jptype != JPType.String) {
             res.failure(RTError.Type(
                     code.get_start(), code.get_end(),
                     "Expected String",

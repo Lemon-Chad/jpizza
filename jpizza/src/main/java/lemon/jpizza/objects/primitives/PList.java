@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.values.ListNode;
@@ -15,7 +15,7 @@ import lemon.jpizza.Pair;
 public class PList extends Value {
     public PList(List<Obj> value) {
         super(value);
-        jptype = Constants.JPType.List;
+        jptype = JPType.List;
         list = value;
     }
 
@@ -45,7 +45,7 @@ public class PList extends Value {
         return pop(other);
     }
     public Pair<Obj, RTError> mul(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "List index must be a number",
                 context
@@ -77,7 +77,7 @@ public class PList extends Value {
         );
     }
     public Pair<Obj, RTError> inRange(Obj other) {
-        if (other.jptype != Constants.JPType.Number) return new Pair<>(null, RTError.Type(
+        if (other.jptype != JPType.Number) return new Pair<>(null, RTError.Type(
                 pos_start, pos_end,
                 "List index must be a number",
                 context
@@ -114,7 +114,7 @@ public class PList extends Value {
     }
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.List) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.List) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(this.list.equals(o.list)), null);
     }
 

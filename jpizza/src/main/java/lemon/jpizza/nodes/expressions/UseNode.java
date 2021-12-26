@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -19,7 +19,7 @@ public class UseNode extends Node {
         this.useToken = useToken;
         this.args = args;
         pos_start = useToken.pos_start.copy(); pos_end = useToken.pos_end.copy();
-        jptype = Constants.JPType.Use;
+        jptype = JPType.Use;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -53,4 +53,23 @@ public class UseNode extends Node {
         return new RTResult().success(new Null());
     }
 
+    @Override
+    public Node optimize() {
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of();
+    }
+
+    @Override
+    public String visualize() {
+        String[] args = new String[this.args.size() + 1];
+        for (int i = 0; i < args.length - 1; i++) {
+            args[i + 1] = this.args.get(i).value.toString();
+        }
+        args[0] = useToken.value.toString();
+        return "#" + String.join(" ", args);
+    }
 }

@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
@@ -8,6 +8,7 @@ import lemon.jpizza.objects.executables.CMethod;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MethDefNode extends Node {
@@ -50,7 +51,7 @@ public class MethDefNode extends Node {
 
         pos_start = var_name_tok.pos_start;
         pos_end = body_node.pos_end;
-        jptype = Constants.JPType.MethDef;
+        jptype = JPType.MethDef;
     }
 
     public MethDefNode setCatcher(boolean c) {
@@ -78,5 +79,29 @@ public class MethDefNode extends Node {
     public FuncDefNode asFuncDef() {
         return new FuncDefNode(var_name_tok, arg_name_toks, arg_type_toks, body_node, autoreturn, async,
                 returnType, defaults, defaultCount, generic_toks, argname, kwargname).setCatcher(catcher);
+    }
+
+    @Override
+    public Node optimize() {
+        Node body = body_node.optimize();
+        List<Node> optDefaults = new ArrayList<>();
+        for (Node n : defaults) {
+            optDefaults.add(n.optimize());
+        }
+        return new MethDefNode(var_name_tok, arg_name_toks, arg_type_toks, body, autoreturn, bin, async,
+                returnType, optDefaults, defaultCount, generic_toks, stat, priv, argname, kwargname)
+                .setCatcher(catcher);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(body_node);
+    }
+
+    @Override
+    public String visualize() {
+        String stc = stat ? "static " : "";
+        String prv = priv ? "private " : "public ";
+        return prv + stc + "mthd " + var_name_tok.value + "(" + arg_name_toks.stream().map(x -> x.value.toString()).reduce("", (a, b) -> a + b + ",") + ")";
     }
 }

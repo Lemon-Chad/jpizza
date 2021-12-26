@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.*;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.errors.RTError;
@@ -8,15 +8,13 @@ import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.results.RTResult;
-import lemon.jpizza.Shell;
-import lemon.jpizza.Token;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.Pair;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class ImportNode extends Node {
     public final Token file_name_tok;
@@ -27,7 +25,7 @@ public class ImportNode extends Node {
         this.as_tok = null;
 
         pos_start = file_name_tok.pos_start.copy(); pos_end = file_name_tok.pos_end.copy();
-        jptype = Constants.JPType.Import;
+        jptype = JPType.Import;
     }
 
     public ImportNode(Token file_name_tok, Token as_tok) {
@@ -35,7 +33,7 @@ public class ImportNode extends Node {
         this.as_tok = as_tok;
 
         pos_start = file_name_tok.pos_start.copy(); pos_end = as_tok.pos_end.copy();
-        jptype = Constants.JPType.Import;
+        jptype = JPType.Import;
     }
 
     public RTResult vis(Context context) throws IOException {
@@ -103,4 +101,18 @@ public class ImportNode extends Node {
         }
     }
 
+    @Override
+    public Node optimize() {
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of();
+    }
+
+    @Override
+    public String visualize() {
+        return "import " + file_name_tok.value;
+    }
 }

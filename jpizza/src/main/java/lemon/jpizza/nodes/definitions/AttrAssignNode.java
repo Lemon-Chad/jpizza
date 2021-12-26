@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -8,6 +8,8 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
+
+import java.util.List;
 
 public class AttrAssignNode extends Node {
     public final Token var_name_tok;
@@ -18,7 +20,7 @@ public class AttrAssignNode extends Node {
         this.value_node = value_node;
 
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = Constants.JPType.AttrAssign;
+        jptype = JPType.AttrAssign;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -37,4 +39,18 @@ public class AttrAssignNode extends Node {
         return res.success(value);
     }
 
+    @Override
+    public Node optimize() {
+        return new AttrAssignNode(var_name_tok, value_node.optimize());
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(value_node);
+    }
+
+    @Override
+    public String visualize() {
+        return "attr " + var_name_tok.value;
+    }
 }

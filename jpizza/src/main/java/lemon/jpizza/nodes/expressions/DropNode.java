@@ -7,6 +7,8 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.List;
+
 public class DropNode extends Node {
     public final Token varTok;
 
@@ -18,5 +20,20 @@ public class DropNode extends Node {
     public RTResult visit(Interpreter inter, Context context) {
         context.symbolTable.remove(varTok.value.toString());
         return new RTResult().success(new Null());
+    }
+
+    @Override
+    public Node optimize() {
+        return this;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of();
+    }
+
+    @Override
+    public String visualize() {
+        return "free " + varTok.value;
     }
 }

@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -28,7 +28,7 @@ public class IterNode extends Node {
         this.retnull = retnull;
 
         pos_start = var_name_tok.pos_start.copy(); pos_end = body_node.pos_end.copy();
-        jptype = Constants.JPType.Iter;
+        jptype = JPType.Iter;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -38,7 +38,7 @@ public class IterNode extends Node {
 
         Obj iterableNode = res.register(inter.visit(iterable_node, context));
         if (res.shouldReturn()) return res;
-        if (iterableNode.jptype != Constants.JPType.List) return res.failure(RTError.Type(
+        if (iterableNode.jptype != JPType.List) return res.failure(RTError.Type(
                 iterableNode.pos_start, iterableNode.pos_end,
                 "Value must be an iterable",
                 context
@@ -73,4 +73,23 @@ public class IterNode extends Node {
         );
     }
 
+    @Override
+    public Node optimize() {
+        Node iterable = iterable_node.optimize();
+        Node body = body_node.optimize();
+        return new IterNode(var_name_tok, iterable, body, retnull);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> children = new ArrayList<>();
+        children.add(iterable_node);
+        children.add(body_node);
+        return children;
+    }
+
+    @Override
+    public String visualize() {
+        return "iter(" + var_name_tok.value + ")";
+    }
 }

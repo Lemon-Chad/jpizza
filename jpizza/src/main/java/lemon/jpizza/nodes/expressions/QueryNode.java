@@ -1,8 +1,8 @@
 package lemon.jpizza.nodes.expressions;
 
+import lemon.jpizza.JPType;
 import lemon.jpizza.cases.Case;
 import lemon.jpizza.cases.ElseCase;
-import lemon.jpizza.Constants;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -11,6 +11,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class QueryNode extends Node {
@@ -23,7 +24,7 @@ public class QueryNode extends Node {
         pos_start = cases.get(0).condition.pos_start.copy(); pos_end = (
                 else_case != null ? else_case.statements : cases.get(cases.size() - 1).condition
         ).pos_end.copy();
-        jptype = Constants.JPType.Query;
+        jptype = JPType.Query;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -36,7 +37,7 @@ public class QueryNode extends Node {
             conditionValue = res.register(inter.visit(c.condition, context));
             if (res.shouldReturn()) return res;
             Obj bx = conditionValue.bool();
-            if (bx.jptype != Constants.JPType.Boolean) return res.failure(RTError.Type(
+            if (bx.jptype != JPType.Boolean) return res.failure(RTError.Type(
                     pos_start, pos_end,
                     "Conditional must be a boolean",
                     context
@@ -57,4 +58,30 @@ public class QueryNode extends Node {
         return res.success(new Null());
     }
 
+    @Override
+    public Node optimize() {
+        List<Case> optimizedCases = new ArrayList<>();
+        for (Case c : cases) {
+            optimizedCases.add(new Case(c.condition.optimize(), c.statements.optimize(), c.returnValue));
+        }
+        return new QueryNode(optimizedCases, else_case != null ? new ElseCase(else_case.statements.optimize(), else_case.returnValue) : null);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> children = new ArrayList<>();
+        for (Case c : cases) {
+            children.add(c.condition);
+            children.add(c.statements);
+        }
+        if (else_case != null) {
+            children.add(else_case.statements);
+        }
+        return children;
+    }
+
+    @Override
+    public String visualize() {
+        return "query";
+    }
 }

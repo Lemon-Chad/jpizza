@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Token;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
@@ -28,7 +28,7 @@ public class EnumJChild extends Value {
         this.types = types;
         this.generics = generics;
 
-        jptype = Constants.JPType.EnumChild;
+        jptype = JPType.EnumChild;
     }
 
     // Functions
@@ -66,7 +66,7 @@ public class EnumJChild extends Value {
             Obj arg = args.get(i);
 
             Obj oType = arg.type().astring();
-            if (oType.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+            if (oType.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                     arg.get_start(), arg.get_end(),
                     "Type is not a string",
                     arg.get_ctx()
@@ -107,7 +107,7 @@ public class EnumJChild extends Value {
     // Methods
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.EnumChild) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.EnumChild) return new Pair<>(new Bool(false), null);
         EnumJChild other = (EnumJChild) o;
         if (other.parent != parent) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(other.val == val), null);

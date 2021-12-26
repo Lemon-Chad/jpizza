@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -43,7 +43,7 @@ public class VarAssignNode extends Node {
         locked = false;
         defining = true;
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = Constants.JPType.VarAssign;
+        jptype = JPType.VarAssign;
     }
 
     public VarAssignNode(Token var_name_tok, Node value_node, boolean locked) {
@@ -53,7 +53,7 @@ public class VarAssignNode extends Node {
 
         defining = true;
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = Constants.JPType.VarAssign;
+        jptype = JPType.VarAssign;
     }
 
     @SuppressWarnings("unused")
@@ -64,7 +64,7 @@ public class VarAssignNode extends Node {
 
         this.defining = defining;
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = Constants.JPType.VarAssign;
+        jptype = JPType.VarAssign;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -87,4 +87,22 @@ public class VarAssignNode extends Node {
         return res.success(value);
     }
 
+    @Override
+    public Node optimize() {
+        Node val = value_node.optimize();
+        return new VarAssignNode(var_name_tok, val, locked)
+                .setDefining(defining)
+                .setRange(min, max)
+                .setType(type);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(value_node);
+    }
+
+    @Override
+    public String visualize() {
+        return "var " + var_name_tok.value;
+    }
 }

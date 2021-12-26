@@ -1,7 +1,7 @@
 package lemon.jpizza.libraries.httpretzel;
 
 import com.sun.net.httpserver.HttpServer;
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Function;
@@ -45,7 +45,7 @@ public class HTTPretzel extends Library {
     public RTResult execute_init(Context execCtx) {
         RTResult res = new RTResult();
 
-        Obj hst = res.register(checkType(execCtx.symbolTable.get("host"), "String", Constants.JPType.String));
+        Obj hst = res.register(checkType(execCtx.symbolTable.get("host"), "String", JPType.String));
         Obj adr = res.register(checkPosInt(execCtx.symbolTable.get("addr")));
 
         if (res.error != null) return res;
@@ -71,7 +71,7 @@ public class HTTPretzel extends Library {
         res.register(inited());
         if (res.error != null) return res;
 
-        Obj rte = res.register(checkType(execCtx.symbolTable.get("route"), "String", Constants.JPType.String));
+        Obj rte = res.register(checkType(execCtx.symbolTable.get("route"), "String", JPType.String));
         Obj fnc = res.register(checkFunction(execCtx.symbolTable.get("func")));
         if (res.error != null) return res;
 

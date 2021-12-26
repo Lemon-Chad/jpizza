@@ -21,11 +21,11 @@ public class Value extends Obj {
     public Context context;
 
     public Value(Object value) {
-        this.value = value; jptype = Constants.JPType.Generic;
+        this.value = value; jptype = JPType.Generic;
         set_pos(); set_context();
     }
     public Value() {
-        jptype = Constants.JPType.Generic;
+        jptype = JPType.Generic;
         set_pos(); set_context();
     }
 

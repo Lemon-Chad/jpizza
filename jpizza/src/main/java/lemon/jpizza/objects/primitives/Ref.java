@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.objects.Obj;
@@ -16,7 +16,7 @@ public class Ref extends Value {
     Obj inner;
     public Ref(Obj inner) {
         this.inner = inner;
-        jptype = Constants.JPType.Ref;
+        jptype = JPType.Ref;
         pos_start = inner.get_start(); pos_end = inner.get_end();
     }
 
@@ -79,7 +79,7 @@ public class Ref extends Value {
         if (!(o instanceof Obj)) return false;
 
         Obj other = (Obj) o;
-        while (other.jptype == Constants.JPType.Ref)
+        while (other.jptype == JPType.Ref)
             other = other.deref().a;
 
         if (inner.jptype != other.jptype) return false;

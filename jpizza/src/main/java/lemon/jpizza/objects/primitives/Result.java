@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.Value;
@@ -18,12 +18,12 @@ public class Result extends Value {
     public Result(String failure, String failtype) {
         this.failure = failure;
         this.failtype = failtype;
-        this.jptype = Constants.JPType.Res;
+        this.jptype = JPType.Res;
     }
 
     public Result(Obj success) {
         this.success = success;
-        this.jptype = Constants.JPType.Res;
+        this.jptype = JPType.Res;
     }
 
     // Functions

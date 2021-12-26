@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.values;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.generators.Parser.EnumChild;
@@ -21,7 +21,7 @@ public class EnumNode extends ValueNode {
         super(tok);
         this.children = children;
         this.pub = pub;
-        jptype = Constants.JPType.Enum;
+        jptype = JPType.Enum;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -47,4 +47,8 @@ public class EnumNode extends ValueNode {
         return new RTResult().success(e);
     }
 
+    @Override
+    public String visualize() {
+        return "Enume";
+    }
 }

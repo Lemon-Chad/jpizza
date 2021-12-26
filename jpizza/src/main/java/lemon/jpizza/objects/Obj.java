@@ -31,7 +31,7 @@ public abstract class Obj implements Serializable {
     public Position pos_start;
     public Position pos_end;
     public Context context;
-    public Constants.JPType jptype;
+    public JPType jptype;
 
     public Object getValue() { return value; }
 
@@ -112,7 +112,7 @@ public abstract class Obj implements Serializable {
         if (!(o instanceof Obj)) return false;
 
         Obj other = (Obj) o;
-        while (other.jptype == Constants.JPType.Ref)
+        while (other.jptype == JPType.Ref)
             other = other.deref().a;
 
         if (jptype != other.jptype) return false;

@@ -1,6 +1,6 @@
 package lemon.jpizza.objects.primitives;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.BooleanNode;
 import lemon.jpizza.objects.executables.Function;
@@ -17,7 +17,7 @@ import static lemon.jpizza.Tokens.TT;
 public class Bool extends Value {
     public Bool(boolean value) {
         super(value);
-        jptype = Constants.JPType.Boolean;
+        jptype = JPType.Boolean;
         boolval = value;
     }
 
@@ -38,7 +38,7 @@ public class Bool extends Value {
 
     @SuppressWarnings("unused")
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.Boolean) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.Boolean) return new Pair<>(new Bool(false), null);
         return new Pair<>(new Bool(this.boolval == o.boolval), null);
     }
 

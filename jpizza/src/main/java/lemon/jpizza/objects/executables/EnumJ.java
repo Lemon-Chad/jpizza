@@ -1,13 +1,10 @@
 package lemon.jpizza.objects.executables;
 
-import lemon.jpizza.Constants;
-import lemon.jpizza.Pair;
+import lemon.jpizza.*;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.NullNode;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.Value;
-import lemon.jpizza.Token;
-import lemon.jpizza.Tokens;
 import lemon.jpizza.objects.primitives.*;
 
 import java.util.ArrayList;
@@ -26,7 +23,7 @@ public class EnumJ extends Value {
         for (String key : keySet)
             children.get(key).setParent(this);
 
-        jptype = Constants.JPType.Enum;
+        jptype = JPType.Enum;
     }
 
     // Functions
@@ -38,7 +35,7 @@ public class EnumJ extends Value {
     // Methods
 
     public Pair<Obj, RTError> eq(Obj o) {
-        if (o.jptype != Constants.JPType.Enum) return new Pair<>(new Bool(false), null);
+        if (o.jptype != JPType.Enum) return new Pair<>(new Bool(false), null);
         EnumJ other = (EnumJ) o;
         return new Pair<>(new Bool(other.name.equals(name)), null);
     }

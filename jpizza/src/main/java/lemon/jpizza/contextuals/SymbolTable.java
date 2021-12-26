@@ -1,6 +1,6 @@
 package lemon.jpizza.contextuals;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.variables.AttrNode;
@@ -95,7 +95,7 @@ public class SymbolTable implements Serializable {
         if (!type.equals("any")) {
             Obj t = ((Obj) value).type().astring();
             String provided;
-            if (t.jptype != Constants.JPType.String)
+            if (t.jptype != JPType.String)
                 return RTError.makeDetails(RTError::Type, "Type is not a string");
             else if (!type.equals(provided = t.string))
                 return RTError.makeDetails(RTError::Type, "Got type " + provided + ", expected type " + type);
@@ -131,7 +131,7 @@ public class SymbolTable implements Serializable {
             else if (!expect.equals("any")) {
                 Obj type = value.type().astring();
                 String t;
-                if (type.jptype != Constants.JPType.String)
+                if (type.jptype != JPType.String)
                     return RTError.makeDetails(RTError::Type, "Type is not a string");
                 else if (!expect.equals(t = type.string))
                     return RTError.makeDetails(RTError::Type, "Got type " + t + ", expected type " + expect);

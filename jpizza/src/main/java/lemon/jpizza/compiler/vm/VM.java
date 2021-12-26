@@ -883,11 +883,11 @@ public class VM {
         };
     }
 
-    interface BitCall {
+    public interface BitCall {
         long call(long left, long right);
     }
 
-    double bitOp(double left, double right, BitCall call) {
+    public static double bitOp(double left, double right, BitCall call) {
         long power = 0;
         while (left % 1 != 0 || right % 1 != 0) {
             left *= 10;

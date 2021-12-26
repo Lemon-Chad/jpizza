@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Library;
@@ -54,7 +54,7 @@ public class HTTPLIB extends Library {
                 params.get_ctx()
         ));
 
-        if (params.jptype != Constants.JPType.Dict) return errX;
+        if (params.jptype != JPType.Dict) return errX;
 
         Map<Obj, Obj> mp = params.map;
         Map<String, String> args = new HashMap<>();
@@ -63,7 +63,7 @@ public class HTTPLIB extends Library {
             v = mp.get(k).astring();
             k = k.astring();
 
-            if (k.jptype != Constants.JPType.String || v.jptype != Constants.JPType.String) return errX;
+            if (k.jptype != JPType.String || v.jptype != JPType.String) return errX;
 
             args.put(k.string, v.string);
         }
@@ -145,7 +145,7 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_getRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (urlObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
@@ -168,7 +168,7 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_deleteRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (urlObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
@@ -191,14 +191,14 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_postRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (urlObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
         ));
 
         Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
-        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (bodyObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected body string",
                 urlObj.get_ctx()
@@ -223,14 +223,14 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult otherRequest(String method, Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (urlObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
         ));
 
         Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
-        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (bodyObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected body string",
                 urlObj.get_ctx()
@@ -275,14 +275,14 @@ public class HTTPLIB extends Library {
     @SuppressWarnings("DuplicatedCode")
     public RTResult execute_putRequest(Context execCtx) {
         Obj urlObj = ((Obj) execCtx.symbolTable.get("url")).astring();
-        if (urlObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (urlObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected URL string",
                 urlObj.get_ctx()
         ));
 
         Obj bodyObj = ((Obj) execCtx.symbolTable.get("body")).astring();
-        if (bodyObj.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (bodyObj.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 urlObj.get_start(), urlObj.get_end(),
                 "Expected body string",
                 urlObj.get_ctx()

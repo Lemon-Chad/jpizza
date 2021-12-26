@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries.socks;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.Obj;
@@ -19,7 +19,7 @@ public class GenConn {
     Context context;
 
     public RTError sendBytes(Obj data) {
-        if (data.jptype != Constants.JPType.Bytes) return RTError.Type(
+        if (data.jptype != JPType.Bytes) return RTError.Type(
                 data.get_start(), data.get_end(),
                 "Expected bytearray",
                 data.get_ctx()

@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
@@ -9,7 +9,9 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FuncDefNode extends Node {
     public final Token var_name_tok;
@@ -46,7 +48,7 @@ public class FuncDefNode extends Node {
                 arg_name_toks != null && arg_name_toks.size() > 0 ? arg_name_toks.get(0).pos_start : body_node.pos_start
                 );
         pos_end = body_node.pos_end;
-        jptype = Constants.JPType.FuncDef;
+        jptype = JPType.FuncDef;
     }
 
     public FuncDefNode setCatcher(boolean c) {
@@ -71,5 +73,29 @@ public class FuncDefNode extends Node {
         if (funcName != null) context.symbolTable.define(funcName, funcValue);
 
         return res.success(funcValue);
+    }
+
+    @Override
+    public Node optimize() {
+        Node body = body_node.optimize();
+        List<Node> optimizedDefaults = new ArrayList<>();
+        for (Node n : defaults) {
+            optimizedDefaults.add(n.optimize());
+        }
+        return new FuncDefNode(var_name_tok, arg_name_toks, arg_type_toks, body, autoreturn, async, returnType,
+                optimizedDefaults, defaultCount, generic_toks, argname, kwargname).setCatcher(catcher);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(body_node);
+    }
+
+    @Override
+    public String visualize() {
+        return "fn" + (
+                var_name_tok != null ?
+                " " + var_name_tok.value : ""
+        ) + "(" + arg_name_toks.stream().map(x -> x.value.toString()).collect(Collectors.joining(", ")) + ")";
     }
 }

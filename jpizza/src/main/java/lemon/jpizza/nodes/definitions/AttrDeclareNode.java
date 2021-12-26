@@ -54,4 +54,24 @@ public class AttrDeclareNode extends Node {
         return res;
     }
 
+    @Override
+    public Node optimize() {
+        return new AttrDeclareNode(
+                attrToken,
+                type,
+                isstatic,
+                isprivate,
+                nValue == null ? null : nValue.optimize()
+        );
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Collections.singletonList(nValue);
+    }
+
+    @Override
+    public String visualize() {
+        return "!attr " + name;
+    }
 }

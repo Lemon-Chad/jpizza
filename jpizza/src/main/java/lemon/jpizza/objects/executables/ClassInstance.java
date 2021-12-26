@@ -30,7 +30,7 @@ public class ClassInstance extends Value {
         parent = parentName;
 
         set_pos(); set_context();
-        jptype = Constants.JPType.ClassInstance;
+        jptype = JPType.ClassInstance;
     }
 
     public Object access(Obj o) {
@@ -44,7 +44,7 @@ public class ClassInstance extends Value {
     }
 
     public Object _access(Obj o) {
-        if (o.jptype != Constants.JPType.String) return RTError.Type(
+        if (o.jptype != JPType.String) return RTError.Type(
                 o.get_start(), o.get_end(),
                 "Expected string",
                 o.get_ctx()
@@ -171,7 +171,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new Dict(new HashMap<>()).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.Dict) {
+        if (res.error != null || x.jptype != JPType.Dict) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
@@ -186,7 +186,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new PList(new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.List) {
+        if (res.error != null || x.jptype != JPType.List) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
@@ -205,7 +205,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new Num(0).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.Number) {
+        if (res.error != null || x.jptype != JPType.Number) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
@@ -220,7 +220,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new Bytes(new byte[0]).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.Bytes) {
+        if (res.error != null || x.jptype != JPType.Bytes) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
@@ -235,7 +235,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new Bool(true).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.Boolean) {
+        if (res.error != null || x.jptype != JPType.Boolean) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
@@ -252,7 +252,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new Str(ctx.displayName).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.String) {
+        if (res.error != null || x.jptype != JPType.String) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else
@@ -276,7 +276,7 @@ public class ClassInstance extends Value {
         if (func == null)
             return new ClassInstance(ctx, parent).set_context(context).set_pos(pos_start, pos_end);
         Obj x = res.register(func.execute(new ArrayList<>(), new ArrayList<>(), new HashMap<>(), new Interpreter()));
-        if (res.error != null || x.jptype != Constants.JPType.ClassInstance) {
+        if (res.error != null || x.jptype != JPType.ClassInstance) {
             if (res.error != null)
                 Shell.logger.warn(res.error.asString());
             else

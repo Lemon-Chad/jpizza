@@ -1,6 +1,6 @@
 package lemon.jpizza.nodes.definitions;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.Token;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
@@ -44,7 +44,7 @@ public class DestructNode extends Node {
 
         Obj tar = res.register(inter.visit(target, context));
         if (res.error != null) return res;
-        if (tar.jptype != Constants.JPType.ClassInstance) return res.failure(RTError.Type(
+        if (tar.jptype != JPType.ClassInstance) return res.failure(RTError.Type(
                 tar.get_start(), tar.get_end(),
                 "Expected class instance",
                 context
@@ -78,5 +78,32 @@ public class DestructNode extends Node {
             context.symbolTable.define(sub, v);
         }
         return new RTResult().success(new Null());
+    }
+
+    @Override
+    public Node optimize() {
+        Node target = this.target.optimize();
+        if (glob)
+            return new DestructNode(target);
+        else
+            return new DestructNode(target, subs);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return List.of(target);
+    }
+
+    @Override
+    public String visualize() {
+        if (glob) {
+            return "destruct *";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("destruct ");
+            for (Token struct : subs)
+                sb.append(struct.value.toString()).append(" ");
+            return sb.substring(0, sb.length() - 1);
+        }
     }
 }

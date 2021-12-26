@@ -1,6 +1,7 @@
 package lemon.jpizza.libraries;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.objects.executables.Library;
@@ -72,7 +73,7 @@ public class FileLib extends Library {
     }
 
     private RTResult getdirectory(Obj value, Context ctx) {
-        if (value.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (value.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected String",
                 ctx
@@ -237,7 +238,7 @@ public class FileLib extends Library {
         String dir = d.string;
 
         Obj vtwo = ((Obj) execCtx.symbolTable.get("val")).astring();
-        if (vtwo.jptype != Constants.JPType.String) return res.failure(RTError.Type(
+        if (vtwo.jptype != JPType.String) return res.failure(RTError.Type(
                 vtwo.get_start(), vtwo.get_end(),
                 "Expected String",
                 execCtx
@@ -278,7 +279,7 @@ public class FileLib extends Library {
         try {
             created = file.createNewFile();
             FileOutputStream fout = new FileOutputStream(file);
-            if (val.jptype != Constants.JPType.Bytes) {
+            if (val.jptype != JPType.Bytes) {
                 ObjectOutputStream oos = new ObjectOutputStream(fout);
                 oos.writeObject(val);
                 oos.close();

@@ -1,8 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
-import lemon.jpizza.Cache;
-import lemon.jpizza.Constants;
-import lemon.jpizza.Tokens;
+import lemon.jpizza.*;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
@@ -12,7 +10,6 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.executables.EnumJChild;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
-import lemon.jpizza.Token;
 
 import java.util.*;
 
@@ -30,7 +27,7 @@ public class CallNode extends Node {
 
         pos_start = nodeToCall.pos_start.copy();
         pos_end = (argNodes != null && argNodes.size() > 0 ? argNodes.get(argNodes.size() - 1) : nodeToCall).pos_end.copy();
-        jptype = Constants.JPType.Call;
+        jptype = JPType.Call;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
@@ -44,7 +41,7 @@ public class CallNode extends Node {
         int size = argNodes.size();
         for (int i = 0; i < size; i++) {
             Node node = argNodes.get(i);
-            if (node.jptype == Constants.JPType.Spread) {
+            if (node.jptype == JPType.Spread) {
                 SpreadNode spread = (SpreadNode) node;
                 Obj obj = res.register(inter.visit(spread.internal, context));
                 if (res.shouldReturn()) return res;
@@ -69,7 +66,7 @@ public class CallNode extends Node {
             if (res.shouldReturn()) return res;
         }
 
-        if (valueToCall.jptype == Constants.JPType.EnumChild) {
+        if (valueToCall.jptype == JPType.EnumChild) {
             Obj ret = res.register(((EnumJChild) valueToCall).instance(context, args, processedTypes));
             if (res.error != null) return res;
             return res.success(ret);
@@ -78,14 +75,14 @@ public class CallNode extends Node {
         BaseFunction bValueToCall;
         ClassPlate cValueToCall;
         Obj retValue;
-        if (valueToCall.jptype == Constants.JPType.ClassPlate) {
+        if (valueToCall.jptype == JPType.ClassPlate) {
             cValueToCall = (ClassPlate) valueToCall;
             retValue = res.register(cValueToCall.execute(args, processedTypes, kwargs, inter));
         }
         else {
             bValueToCall = (BaseFunction) valueToCall.copy().set_pos(pos_start, pos_end);
             Cache cache;
-            if (bValueToCall.jptype == Constants.JPType.Library)
+            if (bValueToCall.jptype == JPType.Library)
                 cache = null;
             else
                 cache = (Cache) inter.memo.get(bValueToCall.name, args.toArray(new Obj[0]));
@@ -106,4 +103,43 @@ public class CallNode extends Node {
         return res.success(retValue.copy().set_pos(pos_start, pos_end));
     }
 
+    @Override
+    public Node optimize() {
+        List<Node> optimizedArgNodes = new ArrayList<>();
+        for (Node argNode : argNodes) {
+            Node optimized = argNode.optimize();
+            if (optimized.jptype == JPType.Spread && optimized.constant) {
+                SpreadNode spread = (SpreadNode) optimized;
+                if (spread.internal.jptype == JPType.List) {
+                    for (Node node : spread.internal.asList())
+                        optimizedArgNodes.add(node.optimize());
+                }
+            }
+            else {
+                optimizedArgNodes.add(optimized);
+            }
+        }
+
+        Map<String, Node> optimizedKwargs = new HashMap<>();
+        for (Map.Entry<String, Node> entry : kwargs.entrySet()) {
+            Node optimized = entry.getValue().optimize();
+            optimizedKwargs.put(entry.getKey(), optimized);
+        }
+
+        return new CallNode(nodeToCall, optimizedArgNodes, generics, optimizedKwargs);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> children = new ArrayList<>();
+        children.add(nodeToCall);
+        children.addAll(argNodes);
+        children.addAll(kwargs.values());
+        return children;
+    }
+
+    @Override
+    public String visualize() {
+        return "call";
+    }
 }

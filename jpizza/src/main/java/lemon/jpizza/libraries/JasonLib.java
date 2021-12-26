@@ -1,6 +1,6 @@
 package lemon.jpizza.libraries;
 
-import lemon.jpizza.Constants;
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Lexer;
@@ -42,7 +42,7 @@ public class JasonLib extends Library {
 
     public RTResult execute_loads(Context execCtx) {
         Obj value = ((Obj) execCtx.symbolTable.get("value")).astring();
-        if (value.jptype != Constants.JPType.String) return new RTResult().failure(RTError.Type(
+        if (value.jptype != JPType.String) return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected String",
                 execCtx
@@ -81,9 +81,9 @@ public class JasonLib extends Library {
     }
 
     public String toStr(Obj o) {
-        if (o.jptype == Constants.JPType.String) return "\"" + o + "\"";
-        else if (o.jptype == Constants.JPType.Dict) return visitDictionary(o);
-        else if (o.jptype == Constants.JPType.List) return visitList(o);
+        if (o.jptype == JPType.String) return "\"" + o + "\"";
+        else if (o.jptype == JPType.Dict) return visitDictionary(o);
+        else if (o.jptype == JPType.List) return visitList(o);
         else return o.toString();
     }
 
@@ -108,7 +108,7 @@ public class JasonLib extends Library {
 
     public RTResult execute_dumps(Context execCtx) {
         Obj value = ((Obj) execCtx.symbolTable.get("value")).dictionary();
-        if (value.jptype != Constants.JPType.Dict && value.jptype != Constants.JPType.List)
+        if (value.jptype != JPType.Dict && value.jptype != JPType.List)
             return new RTResult().failure(RTError.Type(
                 value.get_start(), value.get_end(),
                 "Expected Dict or List",
