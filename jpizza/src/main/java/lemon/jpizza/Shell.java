@@ -225,12 +225,23 @@ public class Shell {
     }
 
     public static Pair<JFunc, Error> compile(String fn, String text) {
+        return compile(fn, text, false);
+    }
+
+    public static Pair<JFunc, Error> compile(String fn, String text, boolean scope) {
         Pair<List<Node>, Error> ast = getAst(fn, text);
         if (ast.b != null) return new Pair<>(null, ast.b);
         List<Node> outNode = ast.a;
 
         Compiler compiler = new Compiler(FunctionType.Script, text);
-        return new Pair<>(compiler.compileBlock(outNode), null);
+
+        if (scope)
+            compiler.beginScope();
+        JFunc func = compiler.compileBlock(outNode);
+        if (scope)
+            compiler.endScope(ast.a.get(0).pos_start, ast.a.get(ast.a.size() - 1).pos_end);
+
+        return new Pair<>(func, null);
     }
 
     public static Error compile(String fn, String text, String outpath) {

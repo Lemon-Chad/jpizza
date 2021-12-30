@@ -33,6 +33,8 @@ public class VM {
     final JStack<Value> stack;
     int ip;
 
+    List<String> exports = null;
+
     Stack<Traceback> tracebacks;
     final Map<String, Var> globals;
 
@@ -442,7 +444,7 @@ public class VM {
             }
             else if (frame.bound.isNamespace) {
                 Namespace ns = frame.bound.asNamespace();
-                Value field = ns.getField(name);
+                Value field = ns.getField(name, true);
                 if (field != null) {
                     push(field);
                     return VMResult.OK;
@@ -832,7 +834,7 @@ public class VM {
     }
 
     VMResult access(Value val, Namespace namespace, String name) {
-        return access(val, name, namespace.getField(name));
+        return access(val, name, namespace.getField(name, false));
     }
 
     VMResult access(Value val, Instance instance, String name) {
@@ -1671,10 +1673,12 @@ public class VM {
                     for (int i = 0; i < closure.upvalueCount; i++) {
                         int isLocal = readByte();
                         int index = readByte();
-                        if (isLocal == 1)
-                            closure.upvalues[i] = captureUpvalue(frame.slots + index);
-                        else
-                            closure.upvalues[i] = frame.closure.upvalues[index];
+
+                        switch (isLocal) {
+                            case 0 -> closure.upvalues[i] = frame.closure.upvalues[index];
+                            case 1 -> closure.upvalues[i] = captureUpvalue(frame.slots + index);
+                            case 2 -> closure.upvalues[i] = globals.get(frame.closure.function.chunk.constants().valuesArray[index].asString());
+                        }
                     }
 
                     yield VMResult.OK;
@@ -1890,7 +1894,7 @@ public class VM {
             case HeadCode.SetMainClass, HeadCode.SetMainFunction -> 1;
             default -> -1;
         };
-        if (argc != rArgc) {
+        if (argc != rArgc && rArgc != -1) {
             runtimeError("Argument Count", "Expected " + rArgc + " arguments, got " + argc);
             return VMResult.ERROR;
         }
@@ -1899,6 +1903,12 @@ public class VM {
             case HeadCode.Memoize -> frame.memoize = true;
             case HeadCode.SetMainFunction -> mainFunction = args[0];
             case HeadCode.SetMainClass -> mainClass = args[0];
+            case HeadCode.Export -> {
+                if (exports == null) {
+                    exports = new ArrayList<>();
+                }
+                exports.addAll(Arrays.asList(args));
+            }
         }
 
         push(new Value());
@@ -1970,7 +1980,7 @@ public class VM {
     }
 
     public Namespace asNamespace(String name) {
-        return new Namespace(name, globals);
+        return new Namespace(name, globals, exports == null ? new ArrayList<>(globals.keySet()) : exports);
     }
 
 }

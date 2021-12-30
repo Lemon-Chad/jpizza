@@ -49,6 +49,6 @@ public class EnumNode extends ValueNode {
 
     @Override
     public String visualize() {
-        return "Enume";
+        return "Enum";
     }
 }

@@ -40,7 +40,24 @@ public class Compiler {
 
     }
 
-    static record Upvalue(int index, boolean isLocal) {}
+    static class Upvalue {
+        boolean isLocal;
+        boolean isGlobal;
+
+        String globalName;
+        int index;
+
+        public Upvalue(int index, boolean isLocal) {
+            this.index = index;
+            this.isLocal = isLocal;
+            this.isGlobal = false;
+        }
+
+        public Upvalue(String globalName) {
+            this.isGlobal = true;
+            this.globalName = globalName;
+        }
+    }
 
     final Compiler enclosing;
 
@@ -94,20 +111,17 @@ public class Compiler {
         this.macros = new HashMap<>();
     }
 
-    void beginScope() {
+    public void beginScope() {
         this.scopeDepth++;
     }
 
-    void endScope(@NotNull Position start, @NotNull Position end) {
+    public void endScope(@NotNull Position start, @NotNull Position end) {
         destack(locals, start, end);
         destack(generics, start, end);
         scopeDepth--;
     }
 
-    int destack(Local[] locals, @NotNull Position start, @NotNull Position end, boolean getint) {
-        if (!getint)
-            throw new RuntimeException("Not implemented");
-
+    int destack(Local[] locals) {
         int offs = 0;
         int count = 0;
         int localCount = this.localCount;
@@ -127,7 +141,7 @@ public class Compiler {
     }
 
     void destack(Local[] locals, @NotNull Position start, @NotNull Position end) {
-        int count = destack(locals, start, end, true);
+        int count = destack(locals);
         for (int i = 0; i < count; i++) {
             emit(OpCode.Pop, start, end);
             localCount--;
@@ -165,6 +179,24 @@ public class Compiler {
         return function.upvalueCount++;
     }
 
+    int addUpvalue(String name) {
+        int upvalueCount = function.upvalueCount;
+
+        for (int i = 0; i < upvalueCount; i++) {
+            Upvalue upvalue = upvalues[i];
+            if (Objects.equals(upvalue.globalName, name) && upvalue.isGlobal) {
+                return i;
+            }
+        }
+
+        upvalues[upvalueCount] = new Upvalue(name);
+        return function.upvalueCount++;
+    }
+
+    boolean hasGlobal(String name) {
+        return globals.contains(name) || enclosing != null && enclosing.hasGlobal(name);
+    }
+
     int resolveUpvalue(String name) {
         if (enclosing == null) return -1;
 
@@ -178,7 +210,7 @@ public class Compiler {
             return addUpvalue(upvalue, false);
         }
 
-        return -1;
+        return hasGlobal(name) ? addUpvalue(name) : -1;
     }
 
     void patchBreaks() {
@@ -448,6 +480,7 @@ public class Compiler {
         emit(OpCode.Destruct, node.glob ? -1 : node.subs.size(), node.pos_start, node.pos_end);
         if (!node.glob) for (Token sub : node.subs) {
             String name = sub.value.toString();
+            globals.add(name);
             emit(chunk().addConstant(new Value(name)), sub.pos_start, sub.pos_end);
         }
     }
@@ -458,6 +491,7 @@ public class Compiler {
             case "memoize"  -> HeadCode.Memoize;
             case "func"     -> HeadCode.SetMainFunction;
             case "object"   -> HeadCode.SetMainClass;
+            case "export"   -> HeadCode.Export;
             default         -> -1;
         }, node.args.size(), node.pos_start, node.pos_end);
         for (Token arg : node.args) {
@@ -510,17 +544,23 @@ public class Compiler {
                     genericSlots.add(-1);
                 }
 
-            children.put(child.token().value.toString(), new JEnumChild(
+            String name = child.token().value.toString();
+            children.put(name, new JEnumChild(
                     i,
                     child.params(),
                     child.types(),
                     child.generics(),
                     genericSlots
             ));
+
+            if (node.pub)
+                globals.add(name);
         }
 
+        String name = node.tok.value.toString();
+        globals.add(name);
         int constant = chunk().addConstant(new Value(new JEnum(
-                node.tok.value.toString(),
+                name,
                 children
         )));
         emit(new int[]{ OpCode.Enum, constant, node.pub ? 1 : 0 }, node.pos_start, node.pos_end);
@@ -584,6 +624,7 @@ public class Compiler {
 
         int constant = chunk().addConstant(new Value(fn));
         emit(OpCode.Import, constant, node.pos_start, node.pos_end);
+        globals.add(fn);
 
         if (node.as_tok != null)
             constant = chunk().addConstant(new Value(node.as_tok.value.toString()));
@@ -801,9 +842,16 @@ public class Compiler {
 
         emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(function)), node.defaultCount }, node.pos_start, node.pos_end);
 
-        for (int i = 0; i < function.upvalueCount; i++)
-            emit(compiler.upvalues[i].isLocal ? 1 : 0, compiler.upvalues[i].index,
-                    node.pos_start, node.pos_end);
+        for (int i = 0; i < function.upvalueCount; i++) {
+            Upvalue upvalue = compiler.upvalues[i];
+            emit(upvalue.isLocal ? 1 : upvalue.isGlobal ? 2 : 0, node.pos_start, node.pos_end);
+            if (!upvalue.isGlobal) {
+                emit(upvalue.index, node.pos_start, node.pos_end);
+            }
+            else {
+                emit(chunk().addConstant(new Value(upvalue.globalName)), node.pos_start, node.pos_end);
+            }
+        }
     }
 
     void compileNull(@NotNull Position start, @NotNull Position end) {
@@ -922,7 +970,7 @@ public class Compiler {
         else if ((arg = resolveUpvalue(name)) != -1) {
             emit(OpCode.GetUpvalue, arg, start, end);
         }
-        else if (inPattern && !globals.contains(name)) {
+        else if (inPattern && !hasGlobal(name)) {
             arg = chunk().addConstant(new Value(name));
             addLocal(name, start, end);
             emit(OpCode.PatternVars, arg, start, end);
@@ -1154,7 +1202,7 @@ public class Compiler {
             emit(OpCode.CollectLoop, body.pos_start, body.pos_end);
         }
 
-        int popCount = destack(locals, body.pos_start, body.pos_end, true) + destack(generics, body.pos_start, body.pos_end, true);
+        int popCount = destack(locals) + destack(generics);
 
         endScope(body.pos_start, body.pos_end);
         emitLoop(loopStart, body.pos_start, body.pos_end);
