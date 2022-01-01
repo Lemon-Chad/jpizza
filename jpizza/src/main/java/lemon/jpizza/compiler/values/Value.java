@@ -276,7 +276,8 @@ public class Value implements Serializable {
             list.forEach(k -> {
                 if (k.isString) {
                     result.append('"').append(k.string).append('"');
-                } else {
+                }
+                else {
                     result.append(k.asString());
                 }
                 result.append(", ");
@@ -291,13 +292,15 @@ public class Value implements Serializable {
             map.forEach((k, v) -> {
                 if (k.isString) {
                     result.append('"').append(k.string).append('"');
-                } else {
+                }
+                else {
                     result.append(k.asString());
                 }
                 result.append(": ");
                 if (v.isString) {
                     result.append('"').append(v.string).append('"');
-                } else {
+                }
+                else {
                     result.append(v.asString());
                 }
                 result.append(", ");

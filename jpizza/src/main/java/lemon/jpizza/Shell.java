@@ -2,6 +2,7 @@ package lemon.jpizza;
 
 import lemon.jpizza.compiler.Compiler;
 import lemon.jpizza.compiler.FunctionType;
+import lemon.jpizza.compiler.values.Var;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.compiler.vm.VMResult;
@@ -33,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Shell {
@@ -41,6 +43,7 @@ public class Shell {
     public static final SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
     public static VM vm;
+    public static Map<String, Var> globals;
     public static final String fileEncoding = System.getProperty("file.encoding");
 
     public static String[] getFNDirs(String dir) {
@@ -72,14 +75,12 @@ public class Shell {
     @SuppressWarnings("DuplicatedCode")
     public static void main(String[] args) throws IOException {
         root = System.getenv("JPIZZA_DATA_DIR") == null ? System.getProperty("user.home") + "/.jpizza" : System.getenv("JPIZZA_DATA_DIR");
-        Scanner in = new Scanner(System.in);
         initLibs();
 
         PList cmdargs = new PList(new ArrayList<>());
         for (String arg : args) {
             cmdargs.append(new Str(arg));
         }
-        globalSymbolTable.define("CMDARGS", cmdargs);
 
         if (args.length != 2 && args.length > 0) {
             if (args[0].equals("help")) {
@@ -163,15 +164,23 @@ public class Shell {
             return;
         }
 
+        repl(args);
+
+    }
+
+    public static void repl(String[] args) {
+        Scanner in = new Scanner(System.in);
+
         Shell.logger.outln("Exit with 'quit'");
         Shell.logger.enableTips();
+
         while (true) {
             Shell.logger.out("-> ");
             String input = in.nextLine() + ";";
 
             if (input.equals("quit;"))
                 break;
-           //  compile("<shell>", input, "shell.jbox");
+            //  compile("<shell>", input, "shell.jbox");
             Pair<JFunc, Error> a = compile("<shell>", input);
             if (a.b != null) {
                 Shell.logger.fail(a.b.asString());

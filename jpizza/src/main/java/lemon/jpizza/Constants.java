@@ -17,17 +17,20 @@ public class Constants {
     public static final char[] LETTERS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static final char[] LETTERS_DIGITS = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             .toCharArray();
-    public static final List<Tokens.TT> TYPETOKS = Arrays.asList(
-            Tokens.TT.IDENTIFIER,
-            Tokens.TT.KEYWORD,
-            Tokens.TT.FLOAT,
-            Tokens.TT.INT,
-            Tokens.TT.LPAREN,
-            Tokens.TT.RPAREN,
-            Tokens.TT.LSQUARE,
-            Tokens.TT.RSQUARE
+    public static final List<TokenType> TYPETOKS = Arrays.asList(
+            TokenType.Identifier,
+            TokenType.Keyword,
+            TokenType.Float,
+            TokenType.Int,
+            TokenType.LeftParen,
+            TokenType.RightParen,
+            TokenType.LeftBracket,
+            TokenType.RightBracket,
+            TokenType.RightAngle,
+            TokenType.LeftAngle
     );
     public static final String[] KEYWORDS = {
+            "yields",
             "free",
             "assert",
             "let",
@@ -432,21 +435,21 @@ class SocketClient {
         return sb.toString();
     }
 
-    public static final Map<Tokens.TT, Operations.OP> tto = new HashMap<>(){{
-        put(Tokens.TT.PLUS, Operations.OP.ADD);
-        put(Tokens.TT.MINUS, Operations.OP.SUB);
-        put(Tokens.TT.MUL, Operations.OP.MUL);
-        put(Tokens.TT.DIV, Operations.OP.DIV);
-        put(Tokens.TT.POWER, Operations.OP.FASTPOW);
-        put(Tokens.TT.EE, Operations.OP.EQ);
-        put(Tokens.TT.NE, Operations.OP.NE);
-        put(Tokens.TT.LT, Operations.OP.LT);
-        put(Tokens.TT.LTE, Operations.OP.LTE);
-        put(Tokens.TT.AND, Operations.OP.INCLUDING);
-        put(Tokens.TT.OR, Operations.OP.ALSO);
-        put(Tokens.TT.MOD, Operations.OP.MOD);
-        put(Tokens.TT.DOT, Operations.OP.GET);
-        put(Tokens.TT.LSQUARE, Operations.OP.BRACKET);
+    public static final Map<TokenType, Operations.OP> tto = new HashMap<>(){{
+        put(TokenType.Plus, Operations.OP.ADD);
+        put(TokenType.Minus, Operations.OP.SUB);
+        put(TokenType.Star, Operations.OP.MUL);
+        put(TokenType.Slash, Operations.OP.DIV);
+        put(TokenType.Caret, Operations.OP.FASTPOW);
+        put(TokenType.EqualEqual, Operations.OP.EQ);
+        put(TokenType.BangEqual, Operations.OP.NE);
+        put(TokenType.LeftAngle, Operations.OP.LT);
+        put(TokenType.LessEquals, Operations.OP.LTE);
+        put(TokenType.Ampersand, Operations.OP.INCLUDING);
+        put(TokenType.Pipe, Operations.OP.ALSO);
+        put(TokenType.Percent, Operations.OP.MOD);
+        put(TokenType.Dot, Operations.OP.GET);
+        put(TokenType.LeftBracket, Operations.OP.BRACKET);
     }};
 
     public static final Map<String, JPType> methTypes = new HashMap<>(){{

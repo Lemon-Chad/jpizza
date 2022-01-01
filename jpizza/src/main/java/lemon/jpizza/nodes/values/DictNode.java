@@ -74,13 +74,15 @@ public class DictNode extends Node {
         dict.forEach((k, v) -> {
             if (k.jptype == JPType.String) {
                 result.append('"').append(k.asString()).append('"');
-            } else {
+            }
+            else {
                 result.append(k.asString());
             }
             result.append(": ");
             if (v.jptype == JPType.String) {
                 result.append('"').append(v.asString()).append('"');
-            } else {
+            }
+            else {
                 result.append(v.asString());
             }
             result.append(", ");

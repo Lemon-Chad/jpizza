@@ -8,8 +8,6 @@ import lemon.jpizza.objects.primitives.Num;
 import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-
 public class NumberNode extends ValueNode {
     public final double val;
     public final boolean hex;
@@ -29,14 +27,14 @@ public class NumberNode extends ValueNode {
     }
 
     public NumberNode(int v, @NotNull Position pos_start, @NotNull Position pos_end) {
-        super(new Token(Tokens.TT.IDENTIFIER, "null", pos_start, pos_end));
+        super(new Token(TokenType.Identifier, "null", pos_start, pos_end));
         val = v;
         hex = true;
         jptype = JPType.Number;
     }
 
     public NumberNode(double v, @NotNull Position pos_start, @NotNull Position pos_end) {
-        super(new Token(Tokens.TT.IDENTIFIER, "null", pos_start, pos_end));
+        super(new Token(TokenType.Identifier, "null", pos_start, pos_end));
         val = v;
         hex = true;
         jptype = JPType.Number;

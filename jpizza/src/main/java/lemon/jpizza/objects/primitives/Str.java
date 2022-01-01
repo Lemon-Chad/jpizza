@@ -2,6 +2,7 @@ package lemon.jpizza.objects.primitives;
 
 import lemon.jpizza.JPType;
 import lemon.jpizza.Pair;
+import lemon.jpizza.TokenType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.StringNode;
 import lemon.jpizza.objects.Obj;
@@ -11,7 +12,6 @@ import lemon.jpizza.Token;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static lemon.jpizza.Tokens.TT;
 import lemon.jpizza.objects.executables.Function;
 
 public class Str extends Value {
@@ -64,7 +64,7 @@ public class Str extends Value {
     public Obj number() { return new Num(string.length())
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj function() { return new Function(null, new StringNode(
-            new Token(TT.STRING, string, pos_start, pos_end)), null)
+            new Token(TokenType.String, string, pos_start, pos_end)), null)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj bool() { return new Bool(string.length() > 0)
             .set_context(context).set_pos(pos_start, pos_end); }

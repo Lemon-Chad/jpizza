@@ -68,7 +68,8 @@ public class ListNode extends Node {
         elements.forEach(k -> {
             if (k.jptype == JPType.String) {
                 result.append('"').append(k.asString()).append('"');
-            } else {
+            }
+            else {
                 result.append(k.asString());
             }
             result.append(", ");

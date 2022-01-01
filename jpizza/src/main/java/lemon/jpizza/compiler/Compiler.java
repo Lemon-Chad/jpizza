@@ -805,14 +805,14 @@ public class Compiler {
         }
 
         if (node.argname != null) {
-            Token argNameToken = new Token(Tokens.TT.IDENTIFIER, node.argname, node.pos_start, node.pos_end);
+            Token argNameToken = new Token(TokenType.Identifier, node.argname, node.pos_start, node.pos_end);
             compiler.function.totarity++;
             compiler.parseVariable(argNameToken, argNameToken.pos_start, argNameToken.pos_end);
             compiler.makeVar(compiler.localCount - 1, List.of("list"), false, argNameToken.pos_start, argNameToken.pos_end);
         }
 
         if (node.kwargname != null) {
-            Token kwargNameToken = new Token(Tokens.TT.IDENTIFIER, node.kwargname, node.pos_start, node.pos_end);
+            Token kwargNameToken = new Token(TokenType.Identifier, node.kwargname, node.pos_start, node.pos_end);
             compiler.function.totarity++;
             compiler.parseVariable(kwargNameToken, kwargNameToken.pos_start, kwargNameToken.pos_end);
             compiler.makeVar(compiler.localCount - 1, List.of("dict"), false, kwargNameToken.pos_start, kwargNameToken.pos_end);
@@ -874,7 +874,7 @@ public class Compiler {
     }
 
     void compile(BinOpNode node) {
-        if (node.op_tok == Tokens.TT.AND) {
+        if (node.op_tok == TokenType.Ampersand) {
             compile(node.left_node);
             int jump = emitJump(OpCode.JumpIfFalse, node.left_node.pos_start, node.left_node.pos_end);
             emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
@@ -882,7 +882,7 @@ public class Compiler {
             patchJump(jump);
             return;
         }
-        else if (node.op_tok == Tokens.TT.OR) {
+        else if (node.op_tok == TokenType.Pipe) {
             compile(node.left_node);
             int jump = emitJump(OpCode.JumpIfTrue, node.left_node.pos_start, node.left_node.pos_end);
             emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
@@ -890,13 +890,13 @@ public class Compiler {
             patchJump(jump);
             return;
         }
-        else if (node.op_tok == Tokens.TT.EQ) {
+        else if (node.op_tok == TokenType.FatArrow) {
             compile(node.right_node);
             compile(node.left_node);
             emit(OpCode.SetRef, node.pos_start, node.pos_end);
             return;
         }
-        else if (node.op_tok == Tokens.TT.BITE) {
+        else if (node.op_tok == TokenType.Colon) {
             emit(OpCode.NullErr, 1, node.pos_start, node.pos_end);
             compile(node.left_node);
             emit(OpCode.IncrNullErr, node.pos_start, node.pos_end);
@@ -909,29 +909,29 @@ public class Compiler {
         compile(node.left_node);
         compile(node.right_node);
         switch (node.op_tok) {
-            case PLUS -> emit(OpCode.Add, node.pos_start, node.pos_end);
-            case MINUS -> emit(OpCode.Subtract, node.pos_start, node.pos_end);
-            case MUL -> emit(OpCode.Multiply, node.pos_start, node.pos_end);
-            case DIV -> emit(OpCode.Divide, node.pos_start, node.pos_end);
-            case MOD -> emit(OpCode.Modulo, node.pos_start, node.pos_end);
-            case POWER -> emit(OpCode.Power, node.pos_start, node.pos_end);
+            case Plus -> emit(OpCode.Add, node.pos_start, node.pos_end);
+            case Minus -> emit(OpCode.Subtract, node.pos_start, node.pos_end);
+            case Star -> emit(OpCode.Multiply, node.pos_start, node.pos_end);
+            case Slash -> emit(OpCode.Divide, node.pos_start, node.pos_end);
+            case Percent -> emit(OpCode.Modulo, node.pos_start, node.pos_end);
+            case Caret -> emit(OpCode.Power, node.pos_start, node.pos_end);
 
-            case EE -> emit(OpCode.Equal, node.pos_start, node.pos_end);
-            case NE -> emit(new int[]{ OpCode.Equal, OpCode.Not }, node.pos_start, node.pos_end);
-            case GT -> emit(OpCode.GreaterThan, node.pos_start, node.pos_end);
-            case LT -> emit(OpCode.LessThan, node.pos_start, node.pos_end);
-            case GTE -> emit(new int[]{ OpCode.LessThan, OpCode.Not }, node.pos_start, node.pos_end);
-            case LTE -> emit(new int[]{ OpCode.GreaterThan, OpCode.Not }, node.pos_start, node.pos_end);
+            case EqualEqual -> emit(OpCode.Equal, node.pos_start, node.pos_end);
+            case BangEqual -> emit(new int[]{ OpCode.Equal, OpCode.Not }, node.pos_start, node.pos_end);
+            case RightAngle -> emit(OpCode.GreaterThan, node.pos_start, node.pos_end);
+            case LeftAngle -> emit(OpCode.LessThan, node.pos_start, node.pos_end);
+            case GreaterEquals -> emit(new int[]{ OpCode.LessThan, OpCode.Not }, node.pos_start, node.pos_end);
+            case LessEquals -> emit(new int[]{ OpCode.GreaterThan, OpCode.Not }, node.pos_start, node.pos_end);
 
-            case LSQUARE -> emit(OpCode.Index, node.pos_start, node.pos_end);
-            case DOT -> emit(OpCode.Get, node.pos_start, node.pos_end);
+            case LeftBracket -> emit(OpCode.Index, node.pos_start, node.pos_end);
+            case Dot -> emit(OpCode.Get, node.pos_start, node.pos_end);
 
-            case BITAND -> emit(OpCode.BitAnd, node.pos_start, node.pos_end);
-            case BITOR -> emit(OpCode.BitOr, node.pos_start, node.pos_end);
-            case BITXOR -> emit(OpCode.BitXor, node.pos_start, node.pos_end);
-            case LEFTSHIFT -> emit(OpCode.LeftShift, node.pos_start, node.pos_end);
-            case RIGHTSHIFT -> emit(OpCode.RightShift, node.pos_start, node.pos_end);
-            case SIGNRIGHTSHIFT -> emit(OpCode.SignRightShift, node.pos_start, node.pos_end);
+            case TildeAmpersand -> emit(OpCode.BitAnd, node.pos_start, node.pos_end);
+            case TildePipe -> emit(OpCode.BitOr, node.pos_start, node.pos_end);
+            case TildeCaret -> emit(OpCode.BitXor, node.pos_start, node.pos_end);
+            case LeftTildeArrow -> emit(OpCode.LeftShift, node.pos_start, node.pos_end);
+            case TildeTilde -> emit(OpCode.RightShift, node.pos_start, node.pos_end);
+            case RightTildeArrow -> emit(OpCode.SignRightShift, node.pos_start, node.pos_end);
 
             default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
@@ -940,13 +940,13 @@ public class Compiler {
     void compile(UnaryOpNode node) {
         compile(node.node);
         switch (node.op_tok) {
-            case PLUS -> {}
-            case MINUS -> emit(OpCode.Negate, node.pos_start, node.pos_end);
-            case NOT -> emit(OpCode.Not, node.pos_start, node.pos_end);
-            case INCR -> emit(OpCode.Increment, node.pos_start, node.pos_end);
-            case DECR -> emit(OpCode.Decrement, node.pos_start, node.pos_end);
-            case BITCOMPL -> emit(OpCode.BitCompl, node.pos_start, node.pos_end);
-            case QUEBACK -> emit(OpCode.FromBytes, node.pos_start, node.pos_end);
+            case Plus -> {}
+            case Minus -> emit(OpCode.Negate, node.pos_start, node.pos_end);
+            case Bang -> emit(OpCode.Not, node.pos_start, node.pos_end);
+            case PlusPlus -> emit(OpCode.Increment, node.pos_start, node.pos_end);
+            case MinusMinus -> emit(OpCode.Decrement, node.pos_start, node.pos_end);
+            case Tilde -> emit(OpCode.BitCompl, node.pos_start, node.pos_end);
+            case DollarSign -> emit(OpCode.FromBytes, node.pos_start, node.pos_end);
             default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
     }
@@ -1288,7 +1288,7 @@ public class Compiler {
         Position constructorStart = node.make_node.pos_start;
         Position constructorEnd = node.make_node.pos_end;
         compile(new MethDefNode(
-                new Token(Tokens.TT.IDENTIFIER, "<make>", constructorStart, constructorEnd),
+                new Token(TokenType.Identifier, "<make>", constructorStart, constructorEnd),
                 node.arg_name_toks,
                 node.arg_type_toks,
                 node.make_node,
@@ -1417,7 +1417,7 @@ public class Compiler {
 
         String name = node.var_name_tok.value.toString();
         copyVar(new Token(
-                Tokens.TT.IDENTIFIER,
+                TokenType.Identifier,
                 "@" + name,
                 node.var_name_tok.pos_start,
                 node.var_name_tok.pos_end
@@ -1426,7 +1426,7 @@ public class Compiler {
                 List.of("any"),
                 false,
                 new NullNode(new Token(
-                        Tokens.TT.IDENTIFIER,
+                        TokenType.Identifier,
                         "null",
                         node.var_name_tok.pos_start,
                         node.var_name_tok.pos_end

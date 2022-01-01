@@ -1,6 +1,7 @@
 package lemon.jpizza.libraries;
 
 import lemon.jpizza.JPType;
+import lemon.jpizza.TokenType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Lexer;
@@ -10,25 +11,24 @@ import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Shell;
 import lemon.jpizza.Token;
-import lemon.jpizza.Tokens.TT;
 
 import java.util.*;
 
 @SuppressWarnings("unused")
 public class JasonLib extends Library {
 
-    static final List<TT> acceptableJason = Arrays.asList(
-            TT.STRING,
-            TT.FLOAT,
-            TT.INT,
-            TT.LSQUARE,
-            TT.RSQUARE,
-            TT.COMMA,
-            TT.BITE,
-            TT.OPEN,
-            TT.CLOSE,
-            TT.EOF,
-            TT.BOOL
+    static final List<TokenType> acceptableJason = Arrays.asList(
+            TokenType.String,
+            TokenType.Float,
+            TokenType.Int,
+            TokenType.LeftBracket,
+            TokenType.RightBracket,
+            TokenType.Comma,
+            TokenType.Colon,
+            TokenType.LeftBrace,
+            TokenType.RightBrace,
+            TokenType.EndOfFile,
+            TokenType.Boolean
     );
 
     public JasonLib(String name) { super(name, "json"); }

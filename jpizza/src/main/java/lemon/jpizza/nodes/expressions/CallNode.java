@@ -56,7 +56,7 @@ public class CallNode extends Node {
 
         List<Token> processedTypes = new ArrayList<>();
         for (Token generic : generics)
-            processedTypes.add(new Token(Tokens.TT.TYPE,
+            processedTypes.add(new Token(TokenType.Type,
                     Collections.singletonList(context.symbolTable.getType((List<String>) generic.value)),
                     generic.pos_start, generic.pos_end));
 

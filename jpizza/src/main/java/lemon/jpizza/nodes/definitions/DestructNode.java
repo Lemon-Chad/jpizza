@@ -98,7 +98,8 @@ public class DestructNode extends Node {
     public String visualize() {
         if (glob) {
             return "destruct *";
-        } else {
+        }
+        else {
             StringBuilder sb = new StringBuilder();
             sb.append("destruct ");
             for (Token struct : subs)

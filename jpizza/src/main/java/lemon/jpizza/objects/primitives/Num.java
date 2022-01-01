@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.primitives;
 
 import lemon.jpizza.JPType;
+import lemon.jpizza.TokenType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.NumberNode;
 import lemon.jpizza.objects.executables.Function;
@@ -12,8 +13,6 @@ import lemon.jpizza.Pair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-
-import static lemon.jpizza.Tokens.*;
 
 public class Num extends Value {
     public Num(double v) {
@@ -132,7 +131,7 @@ public class Num extends Value {
                 .set_pos(pos_start, pos_end);
     }
     public Obj function() { return new Function(
-            null, new NumberNode(new Token(TT.FLOAT, number, pos_start, pos_end), hex),
+            null, new NumberNode(new Token(TokenType.Float, number, pos_start, pos_end), hex),
                                 null)
             .set_context(context).set_pos(pos_start, pos_end); }
     public Obj number() { return this; }

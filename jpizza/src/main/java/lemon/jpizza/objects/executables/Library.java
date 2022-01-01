@@ -118,7 +118,7 @@ public class Library extends BaseFunction {
                 e.printStackTrace();
                 return;
             }
-            libTable.declareattr(new Token(Tokens.TT.IDENTIFIER, k, libContext.parentEntryPos, libContext.parentEntryPos), null, val);
+            libTable.declareattr(new Token(TokenType.Identifier, k, libContext.parentEntryPos, libContext.parentEntryPos), null, val);
         });
         if (adlib) Constants.LIBRARIES.put(libName, libContext);
     }

@@ -1,6 +1,7 @@
 package lemon.jpizza.generators;
 
 import lemon.jpizza.Pair;
+import lemon.jpizza.TokenType;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.Position;
 import lemon.jpizza.Token;
@@ -72,7 +73,7 @@ public class Lexer {
                 tokens.add(make_string(currentChar));
             }
             else if (currentChar.equals("}")) {
-                tokens.add(new Token(TT.CLOSE, pos));
+                tokens.add(new Token(TokenType.RightBrace, pos));
                 advance();
             }
             else if (next() != null && TOKEY.containsKey(currentChar + next())) {
@@ -95,7 +96,7 @@ public class Lexer {
                     nextdex++;
                 if (next(nextdex).equals("<") || next(nextdex).equals("{") ||
                         (next(nextdex) + next(nextdex + 1)).equals("->")) {
-                    tokens.add(new Token(TT.KEYWORD, "fn", pos.copy(), pos.copy().advance()));
+                    tokens.add(new Token(TokenType.Keyword, "fn", pos.copy(), pos.copy().advance()));
                     advance();
                 }
                 else if (currentChar.equals("!")){
@@ -117,7 +118,7 @@ public class Lexer {
                 );
             }
         }
-        tokens.add(new Token(TT.EOF, pos));
+        tokens.add(new Token(TokenType.EndOfFile, pos));
         return new Pair<>(
                 tokens,
                 null
@@ -158,7 +159,7 @@ public class Lexer {
         }
 
         advance();
-        return new Token(TT.STRING, new Pair<>(string.toString(), q.equals("`")), pos_start, pos);
+        return new Token(TokenType.String, new Pair<>(string.toString(), q.equals("`")), pos_start, pos);
     }
 
     public Pair<Token, Error> make_equals_expr() {
@@ -171,10 +172,10 @@ public class Lexer {
 
             return new Pair<>(
                     new Token(switch (c) {
-                        case "!" -> TT.NE;
-                        case ">" -> TT.GTE;
-                        case "<" -> TT.LTE;
-                        case "=" -> TT.EE;
+                        case "!" -> TokenType.BangEqual;
+                        case ">" -> TokenType.GreaterEquals;
+                        case "<" -> TokenType.LessEquals;
+                        case "=" -> TokenType.EqualEqual;
                         default -> null;
                     }, pos_start),
                     null
@@ -182,16 +183,16 @@ public class Lexer {
         }
         else if (c.equals("=")) {
             return new Pair<>(
-                    new Token(TT.EQS, pos_start),
+                    new Token(TokenType.Equal, pos_start),
                     null
             );
         }
         else {
             return new Pair<>(
                     new Token(switch (c) {
-                        case ">" -> TT.GT;
-                        case "<" -> TT.LT;
-                        case "!" -> TT.NOT;
+                        case ">" -> TokenType.RightAngle;
+                        case "<" -> TokenType.LeftAngle;
+                        case "!" -> TokenType.Bang;
                         default -> null;
                     }, pos_start),
                     null
@@ -209,10 +210,10 @@ public class Lexer {
         } String id_str = id_strb.toString();
 
         if (id_str.equals("true") || id_str.equals("false")) {
-            return new Token(TT.BOOL, id_str.equals("true"), pos_start, pos);
+            return new Token(TokenType.Boolean, id_str.equals("true"), pos_start, pos);
         }
 
-        TT tok_type = Arrays.asList(KEYWORDS).contains(id_str) ? TT.KEYWORD : TT.IDENTIFIER;
+        TokenType tok_type = Arrays.asList(KEYWORDS).contains(id_str) ? TokenType.Keyword : TokenType.Identifier;
         return new Token(tok_type, id_str, pos_start, pos);
     }
 
@@ -237,8 +238,8 @@ public class Lexer {
         }
 
         if (dot_count == 0)
-            return new Token(TT.INT, Double.valueOf(num.toString()), pos_start, pos);
-        return new Token(TT.FLOAT, Double.valueOf(num.toString()), pos_start, pos);
+            return new Token(TokenType.Int, Double.valueOf(num.toString()), pos_start, pos);
+        return new Token(TokenType.Float, Double.valueOf(num.toString()), pos_start, pos);
 
     }
 

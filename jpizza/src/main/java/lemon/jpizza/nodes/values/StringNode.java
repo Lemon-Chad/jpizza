@@ -17,7 +17,7 @@ public class StringNode extends ValueNode {
     }
 
     public StringNode(String val, Position start, Position end) {
-        super(new Token(Tokens.TT.STRING, new Pair<>(val, false), start, end));
+        super(new Token(TokenType.String, new Pair<>(val, false), start, end));
         this.val = val;
         jptype = JPType.String;
     }

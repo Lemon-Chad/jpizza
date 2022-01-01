@@ -1,6 +1,7 @@
 package lemon.jpizza.objects.primitives;
 
 import lemon.jpizza.JPType;
+import lemon.jpizza.TokenType;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.nodes.values.BooleanNode;
 import lemon.jpizza.objects.executables.Function;
@@ -11,8 +12,6 @@ import lemon.jpizza.Token;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import static lemon.jpizza.Tokens.TT;
 
 public class Bool extends Value {
     public Bool(boolean value) {
@@ -59,7 +58,7 @@ public class Bool extends Value {
     @SuppressWarnings("unused")
     public Obj bool() { return new Bool(boolval).set_context(context).set_pos(pos_start, pos_end); }
     @SuppressWarnings("unused")
-    public Obj function() { return new Function(null, new BooleanNode(new Token(TT.BOOL, value, pos_start, pos_end)), null)
+    public Obj function() { return new Function(null, new BooleanNode(new Token(TokenType.Boolean, value, pos_start, pos_end)), null)
             .set_context(context).set_pos(pos_start, pos_end); }
 
     // Defaults

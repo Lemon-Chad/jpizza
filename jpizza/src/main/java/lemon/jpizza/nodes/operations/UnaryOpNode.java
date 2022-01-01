@@ -1,9 +1,6 @@
 package lemon.jpizza.nodes.operations;
 
-import lemon.jpizza.Constants;
-import lemon.jpizza.JPType;
-import lemon.jpizza.Pair;
-import lemon.jpizza.Tokens;
+import lemon.jpizza.*;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
@@ -21,10 +18,10 @@ import java.io.ObjectInputStream;
 import java.util.List;
 
 public class UnaryOpNode extends Node {
-    public final Tokens.TT op_tok;
+    public final TokenType op_tok;
     public final Node node;
 
-    public UnaryOpNode(Tokens.TT op_tok, Node node) {
+    public UnaryOpNode(TokenType op_tok, Node node) {
         this.node = node;
         this.op_tok = op_tok;
 
@@ -53,7 +50,7 @@ public class UnaryOpNode extends Node {
         Obj number = res.register(inter.visit(node, context));
         if (res.shouldReturn()) return res;
 
-        if (op_tok == Tokens.TT.BITCOMPL) {
+        if (op_tok == TokenType.Tilde) {
             if (number.jptype != JPType.Number || number.floating()) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be an integer",
@@ -64,7 +61,7 @@ public class UnaryOpNode extends Node {
 
             return res.success(new Num(~n));
         }
-        else if (op_tok == Tokens.TT.QUEBACK) {
+        else if (op_tok == TokenType.DollarSign) {
             if (number.jptype != JPType.Bytes) return res.failure(RTError.Type(
                     number.get_start(), number.get_end(),
                     "Operand must be bytes",
@@ -86,11 +83,11 @@ public class UnaryOpNode extends Node {
             }
         }
 
-        Tokens.TT opTokType = op_tok;
+        TokenType opTokType = op_tok;
         Pair<Obj, RTError> ret = switch (opTokType) {
-            case MINUS -> number.mul(new Num(-1.0));
-            case INCR, DECR -> number.add(new Num(opTokType.hashCode() == Tokens.TT.INCR.hashCode() ? 1.0 : -1.0));
-            case NOT -> number.invert();
+            case Minus -> number.mul(new Num(-1.0));
+            case PlusPlus, MinusMinus -> number.add(new Num(opTokType.hashCode() == TokenType.PlusPlus.hashCode() ? 1.0 : -1.0));
+            case Bang -> number.invert();
             default -> new Pair<>(number, null);
         };
         if (ret.b != null)
@@ -101,17 +98,17 @@ public class UnaryOpNode extends Node {
 
     @Override
     public Node optimize() {
-        if (node.constant && op_tok != Tokens.TT.BITCOMPL) {
+        if (node.constant && op_tok != TokenType.Tilde) {
             Node node = this.node.optimize();
             return switch (op_tok) {
-                case MINUS -> new NumberNode(-node.asNumber(), node.pos_start, node.pos_end);
-                case BITCOMPL -> new NumberNode(VM.bitOp(
+                case Minus -> new NumberNode(-node.asNumber(), node.pos_start, node.pos_end);
+                case Tilde -> new NumberNode(VM.bitOp(
                         node.asNumber(),
                         0,
                         (a, b) -> ~a
                 ), node.pos_start, node.pos_end);
-                case NOT -> new BooleanNode(!node.asBoolean(), node.pos_start, node.pos_end);
-                case DECR, INCR -> new NumberNode(node.asNumber() + (op_tok == Tokens.TT.INCR ? 1.0 : -1.0), node.pos_start, node.pos_end);
+                case Bang -> new BooleanNode(!node.asBoolean(), node.pos_start, node.pos_end);
+                case MinusMinus, PlusPlus -> new NumberNode(node.asNumber() + (op_tok == TokenType.PlusPlus ? 1.0 : -1.0), node.pos_start, node.pos_end);
                 default -> node;
             };
         }
@@ -126,13 +123,13 @@ public class UnaryOpNode extends Node {
     @Override
     public String visualize() {
         return switch (op_tok) {
-            case MINUS -> "-";
-            case PLUS -> "+";
-            case QUEBACK -> "$";
-            case BITCOMPL -> "~";
-            case NOT -> "!";
-            case DECR -> "--";
-            case INCR -> "++";
+            case Minus -> "-";
+            case Plus -> "+";
+            case DollarSign -> "$";
+            case Tilde -> "~";
+            case Bang -> "!";
+            case MinusMinus -> "--";
+            case PlusPlus -> "++";
             default -> "";
         };
     }

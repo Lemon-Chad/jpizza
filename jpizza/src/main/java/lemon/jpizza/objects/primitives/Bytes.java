@@ -41,7 +41,7 @@ public class Bytes extends Value {
     // Conversions
 
     public Obj function() {
-        return new Function(null, new NullNode(new Token(Tokens.TT.KEYWORD, "null", pos_start, pos_end)),
+        return new Function(null, new NullNode(new Token(TokenType.Keyword, "null", pos_start, pos_end)),
                 new ArrayList<>()).set_context(context).set_pos(pos_start, pos_end);
     }
 

@@ -1,7 +1,7 @@
 package lemon.jpizza.objects.executables;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.Tokens.TT;
+import lemon.jpizza.TokenType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.RTError;
@@ -157,7 +157,7 @@ public class ClassPlate extends Value {
         if (res.error != null) return res;
 
         for (Map.Entry<String, String> entry : genericKey.entrySet()) {
-            classContext.symbolTable.declareattr(new Token(TT.IDENTIFIER, entry.getKey(), pos_start, pos_end), context, new Str(entry.getValue()));
+            classContext.symbolTable.declareattr(new Token(TokenType.Identifier, entry.getKey(), pos_start, pos_end), context, new Str(entry.getValue()));
             classContext.symbolTable.addGeneric(entry.getKey(), entry.getValue());
         }
 

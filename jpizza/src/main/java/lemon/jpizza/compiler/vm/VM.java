@@ -26,7 +26,7 @@ import java.util.List;
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 256;
-    public String version = "2.0.0";
+    public String version = "2.0.1";
 
     private static record Traceback(String filename, String context, int offset, Chunk chunk) {}
 
@@ -99,6 +99,12 @@ public class VM {
         libraries.get(library).addField(name, new Value(
                 new JNative(name, method, argc)
         ));
+    }
+
+    public void defineVar(String lib, String name, Value val) {
+        if (!libraries.containsKey(lib))
+            libraries.put(lib, new Namespace(lib, new HashMap<>()));
+        libraries.get(lib).addField(name, val);
     }
 
     void defineNative(String name, JNative.Method method, List<String> types) {
@@ -1530,7 +1536,14 @@ public class VM {
                         Class<?> loadedClass = cl.loadClass("jpext." + fn);
                         Constructor<?> constructor = loadedClass.getConstructor(VM.class);
                         Object loadedObject = constructor.newInstance(this);
-                        loadedClass.getMethod("setup").invoke(loadedObject);
+                        if (loadedObject instanceof JPExtension) {
+                            JPExtension extension = (JPExtension) loadedObject;
+                            extension.setup();
+                        }
+                        else {
+                            runtimeError("Imaginary File", "File '" + fn + "' is not a valid extension");
+                            yield VMResult.ERROR;
+                        }
                     } catch (Exception e) {
                         runtimeError("Internal", "Failed to load extension: " + fn);
                         yield VMResult.ERROR;
@@ -1631,7 +1644,8 @@ public class VM {
                         String filename;
                         if (tracebacks.empty()) {
                             filename = "";
-                        } else {
+                        }
+                        else {
                             filename = tracebacks.peek().filename;
                         }
 

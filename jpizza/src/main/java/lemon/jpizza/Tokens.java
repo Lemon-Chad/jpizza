@@ -4,114 +4,50 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Tokens {
-    public enum TT {
-        TYPE,
-        INVISILINE,
-        LEFTSHIFT,
-        RIGHTSHIFT,
-        SIGNRIGHTSHIFT,
-        EQS,
-        BITAND,
-        BITOR,
-        BITXOR,
-        BITCOMPL,
-        TOBYTE,
-        INT,
-        FLOAT,
-        STRING,
-        BOOL,
-        PLUS,
-        MINUS,
-        MUL,
-        DIV,
-        LPAREN,
-        RPAREN,
-        EOF,
-        NEWLINE,
-        POWER,
-        IDENTIFIER,
-        KEYWORD,
-        EQ,
-        EE,
-        NE,
-        LT,
-        GT,
-        LTE,
-        GTE,
-        AND,
-        OR,
-        NOT,
-        CLACCESS,
-        MOD,
-        QUERY,
-        BITE,
-        DEFAULTQUE,
-        QUEBACK,
-        LAMBDA,
-        STEP,
-        COMMA,
-        LSQUARE,
-        RSQUARE,
-        OPEN,
-        CLOSE,
-        PLE,
-        MIE,
-        MUE,
-        DIE,
-        POE,
-        INCR,
-        DECR,
-        DOT,
-        USE,
-        ITER,
-        BACK,
-        SPREAD,
-    }
-    
-    public static final Map<String, TT> TOKEY = new HashMap<>(){{
-        put("[", TT.LSQUARE);
-        put("\\", TT.BACK);
-        put("..", TT.SPREAD);
-        put("~~", TT.RIGHTSHIFT);
-        put("~>", TT.SIGNRIGHTSHIFT);
-        put("<~", TT.LEFTSHIFT);
-        put("@", TT.TOBYTE);
-        put("~&", TT.BITAND);
-        put("~|", TT.BITOR);
-        put("~^", TT.BITXOR);
-        put("~", TT.BITCOMPL);
-        put("<-", TT.ITER);
-        put("::", TT.CLACCESS);
-        put("%", TT.MOD);
-        put("#", TT.USE);
-        put("]", TT.RSQUARE);
-        put(",", TT.COMMA);
-        put("+", TT.PLUS);
-        put("++", TT.INCR);
-        put("--", TT.DECR);
-        put(">>", TT.STEP);
-        put(":", TT.BITE);
-        put("$", TT.QUEBACK);
-        put("$_", TT.DEFAULTQUE);
-        put("?", TT.QUERY);
-        put("-", TT.MINUS);
-        put("*", TT.MUL);
-        put("/", TT.DIV);
-        put("(", TT.LPAREN);
-        put(")", TT.RPAREN);
-        put("^", TT.POWER);
-        put("=>", TT.EQ);
-        put("&", TT.AND);
-        put("|", TT.OR);
-        put("->", TT.LAMBDA);
-        put(";", TT.NEWLINE);
-        put("{", TT.OPEN);
-        put("}", TT.CLOSE);
-        put("^=", TT.POE);
-        put("*=", TT.MUE);
-        put("/=", TT.DIE);
-        put("+=", TT.PLE);
-        put("-=", TT.MIE);
-        put(".", TT.DOT);
+    public static final Map<String, TokenType> TOKEY = new HashMap<>(){{
+        put("[", TokenType.LeftBracket);
+        put("\\", TokenType.Backslash);
+        put("..", TokenType.DotDot);
+        put("~~", TokenType.TildeTilde);
+        put("~>", TokenType.RightTildeArrow);
+        put("<~", TokenType.LeftTildeArrow);
+        put("@", TokenType.At);
+        put("~&", TokenType.TildeAmpersand);
+        put("~|", TokenType.TildePipe);
+        put("~^", TokenType.TildeCaret);
+        put("~", TokenType.Tilde);
+        put("<-", TokenType.LeftArrow);
+        put("::", TokenType.ColonColon);
+        put("%", TokenType.Percent);
+        put("#", TokenType.Hash);
+        put("]", TokenType.RightBracket);
+        put(",", TokenType.Comma);
+        put("+", TokenType.Plus);
+        put("++", TokenType.PlusPlus);
+        put("--", TokenType.MinusMinus);
+        put(">>", TokenType.AngleAngle);
+        put(":", TokenType.Colon);
+        put("$", TokenType.DollarSign);
+        put("$_", TokenType.DollarUnderscore);
+        put("?", TokenType.QuestionMark);
+        put("-", TokenType.Minus);
+        put("*", TokenType.Star);
+        put("/", TokenType.Slash);
+        put("(", TokenType.LeftParen);
+        put(")", TokenType.RightParen);
+        put("^", TokenType.Caret);
+        put("=>", TokenType.FatArrow);
+        put("&", TokenType.Ampersand);
+        put("|", TokenType.Pipe);
+        put("->", TokenType.SkinnyArrow);
+        put(";", TokenType.Newline);
+        put("{", TokenType.LeftBrace);
+        put("}", TokenType.RightBrace);
+        put("^=", TokenType.CaretEquals);
+        put("*=", TokenType.StarEquals);
+        put("/=", TokenType.SlashEquals);
+        put("+=", TokenType.PlusEquals);
+        put("-=", TokenType.MinusEquals);
+        put(".", TokenType.Dot);
     }};
 }

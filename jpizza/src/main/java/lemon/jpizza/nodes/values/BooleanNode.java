@@ -1,14 +1,11 @@
 package lemon.jpizza.nodes.values;
 
-import lemon.jpizza.JPType;
-import lemon.jpizza.Position;
-import lemon.jpizza.Tokens;
+import lemon.jpizza.*;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.results.RTResult;
-import lemon.jpizza.Token;
 
 public class BooleanNode extends ValueNode {
     public final boolean val;
@@ -20,7 +17,7 @@ public class BooleanNode extends ValueNode {
     }
 
     public BooleanNode(boolean val, Position start, Position end) {
-        super(new Token(Tokens.TT.BOOL, start, end));
+        super(new Token(TokenType.Boolean, start, end));
         this.val = val;
         jptype = JPType.Boolean;
     }
