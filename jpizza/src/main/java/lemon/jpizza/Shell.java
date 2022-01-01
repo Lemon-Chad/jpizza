@@ -32,10 +32,7 @@ import lemon.jpizza.results.RTResult;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class Shell {
 
@@ -43,7 +40,7 @@ public class Shell {
     public static final SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
     public static VM vm;
-    public static Map<String, Var> globals;
+    public static final Map<String, Var> globals = new HashMap<>();
     public static final String fileEncoding = System.getProperty("file.encoding");
 
     public static String[] getFNDirs(String dir) {
@@ -164,11 +161,11 @@ public class Shell {
             return;
         }
 
-        repl(args);
+        repl();
 
     }
 
-    public static void repl(String[] args) {
+    public static void repl() {
         Scanner in = new Scanner(System.in);
 
         Shell.logger.outln("Exit with 'quit'");
@@ -186,7 +183,7 @@ public class Shell {
                 Shell.logger.fail(a.b.asString());
             }
             else {
-                runCompiled("<shell>", a.a, new String[]{"<shell>"});
+                runCompiled("<shell>", a.a, new String[]{"<shell>"}, globals);
             }
         }
         in.close();
@@ -306,7 +303,11 @@ public class Shell {
     }
 
     public static void runCompiled(String fn, JFunc func, String[] args) {
-        vm = new VM(func).trace(fn);
+        runCompiled(fn, func, args, new HashMap<>());
+    }
+
+    public static void runCompiled(String fn, JFunc func, String[] args, Map<String, Var> globals) {
+        vm = new VM(func, globals).trace(fn);
         VMResult res = vm.run();
         if (res == VMResult.ERROR) return;
         vm.finish(args);

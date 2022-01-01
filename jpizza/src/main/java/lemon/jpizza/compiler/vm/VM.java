@@ -6,22 +6,21 @@ import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.*;
 import lemon.jpizza.compiler.headers.HeadCode;
 import lemon.jpizza.compiler.headers.Memo;
-import lemon.jpizza.compiler.values.*;
+import lemon.jpizza.compiler.values.Pattern;
+import lemon.jpizza.compiler.values.Value;
+import lemon.jpizza.compiler.values.Var;
 import lemon.jpizza.compiler.values.classes.*;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.List;
 
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
@@ -59,6 +58,10 @@ public class VM {
     JStack<Pair<Integer, Integer>> nehStack = new JStack<>(FRAMES_MAX);
 
     public VM(JFunc function) {
+        this(function, new HashMap<>());
+    }
+
+    public VM(JFunc function, Map<String, Var> globals) {
         Shell.logger.debug("VM create\n");
 
         this.ip = 0;
@@ -66,7 +69,7 @@ public class VM {
         this.stack = new JStack<>(MAX_STACK_SIZE);
         push(new Value(function));
 
-        this.globals = new HashMap<>();
+        this.globals = globals;
         this.tracebacks = new Stack<>();
 
         this.loopCache = new Stack<>();
