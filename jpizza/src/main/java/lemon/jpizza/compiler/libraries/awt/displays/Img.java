@@ -8,18 +8,23 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Paths;
 
 public class Img extends Drawable {
     private final int x, y;
     private final Image img;
 
-    public Img(String filename, int x, int y) throws IOException {
+    public Img(String path, int x, int y) throws IOException {
         // Load file with ImageIcon
-        File file = new File(filename);
-        if (!file.exists()) {
-            throw new IOException("File not found: " + filename);
+        URL url;
+
+        File file = new File(path);
+        if (file.exists()) {
+            url = file.toURI().toURL();
         }
-        URL url = file.toURI().toURL();
+        else {
+            url = new URL(path);
+        }
         ImageIcon icon = new ImageIcon(url);
         img = icon.getImage();
 
