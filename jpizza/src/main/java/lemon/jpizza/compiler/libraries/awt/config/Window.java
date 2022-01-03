@@ -341,4 +341,12 @@ public class Window {
         }
         return sb.toString();
     }
+
+    public int getWidth() {
+        return canvas.getWidth();
+    }
+
+    public int getHeight() {
+        return canvas.getHeight();
+    }
 }

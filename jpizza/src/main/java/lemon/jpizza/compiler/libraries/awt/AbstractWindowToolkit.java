@@ -491,6 +491,8 @@ public class AbstractWindowToolkit extends JPExtension {
             focused = window;
             return Ok;
         }), 0);
+        func("width", args -> Ok(window.getWidth()) , 0);
+        func("height", args -> Ok(window.getWidth()) , 0);
     }
 
     private void input() {
