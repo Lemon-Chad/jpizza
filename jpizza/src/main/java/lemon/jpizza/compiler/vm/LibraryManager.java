@@ -2,6 +2,10 @@ package lemon.jpizza.compiler.vm;
 
 import lemon.jpizza.Pair;
 import lemon.jpizza.Shell;
+import lemon.jpizza.compiler.libraries.Generators;
+import lemon.jpizza.compiler.libraries.IOFile;
+import lemon.jpizza.compiler.libraries.JSystem;
+import lemon.jpizza.compiler.libraries.Time;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
@@ -63,16 +67,8 @@ public class LibraryManager {
         vm.defineNative(name, method, argc);
     }
 
-    private void define(String library, String name, JNative.Method method, int argc) {
-        vm.defineNative(library, name, method, argc);
-    }
-
     private void define(String name, JNative.Method method, List<String> types) {
         vm.defineNative(name, method, types);
-    }
-
-    private void define(String library, String name, JNative.Method method, List<String> types) {
-        vm.defineNative(library, name, method, types);
     }
 
     public static void Setup(VM vm) {
@@ -88,311 +84,15 @@ public class LibraryManager {
     }
 
     private void sys() {
-        // System Library
-        // Quick Environment Variables
-        define("sys", "os", (args) -> NativeResult.Ok(new Value(System.getProperty("os.name"))), 0);
-        define("sys", "home", (args) -> NativeResult.Ok(new Value(System.getProperty("user.home"))), 0);
-
-        // Execution
-        define("sys", "execute", (args) -> {
-            String cmd = args[0].asString();
-            Runtime rt = Runtime.getRuntime();
-            try {
-                Process pr = rt.exec(cmd);
-                return processOut(pr);
-            } catch (Exception e) {
-                return NativeResult.Err("Internal", e.getMessage());
-            }
-        }, List.of("String"));
-        define("sys", "executeFloor", (args) -> {
-            List<Value> args2 = args[0].asList();
-            String[] cmd = new String[args2.size()];
-            for (int i = 0; i < args2.size(); i++)
-                cmd[i] = args2.get(i).asString();
-
-            ProcessBuilder pb = new ProcessBuilder(cmd);
-            pb.inheritIO();
-            try {
-                Process pr = pb.start();
-                return processOut(pr);
-            } catch (Exception e) {
-                return NativeResult.Err("Internal", e.getMessage());
-            }
-        }, List.of("list"));
-
-        // IO
-        define("sys", "disableOut", (args) -> {
-            Shell.logger.disableLogging();
-            return NativeResult.Ok();
-        }, 0);
-        define("sys", "enableOut", (args) -> {
-            Shell.logger.enableLogging();
-            return NativeResult.Ok();
-        }, 0);
-
-        // VM Info
-        define("sys", "jpv", (args) -> NativeResult.Ok(new Value(vm.version)), 0);
-
-        // Environment Variables
-        define("sys", "envVarExists", (args) -> NativeResult.Ok(new Value(System.getenv(args[0].asString()) != null)), List.of("String"));
-        define("sys", "getEnvVar", (args) -> {
-            String name = args[0].asString();
-            String value = System.getenv(name);
-            if (value == null)
-                return NativeResult.Err("Scope", "Environment variable '" + name + "' does not exist");
-            return NativeResult.Ok(new Value(value));
-        }, List.of("String"));
-        define("sys", "setEnvVar", (args) -> {
-            String name = args[0].asString();
-            String value = args[1].asString();
-            System.setProperty(name, value);
-            return NativeResult.Ok();
-        }, List.of("String", "String"));
-
-        // System Properties
-        define("sys", "propExists", (args) -> NativeResult.Ok(new Value(System.getProperty(args[0].asString()) != null)), List.of("String"));
-        define("sys", "getProp", (args) -> {
-            String name = args[0].asString();
-            String value = System.getProperty(name);
-            if (value == null)
-                return NativeResult.Err("Scope", "System property '" + name + "' does not exist");
-            return NativeResult.Ok(new Value(value));
-        }, List.of("String"));
-        define("sys", "setProp", (args) -> {
-            String name = args[0].asString();
-            String value = args[1].asString();
-            System.setProperty(name, value);
-            return NativeResult.Ok();
-        }, List.of("String", "String"));
-
-        // System
-        define("sys", "exit", (args) -> {
-            int code = args[0].asNumber().intValue();
-            System.exit(code);
-            return NativeResult.Ok();
-        }, List.of("num"));
-
-    }
-
-    @NotNull
-    private NativeResult processOut(Process pr) throws InterruptedException, IOException {
-        pr.waitFor();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(pr.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null)
-            sb.append(line).append("\n");
-        return NativeResult.Ok(new Value(sb.toString()));
-    }
-
-    private String dir(Value val) {
-        String dir = val.asString();
-        //noinspection RegExpRedundantEscape
-        if (!dir.matches("^([A-Z]:|\\.|\\/|\\\\).*"))
-            dir = System.getProperty("user.dir") + "/" + dir;
-        return dir;
+        new JSystem(vm).setup();
     }
 
     private void io() {
-        // String Data
-        define("iofile", "readFile", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            if (!file.exists())
-                return NativeResult.Err("Imaginary File", "File not found");
-
-            try {
-                return NativeResult.Ok(new Value(Files.readString(Path.of(path))));
-            } catch (IOException e) {
-                return NativeResult.Err("Internal", "IO Error while reading file");
-            }
-        }, List.of("String"));
-        define("iofile", "writeFile", (args) -> {
-            String path = dir(args[0]);
-            String data = args[1].asString();
-            File file = new File(path);
-            try {
-                boolean created = file.createNewFile();
-                FileWriter writer = new FileWriter(file);
-                writer.write(data);
-                writer.close();
-                return NativeResult.Ok(new Value(created));
-            } catch (IOException e) {
-                return NativeResult.Err("Internal", "IO Error while writing file");
-            }
-        }, List.of("String", "any"));
-
-        // File Creation
-        define("iofile", "fileExists", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            return NativeResult.Ok(new Value(file.exists()));
-        }, List.of("String"));
-        define("iofile", "makeDirs", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            return NativeResult.Ok(new Value(file.mkdirs()));
-        }, List.of("String"));
-        define("iofile", "deleteFile", (args) -> {
-            String path = dir(args[0]);
-            if (!Files.exists(Path.of(path))) {
-                return NativeResult.Err("Imaginary File", "File not found");
-            }
-            boolean isDir = Files.isDirectory(Path.of(path));
-            if (isDir) {
-                try {
-                    FileUtils.deleteDirectory(new File(path));
-                    return NativeResult.Ok(new Value(true));
-                } catch (IOException e) {
-                    return NativeResult.Err("Internal", "IO Error while deleting directory");
-                }
-            }
-            else {
-                try {
-                    FileUtils.delete(new File(path));
-                    return NativeResult.Ok(new Value(true));
-                } catch (IOException e) {
-                    return NativeResult.Err("Internal", "IO Error while deleting file");
-                }
-            }
-        }, List.of("String"));
-
-        // Directories
-        define("iofile", "listDirContents", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            if (!file.exists() || !file.isDirectory())
-                return NativeResult.Err("Imaginary Path", "Path not found");
-
-            String[] files = file.list();
-            List<Value> list = new ArrayList<>();
-            for (String fileName : files) {
-                list.add(new Value(fileName));
-            }
-            return NativeResult.Ok(new Value(list));
-        }, List.of("String"));
-        define("iofile", "isDirectory", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            return NativeResult.Ok(new Value(file.isDirectory()));
-        }, List.of("String"));
-
-        // Working Directory
-        define("iofile", "getCWD", (args) -> NativeResult.Ok(new Value(System.getProperty("user.dir"))), 0);
-        define("iofile", "setCWD", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            if (!file.exists())
-                return NativeResult.Err("Imaginary Path", "Path not found");
-            if (!file.isDirectory())
-                return NativeResult.Err("Imaginary Path", "Path is not a directory");
-            System.setProperty("user.dir", path);
-            return NativeResult.Ok();
-        }, List.of("String"));
-
-        // Serialization
-        define("iofile", "readSerial", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            if (!file.exists())
-                return NativeResult.Err("Imaginary File", "File not found");
-
-            Value out;
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                ObjectInputStream ois = new ObjectInputStream(fis);
-                Object obj = ois.readObject();
-                if (obj instanceof Value) {
-                    out = (Value) obj;
-                }
-                else {
-                    out = Value.fromObject(obj);
-                }
-
-                ois.close();
-                fis.close();
-            } catch (IOException | ClassNotFoundException e) {
-                return NativeResult.Err("Internal", "IO Error while reading serialized file");
-            }
-
-            return NativeResult.Ok(out);
-        }, List.of("String"));
-        define("iofile", "readBytes", (args) -> {
-            String path = dir(args[0]);
-            File file = new File(path);
-            if (!file.exists())
-                return NativeResult.Err("Imaginary File", "File not found");
-
-            byte[] bytes;
-            try {
-                bytes = Files.readAllBytes(Path.of(path));
-            } catch (IOException e) {
-                return NativeResult.Err("Internal", "IO Error while reading file");
-            }
-
-            return NativeResult.Ok(new Value(bytes));
-        }, List.of("String"));
-        define("iofile", "writeSerial", (args) -> {
-            String path = dir(args[0]);
-            Value obj = args[1];
-            File file = new File(path);
-            try {
-                boolean created = file.createNewFile();
-                FileOutputStream fos = new FileOutputStream(file);
-                if (obj.isBytes) {
-                    fos.write(obj.asBytes());
-                }
-                else {
-                    ObjectOutputStream oos = new ObjectOutputStream(fos);
-                    oos.writeObject(obj.asObject());
-                    oos.close();
-                }
-                fos.close();
-                return NativeResult.Ok(new Value(created));
-            } catch (IOException e) {
-                return NativeResult.Err("Internal", "IO Error while writing file");
-            }
-        }, List.of("String", "any"));
-
+        new IOFile(vm).setup();
     }
 
     private void gens() {
-        define("gens", "range", (args) -> {
-            double start = args[0].asNumber();
-            double end = args[1].asNumber();
-            double step = args[2].asNumber();
-            List<Value> list = new ArrayList<>();
-            for (double i = start; i < end; i += step)
-                list.add(new Value(i));
-            return NativeResult.Ok(new Value(list));
-        }, List.of("num", "num", "num"));
-        define("gens", "linear", (args) -> {
-            double start = args[0].asNumber();
-            double end = args[1].asNumber();
-            double step = args[2].asNumber();
-
-            double m = args[3].asNumber();
-            double b = args[4].asNumber();
-
-            List<Value> list = new ArrayList<>();
-            for (double i = start; i < end; i += step)
-                list.add(new Value(m * i + b));
-            return NativeResult.Ok(new Value(list));
-        }, List.of("num", "num", "num", "num", "num"));
-        define("gens", "quadratic", (args) -> {
-            double start = args[0].asNumber();
-            double end = args[1].asNumber();
-            double step = args[2].asNumber();
-
-            double a = args[3].asNumber();
-            double b = args[4].asNumber();
-            double c = args[5].asNumber();
-
-            List<Value> list = new ArrayList<>();
-            for (double i = start; i < end; i += step)
-                list.add(new Value(a * i * i + b * i + c));
-            return NativeResult.Ok(new Value(list));
-        }, List.of("num", "num", "num", "num", "num", "num"));
+        new Generators(vm).setup();
     }
 
     private void builtin() {
@@ -741,15 +441,6 @@ public class LibraryManager {
     }
 
     private void time() {
-        // Time library
-        define("time", "epoch", (args) -> NativeResult.Ok(new Value(System.currentTimeMillis())), 0);
-        define("time", "halt", (args) -> {
-            try {
-                Thread.sleep(args[0].asNumber().intValue());
-            } catch (InterruptedException e) {
-                return NativeResult.Err("Internal", "Interrupted");
-            }
-            return NativeResult.Ok();
-        }, List.of("num"));
+        new Time(vm).setup();
     }
 }

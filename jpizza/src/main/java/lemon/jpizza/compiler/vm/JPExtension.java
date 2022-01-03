@@ -7,52 +7,57 @@ import lemon.jpizza.compiler.values.functions.NativeResult;
 
 import java.util.List;
 
-abstract class JPExtension {
-    private final VM vm;
-    private final String lib;
-    private final static String name = "jpizza";
+public abstract class JPExtension {
+    protected final VM vm;
+    protected final String lib;
+    abstract public String name();
 
     public JPExtension(VM vm) {
-        this(vm, name);
+        this.vm = vm;
+        this.lib = name();
     }
 
-    public JPExtension(VM vm, String lib) {
+    private JPExtension(VM vm, String lib) {
         this.vm = vm;
         this.lib = lib;
     }
 
-    private void print(Object str) {
+    protected void print(Object str) {
         Shell.logger.out(str);
     }
 
-    private void println(Object str) {
+    protected void println(Object str) {
         Shell.logger.outln(str);
     }
 
-    private static final NativeResult Ok = NativeResult.Ok();
+    protected static final NativeResult Ok = NativeResult.Ok();
 
-    private static NativeResult Ok(Value val) {
+    protected static NativeResult Ok(Value val) {
         return NativeResult.Ok(val);
     }
 
-    private static NativeResult Ok(Object obj) {
+    protected static NativeResult Ok(Object obj) {
         return Ok(Value.fromObject(obj));
     }
 
-    private static NativeResult Err(String title, String msg) {
+    protected static NativeResult Err(String title, String msg) {
         return NativeResult.Err(title, msg);
     }
 
-    private void define(String name, JNative.Method method, int argc) {
+    protected void define(String name, JNative.Method method, int argc) {
         vm.defineNative(lib, name, method, argc);
     }
 
-    private void define(String name, JNative.Method method, List<String> types) {
+    protected void define(String name, JNative.Method method, List<String> types) {
         vm.defineNative(lib, name, method, types);
     }
 
-    private void define(String name, Value val) {
+    protected void define(String name, Value val) {
         vm.defineVar(lib, name, val);
+    }
+
+    protected void define(String name, Object val) {
+        define(name, Value.fromObject(val));
     }
 
     abstract public void setup();
