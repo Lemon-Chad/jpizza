@@ -828,7 +828,7 @@ Mixed_Snake_Case_Looks_Like_This"""
                     advance();
                     res.registerAdvancement();
                     Token file_name_tok = currentToken;
-                    if (!file_name_tok.type.equals(TokenType.Identifier))
+                    if (file_name_tok.type != TokenType.String && file_name_tok.type != TokenType.Identifier)
                         return res.failure(Error.InvalidSyntax(
                                 file_name_tok.pos_start.copy(), file_name_tok.pos_end.copy(),
                                 "Expected module name"
