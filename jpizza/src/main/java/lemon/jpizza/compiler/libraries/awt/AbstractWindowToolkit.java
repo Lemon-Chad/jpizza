@@ -438,6 +438,20 @@ public class AbstractWindowToolkit extends JPExtension {
                 return Err("Internal", "Could not load image (" + e.getMessage() + ")");
             }
         }), List.of("String", "num", "num"));
+        func("sizedImage", ifInit(args -> {
+            String path = args[0].asString();
+            int x = args[1].asNumber().intValue();
+            int y = args[2].asNumber().intValue();
+            int w = args[3].asNumber().intValue();
+            int h = args[4].asNumber().intValue();
+
+            try {
+                draw(new Img(path, x, y, w, h));
+                return Ok;
+            } catch (IOException e) {
+                return Err("Internal", "Could not load image (" + e.getMessage() + ")");
+            }
+        }), List.of("String", "num", "num", "num", "num"));
         func("setPixel", ifInit(args -> {
             int x = args[0].asNumber().intValue();
             int y = args[1].asNumber().intValue();

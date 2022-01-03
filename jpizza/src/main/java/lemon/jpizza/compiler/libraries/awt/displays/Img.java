@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 
 public class Img extends Drawable {
     private final int x, y;
-    private final Image img;
+    private Image img;
 
     public Img(String path, int x, int y) throws IOException {
         // Load file with ImageIcon
@@ -31,6 +31,11 @@ public class Img extends Drawable {
         // Set position
         this.x = x;
         this.y = y;
+    }
+
+    public Img(String path, int x, int y, int w, int h) throws IOException {
+        this(path, x, y);
+        img = img.getScaledInstance(w, h, Image.SCALE_FAST);
     }
 
     @Override
