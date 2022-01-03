@@ -506,7 +506,6 @@ public class Compiler {
             case "export_to" -> {
                 if (node.args.size() != 1) {
                     Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
-                    System.exit(1);
                 }
                 else {
                     target = node.args.get(0).asString();
@@ -660,7 +659,6 @@ public class Compiler {
         } catch (IOException e) {
             imp = null;
             Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
-            System.exit(1);
         }
 
         if (imp != null) {

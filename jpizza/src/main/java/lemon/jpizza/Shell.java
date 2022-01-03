@@ -98,13 +98,11 @@ public class Shell {
                     }
                     else {
                         Shell.logger.fail("-o requires an argument");
-                        System.exit(1);
                     }
                 }
                 default -> {
                     if (args[i].startsWith("-")) {
                         Shell.logger.fail("Unknown option: " + args[i]);
-                        System.exit(1);
                     }
                     else {
                         target = args[i];
@@ -118,7 +116,6 @@ public class Shell {
 
         if (hasFlag(flags, Flags.COMPILE) && hasFlag(flags, Flags.RUN)) {
             Shell.logger.fail("Cannot compile and run at the same time");
-            System.exit(1);
         }
 
         if (hasFlag(flags, Flags.REFACTOR)) {
@@ -146,7 +143,6 @@ public class Shell {
         }
         else if (target == null) {
             Shell.logger.fail("No target specified");
-            System.exit(1);
         }
         else {
             // .devp is the raw file format
@@ -166,7 +162,9 @@ public class Shell {
                     }
                     else if (hasFlag(flags, Flags.COMPILE)) {
                         to = to == null ? newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox" : to + ".jbox";
-                        compile(fn, scrpt, to);
+                        Error e = compile(fn, scrpt, to);
+                        if (e != null)
+                            Shell.logger.fail(e.asString());
                     }
                 }
                 else {
@@ -178,15 +176,12 @@ public class Shell {
             else if (target.endsWith(".jbox")) {
                 if (hasFlag(flags, Flags.COMPILE)) {
                     Shell.logger.fail("Cannot compile a compiled file");
-                    System.exit(1);
                 }
                 else if (hasFlag(flags, Flags.REFACTOR)) {
                     Shell.logger.fail("Cannot refactor a compiled file");
-                    System.exit(1);
                 }
                 else if (to != null) {
                     Shell.logger.fail("Cannot output to a compiled file");
-                    System.exit(1);
                 }
                 else if (hasFlag(flags, Flags.RUN)) {
                     // Run the compiled file

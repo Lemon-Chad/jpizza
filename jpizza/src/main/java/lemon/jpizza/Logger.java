@@ -129,10 +129,12 @@ public class Logger {
     }
 
     public void fail(Object text) {
-        if (log)
+        if (log) {
             System.out.println(Chalk.on(
                     getTape("FAILURE") + "\n" + ots(text)
             ).red());
+            System.exit(1);
+        }
     }
 
     public void tip(Object text) {
