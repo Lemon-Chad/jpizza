@@ -1477,7 +1477,8 @@ public class VM {
                     String name = readString();
                     String varName = readString();
 
-                    if (!peek(0).isFunc) {
+                    Value f = pop();
+                    if (!f.isFunc) {
                         if (!libraries.containsKey(name)) {
                             runtimeError("Import", "Library '" + name + "' not found");
                             yield VMResult.ERROR;
@@ -1492,7 +1493,7 @@ public class VM {
                         yield VMResult.OK;
                     }
 
-                    JFunc func = pop().asFunc();
+                    JFunc func = f.asFunc();
 
                     VM runner = new VM(func);
                     runner.trace(name);
@@ -1546,7 +1547,7 @@ public class VM {
                             yield VMResult.ERROR;
                         }
                     } catch (Exception e) {
-                        runtimeError("Internal", "Failed to load extension: " + fn);
+                        runtimeError("Internal", "Failed to load extension (" + e.getMessage() + ")");
                         yield VMResult.ERROR;
                     }
 

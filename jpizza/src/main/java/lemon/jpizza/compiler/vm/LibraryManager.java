@@ -6,6 +6,7 @@ import lemon.jpizza.compiler.libraries.Generators;
 import lemon.jpizza.compiler.libraries.IOFile;
 import lemon.jpizza.compiler.libraries.JSystem;
 import lemon.jpizza.compiler.libraries.Time;
+import lemon.jpizza.compiler.libraries.awt.AbstractWindowToolkit;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
@@ -81,6 +82,11 @@ public class LibraryManager {
         gens();
         io();
         sys();
+        awt();
+    }
+
+    private void awt() {
+        new AbstractWindowToolkit(vm).setup();
     }
 
     private void sys() {

@@ -606,7 +606,6 @@ public class Compiler {
                 imp = res.a;
                 System.setProperty("user.dir", chrDir);
             }
-            else Shell.logger.warn("Could not find module: " + fn);
         } catch (IOException ignored) {
             imp = null;
             Shell.logger.warn("IOException while reading: " + fn);

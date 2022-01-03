@@ -20,6 +20,7 @@ public class PlayThread extends Thread {
         this.audioFormat = audioFormat;
     }
 
+    /*
     public void run() {
         try {
             sourceDataLine.open(audioFormat);
@@ -39,4 +40,5 @@ public class PlayThread extends Thread {
             Shell.logger.outln("Error playing audio: " + e);
         }
     }
+    */
 }

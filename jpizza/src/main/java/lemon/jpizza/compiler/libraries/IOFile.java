@@ -40,7 +40,7 @@ public class IOFile extends JPExtension {
             try {
                 return Ok(Files.readString(Path.of(path)));
             } catch (IOException e) {
-                return Err("Internal", "IO Error while reading file");
+                return Err("Internal", "Could not load file (" + e.getMessage() + ")");
             }
         }, List.of("String"));
         func("writeFile", (args) -> {
@@ -54,7 +54,7 @@ public class IOFile extends JPExtension {
                 writer.close();
                 return Ok(created);
             } catch (IOException e) {
-                return Err("Internal", "IO Error while writing file");
+                return Err("Internal", "Could not write file (" + e.getMessage() + ")");
             }
         }, List.of("String", "any"));
 
@@ -80,7 +80,7 @@ public class IOFile extends JPExtension {
                     FileUtils.deleteDirectory(new File(path));
                     return Ok(true);
                 } catch (IOException e) {
-                    return Err("Internal", "IO Error while deleting directory");
+                    return Err("Internal", "Could not delete directory (" + e.getMessage() + ")");
                 }
             }
             else {
@@ -88,7 +88,7 @@ public class IOFile extends JPExtension {
                     FileUtils.delete(new File(path));
                     return Ok(true);
                 } catch (IOException e) {
-                    return Err("Internal", "IO Error while deleting file");
+                    return Err("Internal", "Could not delete file (" + e.getMessage() + ")");
                 }
             }
         }, List.of("String"));
@@ -145,7 +145,7 @@ public class IOFile extends JPExtension {
                 ois.close();
                 fis.close();
             } catch (IOException | ClassNotFoundException e) {
-                return Err("Internal", "IO Error while reading serialized file");
+                return Err("Internal", "Could not load file (" + e.getMessage() + ")");
             }
 
             return Ok(out);
@@ -160,7 +160,7 @@ public class IOFile extends JPExtension {
             try {
                 bytes = Files.readAllBytes(Path.of(path));
             } catch (IOException e) {
-                return Err("Internal", "IO Error while reading file");
+                return Err("Internal", "Could not load file (" + e.getMessage() + ")");
             }
 
             return Ok(bytes);
@@ -183,7 +183,7 @@ public class IOFile extends JPExtension {
                 fos.close();
                 return Ok(created);
             } catch (IOException e) {
-                return Err("Internal", "IO Error while writing file");
+                return Err("Internal", "Could not write file (" + e.getMessage() + ")");
             }
         }, List.of("String", "any"));
     }

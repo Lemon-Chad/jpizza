@@ -718,8 +718,13 @@ public class Value implements Serializable {
     }
 
     public static Value fromObject(Object object) {
-        if (object instanceof Double) {
-            return new Value((Double) object);
+        if (object instanceof Double ||
+                object instanceof Float ||
+                object instanceof Integer ||
+                object instanceof Long ||
+                object instanceof Short ||
+                object instanceof Byte) {
+            return new Value(Double.parseDouble(object.toString()));
         }
         else if (object instanceof String) {
             return new Value((String) object);
@@ -772,7 +777,7 @@ public class Value implements Serializable {
             Object obj = is.readObject();
             return NativeResult.Ok(Value.fromObject(obj));
         } catch (IOException | ClassNotFoundException e) {
-            return NativeResult.Err("Internal", "Internal byte error: " + e);
+            return NativeResult.Err("Internal", "Could not read bytes (" + e.getMessage() + ")");
         }
     }
 

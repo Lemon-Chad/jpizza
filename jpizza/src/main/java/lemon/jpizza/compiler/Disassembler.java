@@ -148,7 +148,7 @@ public class Disassembler {
                 int kwargCount = chunk.code.get(offset + 2);
                 int genericCount = chunk.code.get(offset + 3);
                 Shell.logger.debug(String.format("%-16s %04d %04d %04d%n", "OP_CALL", argCount, kwargCount, genericCount));
-                yield offset + 4;
+                yield offset + 4 + kwargCount + genericCount;
             }
             case OpCode.Closure -> {
                 offset++;
@@ -177,7 +177,7 @@ public class Disassembler {
             case OpCode.Import -> {
                 int fromConstant = chunk.code.get(offset + 1);
                 int asConstant = chunk.code.get(offset + 2);
-                Shell.logger.debug(String.format("%-16s %-16s as %-16s", "OP_IMPORT", chunk.constants.values.get(fromConstant), chunk.constants.values.get(asConstant)));
+                Shell.logger.debug(String.format("%-16s %-16s as %-16s%n", "OP_IMPORT", chunk.constants.values.get(fromConstant), chunk.constants.values.get(asConstant)));
                 yield offset + 3;
             }
 
@@ -227,7 +227,7 @@ public class Disassembler {
     static int constantInstruction(String name, Chunk chunk, int offset) {
         int constant = chunk.code.get(offset + 1);
         Shell.logger.debug(String.format("%-16s %04d '", name, constant));
-        Shell.logger.debug(chunk.constants.values. get(constant));
+        Shell.logger.debug(chunk.constants.values.get(constant));
         Shell.logger.debug("'\n");
         return offset + 2;
     }
