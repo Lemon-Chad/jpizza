@@ -35,11 +35,11 @@ public class JSystem extends JPExtension {
     public void setup() {
         // System Library
         // Quick Environment Variables
-        define("os", (args) -> Ok(System.getProperty("os.name")), 0);
-        define("home", (args) -> Ok(System.getProperty("user.home")), 0);
+        func("os", (args) -> Ok(System.getProperty("os.name")), 0);
+        func("home", (args) -> Ok(System.getProperty("user.home")), 0);
 
         // Execution
-        define("execute", (args) -> {
+        func("execute", (args) -> {
             String cmd = args[0].asString();
             Runtime rt = Runtime.getRuntime();
             try {
@@ -49,7 +49,7 @@ public class JSystem extends JPExtension {
                 return Err("Internal", e.getMessage());
             }
         }, List.of("String"));
-        define("executeFloor", (args) -> {
+        func("executeFloor", (args) -> {
             List<Value> args2 = args[0].asList();
             String[] cmd = new String[args2.size()];
             for (int i = 0; i < args2.size(); i++)
@@ -66,28 +66,28 @@ public class JSystem extends JPExtension {
         }, List.of("list"));
 
         // IO
-        define("disableOut", (args) -> {
+        func("disableOut", (args) -> {
             Shell.logger.disableLogging();
             return Ok;
         }, 0);
-        define("enableOut", (args) -> {
+        func("enableOut", (args) -> {
             Shell.logger.enableLogging();
             return Ok;
         }, 0);
 
         // VM Info
-        define("jpv", vm.version);
+        var("jpv", vm.version);
 
         // Environment Variables
-        define("envVarExists", (args) -> Ok(System.getenv(args[0].asString()) != null), List.of("String"));
-        define("getEnvVar", (args) -> {
+        func("envVarExists", (args) -> Ok(System.getenv(args[0].asString()) != null), List.of("String"));
+        func("getEnvVar", (args) -> {
             String name = args[0].asString();
             String value = System.getenv(name);
             if (value == null)
                 return Err("Scope", "Environment variable '" + name + "' does not exist");
             return Ok(value);
         }, List.of("String"));
-        define("setEnvVar", (args) -> {
+        func("setEnvVar", (args) -> {
             String name = args[0].asString();
             String value = args[1].asString();
             System.setProperty(name, value);
@@ -95,15 +95,15 @@ public class JSystem extends JPExtension {
         }, List.of("String", "String"));
 
         // System Properties
-        define("propExists", (args) -> Ok(System.getProperty(args[0].asString()) != null), List.of("String"));
-        define("getProp", (args) -> {
+        func("propExists", (args) -> Ok(System.getProperty(args[0].asString()) != null), List.of("String"));
+        func("getProp", (args) -> {
             String name = args[0].asString();
             String value = System.getProperty(name);
             if (value == null)
                 return Err("Scope", "System property '" + name + "' does not exist");
             return Ok(value);
         }, List.of("String"));
-        define("setProp", (args) -> {
+        func("setProp", (args) -> {
             String name = args[0].asString();
             String value = args[1].asString();
             System.setProperty(name, value);
@@ -111,7 +111,7 @@ public class JSystem extends JPExtension {
         }, List.of("String", "String"));
 
         // System
-        define("exit", (args) -> {
+        func("exit", (args) -> {
             int code = args[0].asNumber().intValue();
             System.exit(code);
             return Ok;

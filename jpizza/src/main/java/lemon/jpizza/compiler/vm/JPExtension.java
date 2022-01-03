@@ -44,20 +44,20 @@ public abstract class JPExtension {
         return NativeResult.Err(title, msg);
     }
 
-    protected void define(String name, JNative.Method method, int argc) {
+    protected void func(String name, JNative.Method method, int argc) {
         vm.defineNative(lib, name, method, argc);
     }
 
-    protected void define(String name, JNative.Method method, List<String> types) {
+    protected void func(String name, JNative.Method method, List<String> types) {
         vm.defineNative(lib, name, method, types);
     }
 
-    protected void define(String name, Value val) {
+    protected void var(String name, Value val) {
         vm.defineVar(lib, name, val);
     }
 
-    protected void define(String name, Object val) {
-        define(name, Value.fromObject(val));
+    protected void var(String name, Object val) {
+        var(name, Value.fromObject(val));
     }
 
     abstract public void setup();

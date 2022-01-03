@@ -580,9 +580,7 @@ public class Compiler {
 
         JFunc imp = null;
         try {
-            if (Constants.LIBRARIES.containsKey(fn))
-                imp = null;
-            else if (Constants.STANDLIBS.containsKey(fn)) {
+            if (Constants.STANDLIBS.containsKey(fn)) {
                 Pair<JFunc, Error> res = Shell.compile(fn, Constants.STANDLIBS.get(fn));
                 if (res.b != null)
                     Shell.logger.warn(res.b.asString());

@@ -31,7 +31,7 @@ public class IOFile extends JPExtension {
     @Override
     public void setup() {
         // String Data
-        define("readFile", (args) -> {
+        func("readFile", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             if (!file.exists())
@@ -43,7 +43,7 @@ public class IOFile extends JPExtension {
                 return Err("Internal", "IO Error while reading file");
             }
         }, List.of("String"));
-        define("writeFile", (args) -> {
+        func("writeFile", (args) -> {
             String path = dir(args[0]);
             String data = args[1].asString();
             File file = new File(path);
@@ -59,17 +59,17 @@ public class IOFile extends JPExtension {
         }, List.of("String", "any"));
 
         // File Creation
-        define("fileExists", (args) -> {
+        func("fileExists", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.exists());
         }, List.of("String"));
-        define("makeDirs", (args) -> {
+        func("makeDirs", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.mkdirs());
         }, List.of("String"));
-        define("deleteFile", (args) -> {
+        func("deleteFile", (args) -> {
             String path = dir(args[0]);
             if (!Files.exists(Path.of(path))) {
                 return Err("Imaginary File", "File not found");
@@ -94,7 +94,7 @@ public class IOFile extends JPExtension {
         }, List.of("String"));
 
         // Directories
-        define("listDirContents", (args) -> {
+        func("listDirContents", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             if (!file.exists() || !file.isDirectory())
@@ -104,15 +104,15 @@ public class IOFile extends JPExtension {
             List<String> list = new ArrayList<>(Arrays.asList(files));
             return Ok(list);
         }, List.of("String"));
-        define("isDirectory", (args) -> {
+        func("isDirectory", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.isDirectory());
         }, List.of("String"));
 
         // Working Directory
-        define("getCWD", (args) -> Ok(System.getProperty("user.dir")), 0);
-        define("setCWD", (args) -> {
+        func("getCWD", (args) -> Ok(System.getProperty("user.dir")), 0);
+        func("setCWD", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             if (!file.exists())
@@ -124,7 +124,7 @@ public class IOFile extends JPExtension {
         }, List.of("String"));
 
         // Serialization
-        define("readSerial", (args) -> {
+        func("readSerial", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             if (!file.exists())
@@ -150,7 +150,7 @@ public class IOFile extends JPExtension {
 
             return Ok(out);
         }, List.of("String"));
-        define("readBytes", (args) -> {
+        func("readBytes", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             if (!file.exists())
@@ -165,7 +165,7 @@ public class IOFile extends JPExtension {
 
             return Ok(bytes);
         }, List.of("String"));
-        define("writeSerial", (args) -> {
+        func("writeSerial", (args) -> {
             String path = dir(args[0]);
             Value obj = args[1];
             File file = new File(path);

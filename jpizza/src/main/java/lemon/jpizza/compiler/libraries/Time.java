@@ -15,8 +15,8 @@ public class Time extends JPExtension {
 
     @Override
     public void setup() {
-        define("epoch", (args) -> Ok(System.currentTimeMillis()), 0);
-        define("halt", (args) -> {
+        func("epoch", (args) -> Ok(System.currentTimeMillis()), 0);
+        func("halt", (args) -> {
             try {
                 Thread.sleep(args[0].asNumber().intValue());
             } catch (InterruptedException e) {

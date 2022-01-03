@@ -92,7 +92,7 @@ public class VM {
         globals.put(name, new Var(
                 "function",
                 new Value(new JNative(name, method, argc)),
-                false
+                true
         ));
     }
 
@@ -114,7 +114,7 @@ public class VM {
         globals.put(name, new Var(
                 "function",
                 new Value(new JNative(name, method, types.size(), types)),
-                false
+                true
         ));
     }
 
@@ -387,14 +387,12 @@ public class VM {
             }
             case OpCode.GetGlobal -> {
                 String name = readString();
-
-                VMResult res = getBound(name, true);
-                if (res == VMResult.OK)
-                    yield VMResult.OK;
-
                 Var value = globals.get(name);
 
                 if (value == null) {
+                    VMResult res = getBound(name, true);
+                    if (res == VMResult.OK)
+                        yield VMResult.OK;
                     runtimeError("Scope", "Undefined variable");
                     yield VMResult.ERROR;
                 }

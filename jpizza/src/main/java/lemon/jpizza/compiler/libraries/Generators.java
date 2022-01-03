@@ -16,7 +16,7 @@ public class Generators extends JPExtension {
 
     @Override
     public void setup() {
-        define("range", (args) -> {
+        func("range", (args) -> {
             double start = args[0].asNumber();
             double end = args[1].asNumber();
             double step = args[2].asNumber();
@@ -25,7 +25,7 @@ public class Generators extends JPExtension {
                 list.add(i);
             return Ok(list);
         }, List.of("num", "num", "num"));
-        define("linear", (args) -> {
+        func("linear", (args) -> {
             double start = args[0].asNumber();
             double end = args[1].asNumber();
             double step = args[2].asNumber();
@@ -38,7 +38,7 @@ public class Generators extends JPExtension {
                 list.add(m * i + b);
             return Ok(list);
         }, List.of("num", "num", "num", "num", "num"));
-        define("quadratic", (args) -> {
+        func("quadratic", (args) -> {
             double start = args[0].asNumber();
             double end = args[1].asNumber();
             double step = args[2].asNumber();
