@@ -72,7 +72,7 @@ public class Token implements Serializable {
             case Tilde -> "~";
             case At -> "@";
             case Int, Float, Boolean -> String.valueOf(value);
-            case String -> "\"" + ((Pair<String, Boolean>) value).a + "\"";
+            case String -> ((Pair<String, Boolean>) value).a;
             case Plus -> "+";
             case Minus -> "-";
             case Star -> "*";

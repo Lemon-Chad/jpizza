@@ -505,7 +505,8 @@ public class Compiler {
             }
             case "export_to" -> {
                 if (node.args.size() != 1) {
-                    Shell.logger.warn(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
+                    Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
+                    System.exit(1);
                 }
                 else {
                     target = node.args.get(0).asString();
@@ -591,14 +592,18 @@ public class Compiler {
     }
 
     static boolean equalPackages(String a, String b) {
+        if (a == null || b == null)
+            return a == null && b == null;
         return a.startsWith(b) || b.startsWith(a) || a.equals(b);
     }
 
     JFunc canImport(JFunc func) throws IOException {
+        if (func == null || func.chunk == null)
+            throw new IOException("Failed to load file");
         Chunk chunk = func.chunk;
         if (chunk.target != null) {
             String target = chunk.target;
-            if (target.equals("package") && !equalPackages(packageName, chunk.packageName)) {
+            if (Objects.equals(target, "package") && !equalPackages(packageName, chunk.packageName)) {
                 throw new IOException("Cannot import file outside of package");
             }
             else if (!target.equals("all")) {
@@ -609,7 +614,7 @@ public class Compiler {
     }
 
     void compile(ImportNode node) {
-        String fn = node.file_name_tok.value.toString();
+        String fn = node.file_name_tok.asString();
         String chrDir = System.getProperty("user.dir");
 
         String fileName = chrDir + "/" + fn;
@@ -654,7 +659,8 @@ public class Compiler {
             }
         } catch (IOException e) {
             imp = null;
-            Shell.logger.warn(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
+            Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
+            System.exit(1);
         }
 
         if (imp != null) {
