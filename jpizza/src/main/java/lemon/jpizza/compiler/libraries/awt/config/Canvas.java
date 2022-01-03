@@ -62,10 +62,6 @@ public class Canvas extends JPanel {
         }
     }
 
-    public void setFont(JFont font) {
-        this.font = font;
-    }
-
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -91,7 +87,7 @@ public class Canvas extends JPanel {
                 g.setColor(span.color);
             for (int k = 0; k < span.span; k++) {
                 Drawable drawing = drawings.get().get(i + k);
-                drawing.draw(g);
+                drawing.draw(g, this);
             }
             i += span.span;
         }
