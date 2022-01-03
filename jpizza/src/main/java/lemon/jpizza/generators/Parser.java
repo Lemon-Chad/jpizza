@@ -593,7 +593,7 @@ public class Parser {
             reverse();
         }
         statement = wasStatement;
-        Node node = res.register(binOp(this::getExpr, Collections.singletonList(TokenType.Dot), this::atom));
+        Node node = res.register(binOp(this::getExpr, Collections.singletonList(TokenType.Dot), this::call));
 
         if (res.error != null)
             return res;
