@@ -223,10 +223,10 @@ class Tuple {
     }
     
     mthd bin type {
-        let str => '(';
+        let types => [];
         for (item <- items)
-            str += type(item);
-        str + ')'
+            types.append(type(*item));
+        return "(" + (",".join(types)) + ")";
     }
     
     mthd contains<x> -> contains(items, x);
