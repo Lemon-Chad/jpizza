@@ -76,7 +76,7 @@ public class JSystem extends JPExtension {
         }, 0);
 
         // VM Info
-        var("jpv", vm.version);
+        var("jpv", VM.VERSION);
 
         // Environment Variables
         func("envVarExists", (args) -> Ok(System.getenv(args[0].asString()) != null), List.of("String"));
