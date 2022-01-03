@@ -76,6 +76,9 @@ public class Compiler {
 
     final List<String> globals;
 
+    String packageName;
+    String target;
+
     final Upvalue[] upvalues;
 
     Map<String, Node> macros;
@@ -486,14 +489,35 @@ public class Compiler {
     }
 
     void compile(UseNode node) {
-        emit(OpCode.Header, node.pos_start, node.pos_end);
-        emit(switch (node.useToken.value.toString()) {
+        int code = switch (node.useToken.value.toString()) {
             case "memoize"  -> HeadCode.Memoize;
             case "func"     -> HeadCode.SetMainFunction;
             case "object"   -> HeadCode.SetMainClass;
             case "export"   -> HeadCode.Export;
+            case "package" -> {
+                StringBuilder sb = new StringBuilder();
+                for (Token token : node.args) {
+                    sb.append(token.asString());
+                }
+                packageName = sb.toString();
+                chunk().packageName = packageName;
+                yield HeadCode.Package;
+            }
+            case "export_to" -> {
+                if (node.args.size() != 1) {
+                    Shell.logger.warn(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
+                }
+                else {
+                    target = node.args.get(0).asString();
+                    chunk().target = target;
+                }
+                yield HeadCode.ExportTo;
+            }
             default         -> -1;
-        }, node.args.size(), node.pos_start, node.pos_end);
+        };
+
+        emit(OpCode.Header, node.pos_start, node.pos_end);
+        emit(code, node.args.size(), node.pos_start, node.pos_end);
         for (Token arg : node.args) {
             int constant = chunk().addConstant(new Value(arg.value.toString()));
             emit(constant, arg.pos_start, arg.pos_end);
@@ -566,6 +590,24 @@ public class Compiler {
         emit(new int[]{ OpCode.Enum, constant, node.pub ? 1 : 0 }, node.pos_start, node.pos_end);
     }
 
+    static boolean equalPackages(String a, String b) {
+        return a.startsWith(b) || b.startsWith(a) || a.equals(b);
+    }
+
+    JFunc canImport(JFunc func) throws IOException {
+        Chunk chunk = func.chunk;
+        if (chunk.target != null) {
+            String target = chunk.target;
+            if (target.equals("package") && !equalPackages(packageName, chunk.packageName)) {
+                throw new IOException("Cannot import file outside of package");
+            }
+            else if (!target.equals("all")) {
+                throw new IOException("File is not a module");
+            }
+        }
+        return func;
+    }
+
     void compile(ImportNode node) {
         String fn = node.file_name_tok.value.toString();
         String chrDir = System.getProperty("user.dir");
@@ -587,28 +629,32 @@ public class Compiler {
                 imp = res.a;
             }
             else if (Files.exists(Paths.get(modFilePath + ".jbox"))) {
-                imp = Shell.load(Files.readString(Paths.get(modFilePath + ".jbox")));
+                imp = canImport(Shell.load(Files.readString(Paths.get(modFilePath + ".jbox"))));
             }
             else if (Files.exists(Paths.get(fileName + ".jbox"))) {
-                imp = Shell.load(Files.readString(Paths.get(fileName + ".jbox")));
+                imp = canImport(Shell.load(Files.readString(Paths.get(fileName + ".jbox"))));
             }
             else if (Files.exists(Paths.get(fileName + ".devp"))) {
+                //noinspection DuplicatedCode
+                System.setProperty("user.dir", fileName + ".devp");
                 Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(fileName + ".devp")));
                 if (res.b != null)
                     Shell.logger.warn(res.b.asString());
-                imp = res.a;
+                imp = canImport(res.a);
+                System.setProperty("user.dir", chrDir);
             }
             else if (Files.exists(Paths.get(modFilePath + ".devp"))) {
+                //noinspection DuplicatedCode
                 System.setProperty("user.dir", modPath + ".devp");
                 Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(modFilePath + ".devp")));
                 if (res.b != null)
                     Shell.logger.warn(res.b.asString());
-                imp = res.a;
+                imp = canImport(res.a);
                 System.setProperty("user.dir", chrDir);
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             imp = null;
-            Shell.logger.warn("IOException while reading: " + fn);
+            Shell.logger.warn(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
         }
 
         if (imp != null) {

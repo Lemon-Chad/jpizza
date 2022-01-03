@@ -12,6 +12,8 @@ import java.util.List;
 public class Chunk implements Serializable {
     final List<Integer> code;
     public int[] codeArray;
+    public String packageName;
+    public String target;
     ValueArray constants;
     public List<FlatPosition> positions;
     final String source;
