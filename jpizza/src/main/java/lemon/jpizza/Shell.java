@@ -143,7 +143,7 @@ public class Shell {
         else if (Objects.equals(target, "docs")) {
             Shell.logger.outln("Documentation can be found at https://jpizza.readthedocs.io/en/latest/");
         }
-        else if (target == null) {
+        else if (target == null && !(flags == Flags.SHELL)) {
             Shell.logger.fail("No target specified");
         }
         else {
@@ -225,6 +225,7 @@ public class Shell {
             }
         }
         in.close();
+        System.exit(0);
     }
 
     public static Pair<List<Node>, Error> getAst(String fn, String text) {
