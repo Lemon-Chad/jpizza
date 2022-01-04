@@ -18,11 +18,7 @@ public class RunMain {
             return;
         }
         double start = System.currentTimeMillis();
-        e = Shell.runCompiled("main.jbox", "main.jbox", args);
-        if (e != null) {
-            Shell.logger.fail(e.asString());
-            return;
-        }
+        Shell.runCompiled("main.jbox", "main.jbox", args);
         double end = System.currentTimeMillis();
         Shell.logger.outln("Time: " + (end - start) + "ms");
 

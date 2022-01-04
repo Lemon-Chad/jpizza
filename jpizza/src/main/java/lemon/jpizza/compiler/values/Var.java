@@ -2,7 +2,7 @@ package lemon.jpizza.compiler.values;
 
 import java.io.Serializable;
 
-public class Var implements Serializable {
+public class Var {
     public final String type;
     public Value val;
     public final boolean constant;

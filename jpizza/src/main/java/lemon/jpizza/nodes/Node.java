@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class Node implements Serializable {
+public abstract class Node {
     public Position pos_start;
     public Position pos_end;
     public JPType jptype;
@@ -62,4 +62,9 @@ public abstract class Node implements Serializable {
     public abstract List<Node> getChildren();
 
     public abstract String visualize();
+
+    protected Node setStatic(boolean b) {
+        constant = b;
+        return this;
+    }
 }

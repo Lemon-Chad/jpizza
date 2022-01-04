@@ -1,17 +1,15 @@
 package lemon.jpizza.compiler.values.enums;
 
+import lemon.jpizza.compiler.ChunkCode;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.classes.ClassAttr;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.vm.VM;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Arrays;
+import java.util.*;
 
-public class JEnumChild implements Serializable {
+public class JEnumChild {
     final int value;
     JEnum parent;
 
@@ -86,5 +84,27 @@ public class JEnumChild implements Serializable {
 
     public Value asValue() {
         return asValue;
+    }
+
+    public int[] dump() {
+        List<Integer> dump = new ArrayList<>(List.of(ChunkCode.EnumChild, value, genericSlots.size()));
+        dump.addAll(genericSlots);
+        dump.add(props.size());
+        for (String prop : props) {
+            Value.addAllString(dump, prop);
+        }
+        dump.add(propTypes.size());
+        for (List<String> propType : propTypes) {
+            dump.add(ChunkCode.Type);
+            dump.add(propType.size());
+            for (String propTypePart : propType) {
+                Value.addAllString(dump, propTypePart);
+            }
+        }
+        dump.add(generics.size());
+        for (String generic : generics) {
+            Value.addAllString(dump, generic);
+        }
+        return dump.stream().mapToInt(i -> i).toArray();
     }
 }

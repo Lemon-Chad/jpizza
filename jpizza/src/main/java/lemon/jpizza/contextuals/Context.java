@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
-public class Context implements Serializable {
+public class Context {
     public String displayName;
     public final Context parent;
     public final Position parentEntryPos;

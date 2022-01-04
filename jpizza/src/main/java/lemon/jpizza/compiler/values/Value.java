@@ -1,6 +1,7 @@
 package lemon.jpizza.compiler.values;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.compiler.ChunkCode;
 import lemon.jpizza.compiler.values.classes.BoundMethod;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.values.classes.JClass;
@@ -14,12 +15,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
-public class Value implements Serializable {
+public class Value {
     protected double number;
     protected String string;
     protected boolean bool;
@@ -850,5 +849,56 @@ public class Value implements Serializable {
             return new Value(instance.copy());
         }
         return this;
+    }
+
+    public static int[] dumpString(String s) {
+        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
+        int[] result = new int[bytes.length + 2];
+        result[0] = ChunkCode.String;
+        result[1] = bytes.length;
+        for (int i = 0; i < bytes.length; i++) {
+            result[i + 2] = ((int) bytes[i]) << 2;
+        }
+        return result;
+    }
+
+    public static void addAllString(List<Integer> list, String s) {
+        for (int i : dumpString(s)) {
+            list.add(i);
+        }
+    }
+
+    public int[] dump() {
+        if (isBool) {
+            return new int[] { ChunkCode.Boolean, bool ? 1 : 0 };
+        }
+        else if (isNumber) {
+            int power = 0;
+            while (Math.floor(number) != number) {
+                number *= 10;
+                power++;
+            }
+            long longValue = (long) number;
+            return new int[] { ChunkCode.Number, power, (int) (longValue >>> 32), (int) longValue };
+        }
+        else if (isString) {
+            return dumpString(string);
+        }
+        else if (isEnumParent) {
+            return enumParent.dump();
+        }
+        else if (isFunc) {
+            return func.dump();
+        }
+        else if (isType) {
+            List<Integer> result = new ArrayList<>();
+            result.add(ChunkCode.Type);
+            result.add(type.size());
+            for (String type : this.type) {
+                addAllString(result, type);
+            }
+            return result.stream().mapToInt(i -> i).toArray();
+        }
+        return null;
     }
 }

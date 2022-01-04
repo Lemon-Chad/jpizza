@@ -1,5 +1,6 @@
 package lemon.jpizza;
 
+import lemon.jpizza.compiler.ChunkBuilder;
 import lemon.jpizza.compiler.Compiler;
 import lemon.jpizza.compiler.FunctionType;
 import lemon.jpizza.compiler.values.Var;
@@ -30,6 +31,7 @@ import lemon.jpizza.results.RTResult;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class Shell {
@@ -190,9 +192,7 @@ public class Shell {
                         String[] dsfn = getFNDirs(dir);
                         String fn = dsfn[0]; String newDir = dsfn[1];
                         System.setProperty("user.dir", newDir);
-                        Error res = runCompiled(fn, args[0], args);
-                        if (res != null)
-                            Shell.logger.fail(res.asString());
+                        runCompiled(fn, args[0], args);
                     }
                     else {
                         Shell.logger.fail("File does not exist.");
@@ -296,9 +296,7 @@ public class Shell {
         try {
             FileOutputStream fout;
             fout = new FileOutputStream(outpath);
-            ObjectOutputStream oos = new ObjectOutputStream(fout);
-            oos.writeObject(func);
-            oos.close();
+            fout.write(func.dumpBytes());
             fout.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -313,29 +311,15 @@ public class Shell {
     }
 
     public static JFunc load(String inpath) {
-        FileInputStream fis;
         try {
-            fis = new FileInputStream(inpath);
-        } catch (FileNotFoundException e) {
-            Shell.logger.fail(RTError.FileNotFound(null, null,
-                    "File does not exist!\n" + inpath, null).asString());
-            return null;
-        }
-        try {
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            Object ost = ois.readObject();
-            ois.close();
-            fis.close();
-
-            if (!(ost instanceof JFunc)) {
-                Shell.logger.fail(RTError.FileNotFound(null, null,
-                        "File is not JPizza bytecode!" + inpath, null).asString());
-                return null;
+            Path path = Paths.get(inpath);
+            if (!Files.exists(path)) {
+                Shell.logger.fail("File does not exist!");
             }
-
-            return (JFunc) ost;
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            byte[] arr = Files.readAllBytes(path);
+            return ChunkBuilder.Build(arr);
+        } catch (IOException e) {
+            Shell.logger.fail("File is not readable!");
         }
         return null;
     }
@@ -351,33 +335,24 @@ public class Shell {
         vm.finish(args);
     }
 
-    public static Error runCompiled(String fn, String inpath, String[] args) {
-        FileInputStream fis;
+    public static void runCompiled(String fn, String inpath, String[] args) {
         try {
-            fis = new FileInputStream(inpath);
-        } catch (FileNotFoundException e) {
-            return RTError.FileNotFound(null, null,
-                    "File does not exist!\n" + inpath, null);
-        }
-        try {
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            Object ost = ois.readObject();
-            ois.close();
-            fis.close();
-            if (!(ost instanceof JFunc)) return RTError.FileNotFound(null, null,
-                    "File is not JPizza bytecode!", null);
+            Path path = Paths.get(inpath);
+            if (!Files.exists(path)) {
+                Shell.logger.fail("File does not exist!");
+            }
+            byte[] arr = Files.readAllBytes(path);
 
-            JFunc func = (JFunc) ost;
+            JFunc func = ChunkBuilder.Build(arr);
             vm = new VM(func).trace(fn);
 
             VMResult res = vm.run();
-            if (res == VMResult.ERROR) return null;
+            if (res == VMResult.ERROR) return;
             vm.finish(args);
 
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            Shell.logger.fail("File is not readable!");
         }
-        return null;
     }
 
     //Another public static 

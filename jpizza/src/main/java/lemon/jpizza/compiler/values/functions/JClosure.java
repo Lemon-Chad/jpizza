@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JClosure implements Serializable {
+public class JClosure {
     public final JFunc function;
 
     public final Var[] upvalues;

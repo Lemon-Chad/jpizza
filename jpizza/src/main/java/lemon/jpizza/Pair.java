@@ -2,7 +2,7 @@ package lemon.jpizza;
 
 import java.io.Serializable;
 
-public class Pair<T, X> implements Serializable {
+public class Pair<T, X> {
     public T a;
     public X b;
     public Pair(T a, X b) {

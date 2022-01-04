@@ -4,7 +4,7 @@ import lemon.jpizza.nodes.Node;
 
 import java.io.Serializable;
 
-public class ElseCase implements Serializable {
+public class ElseCase {
     public final boolean returnValue;
     public final Node statements;
 

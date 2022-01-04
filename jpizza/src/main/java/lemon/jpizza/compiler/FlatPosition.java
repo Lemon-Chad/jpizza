@@ -2,7 +2,7 @@ package lemon.jpizza.compiler;
 
 import java.io.Serializable;
 
-public class FlatPosition implements Serializable {
+public class FlatPosition {
     // The starting index of the token in the source file
     public final int index;
     // The number of characters after the index

@@ -16,11 +16,7 @@ public class RunTest {
             return;
         }
         double start = System.currentTimeMillis();
-        e = Shell.runCompiled("UnitTest.jbox", "UnitTest.jbox", args);
-        if (e != null) {
-            Shell.logger.fail(e.asString());
-            return;
-        }
+        Shell.runCompiled("UnitTest.jbox", "UnitTest.jbox", args);
         double end = System.currentTimeMillis();
         Shell.logger.outln("Time: " + (end - start) + "ms");
     }

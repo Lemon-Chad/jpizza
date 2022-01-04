@@ -155,10 +155,7 @@ public class LibraryManager {
                 Shell.runCompiled(path, pair.a, new String[0]);
             }
             else if (path.endsWith(".jbox")) {
-                Error err = Shell.runCompiled(path, path, new String[0]);
-                if (err != null) {
-                    return NativeResult.Err(err.error_name, err.details);
-                }
+                Shell.runCompiled(path, path, new String[0]);
             }
             else {
                 return NativeResult.Err("File Extension", "Invalid file extension");

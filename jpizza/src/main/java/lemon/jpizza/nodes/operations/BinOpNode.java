@@ -6,16 +6,13 @@ import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.nodes.values.BooleanNode;
-import lemon.jpizza.nodes.values.NumberNode;
-import lemon.jpizza.nodes.values.StringNode;
+import lemon.jpizza.nodes.values.*;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.objects.primitives.Num;
 import lemon.jpizza.results.RTResult;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BinOpNode extends Node {
     public final Node left_node;
@@ -145,11 +142,23 @@ public class BinOpNode extends Node {
         if (left_node.constant && right_node.constant) {
             Node left = left_node.optimize();
             Node right = right_node.optimize();
-            Node opt = new BinOpNode(left, op_tok, right);
+            Node opt = new BinOpNode(left, op_tok, right).setStatic(false);
+            if (left.getClass() != right.getClass())
+                return opt;
             return switch (op_tok) {
                 case Ampersand -> new BooleanNode(left.asBoolean() && right.asBoolean(), pos_start, pos_end);
                 case Pipe -> new BooleanNode(left.asBoolean() || right.asBoolean(), pos_start, pos_end);
 
+                case TildeAmpersand -> new NumberNode(VM.bitOp(
+                        left.asNumber(),
+                        right.asNumber(),
+                        (a, b) -> a & b
+                ), pos_start, pos_end);
+                case TildePipe -> new NumberNode(VM.bitOp(
+                        left.asNumber(),
+                        right.asNumber(),
+                        (a, b) -> a | b
+                ), pos_start, pos_end);
                 case TildeCaret -> new NumberNode(VM.bitOp(
                         left.asNumber(),
                         right.asNumber(),
@@ -176,6 +185,18 @@ public class BinOpNode extends Node {
                         yield new NumberNode(left.asNumber() + right.asNumber(), pos_start, pos_end);
                     else if (left instanceof StringNode)
                         yield new StringNode(left.asString() + right.asString(), pos_start, pos_end);
+                    else if (left instanceof ListNode) {
+                        List<Node> list = new ArrayList<>();
+                        list.addAll(left.asList());
+                        list.addAll(right.asList());
+                        yield new ListNode(list, pos_start, pos_end);
+                    }
+                    else if (left instanceof DictNode) {
+                        Map<Node, Node> map = new HashMap<>();
+                        map.putAll(left.asMap());
+                        map.putAll(right.asMap());
+                        yield new DictNode(map, pos_start, pos_end);
+                    }
                     yield opt;
                 }
                 case Minus -> left instanceof NumberNode ? new NumberNode(left.asNumber() - right.asNumber(), pos_start, pos_end) : opt;
@@ -184,7 +205,7 @@ public class BinOpNode extends Node {
                 case Caret -> left instanceof NumberNode ? new NumberNode(Math.pow(left.asNumber(), right.asNumber()), pos_start, pos_end) : opt;
                 case Percent -> left instanceof NumberNode ? new NumberNode(left.asNumber() % right.asNumber(), pos_start, pos_end) : opt;
 
-                case FatArrow -> new BooleanNode(left.equals(right), pos_start, pos_end);
+                case EqualEqual -> new BooleanNode(left.equals(right), pos_start, pos_end);
                 case BangEqual -> new BooleanNode(!left.equals(right), pos_start, pos_end);
                 case LeftAngle -> new BooleanNode(left.asNumber() < right.asNumber(), pos_start, pos_end);
                 case LessEquals -> new BooleanNode(left.asNumber() <= right.asNumber(), pos_start, pos_end);
@@ -226,7 +247,7 @@ public class BinOpNode extends Node {
             case Caret -> "pow";
             case Percent -> "%";
 
-            case Equal -> "==";
+            case EqualEqual -> "==";
             case BangEqual -> "!=";
             case LeftAngle -> "<";
             case LessEquals -> "<=";

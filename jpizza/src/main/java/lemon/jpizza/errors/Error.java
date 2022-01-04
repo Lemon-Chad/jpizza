@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
-public class Error implements Serializable {
+public class Error {
     public final Position pos_start;
     public final Position pos_end;
     public final String error_name;

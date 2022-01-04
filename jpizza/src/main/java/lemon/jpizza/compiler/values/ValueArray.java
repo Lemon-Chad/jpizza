@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ValueArray implements Serializable {
+public class ValueArray {
     public int length;
     public final List<Value> values;
     public Value[] valuesArray;
@@ -12,6 +12,12 @@ public class ValueArray implements Serializable {
     public ValueArray() {
         this.length = 0;
         this.values = new ArrayList<>();
+    }
+
+    public ValueArray(Value[] constants) {
+        this.length = constants.length;
+        this.values = List.of(constants);
+        this.valuesArray = constants;
     }
 
     public int write(Value value) {
@@ -35,5 +41,16 @@ public class ValueArray implements Serializable {
         }
         copy.compile();
         return copy;
+    }
+
+    public int[] dump() {
+        List<Integer> list = new ArrayList<>();
+        list.add(length);
+        for (Value value : values) {
+            for (int i : value.dump()) {
+                list.add(i);
+            }
+        }
+        return list.stream().mapToInt(i -> i).toArray();
     }
 }

@@ -1,17 +1,19 @@
 package lemon.jpizza.compiler.values.functions;
 
 import lemon.jpizza.compiler.Chunk;
+import lemon.jpizza.compiler.ChunkCode;
 import lemon.jpizza.compiler.values.Value;
+import org.checkerframework.checker.units.qual.A;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JFunc implements Serializable {
+public class JFunc {
     public int arity;
     public int genericArity;
     public int totarity;
-    public final Chunk chunk;
+    public Chunk chunk;
     public String name;
     public List<String> returnType;
 
@@ -77,4 +79,58 @@ public class JFunc implements Serializable {
         return copy;
     }
 
+    public int[] dump() {
+        List<Integer> list = new ArrayList<>(List.of(ChunkCode.Func, arity, genericArity, totarity));
+        if (name != null)
+            Value.addAllString(list, name);
+        else
+            list.add(0);
+
+        if (this.returnType != null) {
+            list.add(ChunkCode.Type);
+            list.add(returnType.size());
+            for (String s : returnType)
+                Value.addAllString(list, s);
+        }
+        else {
+            list.add(0);
+        }
+
+        list.add(genericSlots.size());
+        list.addAll(genericSlots);
+
+        list.add(upvalueCount);
+
+        list.add(async ? 1 : 0);
+        list.add(catcher ? 1 : 0);
+
+        if (args != null)
+            Value.addAllString(list, args);
+        else
+            list.add(0);
+
+        if (kwargs != null)
+            Value.addAllString(list, kwargs);
+        else
+            list.add(0);
+
+        int[] chunk = this.chunk.dump();
+        for (int i : chunk)
+            list.add(i);
+
+        return list.stream().mapToInt(i -> i).toArray();
+    }
+
+    public byte[] dumpBytes() {
+        int[] dump = dump();
+        byte[] bytes = new byte[dump.length * 4];
+        for (int i = 0; i < dump.length; i++) {
+            int v = dump[i];
+            bytes[i * 4    ] = (byte) (v >>> 24);
+            bytes[i * 4 + 1] = (byte) (v >>> 16);
+            bytes[i * 4 + 2] = (byte) (v >>>  8);
+            bytes[i * 4 + 3] = (byte) (v       );
+        }
+        return bytes;
+    }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 
-public class Token implements Serializable {
+public class Token {
     public final TokenType type;
     public final Object value;
     public Position pos_start;

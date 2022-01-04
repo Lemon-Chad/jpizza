@@ -1047,6 +1047,7 @@ public class Compiler {
         }
         else {
             arg = chunk().addConstant(new Value(name));
+            globals.remove(name);
             emit(OpCode.DropGlobal, arg, node.pos_start, node.pos_end);
         }
 
@@ -1173,9 +1174,16 @@ public class Compiler {
         func.returnType = List.of("any");
 
         emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(func)), 0 }, start, end);
-        for (int i = 0; i < func.upvalueCount; i++)
-            emit(scope.upvalues[i].isLocal ? 1 : 0, scope.upvalues[i].index,
-                    start, end);
+        for (int i = 0; i < func.upvalueCount; i++) {
+            Upvalue upvalue = scope.upvalues[i];
+            emit(upvalue.isLocal ? 1 : upvalue.isGlobal ? 2 : 0, start, end);
+            if (!upvalue.isGlobal) {
+                emit(upvalue.index, start, end);
+            }
+            else {
+                emit(chunk().addConstant(new Value(upvalue.globalName)), start, end);
+            }
+        }
         emit(new int[]{ OpCode.Call, 0, 0, 0 }, start, end);
     }
 

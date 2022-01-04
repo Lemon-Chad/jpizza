@@ -13,7 +13,7 @@ import lemon.jpizza.Token;
 import java.io.Serializable;
 import java.util.*;
 
-public class SymbolTable implements Serializable {
+public class SymbolTable {
     final Map<String, VarNode> symbols = new HashMap<>();
     final Map<String, String> types = new HashMap<>();
     final Map<String, String> attrtypes = new HashMap<>();

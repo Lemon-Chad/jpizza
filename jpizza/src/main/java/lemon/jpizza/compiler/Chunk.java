@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Chunk implements Serializable {
-    final List<Integer> code;
+public class Chunk {
+    List<Integer> code;
     public int[] codeArray;
     public String packageName;
     public String target;
@@ -73,6 +73,35 @@ public class Chunk implements Serializable {
     }
     public void constants(ValueArray constants) {
         this.constants = constants;
+    }
+
+    public int[] dump() {
+        List<Integer> list = new ArrayList<>(List.of(ChunkCode.Chunk));
+        Value.addAllString(list, source);
+        if (packageName != null) {
+            Value.addAllString(list, packageName);
+        }
+        else {
+            list.add(0);
+        }
+        if (target != null) {
+            Value.addAllString(list, target);
+        }
+        else {
+            list.add(0);
+        }
+        list.add(positions.size());
+        for (FlatPosition pos : positions) {
+            list.add(pos.index);
+            list.add(pos.len);
+            list.add(pos.span);
+        }
+        for (int i : constants().dump())
+            list.add(i);
+        list.add(codeArray.length);
+        for (int i : codeArray)
+            list.add(i);
+        return list.stream().mapToInt(i -> i).toArray();
     }
 
 }

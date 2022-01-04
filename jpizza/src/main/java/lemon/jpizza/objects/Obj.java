@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class Obj implements Serializable {
+public abstract class Obj {
     public Object value;
 
     public String string;

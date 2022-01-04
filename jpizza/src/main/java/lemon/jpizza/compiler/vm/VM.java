@@ -767,6 +767,10 @@ public class VM {
         switch (op) {
             case OpCode.GetUpvalue -> {
                 int slot = readByte();
+                if (frame.closure.upvalues[slot] == null) {
+                    runtimeError("Scope", "Undefined variable");
+                    return VMResult.ERROR;
+                }
                 push(frame.closure.upvalues[slot].val);
             }
             case OpCode.SetUpvalue -> {

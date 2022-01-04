@@ -163,7 +163,7 @@ public class Disassembler {
                     int isLocal = chunk.code.get(offset++);
                     int index = chunk.code.get(offset++);
                     Shell.logger.debug(String.format("%04d      |                     %s %d\n",
-                            offset - 2, isLocal == 1 ? "local" : "upvalue", index));
+                            offset - 2, isLocal == 1 ? "local" : isLocal == 2 ? "global" : "upvalue", index));
                 }
 
                 yield offset;
