@@ -7,6 +7,7 @@ import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JFunc;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 public class ChunkBuilder {
@@ -61,8 +62,10 @@ public class ChunkBuilder {
         i++;
         int a = code[i++];
         int b = code[i++];
-        long v = (long)a << 32 | b;
-        return Double.longBitsToDouble(v);
+        ByteBuffer bb = ByteBuffer.allocate(8);
+        bb.putInt(a);
+        bb.putInt(b);
+        return bb.getDouble(0);
     }
 
     private JEnum readEnum() throws IOException {

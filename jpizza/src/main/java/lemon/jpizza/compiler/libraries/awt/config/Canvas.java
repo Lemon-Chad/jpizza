@@ -70,23 +70,26 @@ public class Canvas extends JPanel {
         drawings.advance();
         colors.advance();
 
+        List<Drawable> drawings = new ArrayList<>(this.drawings.get());
+        List<ColorSpan> colors = new ArrayList<>(this.colors.get());
+        Map<Point, Rectangle> pixels = new ConcurrentHashMap<>(this.pixels.get());
+
         if (font != null) {
             g.setFont(font.getFont());
         }
 
-        for (Rectangle rect : pixels.get().values()) {
+        for (Rectangle rect : pixels.values()) {
             g.setColor(rect.color());
             rect.draw(g);
         }
 
         int i = 0;
-        List<ColorSpan> colorSpans = colors.get();
-        for (int j = 0; j < colorSpans.size(); j++) {
-            ColorSpan span = colorSpans.get(j);
+        for (int j = 0; j < colors.size() && i < drawings.size(); j++) {
+            ColorSpan span = colors.get(j);
             if (span.color != null)
                 g.setColor(span.color);
-            for (int k = 0; k < span.span; k++) {
-                Drawable drawing = drawings.get().get(i + k);
+            for (int k = 0; k < span.span && i + k < drawings.size(); k++) {
+                Drawable drawing = drawings.get(i + k);
                 drawing.draw(g, this);
             }
             i += span.span;

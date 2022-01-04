@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -873,8 +874,9 @@ public class Value {
             return new int[] { ChunkCode.Boolean, bool ? 1 : 0 };
         }
         else if (isNumber) {
-            long longValue = Double.doubleToRawLongBits(number);
-            return new int[] { ChunkCode.Number, (int) (longValue >>> 32), (int) longValue };
+            ByteBuffer buffer = ByteBuffer.allocate(8);
+            buffer.putDouble(number);
+            return new int[] { ChunkCode.Number, buffer.getInt(0), buffer.getInt(4) };
         }
         else if (isString) {
             return dumpString(string);
