@@ -684,7 +684,7 @@ public class Compiler {
 
         int constant = chunk().addConstant(new Value(fn));
         emit(OpCode.Import, constant, node.pos_start, node.pos_end);
-        globals.add(fn);
+        globals.add(node.as_tok != null ? node.as_tok.value.toString() : fn);
 
         if (node.as_tok != null)
             constant = chunk().addConstant(new Value(node.as_tok.value.toString()));
