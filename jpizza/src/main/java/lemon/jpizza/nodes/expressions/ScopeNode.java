@@ -1,5 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.generators.Interpreter;
@@ -19,6 +20,7 @@ public class ScopeNode extends Node {
 
         pos_start = states.pos_start;
         pos_end = states.pos_end;
+        jptype = JPType.Scope;
     }
 
     public RTResult visit(Interpreter inter, Context context) {

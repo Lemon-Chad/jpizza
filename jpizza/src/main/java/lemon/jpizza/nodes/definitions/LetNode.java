@@ -21,7 +21,7 @@ public class LetNode extends Node {
         this.value_node = value_node;
 
         pos_start = var_name_tok.pos_start; pos_end = var_name_tok.pos_end;
-        jptype = JPType.VarAssign;
+        jptype = JPType.Let;
     }
 
     public RTResult visit(Interpreter inter, Context context) {

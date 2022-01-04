@@ -1,5 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
+import lemon.jpizza.JPType;
 import lemon.jpizza.Position;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
@@ -17,12 +18,14 @@ public class BodyNode extends Node {
         this.statements = statements;
         this.pos_start = statements.get(0).pos_start;
         this.pos_end = statements.get(statements.size() - 1).pos_end;
+        this.jptype = JPType.Body;
     }
 
     public BodyNode(List<Node> statements, @NotNull Position start, @NotNull Position end) {
         this.statements = statements;
         this.pos_start = start;
         this.pos_end = end;
+        this.jptype = JPType.Body;
     }
 
     public RTResult visit(Interpreter inter, Context context) {

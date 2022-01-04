@@ -275,164 +275,101 @@ public class Compiler {
     }
 
     void compile(Node statement) {
-        if (statement instanceof BinOpNode)
-            compile((BinOpNode) statement);
+        switch (statement.jptype) {
+            case BinOp -> compile((BinOpNode) statement);
+            case UnaryOp -> compile((UnaryOpNode) statement);
 
-        else if (statement instanceof ExtendNode)
-            compile((ExtendNode) statement);
+            case Use -> compile((UseNode) statement);
+            case Import -> compile((ImportNode) statement);
+            case Extend -> compile((ExtendNode) statement);
+            case Destruct -> compile((DestructNode) statement);
 
-        else if (statement instanceof DecoratorNode)
-            compile((DecoratorNode) statement);
+            case Decorator -> compile((DecoratorNode) statement);
+            case FuncDef -> compile((FuncDefNode) statement);
+            case Call -> compile((CallNode) statement);
+            case Return -> compile((ReturnNode) statement);
+            case Spread -> compile((SpreadNode) statement);
 
-        else if (statement instanceof UnaryOpNode)
-            compile((UnaryOpNode) statement);
-
-        else if (statement instanceof NumberNode) {
-            NumberNode node = (NumberNode) statement;
-            compileNumber(node.val, node.pos_start, node.pos_end);
-        }
-
-        else if (statement instanceof StringNode) {
-            StringNode node = (StringNode) statement;
-            compileString(node.val, node.pos_start, node.pos_end);
-        }
-
-        else if (statement instanceof BooleanNode) {
-            BooleanNode node = (BooleanNode) statement;
-            compileBoolean(node.val, node.pos_start, node.pos_end);
-        }
-
-        else if (statement instanceof NullNode)
-            compileNull(statement.pos_start, statement.pos_end);
-
-        else if (statement instanceof BodyNode) {
-            BodyNode node = (BodyNode) statement;
-            for (Node stmt : node.statements) {
-                compile(stmt);
-                emit(OpCode.Pop, stmt.pos_start, stmt.pos_end);
+            case Number -> {
+                NumberNode node = (NumberNode) statement;
+                compileNumber(node.val, node.pos_start, node.pos_end);
             }
-            compileNull(node.pos_start, node.pos_end);
+            case String -> {
+                StringNode node = (StringNode) statement;
+                compileString(node.val, node.pos_start, node.pos_end);
+            }
+            case Boolean -> {
+                BooleanNode node = (BooleanNode) statement;
+                compileBoolean(node.val, node.pos_start, node.pos_end);
+            }
+            case List -> compile((ListNode) statement);
+            case Dict -> compile((DictNode) statement);
+            case Null, Pass -> compileNull(statement.pos_start, statement.pos_end);
+            case Bytes -> compile((BytesNode) statement);
+
+            case Body -> {
+                BodyNode node = (BodyNode) statement;
+                for (Node stmt : node.statements) {
+                    compile(stmt);
+                    emit(OpCode.Pop, stmt.pos_start, stmt.pos_end);
+                }
+                compileNull(node.pos_start, node.pos_end);
+            }
+            case Scope -> compile((ScopeNode) statement);
+
+            case Enum -> compile((EnumNode) statement);
+
+            case ClassDef -> compile((ClassDefNode) statement);
+            case Claccess -> {
+                ClaccessNode node = (ClaccessNode) statement;
+                compile(node.class_tok);
+                int constant = chunk().addConstant(new Value(node.attr_name_tok.value.toString()));
+                emit(OpCode.Access, constant, node.pos_start, node.pos_end);
+            }
+            case AttrAssign -> {
+                AttrAssignNode node = (AttrAssignNode) statement;
+                compile(node.value_node);
+                int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
+                emit(OpCode.SetAttr, constant, node.pos_start, node.pos_end);
+            }
+            case AttrAccess -> {
+                AttrAccessNode node = (AttrAccessNode) statement;
+                int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
+                emit(OpCode.GetAttr, constant, node.pos_start, node.pos_end);
+            }
+
+            case VarAssign -> compile((VarAssignNode) statement);
+            case DynAssign -> compile((DynAssignNode) statement);
+            case Let -> compile((LetNode) statement);
+
+            case VarAccess -> compile((VarAccessNode) statement);
+            case Drop -> compile((DropNode) statement);
+
+            case Throw -> compile((ThrowNode) statement);
+            case Assert -> compile((AssertNode) statement);
+
+            // This is an if statement
+            case Query -> compile((QueryNode) statement);
+            case Switch -> compile((SwitchNode) statement);
+            case Pattern -> compile((PatternNode) statement);
+
+            case While -> compile((WhileNode) statement);
+            case For -> compile((ForNode) statement);
+            case Iter -> compile((IterNode) statement);
+            case Break -> {
+                compileNull(statement.pos_start, statement.pos_end);
+                breaks.add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
+            }
+            case Continue -> {
+                compileNull(statement.pos_start, statement.pos_end);
+                emitLoop(continueTo, statement.pos_start, statement.pos_end);
+            }
+
+            case Ref -> compile((RefNode) statement);
+            case Deref -> compile((DerefNode) statement);
+
+            default -> throw new RuntimeException("Unknown statement type: " + statement.jptype);
         }
-
-        else if (statement instanceof VarAssignNode)
-            compile((VarAssignNode) statement);
-
-        else if (statement instanceof VarAccessNode)
-            compile((VarAccessNode) statement);
-
-        else if (statement instanceof AssertNode)
-            compile((AssertNode) statement);
-
-        else if (statement instanceof ScopeNode)
-            compile((ScopeNode) statement);
-
-        else if (statement instanceof QueryNode)
-            compile((QueryNode) statement);
-
-        else if (statement instanceof WhileNode)
-            compile((WhileNode) statement);
-
-        else if (statement instanceof ForNode)
-            compile((ForNode) statement);
-
-        else if (statement instanceof PassNode)
-            compileNull(statement.pos_start, statement.pos_end);
-
-        else if (statement instanceof LetNode)
-            compile((LetNode) statement);
-
-        else if (statement instanceof RefNode)
-            compile((RefNode) statement);
-
-        else if (statement instanceof DerefNode)
-            compile((DerefNode) statement);
-
-        else if (statement instanceof FuncDefNode)
-            compile((FuncDefNode) statement);
-
-        else if (statement instanceof CallNode)
-            compile((CallNode) statement);
-
-        else if (statement instanceof ReturnNode)
-            compile((ReturnNode) statement);
-
-        else if (statement instanceof ListNode)
-            compile((ListNode) statement);
-
-        else if (statement instanceof DictNode)
-            compile((DictNode) statement);
-
-        else if (statement instanceof ClassDefNode)
-            compile((ClassDefNode) statement);
-
-        else if (statement instanceof UseNode)
-            compile((UseNode) statement);
-
-        else if (statement instanceof ContinueNode) {
-            compileNull(statement.pos_start, statement.pos_end);
-            emitLoop(continueTo, statement.pos_start, statement.pos_end);
-        }
-
-        else if (statement instanceof BreakNode) {
-            compileNull(statement.pos_start, statement.pos_end);
-            breaks.add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
-        }
-
-        else if (statement instanceof BytesNode)
-            compile((BytesNode) statement);
-
-        else if (statement instanceof ClaccessNode) {
-            ClaccessNode node = (ClaccessNode) statement;
-            compile(node.class_tok);
-            int constant = chunk().addConstant(new Value(node.attr_name_tok.value.toString()));
-            emit(OpCode.Access, constant, node.pos_start, node.pos_end);
-        }
-
-        else if (statement instanceof AttrAssignNode) {
-            AttrAssignNode node = (AttrAssignNode) statement;
-            compile(node.value_node);
-            int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
-            emit(OpCode.SetAttr, constant, node.pos_start, node.pos_end);
-        }
-
-        else if (statement instanceof AttrAccessNode) {
-            AttrAccessNode node = (AttrAccessNode) statement;
-            int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
-            emit(OpCode.GetAttr, constant, node.pos_start, node.pos_end);
-        }
-
-        else if (statement instanceof SwitchNode)
-            compile((SwitchNode) statement);
-
-        else if (statement instanceof ThrowNode)
-            compile((ThrowNode) statement);
-
-        else if (statement instanceof ImportNode)
-            compile((ImportNode) statement);
-
-        else if (statement instanceof EnumNode)
-            compile((EnumNode) statement);
-
-        else if (statement instanceof IterNode)
-            compile((IterNode) statement);
-
-        else if (statement instanceof SpreadNode)
-            compile((SpreadNode) statement);
-
-        else if (statement instanceof DynAssignNode)
-            compile((DynAssignNode) statement);
-
-        else if (statement instanceof DropNode)
-            compile((DropNode) statement);
-
-        else if (statement instanceof DestructNode)
-            compile((DestructNode) statement);
-
-        else if (statement instanceof PatternNode)
-            compile((PatternNode) statement);
-
-        else
-            throw new RuntimeException("Unknown statement type: " + statement.getClass().getName());
     }
 
     void compile(ExtendNode node) {

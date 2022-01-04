@@ -29,6 +29,7 @@ public class DestructNode extends Node {
 
         pos_start = tar.pos_start;
         pos_end = tar.pos_end;
+        jptype = JPType.Destruct;
     }
 
     public DestructNode(Node tar, List<Token> tars) {
@@ -37,6 +38,7 @@ public class DestructNode extends Node {
 
         pos_start = tars.get(0).pos_start;
         pos_end = tar.pos_end;
+        jptype = JPType.Destruct;
     }
 
     public RTResult visit(Interpreter inter, Context context) {

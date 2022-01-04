@@ -1,5 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
@@ -15,6 +16,7 @@ public class DropNode extends Node {
     public DropNode(Token varTok) {
         pos_start = varTok.pos_start; pos_end = varTok.pos_end;
         this.varTok = varTok;
+        jptype = JPType.Drop;
     }
 
     public RTResult visit(Interpreter inter, Context context) {

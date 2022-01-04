@@ -50,5 +50,5 @@ public enum JPType {
     Value,
     VarAccess,
     Var,
-    While,
+    While, Body, Scope, Let, Throw, Drop, Destruct,
 }

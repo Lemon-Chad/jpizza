@@ -1,5 +1,6 @@
 package lemon.jpizza.nodes.expressions;
 
+import lemon.jpizza.JPType;
 import lemon.jpizza.contextuals.Context;
 import lemon.jpizza.errors.RTError;
 import lemon.jpizza.generators.Interpreter;
@@ -17,6 +18,7 @@ public class ThrowNode extends Node {
         this.thrown = thrown;
         this.throwType = throwType;
         pos_start = throwType.pos_start; pos_end = thrown.pos_end;
+        jptype = JPType.Throw;
     }
 
     public RTResult visit(Interpreter inter, Context context) {
