@@ -36,9 +36,9 @@ public class Canvas extends JPanel {
     }
 
     public void add(List<Drawable> drawables, List<ColorSpan> colors, Map<Point, Rectangle> pixels) {
-        this.drawings.add(drawables);
-        this.colors.add(colors);
-        this.pixels.add(pixels);
+        this.drawings.add(new ArrayList<>(drawables));
+        this.colors.add(new ArrayList<>(colors));
+        this.pixels.add(new ConcurrentHashMap<>(pixels));
     }
 
     public static void colorPush(Drawable drawing, List<Drawable> drawables, List<ColorSpan> colors) {
@@ -70,9 +70,9 @@ public class Canvas extends JPanel {
         drawings.advance();
         colors.advance();
 
-        List<Drawable> drawings = new ArrayList<>(this.drawings.get());
-        List<ColorSpan> colors = new ArrayList<>(this.colors.get());
-        Map<Point, Rectangle> pixels = new ConcurrentHashMap<>(this.pixels.get());
+        List<Drawable> drawings = this.drawings.get();
+        List<ColorSpan> colors = this.colors.get();
+        Map<Point, Rectangle> pixels = this.pixels.get();
 
         if (font != null) {
             g.setFont(font.getFont());
