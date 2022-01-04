@@ -440,6 +440,13 @@ public class Value {
                 return List.of(new Value(res.getValue()));
             }
         }
+        else if (isBytes) {
+            List<Value> list = new ArrayList<>();
+            for (int i = 0; i < bytes.length; i++) {
+                list.add(new Value(bytes[i]));
+            }
+            return list;
+        }
         return new ArrayList<>(List.of(this));
     }
 
