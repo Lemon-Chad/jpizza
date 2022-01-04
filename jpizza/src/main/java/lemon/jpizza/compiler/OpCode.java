@@ -22,7 +22,6 @@ public class OpCode {
     public static final int GetGlobal = 0x12;
     public static final int GetLocal = 0x13;
     public static final int SetLocal = 0x14;
-    public static final int PushTraceback = 0x15;
     public static final int Jump = 0x16;
     public static final int JumpIfFalse = 0x17;
     public static final int JumpIfTrue = 0x18;

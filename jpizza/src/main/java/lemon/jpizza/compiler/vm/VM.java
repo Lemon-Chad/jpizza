@@ -1638,30 +1638,6 @@ public class VM {
                         OpCode.SetLocal,
                         OpCode.DefineLocal -> localOps(instruction);
 
-                case OpCode.PushTraceback -> {
-                    int next = readByte();
-                    if (next == -1) {
-                        tracebacks.push(null);
-                    }
-                    else {
-                        String name = frame.closure.function.chunk.constants().valuesArray[next].asString();
-                        int idx = currentPos().index;
-
-                        String filename;
-                        if (tracebacks.empty()) {
-                            filename = "";
-                        }
-                        else {
-                            filename = tracebacks.peek().filename;
-                        }
-
-                        tracebacks.push(new Traceback(filename, name, idx, frame.closure.function.chunk));
-                    }
-                    addFrame(frame.closure, frame.slots, frame.bound, "any", frame.ip);
-                    frame.addPeek = true;
-                    yield VMResult.OK;
-                }
-
                 case OpCode.JumpIfFalse,
                         OpCode.JumpIfTrue,
                         OpCode.Jump -> jumpOps(instruction);

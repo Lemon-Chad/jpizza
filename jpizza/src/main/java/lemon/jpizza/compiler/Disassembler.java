@@ -61,8 +61,6 @@ public class Disassembler {
             case OpCode.GetGlobal -> constantInstruction("OP_GET_GLOBAL", chunk, offset);
             case OpCode.DefineGlobal -> declInstruction("OP_DEFINE_GLOBAL", chunk, offset, false);
 
-            case OpCode.PushTraceback -> byteInstruction("OP_PUSH_TRACEBACK", chunk, offset);
-
             case OpCode.Add -> simpleInstruction("OP_ADD", offset);
             case OpCode.Subtract -> simpleInstruction("OP_SUBTRACT", offset);
             case OpCode.Multiply -> simpleInstruction("OP_MULTIPLY", offset);
