@@ -612,6 +612,11 @@ public class Compiler {
         return func;
     }
 
+    boolean canImportPath(String path) {
+        return Files.exists(Paths.get(path));
+    }
+
+
     void compile(ImportNode node) {
         String fn = node.file_name_tok.asString();
         String chrDir = System.getProperty("user.dir");
@@ -629,7 +634,7 @@ public class Compiler {
             if (Constants.STANDLIBS.containsKey(fn)) {
                 Pair<JFunc, Error> res = Shell.compile(fn, Constants.STANDLIBS.get(fn));
                 if (res.b != null)
-                    Shell.logger.warn(res.b.asString());
+                    Shell.logger.fail(res.b.asString());
                 imp = res.a;
             }
             else if (Files.exists(Paths.get(modFilePath + ".jbox"))) {
@@ -640,19 +645,27 @@ public class Compiler {
             }
             else if (Files.exists(Paths.get(fileName + ".devp"))) {
                 //noinspection DuplicatedCode
-                System.setProperty("user.dir", fileName + ".devp");
                 Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(fileName + ".devp")));
                 if (res.b != null)
-                    Shell.logger.warn(res.b.asString());
+                    Shell.logger.fail(res.b.asString());
+                imp = canImport(res.a);
+                System.setProperty("user.dir", chrDir);
+            }
+            else if (Files.exists(Paths.get(fn))) {
+                String[] split = Shell.getFNDirs(fn);
+                System.setProperty("user.dir", split[1]);
+                Pair<JFunc, Error> res = Shell.compile(split[0], Files.readString(Paths.get(fn)));
+                if (res.b != null)
+                    Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
                 System.setProperty("user.dir", chrDir);
             }
             else if (Files.exists(Paths.get(modFilePath + ".devp"))) {
+                System.setProperty("user.dir", modPath);
                 //noinspection DuplicatedCode
-                System.setProperty("user.dir", modPath + ".devp");
                 Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(modFilePath + ".devp")));
                 if (res.b != null)
-                    Shell.logger.warn(res.b.asString());
+                    Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
                 System.setProperty("user.dir", chrDir);
             }
