@@ -490,20 +490,20 @@ public class Compiler {
 
     void compile(UseNode node) {
         int code = switch (node.useToken.value.toString()) {
-            case "memoize"  -> HeadCode.Memoize;
-            case "func"     -> HeadCode.SetMainFunction;
-            case "object"   -> HeadCode.SetMainClass;
-            case "export"   -> HeadCode.Export;
-            case "package" -> {
+            case    "memoize"   ->  HeadCode.Memoize;
+            case    "func"      ->  HeadCode.SetMainFunction;
+            case    "object"    ->  HeadCode.SetMainClass;
+            case    "export"    ->  HeadCode.Export;
+            case    "package"   ->  {
                 StringBuilder sb = new StringBuilder();
                 for (Token token : node.args) {
-                    sb.append(token.asString());
+                    sb.append(token.asString()).append(".");
                 }
-                packageName = sb.toString();
+                packageName = sb.substring(0, sb.length() - 1);
                 chunk().packageName = packageName;
                 yield HeadCode.Package;
             }
-            case "export_to" -> {
+            case    "export_to" ->  {
                 if (node.args.size() != 1) {
                     Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
                 }
@@ -513,7 +513,7 @@ public class Compiler {
                 }
                 yield HeadCode.ExportTo;
             }
-            default         -> -1;
+            default             ->  -1;
         };
 
         emit(OpCode.Header, node.pos_start, node.pos_end);
