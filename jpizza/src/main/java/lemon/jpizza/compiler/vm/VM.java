@@ -1414,7 +1414,7 @@ public class VM {
                 case OpCode.Return -> {
                     Value result = pop();
                     if (frame.catchError) result = new Value(new Result(result));
-                    CallFrame oldFrame = frames.pop();
+                    CallFrame frame = frames.pop();
                     if (frames.count == 0) {
                         yield VMResult.EXIT;
                     }
@@ -1429,7 +1429,7 @@ public class VM {
                     Value bound = frame.bound;
 
                     stack.setTop(frame.slots);
-                    frame = frames.peek();
+                    this.frame = frames.peek();
                     popTraceback();
 
                     if (isConstructor) {
@@ -1446,8 +1446,8 @@ public class VM {
                         yield VMResult.EXIT;
                     }
 
-                    if (oldFrame.addPeek) {
-                        frame.ip = oldFrame.ip;
+                    if (frame.addPeek) {
+                        this.frame.ip = frame.ip;
                     }
 
                     yield VMResult.OK;

@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class Logger {
     boolean log = true;
     boolean tips = false;
-    public final boolean debug = false;
+    public final boolean debug = true;
     final int omitt = 5;
     final int tape = 40;
     final Scanner scanner = new Scanner(System.in);

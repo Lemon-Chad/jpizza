@@ -213,14 +213,16 @@ switch (input) {
     <> This will execute if the number is not in any of the above cases.
 };
 
-println(match (input) {
-    case 2 -> 4;
-    case 4 -> 8;
-    case 8 -> 12;
+let matched => match (input) {
+   case 2 -> 4;
+   case 4 -> 8;
+   case 8 -> 12;
 
-    default -> 0;
-});
+   default -> 0;
+};
+println(matched);
 
+free matched;
 free input;
 
 printTape("LOOPS");
@@ -512,7 +514,10 @@ class Matrix {
         return st;
     }
 
-    mthd copy -> Matrix(..for ( row <- vector ) => for ( col <- row ) => col);
+    mthd copy {
+        let s => for ( row <- vector ) => for ( col <- row ) => col;
+        Matrix(..s)
+    }
 
     mthd bin add<other> {
         assert type(other) == "Matrix";
@@ -520,7 +525,8 @@ class Matrix {
         assert cols == other::cols;
         assert rows == other::rows;
 
-        return Matrix(..for ( r -> 0:rows ) => for ( c -> 0:cols ) => vector[r][c] + other::vector[r][c]);
+        let s => for ( r -> 0:rows ) => for ( c -> 0:cols ) => vector[r][c] + other::vector[r][c];
+        return Matrix(..s);
     }
 
     mthd bin sub<other> {
@@ -547,8 +553,10 @@ class Matrix {
     }
 
     mthd bin mul<other> {
-        if (type(other) == "num")
-            return Matrix(..for ( row <- vector ) => for ( x <- row ) => x * other);
+        if (type(other) == "num") {
+            let s => for ( row <- vector ) => for ( yoinkers <- row ) => yoinkers * other;
+            return Matrix(..s);
+        }
 
         assert type(other) == "Matrix";
         assert cols == other::rows;

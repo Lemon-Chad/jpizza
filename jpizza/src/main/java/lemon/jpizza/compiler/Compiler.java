@@ -72,7 +72,7 @@ public class Compiler {
     final FunctionType type;
 
     int continueTo;
-    final List<Integer> breaks;
+    final Stack<List<Integer>> breaks;
 
     final List<String> globals;
 
@@ -109,7 +109,7 @@ public class Compiler {
         this.enclosing = enclosing;
 
         this.continueTo = 0;
-        this.breaks = new ArrayList<>();
+        this.breaks = new Stack<>();
 
         this.macros = new HashMap<>();
     }
@@ -217,10 +217,9 @@ public class Compiler {
     }
 
     void patchBreaks() {
-        for (int i : breaks) {
+        for (int i : breaks.pop()) {
             patchJump(i);
         }
-        breaks.clear();
     }
 
     void emit(int b, @NotNull Position start, @NotNull Position end) {
@@ -358,7 +357,9 @@ public class Compiler {
             case Iter -> compile((IterNode) statement);
             case Break -> {
                 compileNull(statement.pos_start, statement.pos_end);
-                breaks.add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
+                if (breaks.isEmpty())
+                    Shell.logger.fail(Error.InvalidSyntax(statement.pos_start, statement.pos_end, "Break statement outside of loop"));
+                breaks.peek().add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
             }
             case Continue -> {
                 compileNull(statement.pos_start, statement.pos_end);
@@ -549,11 +550,6 @@ public class Compiler {
         return func;
     }
 
-    boolean canImportPath(String path) {
-        return Files.exists(Paths.get(path));
-    }
-
-
     void compile(ImportNode node) {
         String fn = node.file_name_tok.asString();
         String chrDir = System.getProperty("user.dir");
@@ -696,6 +692,7 @@ public class Compiler {
     }
 
     void compileSwitch(SwitchNode node) {
+        breaks.add(new ArrayList<>());
         int[] jumps = new int[node.cases.size()];
         for (int i = 0; i < jumps.length; i++) {
             Case caze = node.cases.get(i);
@@ -729,6 +726,7 @@ public class Compiler {
     }
 
     void compileMatch(SwitchNode node) {
+        breaks.add(new ArrayList<>());
         int[] jumps = new int[node.cases.size()];
         for (int i = 0; i < jumps.length; i++) {
             Case caze = node.cases.get(i);
@@ -1154,7 +1152,9 @@ public class Compiler {
             compile(nodeCase.condition);
             lastJump = emitJump(OpCode.JumpIfFalse, nodeCase.condition.pos_start, nodeCase.condition.pos_end);
             emit(OpCode.Pop, nodeCase.condition.pos_start, nodeCase.condition.pos_end);
+            beginScope();
             compile(nodeCase.statements);
+            endScope(nodeCase.statements.pos_start, nodeCase.statements.pos_end);
 
             Position start = nodeCase.statements.pos_start;
             Position end = nodeCase.statements.pos_end;
@@ -1173,7 +1173,9 @@ public class Compiler {
                 lastJump = 0;
             }
 
+            beginScope();
             compile(node.else_case.statements);
+            endScope(node.else_case.statements.pos_start, node.else_case.statements.pos_end);
 
             if (!node.else_case.returnValue) {
                 Position start = node.else_case.statements.pos_start;
@@ -1195,6 +1197,7 @@ public class Compiler {
     }
 
     void loopBody(Node body, boolean returnsNull, int loopStart) {
+        breaks.add(new ArrayList<>());
         continueTo = loopStart;
 
         beginScope();
@@ -1269,7 +1272,7 @@ public class Compiler {
 
         emit(node.attributes.size() + node.generic_toks.size(), node.pos_start, node.pos_end);
 
-        for (Token tok : node.generic_toks) 
+        for (Token tok : node.generic_toks)
             compile(new AttrDeclareNode(
                 tok,
                 List.of("String"),

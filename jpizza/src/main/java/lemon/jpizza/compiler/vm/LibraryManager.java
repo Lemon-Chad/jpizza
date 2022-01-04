@@ -240,6 +240,12 @@ public class LibraryManager {
         define("bool", (args) -> NativeResult.Ok(new Value(args[0].asBool())), 1);
         define("num", (args) -> NativeResult.Ok(new Value(args[0].asNumber())), 1);
         define("dict", (args) -> NativeResult.Ok(new Value(args[0].asMap())), 1);
+        define("chr", (args) -> NativeResult.Ok(new Value(new String(
+                new byte[] { args[0].asNumber().byteValue() }
+        ))), List.of("num"));
+        define("chrs", (args) -> NativeResult.Ok(new Value(new String(
+                args[0].asBytes()
+        ))), List.of("bytearray"));
 
         // Convert number list to byte[]
         define("byter", (args) -> {
@@ -261,6 +267,10 @@ public class LibraryManager {
         // Dictionary Functions
         define("set", (args) -> {
             args[0].asMap().put(args[1], args[2]);
+            return NativeResult.Ok();
+        }, List.of("dict", "any", "any"));
+        define("overset", (args) -> {
+            args[0].asMap().replace(args[1], args[2]);
             return NativeResult.Ok();
         }, List.of("dict", "any", "any"));
         define("get", (args) -> {
@@ -288,6 +298,13 @@ public class LibraryManager {
             String str = args[0].asString();
             int start = args[1].asNumber().intValue();
             int end = args[2].asNumber().intValue();
+
+            while (start < 0) start = str.length() + start;
+            while (end < 0) end = str.length() + end;
+
+            if (start > str.length()) start = str.length();
+            if (end > str.length()) end = str.length();
+
             return NativeResult.Ok(new Value(str.substring(start, end)));
         }, List.of("String", "num", "num"));
         define("join", (args) -> {
@@ -374,6 +391,10 @@ public class LibraryManager {
             Value list = args[0];
             Value index = args[1];
 
+            if (index.asNumber() < 0 || index.asNumber() >= list.asList().size()) {
+                return NativeResult.Err("Index", "Index out of bounds");
+            }
+
             return NativeResult.Ok(list.pop(index.asNumber()));
         }, List.of("list", "num"));
         define("extend", (args) -> {
@@ -388,6 +409,10 @@ public class LibraryManager {
             Value index = args[2];
             Value value = args[1];
 
+            if (list.asList().size() < index.asNumber() || index.asNumber() < 0) {
+                return NativeResult.Err("Scope", "Index out of bounds");
+            }
+
             list.insert(index.asNumber(), value);
             return NativeResult.Ok();
         }, List.of("list", "any", "num"));
@@ -396,6 +421,10 @@ public class LibraryManager {
             Value index = args[2];
             Value value = args[1];
 
+            if (index.asNumber() >= list.asList().size()) {
+                return NativeResult.Err("Index", "Index out of bounds");
+            }
+
             list.set(index.asNumber(), value);
             return NativeResult.Ok();
         }, List.of("list", "any", "num"));
@@ -403,6 +432,10 @@ public class LibraryManager {
             Value list = args[0];
             Value start = args[1];
             Value end = args[2];
+
+            if (list.asList().size() < end.asNumber() || start.asNumber() < 0 || end.asNumber() < start.asNumber()) {
+                return NativeResult.Err("Scope", "Index out of bounds");
+            }
 
             return NativeResult.Ok(new Value(list.asList().subList(start.asNumber().intValue(),
                     end.asNumber().intValue())));

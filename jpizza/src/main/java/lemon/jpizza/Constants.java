@@ -140,7 +140,10 @@ class Array {
         }
     }
 
-    mthd bin string -> str(for (x <- internal) => str(x));
+    mthd bin string {
+        let un => for (x <- internal) => str(x);
+        str(un)
+    }
 
     mthd bin type -> `Array(${T})`;
     
@@ -184,7 +187,8 @@ class Array {
     mthd bin list -> internal;
 
     mthd slice<min#num, max#num> {
-        Array(..for (x <- sublist(internal, min, max)) => *x)<T>
+        let s => for (x <- sublist(internal, min, max)) => *x;
+        Array(..s)<T>
     }
 
     mthd indexOf<item> = num {

@@ -172,6 +172,7 @@ public class Parser {
             res.registerAdvancement();
             advance();
         }
+        this.statement = true;
         Node statement = res.register(this.statement());
         if (res.error != null)
             return res;
@@ -197,6 +198,7 @@ public class Parser {
             if (!moreStatements)
                 break;
 
+            this.statement = true;
             statement = res.try_register(this.statement());
             if (statement == null) {
                 reverse(res.toReverseCount);
@@ -254,8 +256,168 @@ public class Parser {
             advance();
             return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
         }
+        if (currentToken.type == TokenType.Keyword) switch (currentToken.value.toString()) {
+            case "for" -> {
+                Node forExpr = res.register(this.forExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(forExpr);
+            }
+            case "break" -> {
+                res.registerAdvancement();
+                advance();
+                return res.success(new BreakNode(pos_start, currentToken.pos_end.copy()));
+            }
+            case "continue" -> {
+                res.registerAdvancement();
+                advance();
+                return res.success(new ContinueNode(pos_start, currentToken.pos_end.copy()));
+            }
+            case "return" -> {
+                res.registerAdvancement();
+                advance();
+                Node expr = null;
+                if (currentToken.type != TokenType.Newline && currentToken.type != TokenType.InvisibleNewline) {
+                    expr = res.register(this.expr());
+                    if (res.error != null)
+                        return res;
+                }
+                return res.success(new ReturnNode(expr, pos_start, currentToken.pos_end.copy()));
+            }
+            case "pass" -> {
+                res.registerAdvancement();
+                advance();
+                return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
+            }
+            case "assert" -> {
+                res.registerAdvancement();
+                advance();
+                Node condition = res.register(expr());
+                if (res.error != null) return res;
+                return res.success(new AssertNode(condition));
+            }
+            case "free" -> {
+                Token varTok = res.register(expectIdentifier());
+                if (res.error != null) return res;
+                res.registerAdvancement();
+                advance();
+                return res.success(new DropNode(varTok));
+            }
+            case "throw" -> {
+                Node throwNode = res.register(this.throwExpr());
+                if (res.error != null) return res;
+                return res.success(throwNode);
+            }
+            case "class", "obj", "recipe" -> {
+                Node classDef = res.register(this.classDef());
+                if (res.error != null)
+                    return res;
+                return res.success(classDef);
+            }
+            case "if" -> {
+                Node ifExpr = res.register(this.ifExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(ifExpr);
+            }
+            case "enum" -> {
+                Node enumExpr = res.register(this.enumExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(enumExpr);
+            }
+            case "switch" -> {
+                Node switchExpr = res.register(this.switchExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(switchExpr);
+            }
+            case "struct" -> {
+                Node structDef = res.register(this.structDef());
+                if (res.error != null)
+                    return res;
+                return res.success(structDef);
+            }
+            case "loop", "while" -> {
+                Node whileExpr = res.register(this.whileExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(whileExpr);
+            }
+            case "do" -> {
+                Node doExpr = res.register(this.doExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(doExpr);
+            }
+            case "scope" -> {
+                res.registerAdvancement();
+                advance();
+                String name = null;
+                if (currentToken.type == TokenType.LeftBracket) {
+                    Token n = res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
+                    if (res.error != null) return res;
 
-        statement = true;
+                    name = n.value.toString();
+
+                    res.registerAdvancement();
+                    advance();
+                    if (currentToken.type != TokenType.RightBracket) return res.failure(Error.ExpectedCharError(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected ']'"
+                    ));
+                    res.registerAdvancement();
+                    advance();
+                }
+                Node statements = res.register(block());
+                if (res.error != null) return res;
+                return res.success(new ScopeNode(name, statements));
+            }
+            case "import" -> {
+                advance();
+                res.registerAdvancement();
+                Token file_name_tok = currentToken;
+                if (file_name_tok.type != TokenType.String && file_name_tok.type != TokenType.Identifier)
+                    return res.failure(Error.InvalidSyntax(
+                            file_name_tok.pos_start.copy(), file_name_tok.pos_end.copy(),
+                            "Expected module name"
+                    ));
+                matchConvention(file_name_tok, "Module name", NamingConvention.SnakeCase);
+                advance();
+                res.registerAdvancement();
+                if (currentToken.matches(TokenType.Keyword, "as")) {
+                    Token ident = res.register(expectIdentifier("Module name", NamingConvention.SnakeCase));
+                    if (res.error != null)
+                        return res;
+                    res.registerAdvancement();
+                    advance();
+                    return res.success(new ImportNode(file_name_tok, ident));
+                }
+                return res.success(new ImportNode(file_name_tok));
+            }
+            case "extend" -> {
+                advance();
+                res.registerAdvancement();
+                Token fileNameTok = currentToken;
+                if (!fileNameTok.type.equals(TokenType.Identifier))
+                    return res.failure(Error.InvalidSyntax(
+                            fileNameTok.pos_start.copy(), fileNameTok.pos_end.copy(),
+                            "Expected module name"
+                    ));
+                matchConvention(fileNameTok, "Module name", NamingConvention.SnakeCase);
+                advance();
+                res.registerAdvancement();
+                return res.success(new ExtendNode(fileNameTok));
+            }
+            default -> {
+            }
+        }
+        else if (currentToken.type.equals(TokenType.Hash)) {
+            Node useExpr = res.register(this.useExpr());
+            if (res.error != null) return res;
+            return res.success(useExpr);
+        }
+
         Node expr = res.register(this.expr());
         if (res.error != null)
             return res;
@@ -376,7 +538,7 @@ public class Parser {
             res.registerAdvancement();
             advance();
 
-            Node expr = res.register(this.expr());
+            Node expr = res.register(this.statement());
             if (res.error != null)
                 return res;
             return res.success(new AttrAssignNode(var_name, expr));
@@ -411,7 +573,7 @@ public class Parser {
 
                 if (currentToken.type != TokenType.RightBrace) return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '}'"
+                        "Expected '}'a"
                 ));
                 res.registerAdvancement(); advance();
 
@@ -421,7 +583,7 @@ public class Parser {
                 ));
                 res.registerAdvancement(); advance();
 
-                Node destructed = res.register(expr());
+                Node destructed = res.register(statement());
                 if (res.error != null) return res;
 
                 if (glob)
@@ -511,7 +673,7 @@ public class Parser {
 
             res.registerAdvancement();
             advance();
-            Node expr = res.register(this.expr());
+            Node expr = res.register(this.statement());
             if (res.error != null)
                 return res;
             return res.success(new VarAssignNode(var_name, expr, locked)
@@ -528,7 +690,7 @@ public class Parser {
             ));
             res.registerAdvancement(); advance();
 
-            Node expr = res.register(this.expr());
+            Node expr = res.register(this.statement());
             if (res.error != null) return res;
 
             return res.success(new LetNode(ident, expr));
@@ -546,7 +708,7 @@ public class Parser {
 
             res.registerAdvancement();
             advance();
-            Node expr = res.register(this.expr());
+            Node expr = res.register(this.statement());
             if (res.error != null)
                 return res;
             return res.success(new DynAssignNode(var_name, expr));
@@ -589,6 +751,12 @@ public class Parser {
                         op_tok.type,
                         new VarAccessNode(var_tok)
                 ), false).setDefining(false));
+            }
+            if (currentToken.type.equals(TokenType.FatArrow)) {
+                res.registerAdvancement(); advance();
+                Node value = res.register(statement());
+                if (res.error != null) return res;
+                return res.success(new VarAssignNode(var_tok, value, false, 1));
             }
             reverse();
         }
@@ -715,167 +883,38 @@ Mixed_Snake_Case_Looks_Like_This"""
             if (res.error != null) return res;
             return res.success(new ScopeNode(null, statements));
         }
-        else if (tok.type.equals(TokenType.Keyword))
-            switch ((String) tok.value) {
-                case "assert" -> {
-                    res.registerAdvancement();
-                    advance();
-                    Node condition = res.register(expr());
-                    if (res.error != null) return res;
-                    return res.success(new AssertNode(condition));
-                }
-                case "free" -> {
-                    Token varTok = res.register(expectIdentifier());
-                    if (res.error != null) return res;
-                    res.registerAdvancement();
-                    advance();
-                    return res.success(new DropNode(varTok));
-                }
-                case "throw" -> {
-                    Node throwNode = res.register(this.throwExpr());
-                    if (res.error != null) return res;
-                    return res.success(throwNode);
-                }
-                case "class", "obj", "recipe" -> {
-                    Node classDef = res.register(this.classDef());
-                    if (res.error != null)
-                        return res;
-                    return res.success(classDef);
-                }
-                case "if" -> {
-                    Node ifExpr = res.register(this.ifExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(ifExpr);
-                }
-                case "enum" -> {
-                    Node enumExpr = res.register(this.enumExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(enumExpr);
-                }
-                case "switch" -> {
-                    Node switchExpr = res.register(this.switchExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(switchExpr);
-                }
-                case "match" -> {
-                    Node matchExpr = res.register(this.matchExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(matchExpr);
-                }
-                case "null" -> {
-                    res.registerAdvancement();
-                    advance();
-                    return res.success(new NullNode(tok));
-                }
-                case "for" -> {
-                    Node forExpr = res.register(this.forExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(forExpr);
-                }
-                case "function", "yourmom", "fn" -> {
-                    Node funcDef = res.register(this.funcDef());
-                    if (res.error != null)
-                        return res;
-                    return res.success(funcDef);
-                }
-                case "struct" -> {
-                    Node structDef = res.register(this.structDef());
-                    if (res.error != null)
-                        return res;
-                    return res.success(structDef);
-                }
-                case "loop", "while" -> {
-                    Node whileExpr = res.register(this.whileExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(whileExpr);
-                }
-                case "do" -> {
-                    Node doExpr = res.register(this.doExpr());
-                    if (res.error != null)
-                        return res;
-                    return res.success(doExpr);
-                }
-                case "scope" -> {
-                    res.registerAdvancement();
-                    advance();
-                    String name = null;
-                    if (currentToken.type == TokenType.LeftBracket) {
-                        Token n = res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
-                        if (res.error != null) return res;
-
-                        name = n.value.toString();
-
-                        res.registerAdvancement();
-                        advance();
-                        if (currentToken.type != TokenType.RightBracket) return res.failure(Error.ExpectedCharError(
-                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                                "Expected ']'"
-                        ));
-                        res.registerAdvancement();
-                        advance();
-                    }
-                    Node statements = res.register(block());
-                    if (res.error != null) return res;
-                    return res.success(new ScopeNode(name, statements));
-                }
-                case "import" -> {
-                    advance();
-                    res.registerAdvancement();
-                    Token file_name_tok = currentToken;
-                    if (file_name_tok.type != TokenType.String && file_name_tok.type != TokenType.Identifier)
-                        return res.failure(Error.InvalidSyntax(
-                                file_name_tok.pos_start.copy(), file_name_tok.pos_end.copy(),
-                                "Expected module name"
-                        ));
-                    matchConvention(file_name_tok, "Module name", NamingConvention.SnakeCase);
-                    advance();
-                    res.registerAdvancement();
-                    if (currentToken.matches(TokenType.Keyword, "as")) {
-                        Token ident = res.register(expectIdentifier("Module name", NamingConvention.SnakeCase));
-                        if (res.error != null)
-                            return res;
-                        res.registerAdvancement();
-                        advance();
-                        return res.success(new ImportNode(file_name_tok, ident));
-                    }
-                    return res.success(new ImportNode(file_name_tok));
-                }
-                case "extend" -> {
-                    advance();
-                    res.registerAdvancement();
-                    Token fileNameTok = currentToken;
-                    if (!fileNameTok.type.equals(TokenType.Identifier))
-                        return res.failure(Error.InvalidSyntax(
-                                fileNameTok.pos_start.copy(), fileNameTok.pos_end.copy(),
-                                "Expected module name"
-                        ));
-                    matchConvention(fileNameTok, "Module name", NamingConvention.SnakeCase);
-                    advance();
-                    res.registerAdvancement();
-                    return res.success(new ExtendNode(fileNameTok));
-                }
-                case "attr" -> {
-                    advance();
-                    res.registerAdvancement();
-                    Token var_name_tok = currentToken;
-                    if (!currentToken.type.equals(TokenType.Identifier))
-                        return res.failure(Error.InvalidSyntax(
-                                var_name_tok.pos_start.copy(), var_name_tok.pos_end.copy(),
-                                "Expected identifier"
-                        ));
-                    advance();
-                    res.registerAdvancement();
-                    return res.success(new AttrAccessNode(var_name_tok));
-                }
-                default -> {
-                }
+        else if (tok.type == TokenType.Keyword) switch (tok.value.toString()) {
+            case "attr" -> {
+                advance();
+                res.registerAdvancement();
+                Token var_name_tok = currentToken;
+                if (!currentToken.type.equals(TokenType.Identifier))
+                    return res.failure(Error.InvalidSyntax(
+                            var_name_tok.pos_start.copy(), var_name_tok.pos_end.copy(),
+                            "Expected identifier"
+                    ));
+                advance();
+                res.registerAdvancement();
+                return res.success(new AttrAccessNode(var_name_tok));
             }
+            case "match" -> {
+                Node matchExpr = res.register(this.matchExpr());
+                if (res.error != null)
+                    return res;
+                return res.success(matchExpr);
+            }
+            case "function", "yourmom", "fn" -> {
+                Node funcDef = res.register(this.funcDef());
+                if (res.error != null)
+                    return res;
+                return res.success(funcDef);
+            }
+            case "null" -> {
+                res.registerAdvancement();
+                advance();
+                return res.success(new NullNode(tok));
+            }
+        }
         else if (currentToken.type == TokenType.Slash) {
             // Decorator
             // /decorator/ fn abc { xyz; }
@@ -925,11 +964,6 @@ Mixed_Snake_Case_Looks_Like_This"""
             }
             return res.success(new NumberNode(tok));
         }
-        else if (tok.type.equals(TokenType.Hash)) {
-            Node useExpr = res.register(this.useExpr());
-            if (res.error != null) return res;
-            return res.success(useExpr);
-        }
         else if (tok.type.equals(TokenType.String)) {
             if (((Pair<String, Boolean>) tok.value).b) {
                 Node val = res.register(formatStringExpr());
@@ -945,12 +979,6 @@ Mixed_Snake_Case_Looks_Like_This"""
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                     "Should be '=>'"
             ));
-            if (currentToken.type.equals(TokenType.FatArrow)) {
-                res.registerAdvancement(); advance();
-                Node value = res.register(expr());
-                if (res.error != null) return res;
-                return res.success(new VarAssignNode(tok, value, false, 1));
-            }
             return res.success(new VarAccessNode(tok));
         }
         else if (tok.type.equals(TokenType.Boolean)) {
@@ -1133,7 +1161,7 @@ Mixed_Snake_Case_Looks_Like_This"""
 
         if (currentToken.type != TokenType.RightBrace) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'"
+                "Expected '}'b"
         ));
         endLine(1);
         res.registerAdvancement(); advance();
@@ -1238,7 +1266,7 @@ Mixed_Snake_Case_Looks_Like_This"""
                 } while (currentToken.type == TokenType.Comma);
                 if (currentToken.type != TokenType.RightBrace) return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '}'"
+                        "Expected '}'c"
                 ));
                 res.registerAdvancement(); advance();
             }
@@ -1254,7 +1282,7 @@ Mixed_Snake_Case_Looks_Like_This"""
         if (!currentToken.type.equals(TokenType.RightBrace))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'"
+                    "Expected '}'d"
             ));
         endLine(1);
         res.registerAdvancement(); advance();
@@ -1331,7 +1359,7 @@ Mixed_Snake_Case_Looks_Like_This"""
         if (!currentToken.type.equals(TokenType.RightBrace))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'"
+                    "Expected '}'e"
             ));
         endLine(1);
         res.registerAdvancement(); advance();
@@ -1520,14 +1548,15 @@ match (a) {
 
                             if (currentToken.type == TokenType.DotDot) {
                                 res.registerAdvancement(); advance();
-                                arg_nodes.add(new SpreadNode(res.register(this.expr())));
+                                Node internal = res.register(this.expr());
+                                if (res.error != null) return res;
+                                arg_nodes.add(new SpreadNode(internal));
                             }
                             else {
                                 arg_nodes.add(res.register(this.expr()));
+                                if (res.error != null)
+                                    return res;
                             }
-
-                            if (res.error != null)
-                                return res;
                         } while (currentToken.type.equals(TokenType.Comma));
                     }
                     else {
@@ -1897,7 +1926,7 @@ match (a) {
         if (!currentToken.type.equals(TokenType.RightBrace))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'"
+                    "Expected '}'f"
             ));
         if (vLine) endLine(1);
         res.registerAdvancement(); advance();
@@ -2414,7 +2443,7 @@ while (false) {
         }
         if (!currentToken.type.equals(TokenType.RightBrace)) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'"
+                "Expected '}'g"
         )); res.registerAdvancement(); advance();
 
         return res.success(new DictNode(dict, pos_start, currentToken.pos_end.copy()));
@@ -2799,7 +2828,7 @@ while (false) {
         }
         if (!currentToken.type.equals(TokenType.RightBrace)) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'"
+                "Expected '}'h"
         ));
         endLine(1);
         advance(); res.registerAdvancement();
