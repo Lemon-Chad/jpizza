@@ -59,11 +59,10 @@ public class ChunkBuilder {
         if (code[i] != ChunkCode.Number)
             throw new IOException("not double");
         i++;
-        int power = code[i++];
         int a = code[i++];
         int b = code[i++];
         long v = (long)a << 32 | b;
-        return v / Math.pow(10, power);
+        return Double.longBitsToDouble(v);
     }
 
     private JEnum readEnum() throws IOException {

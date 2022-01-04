@@ -873,13 +873,8 @@ public class Value {
             return new int[] { ChunkCode.Boolean, bool ? 1 : 0 };
         }
         else if (isNumber) {
-            int power = 0;
-            while (Math.floor(number) != number) {
-                number *= 10;
-                power++;
-            }
-            long longValue = (long) number;
-            return new int[] { ChunkCode.Number, power, (int) (longValue >>> 32), (int) longValue };
+            long longValue = Double.doubleToRawLongBits(number);
+            return new int[] { ChunkCode.Number, (int) (longValue >>> 32), (int) longValue };
         }
         else if (isString) {
             return dumpString(string);
