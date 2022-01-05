@@ -507,8 +507,8 @@ public class AbstractWindowToolkit extends JPExtension {
         func("mousePos", ifInit(args -> {
             Point pos = window.getMousePos();
             return Ok(List.of(pos.x, pos.y));
-        }), List.of("num"));
-        func("mouseIn", ifInit(args -> Ok(window.mouseIn())), List.of("num"));
+        }), 0);
+        func("mouseIn", ifInit(args -> Ok(window.mouseIn())), 0);
 
         // Keyboard
         func("keyDown", ifInit(args -> {
