@@ -588,7 +588,7 @@ public class Compiler {
             else if (Files.exists(Paths.get(fn + ".devp"))) {
                 String[] split = Shell.getFNDirs(fn);
                 System.setProperty("user.dir", split[1]);
-                Pair<JFunc, Error> res = Shell.compile(split[0], Files.readString(Paths.get(fn)));
+                Pair<JFunc, Error> res = Shell.compile(split[0], Files.readString(Paths.get(fn + ".devp")));
                 if (res.b != null)
                     Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
@@ -611,6 +611,7 @@ public class Compiler {
             }
         } catch (IOException e) {
             imp = null;
+            e.printStackTrace();
             Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
         }
 
