@@ -541,8 +541,9 @@ public class Compiler {
         Chunk chunk = func.chunk;
         if (chunk.target != null) {
             String target = chunk.target;
-            if (Objects.equals(target, "package") && !equalPackages(packageName, chunk.packageName)) {
-                throw new IOException("Cannot import file outside of package");
+            if (Objects.equals(target, "package")) {
+                if (!equalPackages(packageName, chunk.packageName))
+                    throw new IOException("Cannot import file outside of package");
             }
             else if (!target.equals("all")) {
                 throw new IOException("File is not a module");
