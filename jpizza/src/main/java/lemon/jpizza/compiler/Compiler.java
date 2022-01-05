@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -584,13 +585,19 @@ public class Compiler {
                 imp = canImport(res.a);
                 System.setProperty("user.dir", chrDir);
             }
-            else if (Files.exists(Paths.get(fn))) {
+            else if (Files.exists(Paths.get(fn + ".devp"))) {
                 String[] split = Shell.getFNDirs(fn);
                 System.setProperty("user.dir", split[1]);
                 Pair<JFunc, Error> res = Shell.compile(split[0], Files.readString(Paths.get(fn)));
                 if (res.b != null)
                     Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
+                System.setProperty("user.dir", chrDir);
+            }
+            else if (Files.exists(Paths.get(fn + ".jbox"))) {
+                String[] split = Shell.getFNDirs(fn);
+                System.setProperty("user.dir", split[1]);
+                imp = canImport(Shell.load(Files.readString(Paths.get(fn + ".jbox"))));
                 System.setProperty("user.dir", chrDir);
             }
             else if (Files.exists(Paths.get(modFilePath + ".devp"))) {
