@@ -500,7 +500,11 @@ public class VM {
     VMResult attrOps(int op) {
         return switch (op) {
             case OpCode.GetAttr -> getBound(readString(), false);
-            case OpCode.SetAttr -> setBound(readString(), pop(), false);
+            case OpCode.SetAttr -> {
+                setBound(readString(), pop(), false);
+                push(new Value());
+                yield VMResult.OK;
+            }
             default -> VMResult.OK;
         };
     }
