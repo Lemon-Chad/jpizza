@@ -239,7 +239,8 @@ public class Shell {
         ParseResult<Node> ast = parser.parse();
         if (ast.error != null)
             return new Pair<>(null, ast.error);
-        Shell.logger.debug(TreePrinter.print(ast.node));
+        if (Shell.logger.debug)
+            Shell.logger.debug(TreePrinter.print(ast.node));
         BodyNode body = (BodyNode) Optimizer.optimize(ast.node);
         return new Pair<>(body.statements, null);
     }
