@@ -15,6 +15,7 @@ import lemon.jpizza.objects.primitives.Bool;
 import lemon.jpizza.objects.executables.EnumJChild;
 import lemon.jpizza.results.RTResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,7 @@ public class PatternNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(accessNode);
+        return new ArrayList<>(List.of(accessNode));
     }
 
     @Override

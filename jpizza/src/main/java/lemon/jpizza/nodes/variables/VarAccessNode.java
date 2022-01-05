@@ -10,6 +10,7 @@ import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class VarAccessNode extends Node {
@@ -55,7 +56,7 @@ public class VarAccessNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

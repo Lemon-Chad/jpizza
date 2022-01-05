@@ -8,6 +8,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RefNode extends Node {
@@ -34,7 +35,7 @@ public class RefNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(inner);
+        return new ArrayList<>(List.of(inner));
     }
 
     @Override

@@ -8,6 +8,8 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -67,7 +69,7 @@ public class AttrDeclareNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(nValue);
+        return new ArrayList<>(Collections.singletonList(nValue));
     }
 
     @Override

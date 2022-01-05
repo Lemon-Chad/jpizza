@@ -15,6 +15,7 @@ import lemon.jpizza.objects.primitives.Str;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ClaccessNode extends Node {
@@ -91,7 +92,7 @@ public class ClaccessNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(class_tok);
+        return new ArrayList<>(List.of(class_tok));
     }
 
     @Override

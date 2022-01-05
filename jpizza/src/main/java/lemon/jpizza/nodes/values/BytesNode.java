@@ -8,6 +8,7 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -43,7 +44,7 @@ public class BytesNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(toBytes);
+        return new ArrayList<>(List.of(toBytes));
     }
 
     @Override

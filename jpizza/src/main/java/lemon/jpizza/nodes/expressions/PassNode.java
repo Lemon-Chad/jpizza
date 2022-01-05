@@ -9,6 +9,7 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PassNode extends Node {
@@ -26,7 +27,7 @@ public class PassNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

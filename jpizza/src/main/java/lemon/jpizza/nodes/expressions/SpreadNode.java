@@ -3,6 +3,7 @@ package lemon.jpizza.nodes.expressions;
 import lemon.jpizza.JPType;
 import lemon.jpizza.nodes.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SpreadNode extends Node {
@@ -21,7 +22,7 @@ public class SpreadNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(internal);
+        return new ArrayList<>(List.of(internal));
     }
 
     @Override

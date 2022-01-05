@@ -9,6 +9,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AssertNode extends Node {
@@ -39,7 +40,7 @@ public class AssertNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(condition);
+        return new ArrayList<>(List.of(condition));
     }
 
     @Override

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExtendNode extends Node {
@@ -94,7 +95,7 @@ public class ExtendNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

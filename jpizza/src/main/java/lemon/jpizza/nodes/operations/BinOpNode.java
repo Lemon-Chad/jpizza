@@ -220,7 +220,7 @@ public class BinOpNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(left_node, right_node);
+        return new ArrayList<>(List.of(left_node, right_node));
     }
 
     @Override

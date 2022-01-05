@@ -93,7 +93,7 @@ public class DestructNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(target);
+        return new ArrayList<>(List.of(target));
     }
 
     @Override

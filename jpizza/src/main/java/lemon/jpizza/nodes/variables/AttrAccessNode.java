@@ -9,6 +9,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AttrAccessNode extends Node {
@@ -43,7 +44,7 @@ public class AttrAccessNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

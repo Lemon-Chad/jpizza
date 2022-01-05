@@ -15,6 +15,7 @@ import lemon.jpizza.results.RTResult;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UnaryOpNode extends Node {
@@ -117,7 +118,7 @@ public class UnaryOpNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(node);
+        return new ArrayList<>(List.of(node));
     }
 
     @Override

@@ -8,6 +8,7 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ThrowNode extends Node {
@@ -47,7 +48,7 @@ public class ThrowNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(throwType, thrown);
+        return new ArrayList<>(List.of(throwType, thrown));
     }
 
     @Override

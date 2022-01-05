@@ -9,6 +9,7 @@ import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UseNode extends Node {
@@ -60,7 +61,7 @@ public class UseNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

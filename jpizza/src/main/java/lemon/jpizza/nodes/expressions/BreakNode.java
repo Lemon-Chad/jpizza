@@ -8,6 +8,7 @@ import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BreakNode extends Node {
@@ -25,7 +26,7 @@ public class BreakNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

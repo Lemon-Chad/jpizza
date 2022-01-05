@@ -4,6 +4,7 @@ import lemon.jpizza.JPType;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ValueNode extends Node {
@@ -27,7 +28,7 @@ public class ValueNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

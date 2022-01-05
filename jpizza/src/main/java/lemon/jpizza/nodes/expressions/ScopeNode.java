@@ -8,6 +8,7 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.results.RTResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeNode extends Node {
@@ -46,7 +47,7 @@ public class ScopeNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(statements);
+        return new ArrayList<>(List.of(statements));
     }
 
     @Override

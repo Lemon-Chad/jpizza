@@ -9,6 +9,7 @@ import lemon.jpizza.objects.Obj;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,7 +50,7 @@ public class LetNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(value_node);
+        return new ArrayList<>(List.of(value_node));
     }
 
     @Override

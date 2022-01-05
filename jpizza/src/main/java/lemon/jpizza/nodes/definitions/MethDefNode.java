@@ -95,7 +95,7 @@ public class MethDefNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(body_node);
+        return new ArrayList<>(List.of(body_node));
     }
 
     @Override

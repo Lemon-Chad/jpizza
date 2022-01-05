@@ -10,6 +10,7 @@ import lemon.jpizza.Position;
 import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ReturnNode extends Node {
@@ -42,7 +43,7 @@ public class ReturnNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(nodeToReturn);
+        return new ArrayList<>(List.of(nodeToReturn));
     }
 
     @Override

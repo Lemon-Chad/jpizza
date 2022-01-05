@@ -3,6 +3,7 @@ package lemon.jpizza.nodes.variables;
 import lemon.jpizza.JPType;
 import lemon.jpizza.nodes.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AttrNode extends Node {
@@ -20,7 +21,7 @@ public class AttrNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of();
+        return new ArrayList<>();
     }
 
     @Override

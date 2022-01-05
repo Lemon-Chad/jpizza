@@ -9,6 +9,7 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DerefNode extends Node {
@@ -38,7 +39,7 @@ public class DerefNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return List.of(ref);
+        return new ArrayList<>(List.of(ref));
     }
 
     @Override
