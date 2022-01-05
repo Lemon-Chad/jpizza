@@ -611,7 +611,6 @@ public class Compiler {
             }
         } catch (IOException e) {
             imp = null;
-            e.printStackTrace();
             Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
         }
 
