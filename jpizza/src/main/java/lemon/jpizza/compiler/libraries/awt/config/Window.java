@@ -312,7 +312,11 @@ public class Window {
     }
 
     public Point getMousePos() {
-        return canvas.getMousePosition();
+        Point p = canvas.getMousePosition();
+        if (p != null) {
+            return p;
+        }
+        return new Point(-1, -1);
     }
 
     public boolean mouseIn() {
