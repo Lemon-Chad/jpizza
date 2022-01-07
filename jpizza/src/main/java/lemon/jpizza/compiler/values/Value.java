@@ -415,6 +415,9 @@ public class Value {
         if (isList) {
             return list;
         }
+        else if (isMap) {
+            return new ArrayList<>(map.keySet());
+        }
         else if (isString) {
             String[] lis = string.split("");
             List<Value> list = new ArrayList<>();
