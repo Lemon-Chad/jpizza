@@ -5,6 +5,7 @@ import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.libraries.Generators;
 import lemon.jpizza.compiler.libraries.IOFile;
 import lemon.jpizza.compiler.libraries.JSystem;
+import lemon.jpizza.compiler.libraries.GUIs;
 import lemon.jpizza.compiler.libraries.Time;
 import lemon.jpizza.compiler.libraries.awt.AbstractWindowToolkit;
 import lemon.jpizza.compiler.values.Value;
@@ -83,6 +84,7 @@ public class LibraryManager {
         io();
         sys();
         awt();
+        guis();
     }
 
     private void awt() {
@@ -91,6 +93,10 @@ public class LibraryManager {
 
     private void sys() {
         new JSystem(vm).setup();
+    }
+
+    private void guis() {
+        new GUIs(vm).setup();
     }
 
     private void io() {
@@ -102,7 +108,7 @@ public class LibraryManager {
     }
 
     private void builtin() {
-        // IO Functions
+        // IO Function
         define("print", (args) -> {
             Shell.logger.out(args[0]);
             return NativeResult.Ok();
