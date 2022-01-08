@@ -9,7 +9,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 
 public class GUIs extends JPExtension {
 
@@ -41,7 +41,7 @@ public class GUIs extends JPExtension {
             }
 
             return Ok;
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
 
     }
 
