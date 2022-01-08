@@ -13,6 +13,8 @@ import java.util.Collections;
 
 public class GUIs extends JPExtension {
 
+    static JFrame frame;
+
     @Override
     public String name() { return "guis"; }
 
@@ -24,11 +26,9 @@ public class GUIs extends JPExtension {
     public void setup() {
 
         func("createGUI", (args) -> {
-
-            JFrame frame;
             
-            frame = new JFrame(Arrays.toString(args));
-            frame.setTitle(Arrays.toString(args));
+            frame = new JFrame(args[0].asString());
+            frame.setTitle(args[0].asString());
             frame.setFocusTraversalKeysEnabled(false);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
