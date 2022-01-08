@@ -1,15 +1,11 @@
 package lemon.jpizza.nodes.definitions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.executables.Function;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,25 +52,6 @@ public class FuncDefNode extends Node {
         return this;
     }
 
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-
-        String funcName = var_name_tok != null ? (String) var_name_tok.value : null;
-        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks, context);
-
-        var dfts = inter.getDefaults(defaults, context);
-        res.register(dfts.a);
-        if (res.error != null) return res;
-
-        Obj funcValue = new Function(funcName, body_node, argNT.a, argNT.b, async, autoreturn, returnType,
-                dfts.b, defaultCount, generic_toks).setCatch(catcher).setIterative(argname).setKwargs(kwargname)
-                .set_context(context).set_pos(pos_start, pos_end);
-
-        if (funcName != null) context.symbolTable.define(funcName, funcValue);
-
-        return res.success(funcValue);
-    }
-
     @Override
     public Node optimize() {
         Node body = body_node.optimize();
@@ -88,7 +65,7 @@ public class FuncDefNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(List.of(body_node));
+        return new ArrayList<>(Collections.singletonList(body_node));
     }
 
     @Override

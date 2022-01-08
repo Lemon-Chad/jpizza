@@ -2,6 +2,8 @@ package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.compiler.values.Value;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ClassAttr {
@@ -20,7 +22,7 @@ public class ClassAttr {
     }
 
     public ClassAttr(Value val, String type) {
-        this(val, type, List.of(type), false, false);
+        this(val, type, new ArrayList<>(Collections.singletonList(type)), false, false);
     }
 
     public ClassAttr(Value val) {

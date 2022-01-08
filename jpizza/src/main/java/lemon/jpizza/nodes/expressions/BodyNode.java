@@ -2,11 +2,7 @@ package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.JPType;
 import lemon.jpizza.Position;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,17 +22,6 @@ public class BodyNode extends Node {
         this.pos_start = start;
         this.pos_end = end;
         this.jptype = JPType.Body;
-    }
-
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-        for (Node statement : statements) {
-           res.register(statement.visit(inter, context));
-            if (res.shouldReturn()) {
-                return res;
-            }
-        }
-        return res.success(new Null());
     }
 
     @Override

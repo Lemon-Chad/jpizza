@@ -1,9 +1,8 @@
 package lemon.jpizza;
 
-import java.io.Serializable;
-import java.util.List;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class Token {
     public final TokenType type;
@@ -59,65 +58,69 @@ public class Token {
     }
 
     public String asString() {
-        return switch (type) {
-            case Type -> String.join("", (List<String>) value);
-            case InvisibleNewline -> "";
-            case LeftTildeArrow -> "<~";
-            case TildeTilde -> "~~";
-            case RightTildeArrow -> "~>";
-            case Equal -> "=";
-            case TildeAmpersand -> "~&";
-            case TildePipe -> "~|";
-            case TildeCaret -> "~^";
-            case Tilde -> "~";
-            case At -> "@";
-            case Int, Float, Boolean -> String.valueOf(value);
-            case String -> ((Pair<String, Boolean>) value).a;
-            case Plus -> "+";
-            case Minus -> "-";
-            case Star -> "*";
-            case Slash -> "/";
-            case LeftParen -> "(";
-            case RightParen -> ")";
-            case EndOfFile -> "EOF";
-            case Newline -> "\n";
-            case Caret -> "^";
-            case Identifier, Keyword -> (String) value;
-            case FatArrow -> "=>";
-            case EqualEqual -> "==";
-            case BangEqual -> "!=";
-            case LeftAngle -> "<";
-            case RightAngle -> ">";
-            case LessEquals -> "<=";
-            case GreaterEquals -> ">=";
-            case Ampersand -> "&";
-            case Pipe -> "|";
-            case Bang -> "!";
-            case ColonColon -> "::";
-            case Percent -> "%";
-            case QuestionMark -> "?";
-            case Colon -> ":";
-            case DollarUnderscore -> "$_";
-            case DollarSign -> "$";
-            case SkinnyArrow -> "->";
-            case AngleAngle -> ">>";
-            case Comma -> ",";
-            case LeftBracket -> "[";
-            case RightBracket -> "]";
-            case LeftBrace -> "{";
-            case RightBrace -> "}";
-            case PlusEquals -> "+=";
-            case MinusEquals -> "-=";
-            case StarEquals -> "*=";
-            case SlashEquals -> "/=";
-            case CaretEquals -> "^=";
-            case PlusPlus -> "++";
-            case MinusMinus -> "--";
-            case Dot -> ".";
-            case Hash -> "#";
-            case LeftArrow -> "<-";
-            case Backslash -> "\\";
-            case DotDot -> "..";
-        };
+        switch (type) {
+            case Type: return String.join("", (List<String>) value);
+            case InvisibleNewline: return "";
+            case LeftTildeArrow: return "<~";
+            case TildeTilde: return "~~";
+            case RightTildeArrow: return "~>";
+            case Equal: return "=";
+            case TildeAmpersand: return "~&";
+            case TildePipe: return "~|";
+            case TildeCaret: return "~^";
+            case Tilde: return "~";
+            case At: return "@";
+            case Int:
+            case Float:
+            case Boolean: return String.valueOf(value);
+            case String: return ((Pair<String, Boolean>) value).a;
+            case Plus: return "+";
+            case Minus: return "-";
+            case Star: return "*";
+            case Slash: return "/";
+            case LeftParen: return "(";
+            case RightParen: return ")";
+            case EndOfFile: return "EOF";
+            case Newline: return "\n";
+            case Caret: return "^";
+            case Identifier:
+            case Keyword: return (String) value;
+            case FatArrow: return "=>";
+            case EqualEqual: return "==";
+            case BangEqual: return "!=";
+            case LeftAngle: return "<";
+            case RightAngle: return ">";
+            case LessEquals: return "<=";
+            case GreaterEquals: return ">=";
+            case Ampersand: return "&";
+            case Pipe: return "|";
+            case Bang: return "!";
+            case ColonColon: return "::";
+            case Percent: return "%";
+            case QuestionMark: return "?";
+            case Colon: return ":";
+            case DollarUnderscore: return "$_";
+            case DollarSign: return "$";
+            case SkinnyArrow: return "->";
+            case AngleAngle: return ">>";
+            case Comma: return ",";
+            case LeftBracket: return "[";
+            case RightBracket: return "]";
+            case LeftBrace: return "{";
+            case RightBrace: return "}";
+            case PlusEquals: return "+=";
+            case MinusEquals: return "-=";
+            case StarEquals: return "*=";
+            case SlashEquals: return "/=";
+            case CaretEquals: return "^=";
+            case PlusPlus: return "++";
+            case MinusMinus: return "--";
+            case Dot: return ".";
+            case Hash: return "#";
+            case LeftArrow: return "<-";
+            case Backslash: return "\\";
+            case DotDot: return "..";
+        }
+        return "";
     }
 }

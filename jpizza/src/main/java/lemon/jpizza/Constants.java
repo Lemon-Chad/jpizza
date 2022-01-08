@@ -1,15 +1,17 @@
 package lemon.jpizza;
 
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Constants {
     public static final char[] NUMBERS = "0123456789".toCharArray();
@@ -81,293 +83,242 @@ public class Constants {
     };
     @SuppressWarnings("unused") public static char BREAK = ';';
     @SuppressWarnings("unused") public static char[] IGNORE = new char[]{' ', '\n', '\t'};
-    public static final Map<String, Context> LIBRARIES = new HashMap<>();
     public static final char splitter = '\n';
 
-    public static final Map<String, String> STANDLIBS = new HashMap<>(){{
-        put("std", """
-
-enum pub Option {
-    Some { val },
-    None,
-}
-
-enum pub StaticOption {
-    Box(T){ val: T },
-    Empty(T),
-}
-
-class Iter {
-    prv iterable: list;
-    prv f;
-    prv output;
-
-    ingredients<iterable, f, output> {
-        attr iterable => iterable;
-        attr f => f;
-        attr output => output;
-    }
-
-    mthd collect {
-        let fin => for (x <- iterable) => f(x);
-        output(..fin)
-    }
-
-    mthd stream {
-        for (x <- iterable) f(x);
-    }
-
-    mthd bin type -> `Iter`;
-
-}
-
-class Array {
-    prv internal: list;
-
-    ingredients<..items>(T) {
-        internal => [];
-        if (T == "any") {
-            internal => for (item <- items) => &item;
-            return null;
-        }
-
-        let itype => None;
-        for (item <- items) {
-            itype => Some(type(item));
-            if (itype::val != T)
-                throw "Type", `Expected type ${T}, got ${itype::val}`;
-            append(internal, &item);
-        }
-    }
-
-    mthd bin string {
-        let un => for (x <- internal) => str(x);
-        str(un)
-    }
-
-    mthd bin type -> `Array(${T})`;
-    
-    mthd bin eq<other> {
-        if (type(other) != type(this)) return false;
-        if (other::size() != this::size()) return false;
-        
-        list(this) == list(other)
-    }
-    
-    mthd insert<item#T, index#num> = void {
-        insert(internal, item, index);
-    }
-
-    mthd remove<item#T> = void {
-        if (!contains(internal, item)) throw "Out of Bounds", "Item is not in Array";
-        internal /= item;
-    }
-
-    mthd iter<func#function> = Iter {
-        Iter(internal, func, !<..items> -> Array(..items)<any>)
-    }
-
-    mthd pop<index#num> = T {
-        let item => *(internal[index]);
-        internal /= item;
-        return item;
-    }
-
-    mthd add<item#T> = void {
-        append(internal, &item);
-    }
-
-    mthd size -> size(internal);
-
-    mthd addAll<..items> = void {
-        for (item <- items)
-            add(item);
-    }
-
-    mthd bin list -> internal;
-
-    mthd slice<min#num, max#num> {
-        let s => for (x <- sublist(internal, min, max)) => *x;
-        Array(..s)<T>
-    }
-
-    mthd indexOf<item> = num {
-        return indexOf(internal, &item);
-    }
-
-    mthd bin bracket<index> -> internal[index];
-
-    mthd contains<x> = bool {
-        return contains(internal, x);
-    }
-
-    mthd join<str#String> -> join(str, internal);
-
-}
-
-class Tuple {
-    prv items: list;
-    ingredients<..entry> {
-        items => [];
-        for (item <- entry)
-            append(items, &item);
-    }
-
-    mthd size -> size(items);
-
-    mthd bin bracket<other> -> items[other];
-
-    mthd bin string -> `(${substr(str(items), 1, size(str(items)) - 1)})`;
-    
-    mthd bin eq<other> {
-        if (type(other) != type(this)) return false;
-        if (other::size() != this::size()) return false;
-        
-        list(this) == list(other)
-    }
-    
-    mthd bin type {
-        let types => [];
-        for (item <- items)
-            types.append(type(*item));
-        return "(" + (",".join(types)) + ")";
-    }
-    
-    mthd contains<x> -> contains(items, x);
-
-    mthd bin list -> items;
-}
-
-class Map {
-    prv internal: dict;
-
-    ingredients<..pairs>(K, V) {
-        internal => {};
-        for (pair <- pairs) {
-            if (type(pair) != "list" | size(pair) != 2)
-                throw "Type", "Expected a key-value pair ([k, v])";
-            elif (K != "any" & type(pair[0]) != K)
-                throw "Type", `Expected key type to be ${K}, got ${type(pair[0])}`;
-            elif (V != "any" & type(pair[1]) != V)
-                throw "Type", `Expected key type to be ${V}, got ${type(pair[1])}`;
-            
-            set(internal, pair[0], &pair[1]);
-        }
-    }
-
-    mthd iter<f#function> -> Iter(
-        list(pairArray()),
-        f,
-        !<..array> {
-            let new => Map()<any, any>;
-            for (pair <- list(array))
-                new::set(pair[0], pair[1]);
-            new
-        }
-    );
-
-    mthd bin string {
-        let new => {};
-        for (key <- list(internal))
-            set(new, str(key), str(internal[key]));
-        str(new)
-    }
-
-    mthd bin bracket<other#K> -> internal[other];
-
-    mthd contains<other> -> contains(list(internal), other);
-
-    mthd bin list -> list(internal);
-
-    mthd keyArray -> Array(..list(internal));
-
-    mthd get<other#K> {
-        if (!this::contains(other)) throw "Out of Bounds", "Key not in map";
-        internal[other]
-    }
-
-    mthd getOrDefault<other#K, def> {
-        if (!this::contains(other)) return def;
-        internal[other]
-    }
-
-    mthd size -> size(list(internal));
-    
-    mthd bin eq<other> {
-        if (type(other) != type(this)) return false;
-        
-        dict(this) == dict(other)
-    }
-    
-    mthd bin dictionary -> internal;
-
-    mthd set<key#K, value#V> {
-        set(internal, key, value);
-    }
-
-    mthd del<key#K> {
-        if (!this::contains(key)) throw "Out of Bounds", "Key not in map";
-        delete(internal, key);
-    }
-
-    mthd pairArray {
-        let arr => Array()<Array(any)>;
-        for (key <- list(internal)) {
-            var a => Array()<any>;
-            a::addAll(key, internal[key]);
-            arr::add(a);
-        }
-        arr
-    }
-}
-
-        """);
-        put("socks", """
-import sockets as _sockets;
-
-class SocketConnection {
-	prv id: num;
-	ingredients<cID#num> {
-		id => cID;
-	}
-
-	mthd send<msg> = void -> _sockets::serverSend(id, msg);
-	mthd sendBytes<msg#bytearray> = void -> _sockets::serverSendBytes(id, msg);
-
-	mthd recv = any -> _sockets::serverRecv(id);
-	mthd recvBytes<length#num> = bytearray -> _sockets::serverRecvBytes(id, length);
-	mthd recvAllBytes = bytearray -> _sockets::serverRecvAllBytes(id);
-
-	mthd close = void -> _sockets::closeServerConnection(id);
-}
-
-class Socket {
-	prv id: num;
-	ingredients<port#num> {
-		id => _sockets::newServer(port);
-	}
-
-	mthd listen = SocketConnection -> SocketConnection(_sockets::connect(id));
-
-	mthd close = void -> _sockets::closeServer(id);
-}
-
-class SocketClient {
-	prv id: num;
-	ingredients<host#String, port#num> {
-		id => _sockets::newClient(host, port);
-	}
-
-	mthd send<msg> = void -> _sockets::clientSend(id, msg);
-	mthd sendBytes<msg#bytearray> = void -> _sockets::clientSendBytes(id, msg);
-
-	mthd recv = any -> _sockets::clientRecv(id);
-	mthd recvBytes<length#num> = bytearray -> _sockets::clientRecvBytes(id, length);
-	mthd recvAllBytes = bytearray -> _sockets::clientRecvAllBytes(id);
-
-	mthd close = void -> _sockets::clientClose(id);
-}
-""");
+    public static final Map<String, String> STANDLIBS = new HashMap<String, String>(){{
+        put("std", "enum pub Option {\n" +
+                "    Some { val },\n" +
+                "    None,\n" +
+                "}\n" +
+                "\n" +
+                "enum pub StaticOption {\n" +
+                "    Box(T){ val: T },\n" +
+                "    Empty(T),\n" +
+                "}\n" +
+                "\n" +
+                "class Iter {\n" +
+                "    prv iterable: list;\n" +
+                "    prv f;\n" +
+                "    prv output;\n" +
+                "\n" +
+                "    ingredients<iterable, f, output> {\n" +
+                "        attr iterable => iterable;\n" +
+                "        attr f => f;\n" +
+                "        attr output => output;\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd collect {\n" +
+                "        let fin => for (x <- iterable) => f(x);\n" +
+                "        output(..fin)\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd stream {\n" +
+                "        for (x <- iterable) f(x);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd bin type -> `Iter`;\n" +
+                "\n" +
+                "}\n" +
+                "\n" +
+                "class Array {\n" +
+                "    prv internal: list;\n" +
+                "\n" +
+                "    ingredients<..items>(T) {\n" +
+                "        internal => [];\n" +
+                "        if (T == \"any\") {\n" +
+                "            internal => for (item <- items) => &item;\n" +
+                "            return null;\n" +
+                "        }\n" +
+                "\n" +
+                "        let itype => None;\n" +
+                "        for (item <- items) {\n" +
+                "            itype => Some(type(item));\n" +
+                "            if (itype::val != T)\n" +
+                "                throw \"Type\", `Expected type ${T}, got ${itype::val}`;\n" +
+                "            append(internal, &item);\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd bin string {\n" +
+                "        let un => for (x <- internal) => str(x);\n" +
+                "        str(un)\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd bin type -> `Array(${T})`;\n" +
+                "    \n" +
+                "    mthd bin eq<other> {\n" +
+                "        if (type(other) != type(this)) return false;\n" +
+                "        if (other::size() != this::size()) return false;\n" +
+                "        \n" +
+                "        list(this) == list(other)\n" +
+                "    }\n" +
+                "    \n" +
+                "    mthd insert<item#T, index#num> = void {\n" +
+                "        insert(internal, item, index);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd remove<item#T> = void {\n" +
+                "        if (!contains(internal, item)) throw \"Out of Bounds\", \"Item is not in Array\";\n" +
+                "        internal /= item;\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd iter<func#function> = Iter {\n" +
+                "        Iter(internal, func, !<..items> -> Array(..items)<any>)\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd pop<index#num> = T {\n" +
+                "        let item => *(internal[index]);\n" +
+                "        internal /= item;\n" +
+                "        return item;\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd add<item#T> = void {\n" +
+                "        append(internal, &item);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd size -> size(internal);\n" +
+                "\n" +
+                "    mthd addAll<..items> = void {\n" +
+                "        for (item <- items)\n" +
+                "            add(item);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd bin list -> internal;\n" +
+                "\n" +
+                "    mthd slice<min#num, max#num> {\n" +
+                "        let s => for (x <- sublist(internal, min, max)) => *x;\n" +
+                "        Array(..s)<T>\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd indexOf<item> = num {\n" +
+                "        return indexOf(internal, &item);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd bin bracket<index> -> internal[index];\n" +
+                "\n" +
+                "    mthd contains<x> = bool {\n" +
+                "        return contains(internal, x);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd join<str#String> -> join(str, internal);\n" +
+                "\n" +
+                "}\n" +
+                "\n" +
+                "class Tuple {\n" +
+                "    prv items: list;\n" +
+                "    ingredients<..entry> {\n" +
+                "        items => [];\n" +
+                "        for (item <- entry)\n" +
+                "            append(items, &item);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd size -> size(items);\n" +
+                "\n" +
+                "    mthd bin bracket<other> -> items[other];\n" +
+                "\n" +
+                "    mthd bin string -> `(${substr(str(items), 1, size(str(items)) - 1)})`;\n" +
+                "    \n" +
+                "    mthd bin eq<other> {\n" +
+                "        if (type(other) != type(this)) return false;\n" +
+                "        if (other::size() != this::size()) return false;\n" +
+                "        \n" +
+                "        list(this) == list(other)\n" +
+                "    }\n" +
+                "    \n" +
+                "    mthd bin type {\n" +
+                "        let types => [];\n" +
+                "        for (item <- items)\n" +
+                "            types.append(type(*item));\n" +
+                "        return \"(\" + (\",\".join(types)) + \")\";\n" +
+                "    }\n" +
+                "    \n" +
+                "    mthd contains<x> -> contains(items, x);\n" +
+                "\n" +
+                "    mthd bin list -> items;\n" +
+                "}\n" +
+                "\n" +
+                "class Map {\n" +
+                "    prv internal: dict;\n" +
+                "\n" +
+                "    ingredients<..pairs>(K, V) {\n" +
+                "        internal => {};\n" +
+                "        for (pair <- pairs) {\n" +
+                "            if (type(pair) != \"list\" | size(pair) != 2)\n" +
+                "                throw \"Type\", \"Expected a key-value pair ([k, v])\";\n" +
+                "            elif (K != \"any\" & type(pair[0]) != K)\n" +
+                "                throw \"Type\", `Expected key type to be ${K}, got ${type(pair[0])}`;\n" +
+                "            elif (V != \"any\" & type(pair[1]) != V)\n" +
+                "                throw \"Type\", `Expected key type to be ${V}, got ${type(pair[1])}`;\n" +
+                "            \n" +
+                "            set(internal, pair[0], &pair[1]);\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd iter<f#function> -> Iter(\n" +
+                "        list(pairArray()),\n" +
+                "        f,\n" +
+                "        !<..array> {\n" +
+                "            let new => Map()<any, any>;\n" +
+                "            for (pair <- list(array))\n" +
+                "                new::set(pair[0], pair[1]);\n" +
+                "            new\n" +
+                "        }\n" +
+                "    );\n" +
+                "\n" +
+                "    mthd bin string {\n" +
+                "        let new => {};\n" +
+                "        for (key <- list(internal))\n" +
+                "            set(new, str(key), str(internal[key]));\n" +
+                "        str(new)\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd bin bracket<other#K> -> internal[other];\n" +
+                "\n" +
+                "    mthd contains<other> -> contains(list(internal), other);\n" +
+                "\n" +
+                "    mthd bin list -> list(internal);\n" +
+                "\n" +
+                "    mthd keyArray -> Array(..list(internal));\n" +
+                "\n" +
+                "    mthd get<other#K> {\n" +
+                "        if (!this::contains(other)) throw \"Out of Bounds\", \"Key not in map\";\n" +
+                "        internal[other]\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd getOrDefault<other#K, def> {\n" +
+                "        if (!this::contains(other)) return def;\n" +
+                "        internal[other]\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd size -> size(list(internal));\n" +
+                "    \n" +
+                "    mthd bin eq<other> {\n" +
+                "        if (type(other) != type(this)) return false;\n" +
+                "        \n" +
+                "        dict(this) == dict(other)\n" +
+                "    }\n" +
+                "    \n" +
+                "    mthd bin dictionary -> internal;\n" +
+                "\n" +
+                "    mthd set<key#K, value#V> {\n" +
+                "        set(internal, key, value);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd del<key#K> {\n" +
+                "        if (!this::contains(key)) throw \"Out of Bounds\", \"Key not in map\";\n" +
+                "        delete(internal, key);\n" +
+                "    }\n" +
+                "\n" +
+                "    mthd pairArray {\n" +
+                "        let arr => Array()<Array(any)>;\n" +
+                "        for (key <- list(internal)) {\n" +
+                "            var a => Array()<any>;\n" +
+                "            a::addAll(key, internal[key]);\n" +
+                "            arr::add(a);\n" +
+                "        }\n" +
+                "        arr\n" +
+                "    }\n" +
+                "}");
     }};
 
     public static int indexToLine(String code, int index) {
@@ -416,9 +367,9 @@ class SocketClient {
             String highlight;
             if (end - index >= 2) {
                 if (Shell.fileEncoding.equals("UTF-8"))
-                    highlight = "╰" + "─".repeat(end - index - 2) + "╯";
+                    highlight = "╰" + repeat(end - index - 2, "─") + "╯";
                 else
-                    highlight = "\\" + "_".repeat(end - index - 2) + "/";
+                    highlight = "\\" + repeat(end - index - 2, "_") + "/";
             }
             else {
                 highlight = "^";
@@ -426,7 +377,7 @@ class SocketClient {
 
             sb.append(text)
               .append("\n")
-              .append(" ".repeat(index))
+              .append(String.join("", repeat(index, " ")))
               .append(highlight)
               .append("\n");
 
@@ -438,34 +389,6 @@ class SocketClient {
 
         return sb.toString();
     }
-
-    public static final Map<TokenType, Operations.OP> tto = new HashMap<>(){{
-        put(TokenType.Plus, Operations.OP.ADD);
-        put(TokenType.Minus, Operations.OP.SUB);
-        put(TokenType.Star, Operations.OP.MUL);
-        put(TokenType.Slash, Operations.OP.DIV);
-        put(TokenType.Caret, Operations.OP.FASTPOW);
-        put(TokenType.EqualEqual, Operations.OP.EQ);
-        put(TokenType.BangEqual, Operations.OP.NE);
-        put(TokenType.LeftAngle, Operations.OP.LT);
-        put(TokenType.LessEquals, Operations.OP.LTE);
-        put(TokenType.Ampersand, Operations.OP.INCLUDING);
-        put(TokenType.Pipe, Operations.OP.ALSO);
-        put(TokenType.Percent, Operations.OP.MOD);
-        put(TokenType.Dot, Operations.OP.GET);
-        put(TokenType.LeftBracket, Operations.OP.BRACKET);
-    }};
-
-    public static final Map<String, JPType> methTypes = new HashMap<>(){{
-        put("eq", JPType.Boolean);
-        put("lt", JPType.Boolean);
-        put("lte", JPType.Boolean);
-        put("ne", JPType.Boolean);
-        put("also", JPType.Boolean);
-        put("including", JPType.Boolean);
-
-        put("type", JPType.String);
-    }};
 
     public static int nonWhitespace(String string){
         char[] characters = string.toCharArray();
@@ -498,16 +421,16 @@ class SocketClient {
             String grouping;
             if (dist >= 2) {
                 if (Shell.fileEncoding.equals("UTF-8"))
-                    grouping = "╰" + "─".repeat(dist - 2) + "╯";
+                    grouping = "╰" + repeat("─", dist - 2) + "╯";
                 else
-                    grouping = "\\" + "_".repeat(dist - 2) + "/";
+                    grouping = "\\" + repeat("_", dist - 2) + "/";
             }
             else {
                 grouping = "^";
             }
 
             result.append(line).append("\n")
-                    .append(" ".repeat(Math.max(0, colStart + offs))).append(grouping);
+                    .append(repeat(" ", Math.max(0, colStart + offs))).append(grouping);
 
             idxStart = idxEnd;
             idxEnd = text.indexOf(splitter, idxStart + 1);
@@ -516,36 +439,6 @@ class SocketClient {
         }
 
         return result.toString().replace("\t", "");
-    }
-
-    public static Obj getFromValue(Object val) {
-        if (val instanceof String)
-            return new Str((String) val);
-        else if (val instanceof Double)
-            return new Num((double) val, false);
-        else if (val instanceof List) {
-            List<Obj> lst = new ArrayList<>();
-            List<Object> list = (List<Object>) val;
-
-            for (Object item : list)
-                lst.add(getFromValue(item));
-
-            return new PList(lst);
-        }
-        else if (val instanceof Map) {
-            Map<Obj, Obj> mp = new HashMap<>();
-            Map<Object, Object> map = (Map<Object, Object>) val;
-
-            for (Object key : map.keySet())
-                mp.put(getFromValue(key), getFromValue(map.get(key)));
-
-            return new Dict(mp);
-        }
-        else if (val instanceof byte[])
-            return new Bytes((byte[]) val);
-        else if (val instanceof Boolean)
-            return new Bool((boolean) val);
-        else return new Null();
     }
 
     public static byte[] objToBytes(Object obj) {
@@ -560,39 +453,15 @@ class SocketClient {
         }
     }
 
-    public static Object toObject(Obj obj) {
-        return switch (obj.jptype) {
-            case Dict ->{
-                Map<Object, Object> objMap = new ConcurrentHashMap<>();
-                ConcurrentHashMap<Obj, Obj> deMap = obj.map;
-
-                for (Obj k : deMap.keySet())
-                    objMap.put(toObject(k), toObject(deMap.get(k)));
-
-                yield objMap;
-            }
-
-            case List ->{
-                List<Object> objLst = new ArrayList<>();
-                List<Obj> olst = new ArrayList<>(obj.list);
-
-                for (int i = 0; i < olst.size(); i++)
-                    objLst.add(toObject(olst.get(i)));
-
-                yield objLst;
-            }
-
-            case Number -> obj.number;
-
-            case String -> obj.string;
-
-            case Boolean -> obj.boolval;
-
-            case Bytes -> obj.arr;
-
-            case Generic -> obj.value;
-            default -> null;
-        };
+    public static String repeat(String str, int times) {
+        return new String(new char[times]).replace("\0", str);
     }
 
+    public static String repeat(int times, String str) {
+        return new String(new char[times]).replace("\0", str);
+    }
+
+    public static String readString(Path path) throws IOException {
+        return Files.lines(path).collect(Collectors.joining("\n"));
+    }
 }

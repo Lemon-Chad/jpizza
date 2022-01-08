@@ -3,7 +3,6 @@ package lemon.jpizza.compiler.values.classes;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.Var;
 
-import javax.naming.Name;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

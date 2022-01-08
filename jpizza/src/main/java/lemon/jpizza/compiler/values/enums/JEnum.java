@@ -3,13 +3,15 @@ package lemon.jpizza.compiler.values.enums;
 import lemon.jpizza.compiler.ChunkCode;
 import lemon.jpizza.compiler.values.Value;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public record JEnum(String name,
-                    Map<String, JEnumChild> children) {
+public class JEnum {
+    String name;
+    Map<String, JEnumChild> children;
+
     public JEnum(String name, Map<String, JEnumChild> children) {
         this.name = name;
         this.children = children;
@@ -17,6 +19,10 @@ public record JEnum(String name,
         for (JEnumChild child : children.values()) {
             child.setParent(this);
         }
+    }
+
+    public String name() {
+        return name;
     }
 
     public boolean has(String name) {
@@ -28,7 +34,7 @@ public record JEnum(String name,
     }
 
     public int[] dump() {
-        List<Integer> list = new ArrayList<>(List.of(ChunkCode.Enum));
+        List<Integer> list = new ArrayList<>(Collections.singletonList(ChunkCode.Enum));
         for (int i : Value.dumpString(name)) {
             list.add(i);
         }
@@ -42,5 +48,9 @@ public record JEnum(String name,
             }
         }
         return list.stream().mapToInt(i -> i).toArray();
+    }
+
+    public Map<String, JEnumChild> children() {
+        return children;
     }
 }

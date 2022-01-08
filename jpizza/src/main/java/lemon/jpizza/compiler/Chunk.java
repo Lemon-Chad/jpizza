@@ -4,7 +4,6 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.ValueArray;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +75,7 @@ public class Chunk {
     }
 
     public int[] dump() {
-        List<Integer> list = new ArrayList<>(List.of(ChunkCode.Chunk));
+        List<Integer> list = new ArrayList<>(Collections.singletonList(ChunkCode.Chunk));
         Value.addAllString(list, source);
         if (packageName != null) {
             Value.addAllString(list, packageName);

@@ -4,6 +4,7 @@ import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Generators extends JPExtension {
@@ -24,7 +25,7 @@ public class Generators extends JPExtension {
             for (double i = start; i < end; i += step)
                 list.add(i);
             return Ok(list);
-        }, List.of("num", "num", "num"));
+        }, Arrays.asList("num", "num", "num"));
         func("linear", (args) -> {
             double start = args[0].asNumber();
             double end = args[1].asNumber();
@@ -37,7 +38,7 @@ public class Generators extends JPExtension {
             for (double i = start; i < end; i += step)
                 list.add(m * i + b);
             return Ok(list);
-        }, List.of("num", "num", "num", "num", "num"));
+        }, Arrays.asList("num", "num", "num", "num", "num"));
         func("quadratic", (args) -> {
             double start = args[0].asNumber();
             double end = args[1].asNumber();
@@ -51,6 +52,6 @@ public class Generators extends JPExtension {
             for (double i = start; i < end; i += step)
                 list.add(a * i * i + b * i + c);
             return Ok(list);
-        }, List.of("num", "num", "num", "num", "num", "num"));
+        }, Arrays.asList("num", "num", "num", "num", "num", "num"));
     }
 }

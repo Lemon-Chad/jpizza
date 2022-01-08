@@ -175,15 +175,15 @@ public class ChunkBuilder {
     }
 
     private Value readValue() throws IOException {
-        return switch (code[i]) {
-            case ChunkCode.Boolean -> new Value(readBoolean());
-            case ChunkCode.Number -> new Value(readDouble());
-            case ChunkCode.String -> new Value(readString());
-            case ChunkCode.Type -> Value.fromType(readType());
-            case ChunkCode.Enum -> new Value(readEnum());
-            case ChunkCode.Func -> new Value(readFunc());
-            default -> null;
-        };
+        switch (code[i]) {
+            case ChunkCode.Boolean: return new Value(readBoolean());
+            case ChunkCode.Number: return new Value(readDouble());
+            case ChunkCode.String: return new Value(readString());
+            case ChunkCode.Type: return Value.fromType(readType());
+            case ChunkCode.Enum: return new Value(readEnum());
+            case ChunkCode.Func: return new Value(readFunc());
+            default: return null;
+        }
     }
 
     private Chunk readChunk() throws IOException {

@@ -3,6 +3,7 @@ package lemon.jpizza.compiler.libraries;
 import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Time extends JPExtension {
@@ -23,6 +24,6 @@ public class Time extends JPExtension {
                 return Err("Internal", "Interrupted");
             }
             return Ok;
-        }, List.of("num"));
+        }, Collections.singletonList("num"));
     }
 }

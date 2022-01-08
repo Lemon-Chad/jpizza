@@ -14,7 +14,6 @@ import lemon.jpizza.compiler.vm.VMResult;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -437,10 +436,10 @@ public class Value {
         }
         else if (isRes) {
             if (res.isError()) {
-                return List.of(new Value(res.getErrorMessage()), new Value(res.getErrorReason()));
+                return Arrays.asList(new Value(res.getErrorMessage()), new Value(res.getErrorReason()));
             }
             else {
-                return List.of(new Value(res.getValue()));
+                return Collections.singletonList(new Value(res.getValue()));
             }
         }
         else if (isBytes) {
@@ -450,7 +449,7 @@ public class Value {
             }
             return list;
         }
-        return new ArrayList<>(List.of(this));
+        return new ArrayList<>(Collections.singletonList(this));
     }
 
     public Var asVar() {
@@ -465,7 +464,7 @@ public class Value {
             return map;
         }
         else if (this.isNull) {
-            return Map.of();
+            return new HashMap<>();
         }
         else if (isInstance) {
             return instance.asMap();
@@ -474,12 +473,19 @@ public class Value {
             return ref.asMap();
         }
         else if (isRes) {
-            return Map.of(new Value("success"), new Value(res.getValue()), new Value("error"),
-                    new Value(res.isError() ? List.of(new Value(res.getErrorMessage()),
-                                                      new Value(res.getErrorReason()))
-                                            : new ArrayList<>()));
+            Map<Value, Value> map = new HashMap<>();
+            map.put(new Value("sucess"), new Value(res.getValue()));
+            List<Value> key;
+            if (res.isError()) {
+                key = new ArrayList<>(Arrays.asList(new Value(res.getErrorMessage()), new Value(res.getErrorReason())));
+            }
+            else {
+                key = new ArrayList<>();
+            }
+            map.put(new Value("error"), new Value(key));
+            return map;
         }
-        return Map.of(this, this);
+        return new HashMap<>(Collections.singletonMap(this, this));
     }
 
     public JFunc asFunc() {

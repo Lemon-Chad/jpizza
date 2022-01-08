@@ -2,10 +2,6 @@ package lemon.jpizza.compiler.values.functions;
 
 import lemon.jpizza.compiler.values.Var;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
 public class JClosure {
     public final JFunc function;
 

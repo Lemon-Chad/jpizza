@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class JSystem extends JPExtension {
@@ -48,7 +50,7 @@ public class JSystem extends JPExtension {
             } catch (Exception e) {
                 return Err("Internal", e.getMessage());
             }
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("executeFloor", (args) -> {
             List<Value> args2 = args[0].asList();
             String[] cmd = new String[args2.size()];
@@ -63,7 +65,7 @@ public class JSystem extends JPExtension {
             } catch (Exception e) {
                 return Err("Internal", e.getMessage());
             }
-        }, List.of("list"));
+        }, Collections.singletonList("list"));
 
         // IO
         func("disableOut", (args) -> {
@@ -79,42 +81,42 @@ public class JSystem extends JPExtension {
         var("jpv", VM.VERSION);
 
         // Environment Variables
-        func("envVarExists", (args) -> Ok(System.getenv(args[0].asString()) != null), List.of("String"));
+        func("envVarExists", (args) -> Ok(System.getenv(args[0].asString()) != null), Collections.singletonList("String"));
         func("getEnvVar", (args) -> {
             String name = args[0].asString();
             String value = System.getenv(name);
             if (value == null)
                 return Err("Scope", "Environment variable '" + name + "' does not exist");
             return Ok(value);
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("setEnvVar", (args) -> {
             String name = args[0].asString();
             String value = args[1].asString();
             System.setProperty(name, value);
             return Ok;
-        }, List.of("String", "String"));
+        }, Arrays.asList("String", "String"));
 
         // System Properties
-        func("propExists", (args) -> Ok(System.getProperty(args[0].asString()) != null), List.of("String"));
+        func("propExists", (args) -> Ok(System.getProperty(args[0].asString()) != null), Collections.singletonList("String"));
         func("getProp", (args) -> {
             String name = args[0].asString();
             String value = System.getProperty(name);
             if (value == null)
                 return Err("Scope", "System property '" + name + "' does not exist");
             return Ok(value);
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("setProp", (args) -> {
             String name = args[0].asString();
             String value = args[1].asString();
             System.setProperty(name, value);
             return Ok;
-        }, List.of("String", "String"));
+        }, Arrays.asList("String", "String"));
 
         // System
         func("exit", (args) -> {
             int code = args[0].asNumber().intValue();
             System.exit(code);
             return Ok;
-        }, List.of("num"));
+        }, Collections.singletonList("num"));
     }
 }

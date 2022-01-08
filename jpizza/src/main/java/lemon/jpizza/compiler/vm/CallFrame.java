@@ -9,7 +9,7 @@ public class CallFrame {
     public int slots;
     public String returnType;
     public Value bound;
-    public boolean memoize = false;
+    public int memoize = 0;
     public boolean catchError = false;
     public boolean addPeek = false;
 

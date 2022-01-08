@@ -22,12 +22,26 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static lemon.jpizza.Constants.repeat;
+
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 256;
     public static final String VERSION = "2.0.1";
 
-    private static record Traceback(String filename, String context, int offset, Chunk chunk) {}
+    private static class Traceback {
+        String filename;
+        String context;
+        int offset;
+        Chunk chunk;
+
+        public Traceback(String filename, String context, int offset, Chunk chunk) {
+            this.filename = filename;
+            this.context = context;
+            this.offset = offset;
+            this.chunk = chunk;
+        }
+    }
 
     final JStack<Value> stack;
     int ip;
@@ -281,7 +295,7 @@ public class VM {
         Value a = pop();
 
         switch (op) {
-            case OpCode.Add -> {
+            case OpCode.Add:
                 if (a.isString)
                     push(new Value(a.asString() + b.asString()));
                 else if (a.isList) {
@@ -293,17 +307,17 @@ public class VM {
                     return runBin("add", b, a.asInstance());
                 else
                     push(new Value(a.asNumber() + b.asNumber()));
-            }
-            case OpCode.Subtract -> {
+                break;
+            case OpCode.Subtract:
                 if (canOverride(a, "sub"))
                     return runBin("sub", b, a.asInstance());
                 push(new Value(a.asNumber() - b.asNumber()));
-            }
-            case OpCode.Multiply -> {
+                break;
+            case OpCode.Multiply:
                 if (canOverride(a, "mul"))
                     return runBin("mul", b, a.asInstance());
                 if (a.isString) {
-                    push(new Value(a.asString().repeat(b.asNumber().intValue())));
+                    push(new Value(repeat(a.asString(), b.asNumber().intValue())));
                 }
                 else if (a.isList) {
                     List<Value> repeated = new ArrayList<>();
@@ -315,8 +329,8 @@ public class VM {
                 else {
                     push(new Value(a.asNumber() * b.asNumber()));
                 }
-            }
-            case OpCode.Divide -> {
+                break;
+            case OpCode.Divide:
                 if (canOverride(a, "div"))
                     return runBin("div", b, a.asInstance());
                 else if (a.isList) {
@@ -326,17 +340,17 @@ public class VM {
                 }
                 else
                     push(new Value(a.asNumber() / b.asNumber()));
-            }
-            case OpCode.Modulo -> {
+                break;
+            case OpCode.Modulo:
                 if (canOverride(a, "mod"))
                     return runBin("mod", b, a.asInstance());
                 push(new Value(a.asNumber() % b.asNumber()));
-            }
-            case OpCode.Power -> {
+                break;
+            case OpCode.Power:
                 if (canOverride(a, "fastpow"))
                     return runBin("fastpow", b, a.asInstance());
                 push(new Value(Math.pow(a.asNumber(), b.asNumber())));
-            }
+                break;
         }
 
         return VMResult.OK;
@@ -346,18 +360,26 @@ public class VM {
         Value a = pop();
 
         switch (op) {
-            case OpCode.Increment -> push(new Value(a.asNumber() + 1));
-            case OpCode.Decrement -> push(new Value(a.asNumber() - 1));
-            case OpCode.Negate -> push(new Value(-a.asNumber()));
-            case OpCode.Not -> push(new Value(!a.asBool()));
+            case OpCode.Increment:
+                push(new Value(a.asNumber() + 1));
+                break;
+            case OpCode.Decrement:
+                push(new Value(a.asNumber() - 1));
+                break;
+            case OpCode.Negate:
+                push(new Value(-a.asNumber()));
+                break;
+            case OpCode.Not:
+                push(new Value(!a.asBool()));
+                break;
         }
 
         return VMResult.OK;
     }
 
     VMResult globalOps(int op) {
-        return switch (op) {
-            case OpCode.DefineGlobal -> {
+        switch (op) {
+            case OpCode.DefineGlobal: {
                 String name = readString();
                 String type = readType();
                 Value value = peek(0);
@@ -371,7 +393,7 @@ public class VM {
 
                 if (!type.equals("any") && !valType.equals(type)) {
                     runtimeError("Type", "Expected " + type + " but got " + valType);
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
 
                 boolean usesRange = readByte() == 1;
@@ -383,42 +405,42 @@ public class VM {
                 }
 
                 globals.put(name, new Var(type, value, constant, min, max));
-                yield VMResult.OK;
+                return VMResult.OK;
             }
-            case OpCode.GetGlobal -> {
+            case OpCode.GetGlobal: {
                 String name = readString();
                 Var value = globals.get(name);
 
                 if (value == null) {
                     VMResult res = getBound(name, true);
                     if (res == VMResult.OK)
-                        yield VMResult.OK;
+                        return VMResult.OK;
                     runtimeError("Scope", "Undefined variable");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
 
                 push(value.val);
-                yield VMResult.OK;
+                return VMResult.OK;
             }
-            case OpCode.SetGlobal -> {
+            case OpCode.SetGlobal: {
                 String name = readString();
                 Value value = peek(0);
 
                 VMResult res = setBound(name, value, true);
                 if (res == VMResult.OK)
-                    yield VMResult.OK;
+                    return VMResult.OK;
 
                 Var var = globals.get(name);
                 if (var != null) {
-                    yield set(var, value);
+                    return set(var, value);
                 }
                 else {
                     runtimeError("Scope", "Undefined variable");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
             }
-            default -> VMResult.OK;
-        };
+            default: return VMResult.OK;
+        }
     }
 
     VMResult getBound(String name, boolean suppress) {
@@ -498,15 +520,14 @@ public class VM {
     }
 
     VMResult attrOps(int op) {
-        return switch (op) {
-            case OpCode.GetAttr -> getBound(readString(), false);
-            case OpCode.SetAttr -> {
+        switch (op) {
+            case OpCode.GetAttr: return getBound(readString(), false);
+            case OpCode.SetAttr:
                 setBound(readString(), pop(), false);
                 push(new Value());
-                yield VMResult.OK;
-            }
-            default -> VMResult.OK;
-        };
+                return VMResult.OK;
+            default: return VMResult.OK;
+        }
     }
 
     VMResult comparison(int op) {
@@ -514,7 +535,7 @@ public class VM {
         Value a = pop();
 
         switch (op) {
-            case OpCode.Equal -> {
+            case OpCode.Equal:
                 if (b.isPattern) {
                     return matchPattern(a, b.asPattern());
                 }
@@ -526,19 +547,21 @@ public class VM {
                     return runBin("eq", a, b.asInstance());
                 }
                 push(new Value(a.equals(b)));
-            }
-            case OpCode.GreaterThan -> {
+                break;
+
+            case OpCode.GreaterThan:
                 if (canOverride(b, "lte")) {
                     return runBin("lte", a, b.asInstance());
                 }
                 push(new Value(a.asNumber() > b.asNumber()));
-            }
-            case OpCode.LessThan -> {
+                break;
+
+            case OpCode.LessThan:
                 if (canOverride(a, "lt")) {
                     return runBin("lt", b, a.asInstance());
                 }
                 push(new Value(a.asNumber() < b.asNumber()));
-            }
+                break;
         }
 
         return VMResult.OK;
@@ -619,26 +642,26 @@ public class VM {
     }
 
     VMResult localOps(int op) {
-        return switch (op) {
-            case OpCode.GetLocal -> {
+        switch (op) {
+            case OpCode.GetLocal: {
                 int slot = readByte();
                 if (stack.count - slot <= 0) {
                     runtimeError("Scope", "Undefined variable");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
 
                 Value val = get(slot);
                 push(val.asVar().val);
-                yield VMResult.OK;
+                return VMResult.OK;
             }
-            case OpCode.SetLocal -> {
+            case OpCode.SetLocal: {
                 int slot = readByte();
 
                 Value var = get(slot);
                 Value val = peek(0);
-                yield set(var.asVar(), val);
+                return set(var.asVar(), val);
             }
-            case OpCode.DefineLocal -> {
+            case OpCode.DefineLocal: {
                 String type = readType();
                 Value val = pop();
 
@@ -659,18 +682,18 @@ public class VM {
 
                 if (!type.equals("any") && !valType.equals(type)) {
                     runtimeError("Type", "Expected type " + type + ", got " + valType);
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
 
                 Var var = new Var(type, val, constant, min, max);
                 push(new Value(var));
                 push(val);
 
-                yield VMResult.OK;
+                return VMResult.OK;
             }
 
-            default -> VMResult.OK;
-        };
+            default: return VMResult.OK;
+        }
     }
 
     String readType() {
@@ -717,35 +740,51 @@ public class VM {
 
     VMResult loopOps(int op) {
         switch (op) {
-            case OpCode.Loop -> {
+            case OpCode.Loop: {
                 int offset = readByte();
                 moveIP(-offset);
+                break;
             }
 
-            case OpCode.StartCache -> {
+            case OpCode.StartCache:
                 currentLoop = new ArrayList<>();
                 loopCache.push(currentLoop);
-            }
-            case OpCode.CollectLoop -> currentLoop.add(pop());
-            case OpCode.FlushLoop -> {
+                break;
+
+            case OpCode.CollectLoop:
+                currentLoop.add(pop());
+                break;
+
+            case OpCode.FlushLoop:
                 push(new Value(loopCache.pop()));
                 if (loopCache.isEmpty())
                     currentLoop = null;
                 else
                     currentLoop = loopCache.peek();
-            }
+                break;
         }
 
         return VMResult.OK;
     }
 
     VMResult jumpOps(int op) {
-        int offset = switch (op) {
-            case OpCode.JumpIfFalse -> readByte() * isFalsey(peek(0));
-            case OpCode.JumpIfTrue -> readByte() * (1 - isFalsey(peek(0)));
-            case OpCode.Jump -> readByte();
-            default -> throw new IllegalStateException("Unexpected value: " + op);
-        };
+        int offset;
+        switch (op) {
+            case OpCode.JumpIfFalse:
+                offset = readByte() * isFalsey(peek(0));
+                break;
+
+            case OpCode.JumpIfTrue:
+                offset = readByte() * (1 - isFalsey(peek(0)));
+                break;
+
+            case OpCode.Jump:
+                offset = readByte();
+                break;
+
+            default:
+                throw new IllegalStateException("Unexpected value: " + op);
+        }
         moveIP(offset);
         return VMResult.OK;
     }
@@ -769,15 +808,16 @@ public class VM {
 
     VMResult upvalueOps(int op) {
         switch (op) {
-            case OpCode.GetUpvalue -> {
+            case OpCode.GetUpvalue: {
                 int slot = readByte();
                 if (frame.closure.upvalues[slot] == null) {
                     runtimeError("Scope", "Undefined variable");
                     return VMResult.ERROR;
                 }
                 push(frame.closure.upvalues[slot].val);
+                break;
             }
-            case OpCode.SetUpvalue -> {
+            case OpCode.SetUpvalue: {
                 int slot = readByte();
                 return set(frame.closure.upvalues[slot], peek(0));
             }
@@ -787,28 +827,28 @@ public class VM {
     }
 
     VMResult byteOps(int op) {
-        return switch (op) {
-            case OpCode.ToBytes -> {
+        switch (op) {
+            case OpCode.ToBytes:
                 push(new Value(pop().asBytes()));
-                yield VMResult.OK;
-            }
-            case OpCode.FromBytes -> {
+                return VMResult.OK;
+
+            case OpCode.FromBytes:
                 if (!peek(0).isBytes) {
                     runtimeError("Type", "Expected bytes");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
                 NativeResult res = Value.fromByte(pop().asBytes());
                 if (res.ok()) {
                     push(res.value());
-                    yield VMResult.OK;
+                    return VMResult.OK;
                 }
                 else {
                     runtimeError(res.name(), res.reason());
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + op);
-        };
+
+            default: throw new IllegalStateException("Unexpected value: " + op);
+        }
     }
 
     VMResult access() {
@@ -861,8 +901,9 @@ public class VM {
     }
 
     VMResult collections(int op) {
-        return switch (op) {
-            case OpCode.Get, OpCode.Index -> {
+        switch (op) {
+            case OpCode.Get:
+            case OpCode.Index: {
                 Value index = pop();
                 Value collection = pop();
 
@@ -871,33 +912,33 @@ public class VM {
                     int idx = index.asNumber().intValue();
                     if (idx >= list.size()) {
                         runtimeError("Index", "Index out of bounds");
-                        yield VMResult.ERROR;
+                        return VMResult.ERROR;
                     }
                     else if (idx < 0) {
                         idx += list.size();
                         if (idx < 0) {
                             runtimeError("Index", "Index out of bounds");
-                            yield VMResult.ERROR;
+                            return VMResult.ERROR;
                         }
                     }
                     push(list.get(idx));
                 }
                 else if (canOverride(collection, op == OpCode.Get ? "get" : "bracket")) {
-                    yield runBin(op == OpCode.Get ? "get" : "bracket", index, collection.asInstance());
+                    return runBin(op == OpCode.Get ? "get" : "bracket", index, collection.asInstance());
                 }
                 else if (collection.isMap) {
                     push(collection.asMap().getOrDefault(index, new Value()));
                 }
                 else {
                     runtimeError("Type", "Type " + collection.type() + " does not have members");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
 
-                yield VMResult.OK;
+                return VMResult.OK;
             }
 
-            default -> VMResult.OK;
-        };
+            default: return VMResult.OK;
+        }
     }
 
     public interface BitCall {
@@ -916,53 +957,60 @@ public class VM {
 
     VMResult bitOps(int instruction) {
         switch (instruction) {
-            case OpCode.BitAnd -> {
+            case OpCode.BitAnd: {
                 Value b = pop();
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), b.asNumber(), (left, right) -> left & right)
                 ));
+                break;
             }
-            case OpCode.BitOr -> {
+            case OpCode.BitOr: {
                 Value b = pop();
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), b.asNumber(), (left, right) -> left | right)
                 ));
+                break;
             }
-            case OpCode.BitXor -> {
+            case OpCode.BitXor: {
                 Value b = pop();
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), b.asNumber(), (left, right) -> left ^ right)
                 ));
+                break;
             }
-            case OpCode.LeftShift -> {
+            case OpCode.LeftShift: {
                 Value b = pop();
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), b.asNumber(), (left, right) -> left << right)
                 ));
+                break;
             }
-            case OpCode.RightShift -> {
+            case OpCode.RightShift: {
                 Value b = pop();
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), b.asNumber(), (left, right) -> left >>> right)
                 ));
+                break;
             }
-            case OpCode.SignRightShift -> {
+            case OpCode.SignRightShift: {
                 Value b = pop();
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), b.asNumber(), (left, right) -> left >> right)
                 ));
+                break;
             }
-            case OpCode.BitCompl -> {
+            case OpCode.BitCompl: {
                 Value a = pop();
                 push(new Value(
                         bitOp(a.asNumber(), 0, (left, right) -> ~left)
                 ));
+                break;
             }
         }
         return VMResult.OK;
@@ -1151,10 +1199,10 @@ public class VM {
     }
 
     public boolean call(JClosure closure, Value binding, Value[] args, Map<String, Value> kwargs, String[] generics) {
-        if (frame.memoize) {
+        if (frame.memoize > 0) {
             Value val = memo.get(closure.function.name, args);
             if (val != null) {
-                for (int i = 0; i <= args.length; i++)
+                for (int i = 0; i <= args.length + generics.length + kwargs.size(); i++)
                     pop();
                 push(val);
                 return true;
@@ -1242,7 +1290,7 @@ public class VM {
         CallFrame newFrame = new CallFrame(closure, 0, slots, null, binding);
 
         // Inherited flags
-        newFrame.memoize = frame.memoize;
+        newFrame.memoize = frame.memoize > 0 ? 2 : 0;
 
         // General flags
         newFrame.catchError = closure.function.catcher;
@@ -1300,74 +1348,71 @@ public class VM {
     }
 
     VMResult refOps(int op) {
-        return switch (op) {
-            case OpCode.Ref -> {
+        switch (op) {
+            case OpCode.Ref:
                 push(new Value(pop()));
-                yield VMResult.OK;
-            }
+                return VMResult.OK;
 
-            case OpCode.Deref -> {
+            case OpCode.Deref:
                 if (!peek(0).isRef) {
                     runtimeError("Type", "Can't dereference non-ref");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
                 push(pop().asRef());
-                yield VMResult.OK;
-            }
+                return VMResult.OK;
 
-            case OpCode.SetRef -> {
+            case OpCode.SetRef:
                 if (!peek(0).isRef) {
                     runtimeError("Type", "Can't set non-ref");
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
                 push(pop().setRef(pop()));
-                yield VMResult.OK;
-            }
+                return VMResult.OK;
 
-            default -> throw new IllegalArgumentException("Invalid ref op: " + op);
-        };
+            default: throw new IllegalArgumentException("Invalid ref op: " + op);
+        }
     }
 
     VMResult freeOps(int op) {
-        return switch (op) {
-            case OpCode.DropGlobal -> {
+        switch (op) {
+            case OpCode.DropGlobal: {
                 String name = readString();
                 if (globals.containsKey(name)) {
                     globals.remove(name);
-                    yield VMResult.OK;
+                    return VMResult.OK;
                 }
                 else {
                     runtimeError("Scope", "No such global: " + name);
-                    yield VMResult.ERROR;
+                    return VMResult.ERROR;
                 }
             }
-            case OpCode.DropLocal -> {
+            case OpCode.DropLocal: {
                 int slot = readByte();
                 if (slot + frame.slots == stack.count - 1) {
                     stack.pop();
                 }
                 stack.set(slot + frame.slots, null);
-                yield VMResult.OK;
+                return VMResult.OK;
             }
-            case OpCode.DropUpvalue -> {
+            case OpCode.DropUpvalue: {
                 int slot = readByte();
                 if (slot == frame.closure.upvalueCount - 1) {
                     frame.closure.upvalueCount--;
                 }
                 frame.closure.upvalues[slot] = null;
-                yield VMResult.OK;
+                return VMResult.OK;
             }
-            default -> throw new IllegalArgumentException("Invalid free op: " + op);
-        };
+            default: throw new IllegalArgumentException("Invalid free op: " + op);
+        }
     }
 
     VMResult pattern(int op) {
-        return switch (op) {
-            case OpCode.PatternVars -> {
+        switch (op) {
+            case OpCode.PatternVars:
                 push(Value.patternBinding(readString()));
-                yield VMResult.OK;
-            }
-            case OpCode.Pattern -> {
+                return VMResult.OK;
+
+            case OpCode.Pattern: {
                 int fieldCount = readByte();
 
                 Map<String, Value> cases = new HashMap<>();
@@ -1390,10 +1435,10 @@ public class VM {
 
                 push(new Value(new Pattern(pattern, cases, keys.toArray(new String[0]), matches)));
 
-                yield VMResult.OK;
+                return VMResult.OK;
             }
-            default -> throw new IllegalArgumentException("How did you get here?");
-        };
+            default: throw new IllegalArgumentException("How did you get here?");
+        }
     }
 
     public VMResult run() {
@@ -1414,19 +1459,22 @@ public class VM {
             }
 
             int instruction = readByte();
-            VMResult res = switch (instruction) {
-                case OpCode.Return -> {
+            VMResult res;
+            switch (instruction) {
+                case OpCode.Return: {
                     Value result = pop();
                     if (frame.catchError) result = new Value(new Result(result));
                     CallFrame frame = frames.pop();
                     if (frames.count == 0) {
-                        yield VMResult.EXIT;
+                        res = VMResult.EXIT;
+                        break;
                     }
 
                     String type = result.type();
                     if (!frame.returnType.equals("any") && !type.equals(frame.returnType)) {
                         runtimeError("Type", "Expected " + frame.returnType + " but got " + type);
-                        yield VMResult.ERROR;
+                        res = VMResult.ERROR;
+                        break;
                     }
 
                     boolean isConstructor = frame.closure.function.name.equals("<make>");
@@ -1441,47 +1489,54 @@ public class VM {
                     }
                     else {
                         push(result);
-                        if (frame.memoize) {
+                        if (frame.memoize == 2) {
                             memo.storeCache(result);
                         }
                     }
 
                     if (exitLevel == frames.count) {
-                        yield VMResult.EXIT;
+                        res = VMResult.EXIT;
+                        break;
                     }
 
                     if (frame.addPeek) {
                         this.frame.ip = frame.ip;
                     }
 
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
-                case OpCode.Constant -> {
+                case OpCode.Constant:
                     push(readConstant());
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.Assert -> {
+                case OpCode.Assert: {
                     Value value = pop();
                     if (isFalsey(value) == 1) {
                         runtimeError("Assertion", "Assertion failed");
-                        yield VMResult.ERROR;
+                        res = VMResult.ERROR;
+                        break;
                     }
                     push(value);
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Pattern,
-                        OpCode.PatternVars -> pattern(instruction);
+                case OpCode.Pattern:
+                case OpCode.PatternVars:
+                    res = pattern(instruction);
+                    break;
 
-                case OpCode.Throw -> {
+                case OpCode.Throw: {
                     Value type = pop();
                     Value reason = pop();
                     runtimeError(type.asString(), reason.asString());
-                    yield VMResult.ERROR;
+                    res = VMResult.ERROR;
+                    break;
                 }
 
-                case OpCode.Import -> {
+                case OpCode.Import: {
                     String name = readString();
                     String varName = readString();
 
@@ -1489,7 +1544,8 @@ public class VM {
                     if (!f.isFunc) {
                         if (!libraries.containsKey(name)) {
                             runtimeError("Import", "Library '" + name + "' not found");
-                            yield VMResult.ERROR;
+                            res = VMResult.ERROR;
+                            break;
                         }
                         Value lib = new Value(libraries.get(name));
                         globals.put(varName, new Var(
@@ -1498,7 +1554,8 @@ public class VM {
                                 true
                         ));
                         push(lib);
-                        yield VMResult.OK;
+                        res = VMResult.OK;
+                        break;
                     }
 
                     JFunc func = f.asFunc();
@@ -1507,7 +1564,8 @@ public class VM {
                     runner.trace(name);
                     VMResult importres = runner.run();
                     if (importres == VMResult.ERROR) {
-                        yield VMResult.ERROR;
+                        res = VMResult.ERROR;
+                        break;
                     }
 
                     Value space = new Value(runner.asNamespace(name));
@@ -1517,10 +1575,11 @@ public class VM {
                             true
                     ));
                     push(space);
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Extend -> {
+                case OpCode.Extend: {
                     String fn = readString();
 
                     String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
@@ -1540,7 +1599,8 @@ public class VM {
                         }
                         else {
                             runtimeError("Imaginary File", "File '" + fn + "' not found");
-                            yield VMResult.ERROR;
+                            res = VMResult.ERROR;
+                            break;
                         }
                         ClassLoader cl = new URLClassLoader(urls);
                         Class<?> loadedClass = cl.loadClass("jpext." + fn);
@@ -1552,17 +1612,20 @@ public class VM {
                         }
                         else {
                             runtimeError("Imaginary File", "File '" + fn + "' is not a valid extension");
-                            yield VMResult.ERROR;
+                            res = VMResult.ERROR;
+                            break;
                         }
                     } catch (Exception e) {
                         runtimeError("Internal", "Failed to load extension (" + e.getMessage() + ")");
-                        yield VMResult.ERROR;
+                        res = VMResult.ERROR;
+                        break;
                     }
 
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Enum -> {
+                case OpCode.Enum: {
                     Value enumerator = readConstant();
                     globals.put(enumerator.asEnum().name(), new Var(
                             "Enum",
@@ -1583,78 +1646,105 @@ public class VM {
                         }
                     }
 
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Copy -> {
+                case OpCode.Copy:
                     push(pop().shallowCopy());
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.Iter -> iter();
+                case OpCode.Iter:
+                    res = iter();
+                    break;
 
-                case OpCode.Spread -> {
+                case OpCode.Spread:
                     push(new Value(new Spread(pop().asList())));
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.Ref,
-                        OpCode.Deref,
-                        OpCode.SetRef -> refOps(instruction);
+                case OpCode.Ref:
+                case OpCode.Deref:
+                case OpCode.SetRef:
+                    res = refOps(instruction);
+                    break;
 
-                case OpCode.Add,
-                        OpCode.Subtract,
-                        OpCode.Multiply,
-                        OpCode.Divide,
-                        OpCode.Modulo,
-                        OpCode.Power -> binary(instruction);
+                case OpCode.Add:
+                case OpCode.Subtract:
+                case OpCode.Multiply:
+                case OpCode.Divide:
+                case OpCode.Modulo:
+                case OpCode.Power:
+                    res = binary(instruction);
+                    break;
 
-                case OpCode.Increment,
-                        OpCode.Decrement,
-                        OpCode.Negate,
-                        OpCode.Not -> unary(instruction);
+                case OpCode.Increment:
+                case OpCode.Decrement:
+                case OpCode.Negate:
+                case OpCode.Not:
+                    res = unary(instruction);
+                    break;
 
-                case OpCode.FromBytes,
-                        OpCode.ToBytes -> byteOps(instruction);
+                case OpCode.FromBytes:
+                case OpCode.ToBytes:
+                    res = byteOps(instruction);
+                    break;
 
-                case OpCode.Equal,
-                        OpCode.GreaterThan,
-                        OpCode.LessThan -> comparison(instruction);
+                case OpCode.Equal:
+                case OpCode.GreaterThan:
+                case OpCode.LessThan:
+                    res = comparison(instruction);
+                    break;
 
-                case OpCode.Null -> {
+                case OpCode.Null:
                     push(new Value());
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.Get,
-                        OpCode.Index -> collections(instruction);
+                case OpCode.Get:
+                case OpCode.Index:
+                    res = collections(instruction);
+                    break;
 
-                case OpCode.Pop -> {
+                case OpCode.Pop:
                     pop();
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.DefineGlobal,
-                        OpCode.GetGlobal,
-                        OpCode.SetGlobal -> globalOps(instruction);
+                case OpCode.DefineGlobal:
+                case OpCode.GetGlobal:
+                case OpCode.SetGlobal:
+                    res = globalOps(instruction);
+                    break;
 
-                case OpCode.GetLocal,
-                        OpCode.SetLocal,
-                        OpCode.DefineLocal -> localOps(instruction);
+                case OpCode.GetLocal:
+                case OpCode.SetLocal:
+                case OpCode.DefineLocal:
+                    res = localOps(instruction);
+                    break;
 
-                case OpCode.JumpIfFalse,
-                        OpCode.JumpIfTrue,
-                        OpCode.Jump -> jumpOps(instruction);
+                case OpCode.JumpIfFalse:
+                case OpCode.JumpIfTrue:
+                case OpCode.Jump:
+                    res = jumpOps(instruction);
+                    break;
 
-                case OpCode.Loop,
-                        OpCode.StartCache,
-                        OpCode.CollectLoop,
-                        OpCode.FlushLoop -> loopOps(instruction);
+                case OpCode.Loop:
+                case OpCode.StartCache:
+                case OpCode.CollectLoop:
+                case OpCode.FlushLoop:
+                    res = loopOps(instruction);
+                    break;
 
-                case OpCode.For -> forLoop();
+                case OpCode.For:
+                    res = forLoop();
+                    break;
 
-                case OpCode.Call -> call();
-                case OpCode.Closure -> {
+                case OpCode.Call:
+                    res = call();
+                    break;
+                case OpCode.Closure: {
                     JFunc func = readConstant().asFunc();
                     int defaultCount = readByte();
                     JClosure closure = new JClosure(func);
@@ -1675,30 +1765,43 @@ public class VM {
                         int index = readByte();
 
                         switch (isLocal) {
-                            case 0 -> closure.upvalues[i] = frame.closure.upvalues[index];
-                            case 1 -> closure.upvalues[i] = captureUpvalue(frame.slots + index);
-                            case 2 -> closure.upvalues[i] = globals.get(frame.closure.function.chunk.constants().valuesArray[index].asString());
+                            case 0:
+                                closure.upvalues[i] = frame.closure.upvalues[index];
+                                break;
+                            case 1:
+                                closure.upvalues[i] = captureUpvalue(frame.slots + index);
+                                break;
+                            case 2:
+                                closure.upvalues[i] = globals.get(frame.closure.function.chunk.constants().valuesArray[index].asString());
+                                break;
                         }
                     }
 
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.GetAttr,
-                        OpCode.SetAttr -> attrOps(instruction);
+                case OpCode.GetAttr:
+                case OpCode.SetAttr:
+                    res = attrOps(instruction);
+                    break;
 
-                case OpCode.GetUpvalue,
-                        OpCode.SetUpvalue -> upvalueOps(instruction);
+                case OpCode.GetUpvalue:
+                case OpCode.SetUpvalue:
+                    res = upvalueOps(instruction);
+                    break;
 
-                case OpCode.BitAnd,
-                        OpCode.BitOr,
-                        OpCode.BitXor,
-                        OpCode.LeftShift,
-                        OpCode.RightShift,
-                        OpCode.SignRightShift,
-                        OpCode.BitCompl -> bitOps(instruction);
+                case OpCode.BitAnd:
+                case OpCode.BitOr:
+                case OpCode.BitXor:
+                case OpCode.LeftShift:
+                case OpCode.RightShift:
+                case OpCode.SignRightShift:
+                case OpCode.BitCompl:
+                    res = bitOps(instruction);
+                    break;
 
-                case OpCode.NullErr -> {
+                case OpCode.NullErr: {
                     boolean bit = readByte() == 1;
                     if (bit) {
                         Pair<Integer, Integer> pair = new Pair<>(frames.count, stack.count);
@@ -1707,10 +1810,11 @@ public class VM {
                     else {
                         nehStack.pop();
                     }
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Chain -> {
+                case OpCode.Chain: {
                     Value b = pop();
                     Value a = pop();
                     if (a.isNull) {
@@ -1719,24 +1823,26 @@ public class VM {
                     else {
                         push(a);
                     }
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.IncrNullErr -> {
+                case OpCode.IncrNullErr:
                     nehStack.peek().b++;
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.MakeArray -> {
+                case OpCode.MakeArray: {
                     int count = readByte();
                     List<Value> array = new ArrayList<>();
                     for (int i = 0; i < count; i++)
                         array.add(pop());
                     push(new Value(array));
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.MakeMap -> {
+                case OpCode.MakeMap: {
                     int count = readByte();
                     Map<Value, Value> map = new HashMap<>();
                     for (int i = 0; i < count; i++) {
@@ -1745,10 +1851,11 @@ public class VM {
                         map.put(key, value);
                     }
                     push(new Value(map));
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Class -> {
+                case OpCode.Class: {
                     String name = readString();
                     boolean hasSuper = readByte() == 1;
                     JClass superClass = hasSuper ? pop().asClass() : null;
@@ -1772,15 +1879,16 @@ public class VM {
 
 
                     push(new Value(new JClass(name, attributes, genericNames, superClass)));
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Method -> {
+                case OpCode.Method:
                     defineMethod(readString());
-                    yield VMResult.OK;
-                }
+                    res = VMResult.OK;
+                    break;
 
-                case OpCode.MakeVar -> {
+                case OpCode.MakeVar: {
                     int slot = readByte();
                     String type = readType();
                     boolean constant = readByte() == 1;
@@ -1789,25 +1897,37 @@ public class VM {
                     String atType = at.type();
                     if (!type.equals("any") && !atType.equals(type)) {
                         runtimeError("Type", "Expected type " + type + " but got " + atType);
-                        yield VMResult.ERROR;
+                        res = VMResult.ERROR;
+                        break;
                     }
 
                     stack.set(frame.slots + slot, new Value(new Var(type, at, constant)));
-                    yield VMResult.OK;
+                    res = VMResult.OK;
+                    break;
                 }
 
-                case OpCode.Access -> access();
+                case OpCode.Access:
+                    res = access();
+                    break;
 
-                case OpCode.DropGlobal,
-                        OpCode.DropLocal,
-                        OpCode.DropUpvalue -> freeOps(instruction);
+                case OpCode.DropGlobal:
+                case OpCode.DropLocal:
+                case OpCode.DropUpvalue:
+                    res = freeOps(instruction);
+                    break;
 
-                case OpCode.Destruct -> destruct();
+                case OpCode.Destruct:
+                    res = destruct();
+                    break;
 
-                case OpCode.Header -> header();
+                case OpCode.Header:
+                    res = header();
+                    break;
 
-                default -> throw new RuntimeException("Unknown opcode: " + instruction);
-            };
+                default:
+                    throw new RuntimeException("Unknown opcode: " + instruction);
+            }
+
             if (res == VMResult.EXIT) {
                 Shell.logger.debug("Exiting\n");
                 return VMResult.OK;
@@ -1825,7 +1945,7 @@ public class VM {
 
                     Value result = new Value(new Result(lastError.a, lastError.b));
                     push(result);
-                    if (frame.memoize) {
+                    if (frame.memoize == 2) {
                         memo.storeCache(result);
                     }
 
@@ -1889,26 +2009,41 @@ public class VM {
         for (int i = 0; i < argc; i++)
             args[i] = readString();
 
-        int rArgc = switch (command) {
-            case HeadCode.Memoize -> 0;
-            case HeadCode.SetMainClass, HeadCode.SetMainFunction -> 1;
-            default -> -1;
-        };
+        int rArgc;
+        switch (command) {
+            case HeadCode.Memoize:
+                rArgc = 0;
+                break;
+            case HeadCode.SetMainClass:
+            case HeadCode.SetMainFunction:
+                rArgc = 1;
+                break;
+            default:
+                rArgc = -1;
+                break;
+        }
         if (argc != rArgc && rArgc != -1) {
             runtimeError("Argument Count", "Expected " + rArgc + " arguments, got " + argc);
             return VMResult.ERROR;
         }
 
         switch (command) {
-            case HeadCode.Memoize -> frame.memoize = true;
-            case HeadCode.SetMainFunction -> mainFunction = args[0];
-            case HeadCode.SetMainClass -> mainClass = args[0];
-            case HeadCode.Export -> {
+            case HeadCode.Memoize:
+                if (frame.memoize == 0)
+                    frame.memoize = 1;
+                break;
+            case HeadCode.SetMainFunction:
+                mainFunction = args[0];
+                break;
+            case HeadCode.SetMainClass:
+                mainClass = args[0];
+                break;
+            case HeadCode.Export:
                 if (exports == null) {
                     exports = new ArrayList<>();
                 }
                 exports.addAll(Arrays.asList(args));
-            }
+                break;
         }
 
         push(new Value());

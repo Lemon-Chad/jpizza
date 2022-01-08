@@ -1,14 +1,11 @@
 package lemon.jpizza.nodes.definitions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.executables.CMethod;
-import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MethDefNode extends Node {
@@ -59,23 +56,6 @@ public class MethDefNode extends Node {
         return this;
     }
 
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-
-        String funcName = (String) var_name_tok.value;
-        var argNT = inter.gatherArgs(arg_name_toks, arg_type_toks, context);
-
-        var dfts = inter.getDefaults(defaults, context);
-        res.register(dfts.a);
-        if (res.error != null) return res;
-
-        CMethod methValue = new CMethod(funcName, var_name_tok, context, body_node, argNT.a, argNT.b, bin, async,
-                autoreturn, returnType, dfts.b, defaultCount, generic_toks, stat, priv, argname, kwargname);
-
-        context.symbolTable.define(funcName, methValue);
-        return res.success(methValue.setCatch(catcher));
-    }
-
     public FuncDefNode asFuncDef() {
         return new FuncDefNode(var_name_tok, arg_name_toks, arg_type_toks, body_node, autoreturn, async,
                 returnType, defaults, defaultCount, generic_toks, argname, kwargname).setCatcher(catcher);
@@ -95,7 +75,7 @@ public class MethDefNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(List.of(body_node));
+        return new ArrayList<>(Collections.singletonList(body_node));
     }
 
     @Override

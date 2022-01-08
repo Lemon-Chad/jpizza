@@ -1,16 +1,12 @@
 package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Null;
 import lemon.jpizza.Position;
-import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ReturnNode extends Node {
@@ -22,20 +18,6 @@ public class ReturnNode extends Node {
         jptype = JPType.Return;
     }
 
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-
-        Node ret = nodeToReturn;
-        Obj value;
-        if (ret != null) {
-            value = res.register(inter.visit(ret, context));
-            if (res.shouldReturn()) return res;
-        }
-        else value = new Null();
-
-        return res.sreturn(value);
-    }
-
     @Override
     public Node optimize() {
         return new ReturnNode(nodeToReturn != null ? nodeToReturn.optimize() : null, pos_start, pos_end);
@@ -43,7 +25,7 @@ public class ReturnNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(List.of(nodeToReturn));
+        return new ArrayList<>(Collections.singletonList(nodeToReturn));
     }
 
     @Override

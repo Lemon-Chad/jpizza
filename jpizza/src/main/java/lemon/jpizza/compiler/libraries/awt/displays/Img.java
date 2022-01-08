@@ -2,13 +2,11 @@ package lemon.jpizza.compiler.libraries.awt.displays;
 
 import lemon.jpizza.compiler.libraries.awt.config.Canvas;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Paths;
 
 public class Img extends Drawable {
     private final int x, y;

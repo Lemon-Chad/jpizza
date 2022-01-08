@@ -23,13 +23,24 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static lemon.jpizza.Constants.readString;
+
 public class Compiler {
 
-    static record LocalToken(String name, int idx, int len) {}
+    static class LocalToken {
+        String name;
+        int idx;
+        int len;
+
+        public LocalToken(String name, int idx, int len) {
+            this.name = name;
+            this.idx = idx;
+            this.len = len;
+        }
+    }
     static class Local {
         final LocalToken name;
         int depth;
@@ -276,101 +287,178 @@ public class Compiler {
 
     void compile(Node statement) {
         switch (statement.jptype) {
-            case BinOp -> compile((BinOpNode) statement);
-            case UnaryOp -> compile((UnaryOpNode) statement);
+            case BinOp:
+                compile((BinOpNode) statement);
+                break;
+            case UnaryOp:
+                compile((UnaryOpNode) statement);
+                break;
 
-            case Use -> compile((UseNode) statement);
-            case Import -> compile((ImportNode) statement);
-            case Extend -> compile((ExtendNode) statement);
-            case Destruct -> compile((DestructNode) statement);
+            case Use:
+                compile((UseNode) statement);
+                break;
+            case Import:
+                compile((ImportNode) statement);
+                break;
+            case Extend:
+                compile((ExtendNode) statement);
+                break;
+            case Destruct:
+                compile((DestructNode) statement);
+                break;
 
-            case Decorator -> compile((DecoratorNode) statement);
-            case FuncDef -> compile((FuncDefNode) statement);
-            case Call -> compile((CallNode) statement);
-            case Return -> compile((ReturnNode) statement);
-            case Spread -> compile((SpreadNode) statement);
+            case Decorator:
+                compile((DecoratorNode) statement);
+                break;
+            case FuncDef:
+                compile((FuncDefNode) statement);
+                break;
+            case Call:
+                compile((CallNode) statement);
+                break;
+            case Return:
+                compile((ReturnNode) statement);
+                break;
+            case Spread:
+                compile((SpreadNode) statement);
+                break;
 
-            case Number -> {
+            case Number: {
                 NumberNode node = (NumberNode) statement;
                 compileNumber(node.val, node.pos_start, node.pos_end);
+                break;
             }
-            case String -> {
+            case String: {
                 StringNode node = (StringNode) statement;
                 compileString(node.val, node.pos_start, node.pos_end);
+                break;
             }
-            case Boolean -> {
+            case Boolean: {
                 BooleanNode node = (BooleanNode) statement;
                 compileBoolean(node.val, node.pos_start, node.pos_end);
+                break;
             }
-            case List -> compile((ListNode) statement);
-            case Dict -> compile((DictNode) statement);
-            case Null, Pass -> compileNull(statement.pos_start, statement.pos_end);
-            case Bytes -> compile((BytesNode) statement);
+            case List:
+                compile((ListNode) statement);
+                break;
+            case Dict:
+                compile((DictNode) statement);
+                break;
+            case Null:
+            case Pass:
+                compileNull(statement.pos_start, statement.pos_end);
+                break;
+            case Bytes:
+                compile((BytesNode) statement);
+                break;
 
-            case Body -> {
+            case Body: {
                 BodyNode node = (BodyNode) statement;
                 for (Node stmt : node.statements) {
                     compile(stmt);
                     emit(OpCode.Pop, stmt.pos_start, stmt.pos_end);
                 }
                 compileNull(node.pos_start, node.pos_end);
+                break;
             }
-            case Scope -> compile((ScopeNode) statement);
+            case Scope:
+                compile((ScopeNode) statement);
+                break;
 
-            case Enum -> compile((EnumNode) statement);
+            case Enum:
+                compile((EnumNode) statement);
+                break;
 
-            case ClassDef -> compile((ClassDefNode) statement);
-            case Claccess -> {
+
+            case ClassDef:
+                compile((ClassDefNode) statement);
+                break;
+            case Claccess: {
                 ClaccessNode node = (ClaccessNode) statement;
                 compile(node.class_tok);
                 int constant = chunk().addConstant(new Value(node.attr_name_tok.value.toString()));
                 emit(OpCode.Access, constant, node.pos_start, node.pos_end);
+                break;
             }
-            case AttrAssign -> {
+            case AttrAssign: {
                 AttrAssignNode node = (AttrAssignNode) statement;
                 compile(node.value_node);
                 int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
                 emit(OpCode.SetAttr, constant, node.pos_start, node.pos_end);
+                break;
             }
-            case AttrAccess -> {
+            case AttrAccess: {
                 AttrAccessNode node = (AttrAccessNode) statement;
                 int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
                 emit(OpCode.GetAttr, constant, node.pos_start, node.pos_end);
+                break;
             }
 
-            case VarAssign -> compile((VarAssignNode) statement);
-            case DynAssign -> compile((DynAssignNode) statement);
-            case Let -> compile((LetNode) statement);
+            case VarAssign:
+                compile((VarAssignNode) statement);
+                break;
+            case DynAssign:
+                compile((DynAssignNode) statement);
+                break;
+            case Let:
+                compile((LetNode) statement);
+                break;
 
-            case VarAccess -> compile((VarAccessNode) statement);
-            case Drop -> compile((DropNode) statement);
+            case VarAccess:
+                compile((VarAccessNode) statement);
+                break;
+            case Drop:
+                compile((DropNode) statement);
+                break;
 
-            case Throw -> compile((ThrowNode) statement);
-            case Assert -> compile((AssertNode) statement);
+            case Throw:
+                compile((ThrowNode) statement);
+                break;
+            case Assert:
+                compile((AssertNode) statement);
+                break;
 
             // This is an if statement
-            case Query -> compile((QueryNode) statement);
-            case Switch -> compile((SwitchNode) statement);
-            case Pattern -> compile((PatternNode) statement);
+            case Query:
+                compile((QueryNode) statement);
+                break;
+            case Switch:
+                compile((SwitchNode) statement);
+                break;
+            case Pattern:
+                compile((PatternNode) statement);
+                break;
 
-            case While -> compile((WhileNode) statement);
-            case For -> compile((ForNode) statement);
-            case Iter -> compile((IterNode) statement);
-            case Break -> {
+
+            case While:
+                compile((WhileNode) statement);
+                break;
+            case For:
+                compile((ForNode) statement);
+                break;
+            case Iter:
+                compile((IterNode) statement);
+                break;
+            case Break:
                 compileNull(statement.pos_start, statement.pos_end);
                 if (breaks.isEmpty())
                     Shell.logger.fail(Error.InvalidSyntax(statement.pos_start, statement.pos_end, "Break statement outside of loop"));
                 breaks.peek().add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
-            }
-            case Continue -> {
+                break;
+            case Continue:
                 compileNull(statement.pos_start, statement.pos_end);
                 emitLoop(continueTo, statement.pos_start, statement.pos_end);
-            }
+                break;
 
-            case Ref -> compile((RefNode) statement);
-            case Deref -> compile((DerefNode) statement);
+            case Ref:
+                compile((RefNode) statement);
+                break;
+            case Deref:
+                compile((DerefNode) statement);
+                break;
 
-            default -> throw new RuntimeException("Unknown statement type: " + statement.jptype);
+            default:
+                throw new RuntimeException("Unknown statement type: " + statement.jptype);
         }
     }
 
@@ -428,21 +516,22 @@ public class Compiler {
     }
 
     void compile(UseNode node) {
-        int code = switch (node.useToken.value.toString()) {
-            case    "memoize"   ->  HeadCode.Memoize;
-            case    "func"      ->  HeadCode.SetMainFunction;
-            case    "object"    ->  HeadCode.SetMainClass;
-            case    "export"    ->  HeadCode.Export;
-            case    "package"   ->  {
+        int code;
+        switch (node.useToken.value.toString()) {
+            case "memoize": code = HeadCode.Memoize; break;
+            case "func": code = HeadCode.SetMainFunction; break;
+            case "object": code = HeadCode.SetMainClass; break;
+            case "export": code = HeadCode.Export; break;
+            case "package":
                 StringBuilder sb = new StringBuilder();
                 for (Token token : node.args) {
                     sb.append(token.asString()).append(".");
                 }
                 packageName = sb.substring(0, sb.length() - 1);
                 chunk().packageName = packageName;
-                yield HeadCode.Package;
-            }
-            case    "export_to" ->  {
+                code = HeadCode.Package;
+                break;
+            case "export_to":
                 if (node.args.size() != 1) {
                     Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
                 }
@@ -450,10 +539,12 @@ public class Compiler {
                     target = node.args.get(0).asString();
                     chunk().target = target;
                 }
-                yield HeadCode.ExportTo;
-            }
-            default             ->  -1;
-        };
+                code = HeadCode.ExportTo;
+                break;
+            default:
+                code = -1;
+                break;
+        }
 
         emit(OpCode.Header, node.pos_start, node.pos_end);
         emit(code, node.args.size(), node.pos_start, node.pos_end);
@@ -573,14 +664,14 @@ public class Compiler {
                 imp = res.a;
             }
             else if (Files.exists(Paths.get(modFilePath + ".jbox"))) {
-                imp = canImport(Shell.load(Files.readString(Paths.get(modFilePath + ".jbox"))));
+                imp = canImport(Shell.load(readString(Paths.get(modFilePath + ".jbox"))));
             }
             else if (Files.exists(Paths.get(fileName + ".jbox"))) {
-                imp = canImport(Shell.load(Files.readString(Paths.get(fileName + ".jbox"))));
+                imp = canImport(Shell.load(readString(Paths.get(fileName + ".jbox"))));
             }
             else if (Files.exists(Paths.get(fileName + ".devp"))) {
                 //noinspection DuplicatedCode
-                Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(fileName + ".devp")));
+                Pair<JFunc, Error> res = Shell.compile(fn, readString(Paths.get(fileName + ".devp")));
                 if (res.b != null)
                     Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
@@ -589,7 +680,7 @@ public class Compiler {
             else if (Files.exists(Paths.get(fn + ".devp"))) {
                 String[] split = Shell.getFNDirs(fn);
                 System.setProperty("user.dir", split[1]);
-                Pair<JFunc, Error> res = Shell.compile(split[0], Files.readString(Paths.get(fn + ".devp")));
+                Pair<JFunc, Error> res = Shell.compile(split[0], readString(Paths.get(fn + ".devp")));
                 if (res.b != null)
                     Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
@@ -598,13 +689,13 @@ public class Compiler {
             else if (Files.exists(Paths.get(fn + ".jbox"))) {
                 String[] split = Shell.getFNDirs(fn);
                 System.setProperty("user.dir", split[1]);
-                imp = canImport(Shell.load(Files.readString(Paths.get(fn + ".jbox"))));
+                imp = canImport(Shell.load(readString(Paths.get(fn + ".jbox"))));
                 System.setProperty("user.dir", chrDir);
             }
             else if (Files.exists(Paths.get(modFilePath + ".devp"))) {
                 System.setProperty("user.dir", modPath);
                 //noinspection DuplicatedCode
-                Pair<JFunc, Error> res = Shell.compile(fn, Files.readString(Paths.get(modFilePath + ".devp")));
+                Pair<JFunc, Error> res = Shell.compile(fn, readString(Paths.get(modFilePath + ".devp")));
                 if (res.b != null)
                     Shell.logger.fail(res.b.asString());
                 imp = canImport(res.a);
@@ -659,7 +750,7 @@ public class Compiler {
         for (Node arg : node.argNodes) {
             compile(arg);
         }
-        List<String> kwargNames = node.kwargs.keySet().stream().toList();
+        List<String> kwargNames = new ArrayList<>(node.kwargs.keySet());
         for (int i = kwargc - 1; i >= 0; i--) {
             compile(node.kwargs.get(kwargNames.get(i)));
         }
@@ -685,7 +776,7 @@ public class Compiler {
         }
         function(FunctionType.Function, node);
         if (node.var_name_tok != null) {
-            defineVariable(global, List.of("function"), false, node.pos_start, node.pos_end);
+            defineVariable(global, Collections.singletonList("function"), false, node.pos_start, node.pos_end);
         }
     }
 
@@ -811,14 +902,14 @@ public class Compiler {
             Token argNameToken = new Token(TokenType.Identifier, node.argname, node.pos_start, node.pos_end);
             compiler.function.totarity++;
             compiler.parseVariable(argNameToken, argNameToken.pos_start, argNameToken.pos_end);
-            compiler.makeVar(compiler.localCount - 1, List.of("list"), false, argNameToken.pos_start, argNameToken.pos_end);
+            compiler.makeVar(compiler.localCount - 1, Collections.singletonList("list"), false, argNameToken.pos_start, argNameToken.pos_end);
         }
 
         if (node.kwargname != null) {
             Token kwargNameToken = new Token(TokenType.Identifier, node.kwargname, node.pos_start, node.pos_end);
             compiler.function.totarity++;
             compiler.parseVariable(kwargNameToken, kwargNameToken.pos_start, kwargNameToken.pos_end);
-            compiler.makeVar(compiler.localCount - 1, List.of("dict"), false, kwargNameToken.pos_start, kwargNameToken.pos_end);
+            compiler.makeVar(compiler.localCount - 1, Collections.singletonList("dict"), false, kwargNameToken.pos_start, kwargNameToken.pos_end);
         }
 
         pre.compile(compiler);
@@ -912,45 +1003,99 @@ public class Compiler {
         compile(node.left_node);
         compile(node.right_node);
         switch (node.op_tok) {
-            case Plus -> emit(OpCode.Add, node.pos_start, node.pos_end);
-            case Minus -> emit(OpCode.Subtract, node.pos_start, node.pos_end);
-            case Star -> emit(OpCode.Multiply, node.pos_start, node.pos_end);
-            case Slash -> emit(OpCode.Divide, node.pos_start, node.pos_end);
-            case Percent -> emit(OpCode.Modulo, node.pos_start, node.pos_end);
-            case Caret -> emit(OpCode.Power, node.pos_start, node.pos_end);
+            case Plus:
+                emit(OpCode.Add, node.pos_start, node.pos_end);
+                break;
+            case Minus:
+                emit(OpCode.Subtract, node.pos_start, node.pos_end);
+                break;
+            case Star:
+                emit(OpCode.Multiply, node.pos_start, node.pos_end);
+                break;
+            case Slash:
+                emit(OpCode.Divide, node.pos_start, node.pos_end);
+                break;
+            case Percent:
+                emit(OpCode.Modulo, node.pos_start, node.pos_end);
+                break;
+            case Caret:
+                emit(OpCode.Power, node.pos_start, node.pos_end);
+                break;
 
-            case EqualEqual -> emit(OpCode.Equal, node.pos_start, node.pos_end);
-            case BangEqual -> emit(new int[]{ OpCode.Equal, OpCode.Not }, node.pos_start, node.pos_end);
-            case RightAngle -> emit(OpCode.GreaterThan, node.pos_start, node.pos_end);
-            case LeftAngle -> emit(OpCode.LessThan, node.pos_start, node.pos_end);
-            case GreaterEquals -> emit(new int[]{ OpCode.LessThan, OpCode.Not }, node.pos_start, node.pos_end);
-            case LessEquals -> emit(new int[]{ OpCode.GreaterThan, OpCode.Not }, node.pos_start, node.pos_end);
+            case EqualEqual:
+                emit(OpCode.Equal, node.pos_start, node.pos_end);
+                break;
+            case BangEqual:
+                emit(new int[]{ OpCode.Equal, OpCode.Not }, node.pos_start, node.pos_end);
+                break;
+            case RightAngle:
+                emit(OpCode.GreaterThan, node.pos_start, node.pos_end);
+                break;
+            case LeftAngle:
+                emit(OpCode.LessThan, node.pos_start, node.pos_end);
+                break;
+            case GreaterEquals:
+                emit(new int[]{ OpCode.LessThan, OpCode.Not }, node.pos_start, node.pos_end);
+                break;
+            case LessEquals:
+                emit(new int[]{ OpCode.GreaterThan, OpCode.Not }, node.pos_start, node.pos_end);
+                break;
 
-            case LeftBracket -> emit(OpCode.Index, node.pos_start, node.pos_end);
-            case Dot -> emit(OpCode.Get, node.pos_start, node.pos_end);
+            case LeftBracket:
+                emit(OpCode.Index, node.pos_start, node.pos_end);
+                break;
+            case Dot:
+                emit(OpCode.Get, node.pos_start, node.pos_end);
+                break;
 
-            case TildeAmpersand -> emit(OpCode.BitAnd, node.pos_start, node.pos_end);
-            case TildePipe -> emit(OpCode.BitOr, node.pos_start, node.pos_end);
-            case TildeCaret -> emit(OpCode.BitXor, node.pos_start, node.pos_end);
-            case LeftTildeArrow -> emit(OpCode.LeftShift, node.pos_start, node.pos_end);
-            case TildeTilde -> emit(OpCode.RightShift, node.pos_start, node.pos_end);
-            case RightTildeArrow -> emit(OpCode.SignRightShift, node.pos_start, node.pos_end);
+            case TildeAmpersand:
+                emit(OpCode.BitAnd, node.pos_start, node.pos_end);
+                break;
+            case TildePipe:
+                emit(OpCode.BitOr, node.pos_start, node.pos_end);
+                break;
+            case TildeCaret:
+                emit(OpCode.BitXor, node.pos_start, node.pos_end);
+                break;
+            case LeftTildeArrow:
+                emit(OpCode.LeftShift, node.pos_start, node.pos_end);
+                break;
+            case TildeTilde:
+                emit(OpCode.RightShift, node.pos_start, node.pos_end);
+                break;
+            case RightTildeArrow:
+                emit(OpCode.SignRightShift, node.pos_start, node.pos_end);
+                break;
 
-            default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
+            default:
+                throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
     }
 
     void compile(UnaryOpNode node) {
         compile(node.node);
         switch (node.op_tok) {
-            case Plus -> {}
-            case Minus -> emit(OpCode.Negate, node.pos_start, node.pos_end);
-            case Bang -> emit(OpCode.Not, node.pos_start, node.pos_end);
-            case PlusPlus -> emit(OpCode.Increment, node.pos_start, node.pos_end);
-            case MinusMinus -> emit(OpCode.Decrement, node.pos_start, node.pos_end);
-            case Tilde -> emit(OpCode.BitCompl, node.pos_start, node.pos_end);
-            case DollarSign -> emit(OpCode.FromBytes, node.pos_start, node.pos_end);
-            default -> throw new RuntimeException("Unknown operator: " + node.op_tok);
+            case Plus:
+                break;
+            case Minus:
+                emit(OpCode.Negate, node.pos_start, node.pos_end);
+                break;
+            case Bang:
+                emit(OpCode.Not, node.pos_start, node.pos_end);
+                break;
+            case PlusPlus:
+                emit(OpCode.Increment, node.pos_start, node.pos_end);
+                break;
+            case MinusMinus:
+                emit(OpCode.Decrement, node.pos_start, node.pos_end);
+                break;
+            case Tilde:
+                emit(OpCode.BitCompl, node.pos_start, node.pos_end);
+                break;
+            case DollarSign:
+                emit(OpCode.FromBytes, node.pos_start, node.pos_end);
+                break;
+            default: throw new RuntimeException("Unknown operator: " + node.op_tok);
         }
     }
 
@@ -1022,7 +1167,7 @@ public class Compiler {
     }
 
     void compile(LetNode node) {
-        compileDecl(node.var_name_tok, List.of("<inferred>"), false, node.value_node, Integer.MIN_VALUE, Integer.MAX_VALUE, node.pos_start, node.pos_end);
+        compileDecl(node.var_name_tok, Collections.singletonList("<inferred>"), false, node.value_node, Integer.MIN_VALUE, Integer.MAX_VALUE, node.pos_start, node.pos_end);
     }
 
     void defineVariable(int global, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
@@ -1127,7 +1272,7 @@ public class Compiler {
 
         JFunc func = scope.endCompiler();
         func.name = scopeName;
-        func.returnType = List.of("any");
+        func.returnType = Collections.singletonList("any");
 
         emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(func)), 0 }, start, end);
         for (int i = 0; i < func.upvalueCount; i++) {
@@ -1283,7 +1428,7 @@ public class Compiler {
         for (Token tok : node.generic_toks)
             compile(new AttrDeclareNode(
                 tok,
-                List.of("String"),
+                    Collections.singletonList("String"),
                 false,
                 true,
                 null
@@ -1296,7 +1441,7 @@ public class Compiler {
         for (Token tok : node.generic_toks)
             emit(chunk().addConstant(new Value(tok.value.toString())), node.pos_start, node.pos_end);
 
-        defineVariable(nameConstant, List.of("recipe"), true, node.pos_start, node.pos_end);
+        defineVariable(nameConstant, Collections.singletonList("recipe"), true, node.pos_start, node.pos_end);
 
         for (MethDefNode method : node.methods)
             compile(method);
@@ -1311,7 +1456,7 @@ public class Compiler {
                 false,
                 false,
                 false,
-                List.of("void"),
+                Collections.singletonList("void"),
                 node.defaults,
                 node.defaultCount,
                 node.generic_toks,
@@ -1439,7 +1584,7 @@ public class Compiler {
                 node.var_name_tok.pos_end
         ), "list", node.iterable_node);
         compileDecl(node.var_name_tok,
-                List.of("any"),
+                Collections.singletonList("any"),
                 false,
                 new NullNode(new Token(
                         TokenType.Identifier,
@@ -1481,7 +1626,7 @@ public class Compiler {
         int global = parseVariable(varNameTok, varNameTok.pos_start, varNameTok.pos_end);
         compile(startValueNode);
         emit(OpCode.Copy, startValueNode.pos_start, startValueNode.pos_end);
-        defineVariable(global, List.of(type), false, varNameTok.pos_start, startValueNode.pos_end);
+        defineVariable(global, Collections.singletonList(type), false, varNameTok.pos_start, startValueNode.pos_end);
         emit(OpCode.Pop, startValueNode.pos_start, startValueNode.pos_end);
     }
 

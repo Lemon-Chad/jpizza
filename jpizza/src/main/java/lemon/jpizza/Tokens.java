@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Tokens {
-    public static final Map<String, TokenType> TOKEY = new HashMap<>(){{
+    public static final Map<String, TokenType> TOKEY = new HashMap<String, TokenType>(){{
         put("[", TokenType.LeftBracket);
         put("\\", TokenType.Backslash);
         put("..", TokenType.DotDot);

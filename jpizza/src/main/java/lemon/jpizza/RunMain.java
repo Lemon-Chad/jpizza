@@ -4,13 +4,12 @@ import lemon.jpizza.errors.Error;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Collectors;
 
 public class RunMain {
     public static void main(String[] args) throws IOException {
-        Shell.initLibs();
-
-        String text = Files.readString(Path.of("main.devp"));
+        String text = Files.lines(Paths.get("main.devp")).collect(Collectors.joining("\n"));
 
         Error e = Shell.compile("main.devp", text, "main.jbox");
         if (e != null) {
@@ -21,15 +20,5 @@ public class RunMain {
         Shell.runCompiled("main.jbox", "main.jbox", args);
         double end = System.currentTimeMillis();
         Shell.logger.outln("Time: " + (end - start) + "ms");
-
-//        Shell.logger.reset();
-//
-//        start = System.currentTimeMillis();
-//        var pair = Shell.run("main.devp", text, false);
-//        end = System.currentTimeMillis();
-//        if (pair.b != null) {
-//         Shell.logger.fail(pair.b.asString());
-//        }
-//        Shell.logger.outln("Time: " + (end - start) + "ms");
     }
 }

@@ -1,11 +1,8 @@
 package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
 import lemon.jpizza.Position;
-import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,8 +13,6 @@ public class ContinueNode extends Node {
         this.pos_start = start_pos.copy(); this.pos_end = end_pos.copy();
         jptype = JPType.Continue;
     }
-
-    public RTResult visit(Interpreter inter, Context context) { return new RTResult().scontinue(); }
 
     @Override
     public Node optimize() {

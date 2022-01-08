@@ -8,10 +8,7 @@ import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.compiler.vm.VMResult;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Instance {
     public final JClass clazz;
@@ -163,16 +160,16 @@ public class Instance {
     }
 
     public List<Value> asList() {
-        List<Value> res = unfailableOp("list", List.of(self), "list");
+        List<Value> res = unfailableOp("list", new ArrayList<>(Collections.singletonList(self)), "list");
         if (res == null)
             res = vm.pop().asList();
         return res;
     }
 
     public Map<Value, Value> asMap() {
-        Map<Value, Value> res = unfailableOp("map", Map.of(
+        Map<Value, Value> res = unfailableOp("map", new HashMap<>(Collections.singletonMap(
                 self, self
-        ), "map");
+        )), "map");
         if (res == null)
             res = vm.pop().asMap();
         return res;

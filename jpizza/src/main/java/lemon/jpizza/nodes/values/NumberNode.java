@@ -1,11 +1,7 @@
 package lemon.jpizza.nodes.values;
 
 import lemon.jpizza.*;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.primitives.Num;
-import lemon.jpizza.results.RTResult;
 import org.jetbrains.annotations.NotNull;
 
 public class NumberNode extends ValueNode {
@@ -38,11 +34,6 @@ public class NumberNode extends ValueNode {
         val = v;
         hex = true;
         jptype = JPType.Number;
-    }
-
-    public RTResult visit(Interpreter inter, Context context) {
-        return new RTResult().success(new Num(val, hex).set_context(context)
-                .set_pos(pos_start, pos_end));
     }
 
     @Override

@@ -1,7 +1,7 @@
 package lemon.jpizza.compiler.values;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ValueArray {
@@ -16,7 +16,7 @@ public class ValueArray {
 
     public ValueArray(Value[] constants) {
         this.length = constants.length;
-        this.values = List.of(constants);
+        this.values = Arrays.asList(constants);
         this.valuesArray = constants;
     }
 

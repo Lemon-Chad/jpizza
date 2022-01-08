@@ -56,10 +56,6 @@ public class JStack<T> {
         count = top;
     }
 
-    public T[] asArray() {
-        return stack;
-    }
-
     public void clear() {
         top = 0;
         count = 0;

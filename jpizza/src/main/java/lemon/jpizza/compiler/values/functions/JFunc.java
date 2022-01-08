@@ -3,10 +3,9 @@ package lemon.jpizza.compiler.values.functions;
 import lemon.jpizza.compiler.Chunk;
 import lemon.jpizza.compiler.ChunkCode;
 import lemon.jpizza.compiler.values.Value;
-import org.checkerframework.checker.units.qual.A;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class JFunc {
@@ -80,7 +79,7 @@ public class JFunc {
     }
 
     public int[] dump() {
-        List<Integer> list = new ArrayList<>(List.of(ChunkCode.Func, arity, genericArity, totarity));
+        List<Integer> list = new ArrayList<>(Arrays.asList(ChunkCode.Func, arity, genericArity, totarity));
         if (name != null)
             Value.addAllString(list, name);
         else

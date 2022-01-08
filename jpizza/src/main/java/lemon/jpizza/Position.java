@@ -1,7 +1,5 @@
 package lemon.jpizza;
 
-import java.io.Serializable;
-
 public class Position {
     public int idx;
     public int ln;

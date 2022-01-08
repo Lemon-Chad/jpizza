@@ -1,11 +1,7 @@
 package lemon.jpizza.nodes.values;
 
 import lemon.jpizza.*;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.primitives.Str;
-import lemon.jpizza.results.RTResult;
 import org.apache.commons.text.StringEscapeUtils;
 
 public class StringNode extends ValueNode {
@@ -20,11 +16,6 @@ public class StringNode extends ValueNode {
         super(new Token(TokenType.String, new Pair<>(val, false), start, end));
         this.val = val;
         jptype = JPType.String;
-    }
-
-    public RTResult visit(Interpreter inter, Context context) {
-        return new RTResult().success(new Str(StringEscapeUtils.unescapeJava(val)).set_context(context)
-                .set_pos(pos_start, pos_end));
     }
 
     @Override

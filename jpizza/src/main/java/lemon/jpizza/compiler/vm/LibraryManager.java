@@ -12,22 +12,19 @@ import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
 import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.errors.Error;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.regex.Pattern;
+
+import static lemon.jpizza.Constants.readString;
 
 public class LibraryManager {
     VM vm;
 
-    static final HashMap<String, String> SHIFT = new HashMap<>(){{
+    static final HashMap<String, String> SHIFT = new HashMap<String, String>(){{
         put("1", "!");
         put("2", "@");
         put("3", "#");
@@ -55,7 +52,7 @@ public class LibraryManager {
         put("-", "_");
         put("=", "+");
     }};
-    static final HashMap<String, String> UNSHIFT = new HashMap<>(){{
+    static final HashMap<String, String> UNSHIFT = new HashMap<String, String>(){{
         for (String k : SHIFT.keySet())
             put(SHIFT.get(k), k);
     }};
@@ -137,13 +134,13 @@ public class LibraryManager {
             }
             Shell.runCompiled("<sim>", pair.a, new String[0]);
             return NativeResult.Ok();
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         define("run", (args) -> {
             String path = args[0].asString();
             if (path.endsWith(".devp")) {
                 String text;
                 try {
-                    text = Files.readString(Path.of(path));
+                    text = readString(Paths.get(path));
                 } catch (IOException e) {
                     return NativeResult.Err("Internal", e.toString());
                 }
@@ -161,7 +158,7 @@ public class LibraryManager {
                 return NativeResult.Err("File Extension", "Invalid file extension");
             }
             return NativeResult.Ok();
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
 
         define("clear", (args) -> {
             try {
@@ -176,31 +173,31 @@ public class LibraryManager {
         }, 0);
 
         // Number Functions
-        define("round", (args) -> NativeResult.Ok(new Value(Math.round(args[0].asNumber()))), List.of("num"));
-        define("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), List.of("num"));
-        define("ceil", (args) -> NativeResult.Ok(new Value(Math.ceil(args[0].asNumber()))), List.of("num"));
-        define("abs", (args) -> NativeResult.Ok(new Value(Math.abs(args[0].asNumber()))), List.of("num"));
+        define("round", (args) -> NativeResult.Ok(new Value(Math.round(args[0].asNumber()))), Collections.singletonList("num"));
+        define("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), Collections.singletonList("num"));
+        define("ceil", (args) -> NativeResult.Ok(new Value(Math.ceil(args[0].asNumber()))), Collections.singletonList("num"));
+        define("abs", (args) -> NativeResult.Ok(new Value(Math.abs(args[0].asNumber()))), Collections.singletonList("num"));
         define("arctan2",
                 (args) -> NativeResult.Ok(new Value(Math.atan2(args[0].asNumber(), args[1].asNumber()))),
-                List.of("num", "num"));
-        define("sin", (args) -> NativeResult.Ok(new Value(Math.sin(args[0].asNumber()))), List.of("num"));
-        define("cos", (args) -> NativeResult.Ok(new Value(Math.cos(args[0].asNumber()))), List.of("num"));
-        define("tan", (args) -> NativeResult.Ok(new Value(Math.tan(args[0].asNumber()))), List.of("num"));
-        define("arcsin", (args) -> NativeResult.Ok(new Value(Math.asin(args[0].asNumber()))), List.of("num"));
-        define("arccos", (args) -> NativeResult.Ok(new Value(Math.acos(args[0].asNumber()))), List.of("num"));
-        define("arctan", (args) -> NativeResult.Ok(new Value(Math.atan(args[0].asNumber()))), List.of("num"));
+                Arrays.asList("num", "num"));
+        define("sin", (args) -> NativeResult.Ok(new Value(Math.sin(args[0].asNumber()))), Collections.singletonList("num"));
+        define("cos", (args) -> NativeResult.Ok(new Value(Math.cos(args[0].asNumber()))), Collections.singletonList("num"));
+        define("tan", (args) -> NativeResult.Ok(new Value(Math.tan(args[0].asNumber()))), Collections.singletonList("num"));
+        define("arcsin", (args) -> NativeResult.Ok(new Value(Math.asin(args[0].asNumber()))), Collections.singletonList("num"));
+        define("arccos", (args) -> NativeResult.Ok(new Value(Math.acos(args[0].asNumber()))), Collections.singletonList("num"));
+        define("arctan", (args) -> NativeResult.Ok(new Value(Math.atan(args[0].asNumber()))), Collections.singletonList("num"));
         define("min",
                 (args) -> NativeResult.Ok(new Value(Math.min(args[0].asNumber(), args[1].asNumber()))),
-                List.of("num", "num"));
+                Arrays.asList("num", "num"));
         define("max",
                 (args) -> NativeResult.Ok(new Value(Math.max(args[0].asNumber(), args[1].asNumber()))),
-                List.of("num", "num"));
+                Arrays.asList("num", "num"));
         define("log",
                 (args) -> NativeResult.Ok(new Value(Math.log(args[0].asNumber()) / Math.log(args[1].asNumber()))),
-                List.of("num", "num"));
+                Arrays.asList("num", "num"));
         define("doubleStr",
                 (args) -> NativeResult.Ok(new Value(String.format("%." + args[1].asNumber().intValue(), args[0].asNumber()))),
-                List.of("num", "num"));
+                Arrays.asList("num", "num"));
         define("parseNum",
                 (args) -> {
                     try {
@@ -209,7 +206,7 @@ public class LibraryManager {
                         return NativeResult.Err("Number Format", "Could not parse number");
                     }
                 },
-                List.of("String"));
+                Collections.singletonList("String"));
 
         // Random Functions
         define("random", (args) -> NativeResult.Ok(new Value(Math.random())), 0);
@@ -217,7 +214,7 @@ public class LibraryManager {
             double min = args[0].asNumber();
             double max = args[1].asNumber();
             return NativeResult.Ok(new Value(min + Math.round(Math.random() * (max - min + 1))));
-        }, List.of("num", "num"));
+        }, Arrays.asList("num", "num"));
         define("choose", args -> {
             List<Value> list = args[0].asList();
             int max = list.size() - 1;
@@ -242,10 +239,10 @@ public class LibraryManager {
         define("dict", (args) -> NativeResult.Ok(new Value(args[0].asMap())), 1);
         define("chr", (args) -> NativeResult.Ok(new Value(new String(
                 new byte[] { args[0].asNumber().byteValue() }
-        ))), List.of("num"));
+        ))), Collections.singletonList("num"));
         define("chrs", (args) -> NativeResult.Ok(new Value(new String(
                 args[0].asBytes()
-        ))), List.of("bytearray"));
+        ))), Collections.singletonList("bytearray"));
 
         // Convert number list to byte[]
         define("byter", (args) -> {
@@ -258,30 +255,30 @@ public class LibraryManager {
                 bytes[i] = v.asNumber().byteValue();
             }
             return NativeResult.Ok(new Value(bytes));
-        }, List.of("list"));
+        }, Collections.singletonList("list"));
 
         define("floating",
                 (args) -> NativeResult.Ok(new Value(Math.round(args[0].asNumber()) != args[0].asNumber())),
-                List.of("num"));
+                Collections.singletonList("num"));
 
         // Dictionary Functions
         define("set", (args) -> {
             args[0].asMap().put(args[1], args[2]);
             return NativeResult.Ok();
-        }, List.of("dict", "any", "any"));
+        }, Arrays.asList("dict", "any", "any"));
         define("overset", (args) -> {
             args[0].asMap().replace(args[1], args[2]);
             return NativeResult.Ok();
-        }, List.of("dict", "any", "any"));
+        }, Arrays.asList("dict", "any", "any"));
         define("get", (args) -> {
             if (args[0].asMap().containsKey(args[1]))
                 return NativeResult.Ok(args[0].asMap().getOrDefault(args[1], new Value()));
             return NativeResult.Err("Key", "Key not found");
-        }, List.of("dict", "any"));
+        }, Arrays.asList("dict", "any"));
         define("delete", (args) -> {
-            args[0].asMap().remove(args[1]);
+            args[0].delete(args[1]);
             return NativeResult.Ok();
-        }, List.of("dict", "any"));
+        }, Arrays.asList("dict", "any"));
 
         // String Functions
         define("split", (args) -> {
@@ -293,7 +290,7 @@ public class LibraryManager {
                 list.add(new Value(s));
             }
             return NativeResult.Ok(new Value(list));
-        }, List.of("String", "String"));
+        }, Arrays.asList("String", "String"));
         define("substr", (args) -> {
             String str = args[0].asString();
             int start = args[1].asNumber().intValue();
@@ -306,7 +303,7 @@ public class LibraryManager {
             if (end > str.length()) end = str.length();
 
             return NativeResult.Ok(new Value(str.substring(start, end)));
-        }, List.of("String", "num", "num"));
+        }, Arrays.asList("String", "num", "num"));
         define("join", (args) -> {
             Value str = args[0];
             Value list = args[1];
@@ -316,25 +313,25 @@ public class LibraryManager {
                 strings.add(val.asString());
 
             return NativeResult.Ok(new Value(String.join(str.asString(), strings)));
-        }, List.of("String", "list"));
+        }, Arrays.asList("String", "list"));
         define("replace", (args) -> {
             String str = args[0].asString();
             String old = args[1].asString();
             String newStr = args[2].asString();
             return NativeResult.Ok(new Value(str.replace(old, newStr)));
-        }, List.of("String", "String", "String"));
+        }, Arrays.asList("String", "String", "String"));
         define("escape",
                 (args) -> NativeResult.Ok(new Value(StringEscapeUtils.unescapeJava(args[0].asString()))),
-                List.of("String"));
+                Collections.singletonList("String"));
         define("unescape",
                 (args) -> NativeResult.Ok(new Value(StringEscapeUtils.escapeJava(args[0].asString())))
-                , List.of("String"));
+                , Collections.singletonList("String"));
         define("strUpper",
                 (args) -> NativeResult.Ok(new Value(args[0].asString().toUpperCase())),
-                List.of("String"));
+                Collections.singletonList("String"));
         define("strLower",
                 (args) -> NativeResult.Ok(new Value(args[0].asString().toLowerCase()))
-                , List.of("String"));
+                , Collections.singletonList("String"));
         define("strShift", (args) -> {
             String str = args[0].asString();
             StringBuilder sb = new StringBuilder();
@@ -379,14 +376,14 @@ public class LibraryManager {
 
             list.append(value);
             return NativeResult.Ok();
-        }, List.of("list", "any"));
+        }, Arrays.asList("list", "any"));
         define("remove", (args) -> {
             Value list = args[0];
             Value value = args[1];
 
             list.remove(value);
             return NativeResult.Ok();
-        }, List.of("list", "any"));
+        }, Arrays.asList("list", "any"));
         define("pop", (args) -> {
             Value list = args[0];
             Value index = args[1];
@@ -396,14 +393,14 @@ public class LibraryManager {
             }
 
             return NativeResult.Ok(list.pop(index.asNumber()));
-        }, List.of("list", "num"));
+        }, Arrays.asList("list", "num"));
         define("extend", (args) -> {
             Value list = args[0];
             Value other = args[1];
 
             list.add(other);
             return NativeResult.Ok();
-        }, List.of("list", "list"));
+        }, Arrays.asList("list", "list"));
         define("insert", (args) -> {
             Value list = args[0];
             Value index = args[2];
@@ -415,7 +412,7 @@ public class LibraryManager {
 
             list.insert(index.asNumber(), value);
             return NativeResult.Ok();
-        }, List.of("list", "any", "num"));
+        }, Arrays.asList("list", "any", "num"));
         define("setIndex", (args) -> {
             Value list = args[0];
             Value index = args[2];
@@ -427,7 +424,7 @@ public class LibraryManager {
 
             list.set(index.asNumber(), value);
             return NativeResult.Ok();
-        }, List.of("list", "any", "num"));
+        }, Arrays.asList("list", "any", "num"));
         define("sublist", (args) -> {
             Value list = args[0];
             Value start = args[1];
@@ -439,7 +436,7 @@ public class LibraryManager {
 
             return NativeResult.Ok(new Value(list.asList().subList(start.asNumber().intValue(),
                     end.asNumber().intValue())));
-        }, List.of("list", "num", "num"));
+        }, Arrays.asList("list", "num", "num"));
 
         // Collection Functions
         define("size", args -> {
@@ -458,22 +455,22 @@ public class LibraryManager {
         }, 2);
 
         // Results
-        define("ok", args -> NativeResult.Ok(new Value(args[0].asBool())), List.of("catcher"));
+        define("ok", args -> NativeResult.Ok(new Value(args[0].asBool())), Collections.singletonList("catcher"));
         define("resolve", args -> {
             if (!args[0].asBool())
                 return NativeResult.Err("Unresolved", "Unresolved error in catcher");
             return NativeResult.Ok(args[0].asRes().getValue());
-        }, List.of("catcher"));
+        }, Collections.singletonList("catcher"));
         define("catch", args -> {
             if (!args[0].asBool())
                 return NativeResult.Ok(new Value(args[0].asList()));
             return NativeResult.Ok();
-        }, List.of("catcher"));
+        }, Collections.singletonList("catcher"));
         define("fail", args -> {
             if (args[0].asBool())
                 return NativeResult.Ok();
             return NativeResult.Err("Released", args[0].toString());
-        }, List.of("catcher"));
+        }, Collections.singletonList("catcher"));
     }
 
     private void time() {

@@ -4,7 +4,6 @@ import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.libraries.awt.AbstractWindowToolkit;
 import lemon.jpizza.compiler.libraries.awt.displays.Drawable;
 import lemon.jpizza.compiler.libraries.awt.displays.Rectangle;
-import lemon.jpizza.compiler.values.Value;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -25,7 +24,6 @@ public class Window {
 
     private Timer refreshLoop;
 
-    private boolean fullscreen;
     private boolean changed;
     private boolean queue;
 
@@ -47,7 +45,6 @@ public class Window {
     private final boolean[] mouseButtons;
 
     public Window() {
-        fullscreen = false;
         changed = false;
         queue = false;
 
@@ -60,11 +57,11 @@ public class Window {
         frames = 0;
         start = 1;
 
-        keyPressed = new HashMap<>(){{
+        keyPressed = new HashMap<Integer, Boolean>(){{
             for (Integer key : AbstractWindowToolkit.Keys.values())
                 put(key, false);
         }};
-        keyTyped = new HashMap<>(){{
+        keyTyped = new HashMap<Integer, Boolean>(){{
             for (Integer key : AbstractWindowToolkit.Keys.values())
                 put(key, false);
         }};
@@ -112,12 +109,21 @@ public class Window {
             }
 
             private void setMouseIndex(int button, boolean value) {
-                int index = switch (button) {
-                    case MouseEvent.BUTTON1 -> 0;
-                    case MouseEvent.BUTTON2 -> 1;
-                    case MouseEvent.BUTTON3 -> 2;
-                    default -> -1;
-                };
+                int index;
+                switch (button) {
+                    case MouseEvent.BUTTON1:
+                        index = 0;
+                        break;
+                    case MouseEvent.BUTTON2:
+                        index = 1;
+                        break;
+                    case MouseEvent.BUTTON3:
+                        index = 2;
+                        break;
+                    default:
+                        index = -1;
+                        break;
+                }
 
                 if (index != -1)
                     mouseButtons[index] = value;
@@ -238,12 +244,25 @@ public class Window {
     }
 
     public void setFont(String name, String style, int size) {
-        int format = switch (style) {
-            case "B" -> Font.BOLD;
-            case "I" -> Font.ITALIC;
-            case "BI", "IB" -> Font.BOLD | Font.ITALIC;
-            default -> Font.PLAIN;
-        };
+        int format;
+        switch (style) {
+            case "B":
+                format = Font.BOLD;
+                break;
+
+            case "I":
+                format = Font.ITALIC;
+                break;
+
+            case "BI":
+            case "IB":
+                format = Font.BOLD | Font.ITALIC;
+                break;
+
+            default:
+                format = Font.PLAIN;
+                break;
+        }
 
         if (size < 1) size = 1;
 

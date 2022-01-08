@@ -1,15 +1,11 @@
 package lemon.jpizza.nodes.definitions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.errors.RTError;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class VarAssignNode extends Node {
@@ -68,26 +64,6 @@ public class VarAssignNode extends Node {
         jptype = JPType.VarAssign;
     }
 
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-
-        String varName = (String) var_name_tok.value;
-        Obj value = res.register(inter.visit(value_node, context));
-        if (res.shouldReturn()) return res;
-
-        RTError.ErrorDetails error;
-        if (defining)
-            error = context.symbolTable.define(varName, value, locked, type, min, max);
-        else
-            error = context.symbolTable.set(varName, value, locked);
-        if (error != null) return res.failure(error.build(
-                pos_start, pos_end,
-                context
-        ));
-
-        return res.success(value);
-    }
-
     @Override
     public Node optimize() {
         Node val = value_node.optimize();
@@ -99,7 +75,7 @@ public class VarAssignNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(List.of(value_node));
+        return new ArrayList<>(Collections.singletonList(value_node));
     }
 
     @Override

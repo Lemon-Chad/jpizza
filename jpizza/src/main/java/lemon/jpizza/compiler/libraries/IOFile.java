@@ -7,10 +7,13 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import static lemon.jpizza.Constants.readString;
 
 public class IOFile extends JPExtension {
     @Override
@@ -38,11 +41,11 @@ public class IOFile extends JPExtension {
                 return Err("Imaginary File", "File not found");
 
             try {
-                return Ok(Files.readString(Path.of(path)));
+                return Ok(readString(Paths.get(path)));
             } catch (IOException e) {
                 return Err("Internal", "Could not load file (" + e.getMessage() + ")");
             }
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("writeFile", (args) -> {
             String path = dir(args[0]);
             String data = args[1].asString();
@@ -56,25 +59,25 @@ public class IOFile extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not write file (" + e.getMessage() + ")");
             }
-        }, List.of("String", "any"));
+        }, Arrays.asList("String", "any"));
 
         // File Creation
         func("fileExists", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.exists());
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("makeDirs", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.mkdirs());
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("deleteFile", (args) -> {
             String path = dir(args[0]);
-            if (!Files.exists(Path.of(path))) {
+            if (!Files.exists(Paths.get(path))) {
                 return Err("Imaginary File", "File not found");
             }
-            boolean isDir = Files.isDirectory(Path.of(path));
+            boolean isDir = Files.isDirectory(Paths.get(path));
             if (isDir) {
                 try {
                     FileUtils.deleteDirectory(new File(path));
@@ -91,7 +94,7 @@ public class IOFile extends JPExtension {
                     return Err("Internal", "Could not delete file (" + e.getMessage() + ")");
                 }
             }
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
 
         // Directories
         func("listDirContents", (args) -> {
@@ -103,12 +106,12 @@ public class IOFile extends JPExtension {
             String[] files = file.list();
             List<String> list = new ArrayList<>(Arrays.asList(files));
             return Ok(list);
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("isDirectory", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.isDirectory());
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
 
         // Working Directory
         func("getCWD", (args) -> Ok(System.getProperty("user.dir")), 0);
@@ -121,7 +124,7 @@ public class IOFile extends JPExtension {
                 return Err("Imaginary Path", "Path is not a directory");
             System.setProperty("user.dir", path);
             return Ok;
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
 
         // Serialization
         func("readSerial", (args) -> {
@@ -149,7 +152,7 @@ public class IOFile extends JPExtension {
             }
 
             return Ok(out);
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("readBytes", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
@@ -158,13 +161,13 @@ public class IOFile extends JPExtension {
 
             byte[] bytes;
             try {
-                bytes = Files.readAllBytes(Path.of(path));
+                bytes = Files.readAllBytes(Paths.get(path));
             } catch (IOException e) {
                 return Err("Internal", "Could not load file (" + e.getMessage() + ")");
             }
 
             return Ok(bytes);
-        }, List.of("String"));
+        }, Collections.singletonList("String"));
         func("writeSerial", (args) -> {
             String path = dir(args[0]);
             Value obj = args[1];
@@ -185,6 +188,6 @@ public class IOFile extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not write file (" + e.getMessage() + ")");
             }
-        }, List.of("String", "any"));
+        }, Arrays.asList("String", "any"));
     }
 }

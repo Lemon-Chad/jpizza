@@ -35,14 +35,14 @@ public class Parser {
     }
 
     static String stringConvention(NamingConvention convention) {
-        return switch (convention) {
-            case CamelCase -> "camelCase";
-            case ScreamingSnakeCase -> "SCREAMING_SNAKE_CASE";
-            case PascalCase -> "PascalCase";
-            case SnakeCase -> "snake_case";
-            case MixedSnakeCase -> "Mixed_Snake_Case";
-            default -> "lowercase";
-        };
+        switch (convention) {
+            case CamelCase: return "camelCase";
+            case ScreamingSnakeCase: return "SCREAMING_SNAKE_CASE";
+            case PascalCase: return "PascalCase";
+            case SnakeCase: return "snake_case";
+            case MixedSnakeCase: return "Mixed_Snake_Case";
+            default: return "lowercase";
+        }
     }
 
     static NamingConvention getConvention(String name) {
@@ -157,7 +157,15 @@ public class Parser {
         } return res;
     }
 
-    private record TokenMatcher(TokenType type, String value) {}
+    private static class TokenMatcher {
+        TokenType type;
+        String value;
+
+        public TokenMatcher(TokenType type, String value) {
+            this.type = type;
+            this.value = value;
+        }
+    }
 
     public ParseResult<Node> statements(TokenType end) {
         return statements(Collections.singletonList(new TokenMatcher(end, null)));
@@ -257,23 +265,23 @@ public class Parser {
             return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
         }
         if (currentToken.type == TokenType.Keyword) switch (currentToken.value.toString()) {
-            case "for" -> {
+            case "for": {
                 Node forExpr = res.register(this.forExpr());
                 if (res.error != null)
                     return res;
                 return res.success(forExpr);
             }
-            case "break" -> {
+            case "break": {
                 res.registerAdvancement();
                 advance();
                 return res.success(new BreakNode(pos_start, currentToken.pos_end.copy()));
             }
-            case "continue" -> {
+            case "continue": {
                 res.registerAdvancement();
                 advance();
                 return res.success(new ContinueNode(pos_start, currentToken.pos_end.copy()));
             }
-            case "return" -> {
+            case "return": {
                 res.registerAdvancement();
                 advance();
                 Node expr = null;
@@ -284,73 +292,76 @@ public class Parser {
                 }
                 return res.success(new ReturnNode(expr, pos_start, currentToken.pos_end.copy()));
             }
-            case "pass" -> {
+            case "pass": {
                 res.registerAdvancement();
                 advance();
                 return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
             }
-            case "assert" -> {
+            case "assert": {
                 res.registerAdvancement();
                 advance();
                 Node condition = res.register(expr());
                 if (res.error != null) return res;
                 return res.success(new AssertNode(condition));
             }
-            case "free" -> {
+            case "free": {
                 Token varTok = res.register(expectIdentifier());
                 if (res.error != null) return res;
                 res.registerAdvancement();
                 advance();
                 return res.success(new DropNode(varTok));
             }
-            case "throw" -> {
+            case "throw": {
                 Node throwNode = res.register(this.throwExpr());
                 if (res.error != null) return res;
                 return res.success(throwNode);
             }
-            case "class", "obj", "recipe" -> {
+            case "class":
+            case "obj":
+            case "recipe": {
                 Node classDef = res.register(this.classDef());
                 if (res.error != null)
                     return res;
                 return res.success(classDef);
             }
-            case "if" -> {
+            case "if": {
                 Node ifExpr = res.register(this.ifExpr());
                 if (res.error != null)
                     return res;
                 return res.success(ifExpr);
             }
-            case "enum" -> {
+            case "enum": {
                 Node enumExpr = res.register(this.enumExpr());
                 if (res.error != null)
                     return res;
                 return res.success(enumExpr);
             }
-            case "switch" -> {
+            case "switch": {
                 Node switchExpr = res.register(this.switchExpr());
                 if (res.error != null)
                     return res;
                 return res.success(switchExpr);
             }
-            case "struct" -> {
+            case "struct": {
                 Node structDef = res.register(this.structDef());
                 if (res.error != null)
                     return res;
                 return res.success(structDef);
             }
-            case "loop", "while" -> {
+            case "loop":
+            case "while": {
                 Node whileExpr = res.register(this.whileExpr());
                 if (res.error != null)
                     return res;
                 return res.success(whileExpr);
             }
-            case "do" -> {
+            case "do": {
                 Node doExpr = res.register(this.doExpr());
                 if (res.error != null)
                     return res;
                 return res.success(doExpr);
             }
-            case "scope" -> {
+            case "scope": {
                 res.registerAdvancement();
                 advance();
                 String name = null;
@@ -373,7 +384,7 @@ public class Parser {
                 if (res.error != null) return res;
                 return res.success(new ScopeNode(name, statements));
             }
-            case "import" -> {
+            case "import": {
                 advance();
                 res.registerAdvancement();
                 Token file_name_tok = currentToken;
@@ -395,7 +406,7 @@ public class Parser {
                 }
                 return res.success(new ImportNode(file_name_tok));
             }
-            case "extend" -> {
+            case "extend": {
                 advance();
                 res.registerAdvancement();
                 Token fileNameTok = currentToken;
@@ -408,8 +419,6 @@ public class Parser {
                 advance();
                 res.registerAdvancement();
                 return res.success(new ExtendNode(fileNameTok));
-            }
-            default -> {
             }
         }
         else if (currentToken.type.equals(TokenType.Hash)) {
@@ -465,8 +474,10 @@ public class Parser {
                         "Unmatched parenthesis"
                 ));
             switch (currentToken.type) {
-                case LeftAngle -> parens.push("<");
-                case RightAngle -> {
+                case LeftAngle:
+                    parens.push("<");
+                    break;
+                case RightAngle:
                     if (parens.isEmpty())
                         break ParseType;
                     if (!parens.peek().equals("<"))
@@ -475,9 +486,11 @@ public class Parser {
                                 "Unmatched parenthesis"
                         ));
                     parens.pop();
-                }
-                case LeftParen -> parens.push("(");
-                case RightParen -> {
+                    break;
+                case LeftParen:
+                    parens.push("(");
+                    break;
+                case RightParen:
                     if (parens.isEmpty())
                         break ParseType;
                     if (!parens.peek().equals("("))
@@ -486,9 +499,11 @@ public class Parser {
                                 "Unmatched parenthesis"
                         ));
                     parens.pop();
-                }
-                case LeftBracket -> parens.push("[");
-                case RightBracket -> {
+                    break;
+                case LeftBracket:
+                    parens.push("[");
+                    break;
+                case RightBracket:
                     if (parens.isEmpty())
                         break ParseType;
                     if (!parens.peek().equals("["))
@@ -497,9 +512,11 @@ public class Parser {
                                 "Unmatched parenthesis"
                         ));
                     parens.pop();
-                }
-                case LeftBrace -> parens.push("{");
-                case RightBrace -> {
+                    break;
+                case LeftBrace:
+                    parens.push("{");
+                    break;
+                case RightBrace:
                     if (parens.isEmpty())
                         break ParseType;
                     if (!parens.peek().equals("{"))
@@ -508,7 +525,7 @@ public class Parser {
                                 "Unmatched parenthesis"
                         ));
                     parens.pop();
-                }
+                    break;
             }
             type.add(currentToken.asString());
             end = currentToken.pos_end;
@@ -730,16 +747,17 @@ public class Parser {
                 Node value = res.register(this.expr());
                 if (res.error != null)
                     return res;
+                TokenType op = null;
+                switch (op_tok.type) {
+                    case CaretEquals: op = TokenType.Caret; break;
+                    case PlusEquals: op = TokenType.Plus; break;
+                    case StarEquals: op = TokenType.Star; break;
+                    case SlashEquals: op = TokenType.Slash; break;
+                    case MinusEquals: op = TokenType.Minus; break;
+                }
                 return res.success(new VarAssignNode(var_tok, new BinOpNode(
                         new VarAccessNode(var_tok),
-                        switch (op_tok.type) {
-                            case CaretEquals -> TokenType.Caret;
-                            case StarEquals -> TokenType.Star;
-                            case SlashEquals -> TokenType.Slash;
-                            case PlusEquals -> TokenType.Plus;
-                            case MinusEquals -> TokenType.Minus;
-                            default -> null;
-                        }, value
+                        op, value
                 ), false).setDefining(false));
             }
             if (currentToken.type.equals(TokenType.PlusPlus) ||
@@ -795,12 +813,11 @@ public class Parser {
                     tok.pos_start, tok.pos_end,
                     String.format("%s should have naming convention %s, not %s.",
                                   name, stringConvention(convention), stringConvention(tokenCase)),
-                    """
-camelCaseLooksLikeThis
-snake_case_looks_like_this
-SCREAMING_SNAKE_CASE_LOOKS_LIKE_THIS
-PascalCaseLooksLikeThis
-Mixed_Snake_Case_Looks_Like_This"""
+"camelCaseLooksLikeThis\n" +
+"snake_case_looks_like_this\n"  +
+"SCREAMING_SNAKE_CASE_LOOKS_LIKE_THIS\n" +
+"PascalCaseLooksLikeThis\n" +
+"Mixed_Snake_Case_Looks_Like_This\n"
                 ).asString());
             }
     }
@@ -884,7 +901,7 @@ Mixed_Snake_Case_Looks_Like_This"""
             return res.success(new ScopeNode(null, statements));
         }
         else if (tok.type == TokenType.Keyword) switch (tok.value.toString()) {
-            case "attr" -> {
+            case "attr": {
                 advance();
                 res.registerAdvancement();
                 Token var_name_tok = currentToken;
@@ -897,19 +914,21 @@ Mixed_Snake_Case_Looks_Like_This"""
                 res.registerAdvancement();
                 return res.success(new AttrAccessNode(var_name_tok));
             }
-            case "match" -> {
+            case "match": {
                 Node matchExpr = res.register(this.matchExpr());
                 if (res.error != null)
                     return res;
                 return res.success(matchExpr);
             }
-            case "function", "yourmom", "fn" -> {
+            case "function":
+            case "yourmom":
+            case "fn": {
                 Node funcDef = res.register(this.funcDef());
                 if (res.error != null)
                     return res;
                 return res.success(funcDef);
             }
-            case "null" -> {
+            case "null": {
                 res.registerAdvancement();
                 advance();
                 return res.success(new NullNode(tok));
@@ -1184,9 +1203,34 @@ Mixed_Snake_Case_Looks_Like_This"""
 
     }
 
-    public record EnumChild(Token token, List<String> params,
-                            List<List<String>> types,
-                            List<String> generics) {
+    public static class EnumChild {
+        Token token;
+        List<String> params;
+        List<List<String>> types;
+        List<String> generics;
+
+        public EnumChild(Token token, List<String> params, List<List<String>> types, List<String> generics) {
+            this.token = token;
+            this.params = params;
+            this.types = types;
+            this.generics = generics;
+        }
+
+        public List<List<String>> types() {
+            return types;
+        }
+
+        public List<String> params() {
+            return params;
+        }
+
+        public List<String> generics() {
+            return generics;
+        }
+
+        public Token token() {
+            return token;
+        }
     }
 
     public ParseResult<Node> enumExpr() {
@@ -1368,14 +1412,14 @@ Mixed_Snake_Case_Looks_Like_This"""
 
         if (cases.size() < 3) Shell.logger.tip(new Tip(
             swtch.pos_start, swtch.pos_end,
-            "Switch can be replaced with if-elif-else structure", """
-if (x == 1) {
-    println("X is 1!");
-} elif (x == 2) {
-    println("X is two.");
-} else {
-    println("X is dumb! >:(");
-}"""
+            "Switch can be replaced with if-elif-else structure",
+"if (x == 1) {\n" +
+"    println(\"X is 1!\");\n" +
+"} elif (x == 2) {\n" +
+"    println(\"X is two.\");\n" +
+"} else {\n" +
+"    println(\"X is dumb! >:(\");\n" +
+"}"
         ).asString());
 
         return res.success(swtch);
@@ -1518,13 +1562,13 @@ if (x == 1) {
 
         if (elseCase == null) {
             Shell.logger.tip(new Tip(swtch.pos_start, swtch.pos_end,
-                                      "Match statement should have a default branch", """
-match (a) {
-    b -> c
-    default -> d
-    <> This runs in case none of the others match
-    <> and helps prevents stray null values.
-};""").asString());
+                                      "Match statement should have a default branch",
+"match (a) {\n" +
+"    b -> c\n" +
+"    default -> d\n" +
+"    <> This runs in case none of the others match\n" +
+"    <> and helps prevents stray null values.\n" +
+"};").asString());
         }
 
         return res.success(swtch);
@@ -1668,14 +1712,14 @@ match (a) {
                 advance();
             }
             else if (binRefOps.contains(currentToken.type)) {
-                TokenType opTok = switch (currentToken.type) {
-                    case CaretEquals -> TokenType.Caret;
-                    case StarEquals -> TokenType.Star;
-                    case SlashEquals -> TokenType.Slash;
-                    case PlusEquals -> TokenType.Plus;
-                    case MinusEquals -> TokenType.Minus;
-                    default -> null;
-                };
+                TokenType opTok = null;
+                switch (currentToken.type) {
+                    case CaretEquals: opTok = TokenType.Caret; break;
+                    case StarEquals: opTok = TokenType.Star; break;
+                    case SlashEquals: opTok = TokenType.Slash; break;
+                    case PlusEquals: opTok = TokenType.Plus; break;
+                    case MinusEquals: opTok = TokenType.Minus; break;
+                }
                 res.registerAdvancement();
                 advance();
 
@@ -1766,9 +1810,24 @@ match (a) {
         return res.success(left);
     }
 
-    record ArgData(List<Token> argNameToks, List<Token> argTypeToks,
-                   List<Node> defaults, int defaultCount,
-                   List<Token> generics, String argname, String kwargname) {
+    private static class ArgData {
+        List<Token> argNameToks;
+        List<Token> argTypeToks;
+        List<Node> defaults;
+        int defaultCount;
+        List<Token> generics;
+        String argname;
+        String kwargname;
+
+        public ArgData(List<Token> argNameToks, List<Token> argTypeToks, List<Node> defaults, int defaultCount, List<Token> generics, String argname, String kwargname) {
+            this.argNameToks = argNameToks;
+            this.argTypeToks = argTypeToks;
+            this.defaults = defaults;
+            this.defaultCount = defaultCount;
+            this.generics = generics;
+            this.argname = argname;
+            this.kwargname = kwargname;
+        }
     }
 
     public ParseResult<ArgData> gatherArgs() {
@@ -1940,7 +1999,7 @@ match (a) {
 
     public ParseResult<Node> ifExpr() {
         ParseResult<Node> res = new ParseResult<>();
-        var allCases = res.register(this.ifExprCases("if", true));
+        Pair<List<Case>, ElseCase> allCases = res.register(this.ifExprCases("if", true));
         if (res.error != null)
             return res;
         List<Case> cases = allCases.a;
@@ -1976,16 +2035,16 @@ match (a) {
 
         if (condition.jptype == JPType.Boolean && ((BooleanNode) condition).val) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
-                    "Redundant conditional", """
-if (true)
-    println("This runs no matter what");""")
+                    "Redundant conditional",
+"if (true)\n" +
+"    println(\"This runs no matter what\");")
                     .asString());
         }
         else if (condition.jptype == JPType.Boolean) {
             Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
-                    "Conditional will never run", """
-if (false)
-    println("Useless!!!");""")
+                    "Conditional will never run",
+"if (false)\n" +
+"    println(\"Useless!!!\");")
                     .asString());
         }
 
@@ -2028,7 +2087,7 @@ if (false)
         ElseCase elseCase;
 
         if (currentToken.matches(TokenType.Keyword, "elif")) {
-            var allCases = (Pair<List<Case>, ElseCase>) res.register(this.elifExpr(parenthesis));
+            Pair<List<Case>, ElseCase> allCases = res.register(this.elifExpr(parenthesis));
             if (res.error != null)
                 return res;
             cases = allCases.a;
@@ -2175,19 +2234,19 @@ if (false)
             if (res.error != null) return res;
             Node body;
             switch (currentToken.type) {
-                case LeftBrace -> {
+                case LeftBrace: {
                     body = res.register(this.block());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, true));
                 }
-                case FatArrow -> {
+                case FatArrow: {
                     res.registerAdvancement();
                     advance();
                     body = res.register(this.statement());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, false));
                 }
-                default -> {
+                default: {
                     body = res.register(this.statement());
                     if (res.error != null) return res;
                     return res.success(new IterNode(varName, iterableNode, body, true));
@@ -2224,19 +2283,19 @@ if (false)
 
         Node body;
         switch (currentToken.type) {
-            case LeftBrace -> {
+            case LeftBrace: {
                 body = res.register(this.block());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, true));
             }
-            case FatArrow -> {
+            case FatArrow: {
                 res.registerAdvancement();
                 advance();
                 body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, false));
             }
-            default -> {
+            default: {
                 body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new ForNode(varName, start, end, step, body, true));
@@ -2281,18 +2340,18 @@ if (false)
         if (condition.jptype == JPType.Boolean) {
             if (((BooleanNode) condition).val) {
                 Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
-                        "Can be changed to a generic loop", """
-loop {
-    println("To infinity and beyond!");
-}""")
+                        "Can be changed to a generic loop",
+"loop {\n" +
+"    println(\"To infinity and beyond!\");\n" +
+"}")
                         .asString());
             }
             else {
                 Shell.logger.tip(new Tip(condition.pos_start, condition.pos_end,
-                        "Loop will never run", """
-while (false) {
-    println("Remove me!");
-}""")
+                        "Loop will never run",
+"while (false) {\n" +
+"    println(\"Remove me!\");\n" +
+"}")
                         .asString());
             }
         }
@@ -2313,20 +2372,20 @@ while (false) {
         Node body;
         boolean bracket = currentToken.type == TokenType.LeftBrace;
         switch (currentToken.type) {
-            case FatArrow -> {
+            case FatArrow:
                 res.registerAdvancement();
                 advance();
                 body = res.register(this.statement());
                 if (res.error != null) return res;
-            }
-            case LeftBrace -> {
+                break;
+            case LeftBrace:
                 body = res.register(block(false));
                 if (res.error != null) return res;
-            }
-            default -> {
+                break;
+            default:
                 body = res.register(this.statement());
                 if (res.error != null) return res;
-            }
+                break;
         }
 
         Node condition = res.register(getWhileCondition());
@@ -2352,19 +2411,19 @@ while (false) {
         }
         Node body;
         switch (currentToken.type) {
-            case FatArrow -> {
+            case FatArrow: {
                 res.registerAdvancement();
                 advance();
                 body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, false, false));
             }
-            case LeftBrace -> {
+            case LeftBrace: {
                 body = res.register(block());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
             }
-            default -> {
+            default: {
                 body = res.register(this.statement());
                 if (res.error != null) return res;
                 return res.success(new WhileNode(condition, body, true, false));
@@ -2503,7 +2562,7 @@ while (false) {
 
         Node nodeToReturn;
         switch (currentToken.type) {
-            case SkinnyArrow -> {
+            case SkinnyArrow: {
                 res.registerAdvancement();
                 advance();
                 nodeToReturn = res.register(this.statement());
@@ -2523,7 +2582,7 @@ while (false) {
                         argTKs.kwargname
                 ).setCatcher(isCatcher));
             }
-            case LeftBrace -> {
+            case LeftBrace: {
                 nodeToReturn = res.register(this.block(varNameTok != null));
                 if (res.error != null) return res;
 
@@ -2550,7 +2609,7 @@ while (false) {
 
                 return res.success(funcNode);
             }
-            default -> {
+            default: {
                 if (tokV.equals("yourmom"))
                     return res.failure(Error.ExpectedCharError(
                             currentToken.pos_start.copy(), currentToken.pos_end.copy(),
@@ -2577,6 +2636,10 @@ while (false) {
 
             retype = (List<String>) etok.value;
         } return res.success(retype);
+    }
+
+    private interface AttrGetter {
+        ParseResult<Node> run(Token tok, boolean b1, boolean b2);
     }
 
     public ParseResult<Node> classDef() {
@@ -2626,7 +2689,7 @@ while (false) {
                 null
         );
 
-        TriFunction<Token, Boolean, Boolean, ParseResult<Node>> getComplexAttr = (valTok, isstatic, isprivate) -> {
+        AttrGetter getComplexAttr = (valTok, isstatic, isprivate) -> {
             ParseResult<Node> result = new ParseResult<>();
 
             List<String> type = Collections.singletonList("any");
@@ -2679,11 +2742,26 @@ while (false) {
                 async = bin = stat = priv = false;
                 while (currentToken.type.equals(TokenType.Keyword)) {
                     switch (currentToken.value.toString()) {
-                        case "bin" -> bin = true;
-                        case "async" -> async = true;
-                        case "static", "stc" -> stat = true;
-                        case "prv" -> priv = true;
-                        case "pub" -> priv = false;
+                        case "bin":
+                            bin = true;
+                            break;
+
+                        case "async":
+                            async = true;
+                            break;
+
+                        case "static":
+                        case "stc":
+                            stat = true;
+                            break;
+
+                        case "prv":
+                            priv = true;
+                            break;
+
+                        case "pub":
+                            priv = false;
+                            break;
                     }
                     advance(); res.registerAdvancement();
                 }
@@ -2770,7 +2848,7 @@ while (false) {
                         "Should be '=>'"
                 ));
                 if (currentToken.type == TokenType.FatArrow || currentToken.type == TokenType.Colon) {
-                    res.register(getComplexAttr.apply(valTok, false, false));
+                    res.register(getComplexAttr.run(valTok, false, false));
                     if (res.error != null) return res;
                 }
                 else {
@@ -2801,9 +2879,18 @@ while (false) {
 
                 while (declKeywords.contains(currentToken.value.toString())) {
                     switch (currentToken.value.toString()) {
-                        case "prv" -> isprivate = true;
-                        case "static", "stc" -> isstatic = true;
-                        case "pub" -> isprivate = false;
+                        case "prv":
+                            isprivate = true;
+                            break;
+
+                        case "static":
+                        case "stc":
+                            isstatic = true;
+                            break;
+
+                        case "pub":
+                            isprivate = false;
+                            break;
                     }
                     res.registerAdvancement(); advance();
                 }
@@ -2818,7 +2905,7 @@ while (false) {
                 matchConvention(valTok, "Attribute name", NamingConvention.CamelCase);
 
                 res.registerAdvancement(); advance();
-                res.register(getComplexAttr.apply(valTok, isstatic, isprivate));
+                res.register(getComplexAttr.run(valTok, isstatic, isprivate));
                 if (res.error != null) return res;
             }
             else return res.failure(Error.InvalidSyntax(
@@ -2851,12 +2938,12 @@ while (false) {
 
         if (argTKs.argNameToks.size() == attributeDeclarations.size() && methods.size() == 0) {
             Shell.logger.tip(new Tip(classDef.pos_start, classDef.pos_end,
-                    "Can be refactored as a struct", """
-struct Vector3 {
-    x,
-    y,
-    z
-};""")
+                    "Can be refactored as a struct",
+"struct Vector3 {\n" +
+"    x,\n" +
+"    y,\n" +
+"    z\n" +
+"};")
                     .asString());
         }
 

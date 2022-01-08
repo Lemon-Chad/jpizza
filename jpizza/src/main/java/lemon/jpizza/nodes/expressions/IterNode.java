@@ -1,14 +1,7 @@
 package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.errors.RTError;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.objects.primitives.PList;
-import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
@@ -29,48 +22,6 @@ public class IterNode extends Node {
 
         pos_start = var_name_tok.pos_start.copy(); pos_end = body_node.pos_end.copy();
         jptype = JPType.Iter;
-    }
-
-    @SuppressWarnings("DuplicatedCode")
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-        List<Obj> elements = new ArrayList<>();
-
-        Obj iterableNode = res.register(inter.visit(iterable_node, context));
-        if (res.shouldReturn()) return res;
-        if (iterableNode.jptype != JPType.List) return res.failure(RTError.Type(
-                iterableNode.pos_start, iterableNode.pos_end,
-                "Value must be an iterable",
-                context
-        ));
-        List<Obj> iterable = iterableNode.list;
-
-        double size = iterable.size();
-
-        String vtk = (String) var_name_tok.value;
-        Obj value;
-
-        context.symbolTable.define(vtk, new Null());
-        // clock.tick();
-        for (int i = 0; i < size; i++) {
-            context.symbolTable.set(vtk, iterable.get(i));
-
-            value = res.register(inter.visit(body_node, context));
-            if (res.shouldReturn() && !res.continueLoop && !res.breakLoop) return res;
-
-            if (res.continueLoop) continue;
-            if (res.breakLoop) break;
-
-            if (!retnull)
-                elements.add(value);
-        }
-
-        context.symbolTable.remove(vtk);
-
-        return res.success(
-                retnull ? new Null() : new PList(new ArrayList<>(elements)).set_context(context)
-                        .set_pos(pos_start, pos_end)
-        );
     }
 
     @Override

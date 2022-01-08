@@ -1,7 +1,5 @@
 package lemon.jpizza.compiler.libraries.awt.displays;
 
-import lemon.jpizza.libraries.jdraw.Rect;
-
 import java.awt.*;
 
 public class Rectangle extends Drawable {

@@ -6,7 +6,6 @@ import lemon.jpizza.compiler.values.classes.ClassAttr;
 import lemon.jpizza.compiler.values.classes.Instance;
 import lemon.jpizza.compiler.vm.VM;
 
-import java.io.Serializable;
 import java.util.*;
 
 public class JEnumChild {
@@ -87,7 +86,7 @@ public class JEnumChild {
     }
 
     public int[] dump() {
-        List<Integer> dump = new ArrayList<>(List.of(ChunkCode.EnumChild, value, genericSlots.size()));
+        List<Integer> dump = new ArrayList<>(Arrays.asList(ChunkCode.EnumChild, value, genericSlots.size()));
         dump.addAll(genericSlots);
         dump.add(props.size());
         for (String prop : props) {

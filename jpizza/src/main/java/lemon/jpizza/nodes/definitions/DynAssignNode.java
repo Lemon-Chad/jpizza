@@ -1,14 +1,11 @@
 package lemon.jpizza.nodes.definitions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.primitives.Null;
-import lemon.jpizza.results.RTResult;
 import lemon.jpizza.Token;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DynAssignNode extends Node {
@@ -23,16 +20,6 @@ public class DynAssignNode extends Node {
         jptype = JPType.DynAssign;
     }
 
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-
-        String varName = (String) var_name_tok.value;
-
-        context.symbolTable.setDyn(varName, value_node);
-
-        return res.success(new Null());
-    }
-
     @Override
     public Node optimize() {
         return new DynAssignNode(var_name_tok, value_node.optimize());
@@ -40,7 +27,7 @@ public class DynAssignNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(List.of(value_node));
+        return new ArrayList<>(Collections.singletonList(value_node));
     }
 
     @Override

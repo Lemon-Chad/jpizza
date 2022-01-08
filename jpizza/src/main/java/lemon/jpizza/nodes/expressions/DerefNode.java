@@ -1,15 +1,10 @@
 package lemon.jpizza.nodes.expressions;
 
 import lemon.jpizza.JPType;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
-import lemon.jpizza.errors.RTError;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.Pair;
-import lemon.jpizza.results.RTResult;
 import lemon.jpizza.nodes.Node;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DerefNode extends Node {
@@ -21,17 +16,6 @@ public class DerefNode extends Node {
         jptype = JPType.Deref;
     }
 
-    public RTResult visit(Interpreter inter, Context context) {
-        RTResult res = new RTResult();
-
-        Obj ref = res.register(inter.visit(this.ref, context));
-        if (res.error != null) return res;
-
-        Pair<Obj, RTError> pair = ref.deref();
-        if (pair.b != null) return res.failure(pair.b);
-        return res.success(pair.a);
-    }
-
     @Override
     public Node optimize() {
         return new DerefNode(ref.optimize());
@@ -39,7 +23,7 @@ public class DerefNode extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(List.of(ref));
+        return new ArrayList<>(Collections.singletonList(ref));
     }
 
     @Override

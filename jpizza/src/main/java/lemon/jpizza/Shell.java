@@ -7,37 +7,24 @@ import lemon.jpizza.compiler.values.Var;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.compiler.vm.VMResult;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.contextuals.SymbolTable;
 import lemon.jpizza.errors.Error;
-import lemon.jpizza.errors.RTError;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.generators.Lexer;
 import lemon.jpizza.generators.Optimizer;
 import lemon.jpizza.generators.Parser;
-import lemon.jpizza.libraries.*;
-import lemon.jpizza.libraries.httpretzel.HTTPretzel;
-import lemon.jpizza.libraries.jdraw.JDraw;
-import lemon.jpizza.libraries.pdl.SafeSocks;
-import lemon.jpizza.libraries.socks.SockLib;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.nodes.TreePrinter;
 import lemon.jpizza.nodes.expressions.BodyNode;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.executables.ClassInstance;
 import lemon.jpizza.results.ParseResult;
-import lemon.jpizza.results.RTResult;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Shell {
 
     public static final Logger logger = new Logger();
-    public static final SymbolTable globalSymbolTable = new SymbolTable();
     public static String root;
     public static VM vm;
     public static final Map<String, Var> globals = new HashMap<>();
@@ -60,22 +47,6 @@ public class Shell {
         };
     }
 
-    public static void initLibs() {
-        // Load librarys
-        BuiltInFunction.initialize();
-        SysLib.initialize();
-        JGens.initialize();
-        GUIs.initialize();
-        FileLib.initialize();
-        SockLib.initialize();
-        HTTPLIB.initialize();
-        JasonLib.initialize();
-        JDraw.initialize();
-        HTTPretzel.initialize();
-        Time.initialize();
-        SafeSocks.initialize();
-    }
-
     static boolean hasFlag(int target, int flag) {
         return (target & flag) == flag;
     }
@@ -90,10 +61,16 @@ public class Shell {
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-                case "-c" -> flags |= Flags.COMPILE;
-                case "-rf" -> flags |= Flags.REFACTOR;
-                case "-r" -> flags |= Flags.RUN;
-                case "-o" -> {
+                case "-c":
+                    flags |= Flags.COMPILE;
+                    break;
+                case "-rf":
+                    flags |= Flags.REFACTOR;
+                    break;
+                case "-r":
+                    flags |= Flags.RUN;
+                    break;
+                case "-o":
                     if (i + 1 < args.length) {
                         to = args[i + 1];
                         i++;
@@ -101,15 +78,15 @@ public class Shell {
                     else {
                         Shell.logger.fail("-o requires an argument");
                     }
-                }
-                default -> {
+                    break;
+                default:
                     if (args[i].startsWith("-")) {
                         Shell.logger.fail("Unknown option: " + args[i]);
                     }
                     else {
                         target = args[i];
                     }
-                }
+                    break;
             }
             flags &= ~Flags.SHELL;
         }
@@ -149,12 +126,17 @@ public class Shell {
         else {
             // .devp is the raw file format
             // It contants the source code
+            Path path = Paths.get(args[0]);
             if (target.endsWith(".devp")) {
-                if (Files.exists(Path.of(args[0]))) {
-                    String scrpt = Files.readString(Path.of(args[0]));
-                    String dir = Path.of(args[0]).toString();
+                if (Files.exists(path)) {
+                    String scrpt = Files.lines(path).collect(Collectors.joining("\n"));
+
+                    String dir = path.toString();
+
                     String[] dsfn = getFNDirs(dir);
-                    String fn = dsfn[0]; String newDir = dsfn[1];
+                    String fn = dsfn[0];
+                    String newDir = dsfn[1];
+
                     System.setProperty("user.dir", newDir);
                     if (hasFlag(flags, Flags.RUN)) {
                         Pair<JFunc, Error> res = compile(fn, scrpt);
@@ -187,10 +169,13 @@ public class Shell {
                 }
                 else if (hasFlag(flags, Flags.RUN)) {
                     // Run the compiled file
-                    if (Files.exists(Path.of(args[0]))) {
-                        String dir = Path.of(args[0]).toString();
+                    if (Files.exists(path)) {
+                        String dir = path.toString();
+
                         String[] dsfn = getFNDirs(dir);
-                        String fn = dsfn[0]; String newDir = dsfn[1];
+                        String fn = dsfn[0];
+                        String newDir = dsfn[1];
+
                         System.setProperty("user.dir", newDir);
                         runCompiled(fn, args[0], args);
                     }
@@ -245,31 +230,6 @@ public class Shell {
         return new Pair<>(body.statements, null);
     }
 
-    public static Pair<Obj, Error> run(String fn, String text, boolean log) {
-        return run(fn, text, true, log);
-    }
-    public static Pair<Obj, Error> run(String fn, String text, boolean main, boolean log) {
-        Pair<List<Node>, Error> ast = getAst(fn, text);
-        if (ast.b != null) return new Pair<>(null, ast.b);
-        Context context = new Context(fn, null, null);
-        context.symbolTable = globalSymbolTable;
-        Interpreter inter = new Interpreter();
-        if (main) inter.makeMain();
-        RTResult result;
-        try {
-            result = inter.interpret(ast.a, context, log);
-            if (result.error != null) return new Pair<>(result.value, result.error);
-            result.register(inter.finish(context));
-        } catch (OutOfMemoryError e) {
-            return new Pair<>(null, RTError.Internal(
-                    null, null,
-                    "Out of memory",
-                    context
-            ));
-        }
-        return new Pair<>(result.value, result.error);
-    }
-
     public static Pair<JFunc, Error> compile(String fn, String text) {
         return compile(fn, text, false);
     }
@@ -302,10 +262,10 @@ public class Shell {
             fout.close();
         } catch (IOException e) {
             e.printStackTrace();
-            return RTError.Internal(
+            return new Error(
                     null, null,
-                    "Could not write to file",
-                    null
+                    "Internal",
+                    "Could not write to file"
             );
         }
 
@@ -355,16 +315,6 @@ public class Shell {
         } catch (IOException e) {
             Shell.logger.fail("File is not readable!");
         }
-    }
-
-    //Another public static 
-    public static Pair<ClassInstance, Error> imprt(String fn, String text) {
-        Pair<List<Node>, Error> ast = getAst(fn, text);
-        if (ast.b != null) return new Pair<>(null, ast.b);
-        Context context = new Context(fn, null, null);
-        context.symbolTable = new SymbolTable(globalSymbolTable);
-        RTResult result = new Interpreter().interpret(ast.a, context, false);
-        return new Pair<>(new ClassInstance(context, fn), result.error);
     }
 
 }

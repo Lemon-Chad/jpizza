@@ -170,14 +170,23 @@ public class Lexer {
         if (currentChar != null && currentChar.equals("=")) {
             advance();
 
+            TokenType type = null;
+            switch (c) {
+                case "!":
+                    type = TokenType.BangEqual;
+                    break;
+                case "=":
+                    type = TokenType.EqualEqual;
+                    break;
+                case "<":
+                    type = TokenType.LessEquals;
+                    break;
+                case ">":
+                    type = TokenType.GreaterEquals;
+                    break;
+            }
             return new Pair<>(
-                    new Token(switch (c) {
-                        case "!" -> TokenType.BangEqual;
-                        case ">" -> TokenType.GreaterEquals;
-                        case "<" -> TokenType.LessEquals;
-                        case "=" -> TokenType.EqualEqual;
-                        default -> null;
-                    }, pos_start),
+                    new Token(type, pos_start),
                     null
             );
         }
@@ -188,13 +197,20 @@ public class Lexer {
             );
         }
         else {
+            TokenType type = null;
+            switch (c) {
+                case "!":
+                    type = TokenType.Bang;
+                    break;
+                case "<":
+                    type = TokenType.LeftAngle;
+                    break;
+                case ">":
+                    type = TokenType.RightAngle;
+                    break;
+            }
             return new Pair<>(
-                    new Token(switch (c) {
-                        case ">" -> TokenType.RightAngle;
-                        case "<" -> TokenType.LeftAngle;
-                        case "!" -> TokenType.Bang;
-                        default -> null;
-                    }, pos_start),
+                    new Token(type, pos_start),
                     null
             );
         }

@@ -1,11 +1,7 @@
 package lemon.jpizza.nodes.values;
 
 import lemon.jpizza.*;
-import lemon.jpizza.contextuals.Context;
-import lemon.jpizza.generators.Interpreter;
 import lemon.jpizza.nodes.Node;
-import lemon.jpizza.objects.primitives.Bool;
-import lemon.jpizza.results.RTResult;
 
 public class BooleanNode extends ValueNode {
     public final boolean val;
@@ -20,11 +16,6 @@ public class BooleanNode extends ValueNode {
         super(new Token(TokenType.Boolean, start, end));
         this.val = val;
         jptype = JPType.Boolean;
-    }
-
-    public RTResult visit(Interpreter inter, Context context) {
-        return new RTResult().success(new Bool(val).set_context(context)
-                .set_pos(pos_start, pos_end));
     }
 
     @Override

@@ -2,11 +2,8 @@ package lemon.jpizza;
 
 import com.github.tomaslanger.chalk.Chalk;
 import lemon.jpizza.compiler.values.Value;
-import lemon.jpizza.objects.Obj;
-import lemon.jpizza.objects.primitives.Bytes;
-import lemon.jpizza.objects.primitives.Dict;
-import lemon.jpizza.objects.primitives.PList;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -30,48 +27,7 @@ public class Logger {
 
     @SuppressWarnings("DuplicatedCode")
     public String ots(Object text, boolean stringInner) {
-        if (text instanceof PList) {
-            StringBuilder sb = new StringBuilder();
-            List<Obj> l = ((Obj) text).list;
-
-            for (int i = 0; i < l.size(); i++)
-                if (i >= omitt && i < l.size() - omitt) {
-                    if (i == omitt + 1) sb.append("..., ");
-                }
-                else sb.append(ots(l.get(i))).append(", ");
-
-            return "[ " + sb + "len=" + l.size() + " ]";
-        }
-        else if (text instanceof Dict) {
-            StringBuilder sb = new StringBuilder();
-            Map<Obj, Obj> d = ((Obj) text).map;
-
-            Obj[] keys = d.keySet().toArray(new Obj[0]);
-            for (int i = 0; i < keys.length; i++)
-                if (i >= omitt && i < keys.length - omitt) {
-                    if (i == omitt + 1) sb.append("..., ");
-                }
-                else sb.append(ots(keys[i])).append(": ")
-                        .append(ots(d.get(keys[i]))).append(", ");
-
-            return "{ " + sb + "len=" + keys.length + " }";
-        }
-        else if (text instanceof Bytes) {
-            StringBuilder sb = new StringBuilder();
-            Obj b = (Obj) text;
-
-            for (int i = 0; i < b.arr.length; i++)
-                if (i >= omitt && i < b.arr.length - omitt) {
-                    if (i == omitt + 1) sb.append("..., ");
-                }
-                else sb.append(b.arr[i]).append(", ");
-
-            return "{ " + sb + "len=" + b.arr.length + " }";
-        }
-        else if (text instanceof Obj) {
-            return ((Obj) text).astring().toString();
-        }
-        else if (text instanceof Value) {
+        if (text instanceof Value) {
             Value val = (Value) text;
             if (val.isList) {
                 StringBuilder sb = new StringBuilder();
@@ -124,8 +80,8 @@ public class Logger {
     }
 
     private String getTape(String message) {
-        return " ".repeat((tape - message.length()) / 2) + message + "\n" +
-                (Shell.fileEncoding.equals("UTF-8") ? "─" : "_").repeat(tape);
+        return String.join("", Collections.nCopies((tape - message.length()) / 2, " ")) + message + "\n" +
+                String.join("", Collections.nCopies(tape, Shell.fileEncoding.equals("UTF-8") ? "─" : "_"));
     }
 
     public void fail(Object text) {
