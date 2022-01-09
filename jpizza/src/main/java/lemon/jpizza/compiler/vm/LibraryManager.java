@@ -4,6 +4,8 @@ import lemon.jpizza.Pair;
 import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.libraries.*;
 import lemon.jpizza.compiler.libraries.awt.AbstractWindowToolkit;
+import lemon.jpizza.compiler.libraries.pretzel.Pretzel;
+import lemon.jpizza.compiler.libraries.puddle.PDL;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
@@ -78,7 +80,22 @@ public class LibraryManager {
         sys();
         awt();
         json();
+        httpx();
+        puddle();
         guis();
+        pretzel();
+    }
+
+    private void pretzel() {
+        new Pretzel(vm).setup();
+    }
+
+    private void puddle() {
+        new PDL(vm).setup();
+    }
+
+    private void httpx() {
+        new HTTPx(vm).setup();
     }
 
     private void awt() {
