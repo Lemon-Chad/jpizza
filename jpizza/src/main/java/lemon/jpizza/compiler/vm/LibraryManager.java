@@ -2,11 +2,7 @@ package lemon.jpizza.compiler.vm;
 
 import lemon.jpizza.Pair;
 import lemon.jpizza.Shell;
-import lemon.jpizza.compiler.libraries.Generators;
-import lemon.jpizza.compiler.libraries.IOFile;
-import lemon.jpizza.compiler.libraries.JSystem;
-import lemon.jpizza.compiler.libraries.GUIs;
-import lemon.jpizza.compiler.libraries.Time;
+import lemon.jpizza.compiler.libraries.*;
 import lemon.jpizza.compiler.libraries.awt.AbstractWindowToolkit;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JFunc;
@@ -81,12 +77,15 @@ public class LibraryManager {
         io();
         sys();
         awt();
+        json();
         guis();
     }
 
     private void awt() {
         new AbstractWindowToolkit(vm).setup();
     }
+
+    private void json() { new JPSon(vm).setup(); }
 
     private void sys() {
         new JSystem(vm).setup();
