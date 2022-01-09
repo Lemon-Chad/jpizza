@@ -264,7 +264,12 @@ public class Parser {
             advance();
             return res.success(new PassNode(pos_start, currentToken.pos_end.copy()));
         }
-        if (currentToken.type == TokenType.Keyword) switch (currentToken.value.toString()) {
+        else if (currentToken.type == TokenType.LeftBrace) {
+            Node statements = res.register(block());
+            if (res.error != null) return res;
+            return res.success(new ScopeNode(null, statements));
+        }
+        else if (currentToken.type == TokenType.Keyword) switch (currentToken.value.toString()) {
             case "for": {
                 Node forExpr = res.register(this.forExpr());
                 if (res.error != null)
@@ -285,6 +290,7 @@ public class Parser {
                 res.registerAdvancement();
                 advance();
                 Node expr = null;
+                statement = false;
                 if (currentToken.type != TokenType.Newline && currentToken.type != TokenType.InvisibleNewline) {
                     expr = res.register(this.expr());
                     if (res.error != null)
@@ -590,7 +596,7 @@ public class Parser {
 
                 if (currentToken.type != TokenType.RightBrace) return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '}'a"
+                        "Expected '}'"
                 ));
                 res.registerAdvancement(); advance();
 
@@ -895,12 +901,7 @@ public class Parser {
 
         // If it's a statement, then { means scope not dictionary
         // However, the scope keyword means it's a scope anywhere
-        if (isStatement && tok.type == TokenType.LeftBrace) {
-            Node statements = res.register(block());
-            if (res.error != null) return res;
-            return res.success(new ScopeNode(null, statements));
-        }
-        else if (tok.type == TokenType.Keyword) switch (tok.value.toString()) {
+        if (tok.type == TokenType.Keyword) switch (tok.value.toString()) {
             case "attr": {
                 advance();
                 res.registerAdvancement();
@@ -1180,7 +1181,7 @@ public class Parser {
 
         if (currentToken.type != TokenType.RightBrace) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'b"
+                "Expected '}'"
         ));
         endLine(1);
         res.registerAdvancement(); advance();
@@ -1310,7 +1311,7 @@ public class Parser {
                 } while (currentToken.type == TokenType.Comma);
                 if (currentToken.type != TokenType.RightBrace) return res.failure(Error.ExpectedCharError(
                         currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                        "Expected '}'c"
+                        "Expected '}'"
                 ));
                 res.registerAdvancement(); advance();
             }
@@ -1326,7 +1327,7 @@ public class Parser {
         if (!currentToken.type.equals(TokenType.RightBrace))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'d"
+                    "Expected '}'"
             ));
         endLine(1);
         res.registerAdvancement(); advance();
@@ -1403,7 +1404,7 @@ public class Parser {
         if (!currentToken.type.equals(TokenType.RightBrace))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'e"
+                    "Expected '}'"
             ));
         endLine(1);
         res.registerAdvancement(); advance();
@@ -1985,7 +1986,7 @@ public class Parser {
         if (!currentToken.type.equals(TokenType.RightBrace))
             return res.failure(Error.ExpectedCharError(
                     currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                    "Expected '}'f"
+                    "Expected '}'"
             ));
         if (vLine) endLine(1);
         res.registerAdvancement(); advance();
@@ -2502,7 +2503,7 @@ public class Parser {
         }
         if (!currentToken.type.equals(TokenType.RightBrace)) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'g"
+                "Expected '}'"
         )); res.registerAdvancement(); advance();
 
         return res.success(new DictNode(dict, pos_start, currentToken.pos_end.copy()));
@@ -2915,7 +2916,7 @@ public class Parser {
         }
         if (!currentToken.type.equals(TokenType.RightBrace)) return res.failure(Error.ExpectedCharError(
                 currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                "Expected '}'h"
+                "Expected '}'"
         ));
         endLine(1);
         advance(); res.registerAdvancement();

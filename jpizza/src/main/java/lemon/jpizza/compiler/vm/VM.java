@@ -68,6 +68,9 @@ public class VM {
 
     public boolean safe = false;
     public boolean failed = false;
+    public boolean sim = false;
+
+    public NativeResult res;
 
     JStack<Pair<Integer, Integer>> nehStack = new JStack<>(FRAMES_MAX);
 
@@ -76,12 +79,16 @@ public class VM {
     }
 
     public VM(JFunc function, Map<String, Var> globals) {
+        this(new JClosure(function), globals);
+    }
+
+    public VM(JClosure closure, Map<String, Var> globals) {
         Shell.logger.debug("VM create\n");
 
         this.ip = 0;
 
         this.stack = new JStack<>(MAX_STACK_SIZE);
-        push(new Value(function));
+        push(new Value(closure));
 
         this.globals = globals;
         this.tracebacks = new Stack<>();
@@ -91,10 +98,22 @@ public class VM {
 
         this.frames = new JStack<>(FRAMES_MAX);
 
-        this.frame = new CallFrame(new JClosure(function), 0, 0, "void");
+        this.frame = new CallFrame(closure, 0, 0, "void");
         frames.push(frame);
 
         setup();
+    }
+
+    public static NativeResult Run(JClosure function, Value[] args) {
+        if (function.function.totarity != args.length) {
+            return NativeResult.Err("Argument Count", "Expected " + function.function.totarity + " arguments, got " + args.length);
+        }
+        VM vm = new VM(function, new HashMap<>());
+        vm.sim = true;
+        for (Value arg : args)
+            vm.push(arg);
+        vm.run();
+        return vm.res;
     }
 
     void setup() {
@@ -178,6 +197,10 @@ public class VM {
             return;
 
         lastError = new Pair<>(message, reason);
+        if (sim) {
+            res = NativeResult.Err(message, reason);
+            return;
+        }
 
         int idx = position.index;
         int len = position.len;
@@ -1466,6 +1489,8 @@ public class VM {
                     if (frame.catchError) result = new Value(new Result(result));
                     CallFrame frame = frames.pop();
                     if (frames.count == 0) {
+                        if (sim)
+                            this.res = NativeResult.Ok(result);
                         res = VMResult.EXIT;
                         break;
                     }
