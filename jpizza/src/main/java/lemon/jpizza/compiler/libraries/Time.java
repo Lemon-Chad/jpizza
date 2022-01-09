@@ -1,5 +1,7 @@
 package lemon.jpizza.compiler.libraries;
 
+import lemon.jpizza.compiler.values.Value;
+import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
 
@@ -25,5 +27,12 @@ public class Time extends JPExtension {
             }
             return Ok;
         }, Collections.singletonList("num"));
+        func("stopwatch", (args) -> {
+            long start = System.currentTimeMillis();
+            NativeResult ret = VM.Run(args[0].asClosure(), new Value[0]);
+            if (!ret.ok()) return ret;
+            long end = System.currentTimeMillis();
+            return Ok(end - start);
+        }, Collections.singletonList("function"));
     }
 }
