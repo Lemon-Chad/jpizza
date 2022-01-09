@@ -114,13 +114,13 @@ public class HTTPx extends JPExtension {
     @Override
     public void setup() {
         request("GET", false);
-        request("POST", true);
-        request("PUT", true);
         request("DELETE", false);
-        request("PATCH", true);
         request("HEAD", false);
         request("OPTIONS", false);
         request("TRACE", false);
         request("CONNECT", false);
+        request("POST", true);
+        request("PUT", true);
+        request("PATCH", true);
     }
 }
