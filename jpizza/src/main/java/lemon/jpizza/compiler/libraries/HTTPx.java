@@ -8,6 +8,8 @@ import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
 
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -33,8 +35,8 @@ public class HTTPx extends JPExtension {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             conn.setRequestProperty(entry.getKey(), entry.getValue());
         }
-        conn.setConnectTimeout((int) Duration.of(10, ChronoUnit.SECONDS).getSeconds());
-        conn.setReadTimeout((int) Duration.of(10, ChronoUnit.SECONDS).getSeconds());
+        conn.setConnectTimeout(10_000);
+        conn.setReadTimeout(10_000);
         return conn;
     }
 
@@ -50,7 +52,20 @@ public class HTTPx extends JPExtension {
         String body;
         try {
             status = conn.getResponseCode();
-            body = conn.getResponseMessage();
+
+            BufferedReader br = null;
+            if (100 <= conn.getResponseCode() && conn.getResponseCode() <= 399) {
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            StringBuilder sb = new StringBuilder();
+            String output;
+            while ((output = br.readLine()) != null) {
+                sb.append(output);
+            }
+            body = sb.toString();
         } catch (IOException e) {
             return Err("Connection", e.getMessage());
         }
