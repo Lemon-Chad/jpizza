@@ -294,7 +294,7 @@ public class LibraryManager {
         }, Arrays.asList("dict", "any", "any"));
         define("get", (args) -> {
             if (args[0].asMap().containsKey(args[1]))
-                return NativeResult.Ok(args[0].asMap().getOrDefault(args[1], new Value()));
+                return NativeResult.Ok(args[0].get(args[1]));
             return NativeResult.Err("Key", "Key not found");
         }, Arrays.asList("dict", "any"));
         define("delete", (args) -> {

@@ -914,4 +914,14 @@ public class Value {
         }
         return null;
     }
+
+    public Value get(Value other) {
+        Map<Value, Value> map = asMap();
+        for (Value key : map.keySet()) {
+            if (other.equals(key)) {
+                return map.get(key);
+            }
+        }
+        return new Value();
+    }
 }
