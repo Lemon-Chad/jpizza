@@ -829,15 +829,22 @@ public class Compiler {
         int[] jumps = new int[node.cases.size()];
         for (int i = 0; i < jumps.length; i++) {
             Case caze = node.cases.get(i);
+
             compile(node.reference);
+            int height = localCount;
             compile(caze.condition);
             emit(OpCode.Equal, node.pos_start, node.pos_end);
+
             int jump = emitJump(OpCode.JumpIfFalse, node.pos_start, node.pos_end);
             emit(OpCode.Pop, node.pos_start, node.pos_end);
+
             compile(caze.statements);
             jumps[i] = emitJump(OpCode.Jump, node.pos_start, node.pos_end);
             patchJump(jump);
+
             emit(OpCode.Pop, node.pos_start, node.pos_end);
+
+            localCount = height;
         }
 
         if (node.elseCase != null) {
