@@ -367,29 +367,6 @@ public class Parser {
                     return res;
                 return res.success(doExpr);
             }
-            case "scope": {
-                res.registerAdvancement();
-                advance();
-                String name = null;
-                if (currentToken.type == TokenType.LeftBracket) {
-                    Token n = res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
-                    if (res.error != null) return res;
-
-                    name = n.value.toString();
-
-                    res.registerAdvancement();
-                    advance();
-                    if (currentToken.type != TokenType.RightBracket) return res.failure(Error.ExpectedCharError(
-                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
-                            "Expected ']'"
-                    ));
-                    res.registerAdvancement();
-                    advance();
-                }
-                Node statements = res.register(block());
-                if (res.error != null) return res;
-                return res.success(new ScopeNode(name, statements));
-            }
             case "import": {
                 advance();
                 res.registerAdvancement();
@@ -893,7 +870,6 @@ public class Parser {
     }
 
     public ParseResult<Node> atom() {
-        boolean isStatement = statement;
         statement = false;
 
         ParseResult<Node> res = new ParseResult<>();
@@ -914,6 +890,29 @@ public class Parser {
                 advance();
                 res.registerAdvancement();
                 return res.success(new AttrAccessNode(var_name_tok));
+            }
+            case "scope": {
+                res.registerAdvancement();
+                advance();
+                String name = null;
+                if (currentToken.type == TokenType.LeftBracket) {
+                    Token n = res.register(expectIdentifier("Scope", NamingConvention.SnakeCase));
+                    if (res.error != null) return res;
+
+                    name = n.value.toString();
+
+                    res.registerAdvancement();
+                    advance();
+                    if (currentToken.type != TokenType.RightBracket) return res.failure(Error.ExpectedCharError(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected ']'"
+                    ));
+                    res.registerAdvancement();
+                    advance();
+                }
+                Node statements = res.register(block());
+                if (res.error != null) return res;
+                return res.success(new ScopeNode(name, statements));
             }
             case "match": {
                 Node matchExpr = res.register(this.matchExpr());
@@ -1530,7 +1529,7 @@ public class Parser {
                     res.registerAdvancement();
                     advance();
                     if (!def) {
-                        condition = res.register(expr());
+                        condition = res.register(statement());
                         if (res.error != null) return res;
                     }
                 else condition = null;
