@@ -1544,7 +1544,7 @@ public class Parser {
             ));
             res.registerAdvancement(); advance();
 
-            body = res.register(expr());
+            body = res.register(statement());
             if (res.error != null) return res;
 
             if (def)
