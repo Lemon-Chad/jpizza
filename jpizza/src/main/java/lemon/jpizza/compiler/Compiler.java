@@ -1494,6 +1494,7 @@ public class Compiler {
                             tok,
                             new VarAccessNode(tok)
                         ));
+                        compiler.emit(OpCode.Pop, tok.pos_start, tok.pos_end);
                     }
                 },
                 (compiler) -> {}
