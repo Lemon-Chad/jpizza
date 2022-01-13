@@ -950,7 +950,7 @@ public class VM {
                     return runBin(op == OpCode.Get ? "get" : "bracket", index, collection.asInstance());
                 }
                 else if (collection.isMap) {
-                    push(collection.asMap().getOrDefault(index, new Value()));
+                    push(collection.get(index));
                 }
                 else {
                     runtimeError("Type", "Type " + collection.type() + " does not have members");
