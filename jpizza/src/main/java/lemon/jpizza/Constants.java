@@ -241,7 +241,7 @@ public class Constants {
                 "    prv internal: dict;\n" +
                 "\n" +
                 "    ingredients<..pairs>(K, V) {\n" +
-                "        internal => {};\n" +
+                "        internal => ({});\n" +
                 "        for (pair <- pairs) {\n" +
                 "            if (type(pair) != \"list\" | size(pair) != 2)\n" +
                 "                throw \"Type\", \"Expected a key-value pair ([k, v])\";\n" +
@@ -266,7 +266,7 @@ public class Constants {
                 "    );\n" +
                 "\n" +
                 "    mthd bin string {\n" +
-                "        let new => {};\n" +
+                "        let new => ({});\n" +
                 "        for (key <- list(internal))\n" +
                 "            set(new, str(key), str(internal[key]));\n" +
                 "        str(new)\n" +
