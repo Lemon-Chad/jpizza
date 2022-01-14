@@ -564,8 +564,6 @@ public class Parser {
                             "Expected identifier"
                     ));
 
-                    matchConvention(currentToken, "Variable name", NamingConvention.CamelCase);
-
                     destructs.add(currentToken);
                     res.registerAdvancement();
                     advance();

@@ -9,15 +9,8 @@ import java.util.stream.Collectors;
 
 public class RunTest {
     public static void main(String[] args) throws IOException {
-        String text = Files.lines(Paths.get("UnitTest.devp")).collect(Collectors.joining("\n"));
-
-        Error e = Shell.compile("UnitTest.devp", text, "UnitTest.jbox");
-        if (e != null) {
-            Shell.logger.fail(e.asString());
-            return;
-        }
         double start = System.currentTimeMillis();
-        Shell.runCompiled("UnitTest.jbox", "UnitTest.jbox", args);
+        Shell.main(new String[]{ "UnitTest.devp", "-rf", "-r" });
         double end = System.currentTimeMillis();
         Shell.logger.outln("Time: " + (end - start) + "ms");
     }

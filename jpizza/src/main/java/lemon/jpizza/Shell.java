@@ -114,7 +114,7 @@ public class Shell {
             Shell.logger.outln("  v\t\tPrint version");
             Shell.logger.outln("  docs\t\tPrint documentation");
         }
-        else if (Objects.equals(target, "version")) {
+        else if (Objects.equals(target, "v")) {
             Shell.logger.outln("jpizza version " + VM.VERSION);
         }
         else if (Objects.equals(target, "docs")) {

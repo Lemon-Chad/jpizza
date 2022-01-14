@@ -157,10 +157,10 @@ free lst;
 
 printTape("DICTIONARIES");
 
-var coolDict => {
+var coolDict => ({
     "abc": 123,
     "Hello": "world."
-};
+});
 
 set(coolDict, "Hello", "world!");
 <> Sets the value of the key "Hello" from "world." to "world!".
