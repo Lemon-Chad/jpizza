@@ -27,7 +27,7 @@ import static lemon.jpizza.Constants.repeat;
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 256;
-    public static final String VERSION = "2.0.1";
+    public static final String VERSION = "2.1.0";
 
     private static class Traceback {
         String filename;
