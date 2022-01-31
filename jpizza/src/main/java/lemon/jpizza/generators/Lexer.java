@@ -50,7 +50,7 @@ public class Lexer {
     public void skip_multiline_comment() {
         advance();
 
-        while (currentChar != null && next() != null && !(currentChar + next()).equals("<<")) {
+        while (currentChar != null && next() != null && !(currentChar + next()).equals("*/")) {
             advance();
         }
 
@@ -63,10 +63,10 @@ public class Lexer {
             if (!currentChar.matches(".") || Character.isWhitespace(currentChar.toCharArray()[0])) {
                 advance();
             }
-            else if (next() != null && (currentChar + next()).equals("<>")) {
+            else if (next() != null && (currentChar + next()).equals("//")) {
                 skip_comment();
             }
-            else if (next() != null && (currentChar + next()).equals("<<")) {
+            else if (next() != null && (currentChar + next()).equals("/*")) {
                 skip_multiline_comment();
             }
             else if ("\"'`".contains(currentChar)) {
