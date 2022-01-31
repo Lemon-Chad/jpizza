@@ -1842,7 +1842,7 @@ public class Parser {
         boolean optionals = false;
 
         if (currentToken.type.equals(TokenType.LeftAngle)) {
-            if (peek(1) != null && peek(1).type != TokenType.Backslash) {
+            if (peek(1) != null && peek(1).type != TokenType.Backslash && peek(1).type != TokenType.RightAngle) {
                 boolean args;
                 do {
                     res.registerAdvancement();
