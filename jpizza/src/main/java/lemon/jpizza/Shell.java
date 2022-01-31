@@ -31,10 +31,14 @@ public class Shell {
     public static final String fileEncoding = System.getProperty("file.encoding");
 
     static class Flags {
-        public static final int COMPILE   = 0b0001;
-        public static final int RUN       = 0b0010;
-        public static final int REFACTOR  = 0b0100;
-        public static final int SHELL     = 0b1000;
+        public static final int COMPILE   = 0b00000001;
+        public static final int REFACTOR  = 0b00000100;
+        public static final int HELP      = 0b00001000;
+        public static final int VERSION   = 0b00010000;
+        public static final int DOCS      = 0b00100000;
+        public static final int OUTPUT    = 0b01000000;
+        public static final int RUN       = 0b10000000;
+        public static final int SHELL     = 0b00000000;
     }
 
     public static String[] getFNDirs(String dir) {
@@ -58,50 +62,95 @@ public class Shell {
         int flags = Flags.SHELL;
         String to = null;
         String target = null;
+        String refactor_to = null;
 
         for (int i = 0; i < args.length; i++) {
-            switch (args[i]) {
-                case "-c":
-                    flags |= Flags.COMPILE;
-                    break;
-                case "-rf":
-                    flags |= Flags.REFACTOR;
-                    break;
-                case "-r":
-                    flags |= Flags.RUN;
-                    break;
-                case "-o":
-                    if (i + 1 < args.length) {
-                        to = args[i + 1];
-                        i++;
+            if (args[i].startsWith("--")) {
+                switch (args[i].substring(2)) {
+                    case "compile" -> {
+                        if (i + 1 < args.length) {
+                            target = args[i + 1];
+                            i++;
+                        } else {
+                            Shell.logger.fail("-c requires an argument");
+                        }
+                        flags |= Flags.COMPILE;
                     }
-                    else {
-                        Shell.logger.fail("-o requires an argument");
+                    case "refactor" -> {
+                        if (i + 1 < args.length) {
+                            refactor_to = args[i + 1];
+                            i++;
+                        } else {
+                            Shell.logger.fail("-R requires an argument");
+                        }
+                        flags |= Flags.COMPILE;
                     }
-                    break;
-                default:
-                    if (args[i].startsWith("-")) {
-                        Shell.logger.fail("Unknown option: " + args[i]);
+                    case "help" -> flags |= Flags.HELP;
+                    case "version" -> flags |= Flags.VERSION;
+                    case "docs" -> flags |= Flags.DOCS;
+                    case "output" -> {
+                        if (i + 1 < args.length) {
+                            to = args[i + 1];
+                            i++;
+                        } else {
+                            Shell.logger.fail("-o requires an argument");
+                        }
+                        flags |= Flags.OUTPUT;
                     }
-                    else {
-                        target = args[i];
+                    default -> Shell.logger.fail("Unknown argument: " + args[i]);
+                }
+            } else if (args[i].startsWith("-")) {
+                String shortArg = args[i];
+                for (int c = 1; c < shortArg.length(); c++) {
+                    switch (String.valueOf(shortArg.charAt(c))) {
+                        case "c" -> {
+                            if (i + 1 < args.length) {
+                                target = args[i + 1];
+                                i++;
+                            } else {
+                                Shell.logger.fail("-c requires an argument");
+                            }
+                            flags |= Flags.COMPILE;
+                        }
+                        case "R" -> {
+                            if (i + 1 < args.length) {
+                                refactor_to = args[i + 1];
+                                i++;
+                            } else {
+                                Shell.logger.fail("-R requires an argument");
+                            }
+                            flags |= Flags.COMPILE;
+                        }
+                        case "h" -> flags |= Flags.HELP;
+                        case "v" -> flags |= Flags.VERSION;
+                        case "o" -> {
+                            if (i + 1 < args.length) {
+                                to = args[i + 1];
+                                i++;
+                            } else {
+                                Shell.logger.fail("-o requires an argument");
+                            }
+                            flags |= Flags.OUTPUT;
+                        }
+                        default -> Shell.logger.fail("Unknown argument: " + shortArg.charAt(c));
                     }
-                    break;
+                }
+            } else {
+                if (args.length > 1) Shell.logger.fail("Invalid argument: " + args[i]);
+                else {
+                    target = args[i];
+                    flags = Flags.RUN;
+                }
             }
-            flags &= ~Flags.SHELL;
         }
 
         if (flags == Flags.SHELL) repl();
-
-        if (hasFlag(flags, Flags.COMPILE) && hasFlag(flags, Flags.RUN)) {
-            Shell.logger.fail("Cannot compile and run at the same time");
-        }
 
         if (hasFlag(flags, Flags.REFACTOR)) {
             Shell.logger.enableTips();
         }
 
-        if (Objects.equals(target, "help")) {
+        if (hasFlag(flags, Flags.HELP)) {
             Shell.logger.outln("Usage: jpizza [options] [target]");
             Shell.logger.outln("Options:");
             Shell.logger.outln("  -c\t\tCompile target");
@@ -114,79 +163,40 @@ public class Shell {
             Shell.logger.outln("  v\t\tPrint version");
             Shell.logger.outln("  docs\t\tPrint documentation");
         }
-        else if (Objects.equals(target, "v")) {
+        if (hasFlag(flags, Flags.VERSION)) {
             Shell.logger.outln("jpizza version " + VM.VERSION);
         }
-        else if (Objects.equals(target, "docs")) {
+        if (hasFlag(flags, Flags.DOCS)) {
             Shell.logger.outln("Documentation can be found at https://jpizza.readthedocs.io/en/latest/");
         }
-        else if (target == null && !(flags == Flags.SHELL)) {
-            Shell.logger.fail("No target specified");
-        }
-        else {
-            // .devp is the raw file format
-            // It contants the source code
-            Path path = Paths.get(args[0]);
-            if (target.endsWith(".devp")) {
-                if (Files.exists(path)) {
-                    String scrpt = Files.lines(path).collect(Collectors.joining("\n"));
-
-                    String dir = path.toString();
-
-                    String[] dsfn = getFNDirs(dir);
-                    String fn = dsfn[0];
-                    String newDir = dsfn[1];
-
-                    System.setProperty("user.dir", newDir);
-                    if (hasFlag(flags, Flags.RUN)) {
-                        Pair<JFunc, Error> res = compile(fn, scrpt);
-                        if (res.b != null)
-                            Shell.logger.fail(res.b.asString());
-                        runCompiled(fn, res.a, args);
-                    }
-                    else if (hasFlag(flags, Flags.COMPILE)) {
-                        to = to == null ? newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox" : to + ".jbox";
-                        Error e = compile(fn, scrpt, to);
-                        if (e != null)
-                            Shell.logger.fail(e.asString());
-                    }
-                }
-                else {
-                    Shell.logger.fail("File does not exist.");
-                }
-            }
-            // .jbox is the compiled file format
-            // It contains the bytecode
-            else if (target.endsWith(".jbox")) {
-                if (hasFlag(flags, Flags.COMPILE)) {
-                    Shell.logger.fail("Cannot compile a compiled file");
-                }
-                else if (hasFlag(flags, Flags.REFACTOR)) {
-                    Shell.logger.fail("Cannot refactor a compiled file");
-                }
-                else if (to != null) {
-                    Shell.logger.fail("Cannot output to a compiled file");
-                }
-                else if (hasFlag(flags, Flags.RUN)) {
-                    // Run the compiled file
-                    if (Files.exists(path)) {
-                        String dir = path.toString();
-
-                        String[] dsfn = getFNDirs(dir);
-                        String fn = dsfn[0];
-                        String newDir = dsfn[1];
-
-                        System.setProperty("user.dir", newDir);
-                        runCompiled(fn, args[0], args);
-                    }
-                    else {
-                        Shell.logger.fail("File does not exist.");
-                    }
-                }
+        if (hasFlag(flags, Flags.COMPILE)) {
+            if (Files.exists(Path.of(target))) {
+                String scrpt = Files.readString(Path.of(target));
+                String dir = Path.of(target).toString();
+                String[] dsfn = getFNDirs(dir);
+                String fn = dsfn[0];
+                String newDir = dsfn[1];
+                System.setProperty("user.dir", newDir);
+                to = to == null ? newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox" : to;
+                Error e = compile(fn, scrpt, to);
+                if (e != null)
+                    Shell.logger.fail(e.asString());
             }
         }
-
+        if (hasFlag(flags, Flags.RUN)) {
+            if (Files.exists(Path.of(args[0]))) {
+                String dir = Path.of(args[0]).toString();
+                String[] dsfn = getFNDirs(dir);
+                String fn = dsfn[0];
+                String newDir = dsfn[1];
+                System.setProperty("user.dir", newDir);
+                runCompiled(fn, args[0], args);
+            } else {
+                Shell.logger.fail("File does not exist.");
+            }
+        }
     }
+
 
     public static void repl() {
         Scanner in = new Scanner(System.in);
@@ -224,8 +234,6 @@ public class Shell {
         ParseResult<Node> ast = parser.parse();
         if (ast.error != null)
             return new Pair<>(null, ast.error);
-//        if (Shell.logger.debug)
-//            Shell.logger.debug(TreePrinter.print(ast.node));
         BodyNode body = (BodyNode) Optimizer.optimize(ast.node);
         return new Pair<>(body.statements, null);
     }
