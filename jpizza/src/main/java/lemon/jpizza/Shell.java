@@ -153,15 +153,13 @@ public class Shell {
         if (hasFlag(flags, Flags.HELP)) {
             Shell.logger.outln("Usage: jpizza [options] [target]");
             Shell.logger.outln("Options:");
-            Shell.logger.outln("  -c\t\tCompile target");
-            Shell.logger.outln("  -r\t\tRun target");
-            Shell.logger.outln("  -o [target]\tOutput target to file");
-            Shell.logger.outln("  -rf\t\tRefactor target");
-            Shell.logger.outln("Targets:");
-            Shell.logger.outln("  help\t\tPrint this help message");
-            Shell.logger.outln("  <file>\tCompile and/or run file");
-            Shell.logger.outln("  v\t\tPrint version");
-            Shell.logger.outln("  docs\t\tPrint documentation");
+            Shell.logger.outln("  -c, --compile [target]\t\tCompile target");
+            Shell.logger.outln("  -o, --output [target]\tOutput target to file");
+            Shell.logger.outln("  -R, --refactor [target]\t\tRefactor target");
+            Shell.logger.outln("  -h, --help\t\tPrint this help message");
+            Shell.logger.outln("  -v, --version\t\tPrint version");
+            Shell.logger.outln("  --docs\t\tPrint link to documentation");
+            Shell.logger.outln("You can pass in a single compiled file as an argument to run it.");
         }
         if (hasFlag(flags, Flags.VERSION)) {
             Shell.logger.outln("jpizza version " + VM.VERSION);
