@@ -979,6 +979,22 @@ public class Parser {
                         identifier
                 ));
             }
+            else if (currentToken.type == TokenType.LeftParen) {
+                // 3(1 + 2) = 3 * (1 + 2)
+                Node node = new NumberNode(tok);
+                while (currentToken.type == TokenType.LeftParen) {
+                    res.registerAdvancement(); advance();
+                    Node expr = res.register(expr());
+                    if (res.error != null) return res;
+                    if (currentToken.type != TokenType.RightParen) return res.failure(Error.ExpectedCharError(
+                            currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                            "Expected ')' to close expression"
+                    ));
+                    res.registerAdvancement(); advance();
+                    node = new BinOpNode(node, TokenType.Star, expr);
+                }
+                return res.success(node);
+            }
             return res.success(new NumberNode(tok));
         }
         else if (tok.type.equals(TokenType.String)) {
