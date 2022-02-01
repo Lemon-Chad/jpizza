@@ -112,6 +112,12 @@ public class Parser {
             "const",
             "var"
     );
+    static final List<String> constructorWords = Arrays.asList(
+            "ingredients",
+            "constructor",
+            "call",
+            "init"
+    );
 
     public interface L<T> {
         ParseResult<T> execute();
@@ -2733,7 +2739,7 @@ public class Parser {
         );
         List<MethDefNode> methods = new ArrayList<>();
         while (currentToken.type.equals(TokenType.Keyword) || currentToken.type.equals(TokenType.Identifier)) {
-            if (currentToken.value.equals("ingredients")) {
+            if (constructorWords.contains(currentToken.value.toString())) {
                 advance(); res.registerAdvancement();
                 argTKs = res.register(gatherArgs());
                 if (res.error != null) return res;
