@@ -507,8 +507,8 @@ public class Compiler {
 
     void compile(DestructNode node) {
         compile(node.target);
-        emit(OpCode.Destruct, node.glob ? -1 : node.subs.size(), node.pos_start, node.pos_end);
-        if (!node.glob) for (Token sub : node.subs) {
+        emit(OpCode.Destruct, node.subs.size(), node.pos_start, node.pos_end);
+        for (Token sub : node.subs) {
             String name = sub.value.toString();
             globals.add(name);
             emit(chunk().addConstant(new Value(name)), sub.pos_start, sub.pos_end);

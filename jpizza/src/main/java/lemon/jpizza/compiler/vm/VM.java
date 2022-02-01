@@ -2007,10 +2007,6 @@ public class VM {
         Namespace v = pop().asNamespace();
         push(new Value());
         int args = readByte();
-        if (args == -1) {
-            globals.putAll(v.values());
-            return VMResult.OK;
-        }
         String[] names = new String[args];
         for (int i = 0; i < args; i++)
             names[i] = readString();

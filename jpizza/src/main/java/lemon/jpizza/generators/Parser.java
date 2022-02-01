@@ -549,16 +549,11 @@ public class Parser {
             res.registerAdvancement(); advance();
             if (currentToken.type == TokenType.LeftBrace) {
                 // Destructure
-                boolean glob = false;
                 List<Token> destructs = new ArrayList<>();
 
                 res.registerAdvancement(); advance();
 
-                if (currentToken.type == TokenType.Star) {
-                    glob = true;
-                    res.registerAdvancement(); advance();
-                }
-                else do {
+                do {
                     if (currentToken.type != TokenType.Identifier) return res.failure(Error.InvalidSyntax(
                             currentToken.pos_start.copy(), currentToken.pos_end.copy(),
                             "Expected identifier"
@@ -584,10 +579,7 @@ public class Parser {
                 Node destructed = res.register(statement());
                 if (res.error != null) return res;
 
-                if (glob)
-                    return res.success(new DestructNode(destructed));
-                else
-                    return res.success(new DestructNode(destructed, destructs));
+                return res.success(new DestructNode(destructed, destructs));
             }
             Token var_name = res.register(extractVarTok(locked));
             if (res.error != null) return res;
