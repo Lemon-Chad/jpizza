@@ -21,6 +21,7 @@ import lemon.jpizza.results.ParseResult;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,7 +51,7 @@ public class Shell {
     }
 
     public static String[] getFNDirs(String dir) {
-        int ind = dir.lastIndexOf('\\');
+        int ind = Math.max(dir.lastIndexOf('\\'), dir.lastIndexOf('/'));
         if (ind == -1)
             return new String[]{dir, "."};
         return new String[]{
@@ -242,7 +243,8 @@ public class Shell {
             if (Files.exists(Paths.get(target))) {
                 String[] data = extractData(target, true);
                 System.setProperty("user.dir", data[1]);
-                to = to == null ? data[1] + "\\" + data[0].substring(0, data[0].lastIndexOf(".")) + ".jbox" : to;
+                to = to == null ? data[1] + data[0].substring(0, data[0].lastIndexOf(".")) + ".jbox" : to;
+                System.out.println(to);
                 Error e = compile(data[0], data[2], to);
                 if (e != null)
                     Shell.logger.fail(e.asString());
@@ -337,6 +339,7 @@ public class Shell {
         JFunc func = compiler.compileBlock(outNode);
         if (scope)
             compiler.endScope(ast.a.get(0).pos_start, ast.a.get(ast.a.size() - 1).pos_end);
+        System.out.println("Pain!");
 
         return new Pair<>(func, null);
     }
@@ -347,11 +350,13 @@ public class Shell {
         JFunc func = res.a;
 
         try {
+            new File(outpath).createNewFile();
             FileOutputStream fout;
             fout = new FileOutputStream(outpath);
             fout.write(func.dumpBytes());
             fout.close();
         } catch (IOException e) {
+            System.out.println(e);
             e.printStackTrace();
             return new Error(
                     null, null,
@@ -390,7 +395,7 @@ public class Shell {
 
     public static void runCompiled(String fn, String inpath, String[] args) {
         try {
-            Path path = Paths.get(inpath);
+            Path path = Paths.get(inpath + fn);
             if (!Files.exists(path)) {
                 Shell.logger.fail("File does not exist!");
             }
@@ -403,6 +408,7 @@ public class Shell {
             if (res == VMResult.ERROR) return;
             vm.finish(args);
         } catch (IOException e) {
+            e.printStackTrace();
             Shell.logger.fail("File is not readable.");
         }
     }

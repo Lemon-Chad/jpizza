@@ -356,7 +356,6 @@ public class Compiler {
     }
 
     Type compile(Node statement) {
-        System.out.println(statement.jptype);
         switch (statement.jptype) {
             case Cast:
                 compile(((CastNode) statement).expr);
@@ -951,7 +950,7 @@ public class Compiler {
         }
         Type res = function.call(argTypes, generics);
         if (res == null) {
-            error("Type", "Can't call function with given arguments", node.pos_start, node.pos_end);
+            error("Call", "Can't call function with given arguments", node.pos_start, node.pos_end);
         }
     }
 
@@ -1731,8 +1730,17 @@ public class Compiler {
         if (!node.retnull) emit(OpCode.StartCache, node.pos_start, node.pos_end);
         beginScope();
 
+        Type startType = typeHandler.resolve(node.start_value_node);
+        Type stepType;
+        if (node.step_value_node != null) {
+            stepType = typeHandler.resolve(node.step_value_node);
+        }
+        else {
+            stepType = Types.INT;
+        }
+        
         String name = node.var_name_tok.value.toString();
-        copyVar(node.var_name_tok, Types.FLOAT, node.start_value_node);
+        copyVar(node.var_name_tok, startType.isCompatible(TokenType.Plus, stepType), node.start_value_node);
 
         int firstSkip = emitJump(OpCode.Jump, node.start_value_node.pos_start, node.start_value_node.pos_end);
 

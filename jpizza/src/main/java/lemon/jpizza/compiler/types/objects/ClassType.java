@@ -27,6 +27,7 @@ public class ClassType extends Type {
         this.constructor = constructor;
         this.privates = privates;
         this.fields = fields;
+        this.fields.putAll(operators);
         this.staticFields = staticFields;
         this.operators = operators;
         this.generics = generics;

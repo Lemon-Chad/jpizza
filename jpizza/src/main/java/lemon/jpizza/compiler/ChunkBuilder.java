@@ -166,7 +166,7 @@ public class ChunkBuilder {
         if (code[i] != ChunkCode.Type)
             throw new IOException("not type");
         i++;
-        int typeType = code[i++];
+        int typeType = code[i];
         switch (typeType) {
             // Objects
             case TypeCodes.CLASS:
@@ -186,28 +186,39 @@ public class ChunkBuilder {
 
             // Primitives
             case TypeCodes.BOOL:
+                i++;
                 return Types.BOOL;
             case TypeCodes.BYTES:
+                i++;
                 return Types.BYTES;
             case TypeCodes.DICT:
+                i++;
                 return Types.DICT;
             case TypeCodes.FLOAT:
+                i++;
                 return Types.FLOAT;
             case TypeCodes.INT:
+                i++;
                 return Types.INT;
             case TypeCodes.LIST:
+                i++;
                 return Types.LIST;
             case TypeCodes.RESULT:
+                i++;
                 return Types.RESULT;
             case TypeCodes.STRING:
+                i++;
                 return Types.STRING;
             case TypeCodes.VOID:
+                i++;
                 return Types.VOID;
             case TypeCodes.ANY:
+                i++;
                 return Types.ANY;
 
             // Generic
             case TypeCodes.GENERIC:
+                i++;
                 return new GenericType(readString());
         }
         throw new IOException("unknown type");

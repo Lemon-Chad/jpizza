@@ -489,7 +489,7 @@ class Matrix {
         Matrix(..s)
     }
 
-    mthd bin add<other: Matrix> {
+    mthd bin add<other: Matrix> yields Matrix {
         assert type(other) == "Matrix";
 
         assert cols == other::cols;
@@ -499,35 +499,36 @@ class Matrix {
         return Matrix(..s);
     }
 
-    mthd bin sub<other> {
-        return this + (other * -1);
+    mthd bin sub<other: Matrix> yields Matrix {
+        return this::add(other * -1);
     }
 
-    mthd det<vector=null> {
-        if (vector == null) vector => this::vector;
+    mthd det<vector: list = []> yields float {
+        if (vector == []) vector => this::vector;
         assert size(vector) > 0;
         assert size(vector) == size(vector[0]);
 
         if (size(vector) == 2)
-            return vector[0][0] * vector[1][1] - vector[0][1] * vector[1][0];
+            return |float| (vector[0][0] * vector[1][1] - vector[0][1] * vector[1][0]);
 
-        let d => 0;
+        var d: float => 0;
         for (i -> 0:size(vector)) {
             let copy => for (row <- sublist(vector, 1, size(vector))) => for (col <- row) => col;
             for (row <- copy) {
-                pop(row, i);
+                pop(|list| row, |int| i);
             }
-            d += ((-1) ^ i) * vector[0][i] * det(copy);
+            d += ((-1) ^ i) * (|float| vector[0][i]) * det(copy);
         }
         return d;
     }
 
-    mthd bin mul<other> {
-        if (type(other) == "float") {
-            let s => for ( row <- vector ) => for ( yoinkers <- row ) => yoinkers * other;
+    mthd bin mul<o: any> yields Matrix {
+        if (type(o) == "float") {
+            let s => for ( row <- vector ) => for ( yoinkers <- row ) => |float| (yoinkers * o);
             return Matrix(..s);
         }
 
+        var other: Matrix => |Matrix| o;
         assert type(other) == "Matrix";
         assert cols == other::rows;
 
@@ -535,11 +536,11 @@ class Matrix {
         for (r -> 0:rows) {
             append(newVector, []);
             for (c -> 0:other::cols) {
-                let x => 0;
+                var x: float => 0;
                 for (k -> 0:cols) {
-                    x += vector[r][k] * other::vector[k][c];
+                    x += |float| vector[r][k] * other::vector[k][c];
                 }
-                append(newVector[r], x);
+                append(|list| newVector[r], x);
             }
         }
         return Matrix(..newVector);

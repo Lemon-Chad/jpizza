@@ -166,7 +166,6 @@ public class TypeLookup {
                 type = new FuncType(type, argTypes.toArray(new Type[0]), new GenericType[0], varargs, defaultCount);
             }
 
-            System.out.println("Type: " + type);
             return type;
         }
 
@@ -188,7 +187,6 @@ public class TypeLookup {
     }
 
     public Type resolve(Node statement) {
-        System.out.println("Type: " + statement.jptype);
         switch (statement.jptype) {
             case Use:
             case Null:
@@ -263,7 +261,7 @@ public class TypeLookup {
                     attrType = compiler.accessEnclosed(attr);
                 }
                 if (attrType == null) {
-                    compiler.error("Attribute", String.format("A. '%s' object has no attribute '%s'", clazz, attr), node.pos_start, node.pos_end);
+                    compiler.error("Attribute", String.format("'%s' object has no attribute '%s'", clazz, attr), node.pos_start, node.pos_end);
                 }
                 return attrType;
             }
@@ -273,7 +271,7 @@ public class TypeLookup {
                 String attr = node.var_name_tok.value.toString();
                 Type oldAttr = compiler.accessEnclosed(attr);
                 if (oldAttr == null) {
-                    compiler.error("Attribute", String.format("B. '%s' object has no attribute '%s'", compiler.enclosingType, attr), node.pos_start, node.pos_end);
+                    compiler.error("Attribute", String.format("'%s' object has no attribute '%s'", compiler.enclosingType, attr), node.pos_start, node.pos_end);
                 }
                 else if (!oldAttr.equals(newAttr) && oldAttr != Types.ANY) {
                     compiler.error("Type", String.format("Cannot assign '%s' to '%s'", newAttr, oldAttr), node.pos_start, node.pos_end);
@@ -285,7 +283,7 @@ public class TypeLookup {
                 String attr = node.var_name_tok.value.toString();
                 Type type = compiler.accessEnclosed(attr);
                 if (type == null) {
-                    compiler.error("Attribute", String.format("C. '%s' object has no attribute '%s'", compiler.enclosingType, attr), node.pos_start, node.pos_end);
+                    compiler.error("Attribute", String.format("'%s' object has no attribute '%s'", compiler.enclosingType, attr), node.pos_start, node.pos_end);
                 }
                 return type;
             }
@@ -319,7 +317,6 @@ public class TypeLookup {
         if (result == null) {
             compiler.error("Type", String.format("Cannot apply '%s' to '%s' and '%s'", statement.op_tok, left, right), statement.pos_start, statement.pos_end);
         }
-        System.out.println(statement.op_tok + " " + result);
         return result;
     }
 
@@ -369,7 +366,6 @@ public class TypeLookup {
         Type[] argTypes = new Type[node.arg_type_toks.size()];
         for (int i = 0; i < node.arg_type_toks.size(); i++) {
             Token argTypeTok = node.arg_type_toks.get(i);
-            System.out.println(argTypeTok.value);
             argTypes[i] = resolve(argTypeTok);
         }
 
@@ -470,7 +466,6 @@ public class TypeLookup {
 
         ClassType type = new ClassType(name, parent, null, new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>(), generics);
         types.put(name, type);
-        System.out.println(name);
 
         FuncType constructor = (FuncType) resolve(constructorNode);
         Map<String, Type> fields = new HashMap<>();
@@ -495,9 +490,7 @@ public class TypeLookup {
             if (meth.priv) {
                 privates.add(funcName);
             }
-            System.out.println("A. " + funcName);
             Type methType = resolve(meth.asFuncDef());
-            System.out.println("B. " + funcName);
             if (meth.stat) {
                 staticFields.put(funcName, methType);
             }
@@ -510,6 +503,7 @@ public class TypeLookup {
         }
 
         type.fields.putAll(fields);
+        type.fields.putAll(operators);
         type.staticFields.putAll(staticFields);
         type.operators.putAll(operators);
         type.privates.addAll(privates);

@@ -18,6 +18,9 @@ public class Error {
     }
 
     public String asString() {
+        if (pos_start == null || pos_end == null) {
+            return error_name + ": " + details;
+        }
         return String.format(
                 "%s: %s\nFile %s, line %s\n%s",
                 error_name, details,
