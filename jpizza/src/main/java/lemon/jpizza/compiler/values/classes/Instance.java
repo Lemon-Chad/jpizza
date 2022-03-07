@@ -1,6 +1,7 @@
 package lemon.jpizza.compiler.values.classes;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.compiler.types.Type;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.Var;
 import lemon.jpizza.compiler.values.functions.JClosure;
@@ -18,6 +19,7 @@ public class Instance {
     public Value self;
     final VM vm;
     final Map<String, String> generics;
+    public Type type;
 
     public Instance(JClass clazz, VM vm) {
         this.clazz = clazz;
@@ -40,16 +42,10 @@ public class Instance {
             ClassAttr value = entry.getValue();
             dst.put(entry.getKey(), new ClassAttr(
                     value.val,
-                    value.type,
-                    value.rawType,
                     value.isStatic,
                     value.isPrivate
             ));
         }
-    }
-
-    public void putGeneric(String key, String val) {
-        generics.put(key, val);
     }
 
     public String getGeneric(String key) {
@@ -75,7 +71,22 @@ public class Instance {
     }
 
     public String type() {
-        return stringOp("type");
+        String name = clazz.name;
+        if (generics.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(name);
+            sb.append("(");
+            boolean first = true;
+            for (Map.Entry<String, String> entry : generics.entrySet()) {
+                if (!first)
+                    sb.append(", ");
+                sb.append(entry.getValue());
+                first = false;
+            }
+            sb.append(")");
+            name = sb.toString();
+        }
+        return name;
     }
 
     @Override
@@ -87,11 +98,10 @@ public class Instance {
         Value val = binMethods.get(opName);
         if (val != null) {
             vm.push(new Value(new Var(
-                    "any",
                     self,
                     true
             )));
-            boolean worked = vm.call(val.asClosure(), self, new Value[0], new HashMap<>(), new String[0]);
+            boolean worked = vm.call(val.asClosure(), self, new Value[0], new HashMap<>());
             if (!worked)
                 return def;
 
@@ -129,20 +139,14 @@ public class Instance {
         return null;
     }
 
-    public NativeResult setField(String name, Value value, boolean internal) {
-        return setField(name, value, fields, false, internal);
+    public NativeResult setField(String name, Value value) {
+        return setField(name, value, fields);
     }
 
-    public static NativeResult setField(String name, Value value, Map<String, ClassAttr> fields, boolean staticContext, boolean internal) {
+    public static NativeResult setField(String name, Value value, Map<String, ClassAttr> fields) {
         ClassAttr attr = fields.get(name);
-        if (attr != null && attr.isStatic == staticContext && (!attr.isPrivate || internal)) {
-            String type = value.type();
-            if (!attr.type.equals("any") && !attr.type.equals(type))
-                return NativeResult.Err("Type", "Expected " + attr.type + " but got " + type);
-            attr.set(value);
-            return NativeResult.Ok();
-        }
-        return NativeResult.Err("Scope", "Undefined attribute '" + name + "'");
+        attr.set(value);
+        return NativeResult.Ok();
     }
 
     public Double asNumber() {

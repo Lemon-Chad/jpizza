@@ -6,6 +6,11 @@ import lemon.jpizza.compiler.libraries.*;
 import lemon.jpizza.compiler.libraries.awt.AbstractWindowToolkit;
 import lemon.jpizza.compiler.libraries.pretzel.Pretzel;
 import lemon.jpizza.compiler.libraries.puddle.PDL;
+import lemon.jpizza.compiler.types.GenericType;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
+import lemon.jpizza.compiler.types.objects.FuncType;
+import lemon.jpizza.compiler.types.objects.TupleType;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.values.functions.JNative;
@@ -60,12 +65,30 @@ public class LibraryManager {
         this.vm = vm;
     }
 
-    private void define(String name, JNative.Method method, int argc) {
-        vm.defineNative(name, method, argc);
+    private void define(String name, JNative.Method method, Type returnType, int argc) {
+        if (vm == null) {
+            Type[] types = new Type[argc];
+            for (int i = 0; i < argc; i++)
+                types[i] = Types.ANY;
+            Shell.globals.put(name, new FuncType(returnType, types, new GenericType[0], false));
+        } else
+            vm.defineNative(name, method, argc);
     }
 
-    private void define(String name, JNative.Method method, List<String> types) {
-        vm.defineNative(name, method, types);
+    private void define(String name, JNative.Method method, Type returnType, Type... types) {
+        if (vm == null)
+            Shell.globals.put(name, new FuncType(returnType, types, new GenericType[0], false));
+        else
+            vm.defineNative(name, method, types);
+    }
+
+    // Esto se usa para funciones irregulares
+    // tuple(1, 2, 3) -> (int, int, int), tuple(1, 2, "3") -> (int, int, String)
+    private void define(String name, JNative.Method method, FuncType type) {
+        if (vm == null)
+            Shell.globals.put(name, type);
+        else
+            vm.defineNative(name, method, type.varargs ? -1 : type.parameterTypes.length);
     }
 
     public static void Setup(VM vm) {
@@ -125,20 +148,20 @@ public class LibraryManager {
         define("print", (args) -> {
             Shell.logger.out(args[0]);
             return NativeResult.Ok();
-        }, 1);
+        }, Types.VOID, 1);
         define("println", (args) -> {
             Shell.logger.outln(args[0]);
             return NativeResult.Ok();
-        }, 1);
+        }, Types.VOID, 1);
         define("printback", (args) -> {
             Shell.logger.out(args[0]);
             return NativeResult.Ok(args[0]);
-        }, 1);
+        }, Types.ANY, 1);
 
         define("field", (args) -> {
             Shell.logger.out(args[0].asString());
             return NativeResult.Ok(new Value(Shell.logger.in()));
-        }, 1);
+        }, Types.STRING, 1);
         define("nfield", (args) -> {
             Pattern p = Pattern.compile("-?\\d+(\\.\\d+)?");
             Shell.logger.out(args[0].asString());
@@ -147,7 +170,7 @@ public class LibraryManager {
                 text = Shell.logger.in();
             } while (!p.matcher(text).matches());
             return NativeResult.Ok(new Value(Double.parseDouble(text)));
-        }, 1);
+        }, Types.FLOAT, 1);
 
         define("sim", (args) -> {
             Pair<JFunc, Error> pair = Shell.compile("<sim>", args[0].asString());
@@ -156,7 +179,7 @@ public class LibraryManager {
             }
             Shell.runCompiled("<sim>", pair.a, new String[0]);
             return NativeResult.Ok();
-        }, Collections.singletonList("String"));
+        }, Types.VOID, Types.STRING);
         define("run", (args) -> {
             String path = args[0].asString();
             if (path.endsWith(".devp")) {
@@ -180,7 +203,7 @@ public class LibraryManager {
                 return NativeResult.Err("File Extension", "Invalid file extension");
             }
             return NativeResult.Ok();
-        }, Collections.singletonList("String"));
+        }, Types.VOID, Types.STRING);
 
         define("clear", (args) -> {
             try {
@@ -192,34 +215,34 @@ public class LibraryManager {
                 }
             } catch (IOException | InterruptedException ignored) {}
             return NativeResult.Ok();
-        }, 0);
+        }, Types.VOID, 0);
 
         // Number Functions
-        define("round", (args) -> NativeResult.Ok(new Value(Math.round(args[0].asNumber()))), Collections.singletonList("num"));
-        define("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), Collections.singletonList("num"));
-        define("ceil", (args) -> NativeResult.Ok(new Value(Math.ceil(args[0].asNumber()))), Collections.singletonList("num"));
-        define("abs", (args) -> NativeResult.Ok(new Value(Math.abs(args[0].asNumber()))), Collections.singletonList("num"));
+        define("round", (args) -> NativeResult.Ok(new Value(Math.round(args[0].asNumber()))), Types.INT, Types.FLOAT);
+        define("floor", (args) -> NativeResult.Ok(new Value(Math.floor(args[0].asNumber()))), Types.INT, Types.FLOAT);
+        define("ceil", (args) -> NativeResult.Ok(new Value(Math.ceil(args[0].asNumber()))), Types.INT, Types.FLOAT);
+        define("abs", (args) -> NativeResult.Ok(new Value(Math.abs(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
         define("arctan2",
                 (args) -> NativeResult.Ok(new Value(Math.atan2(args[0].asNumber(), args[1].asNumber()))),
-                Arrays.asList("num", "num"));
-        define("sin", (args) -> NativeResult.Ok(new Value(Math.sin(args[0].asNumber()))), Collections.singletonList("num"));
-        define("cos", (args) -> NativeResult.Ok(new Value(Math.cos(args[0].asNumber()))), Collections.singletonList("num"));
-        define("tan", (args) -> NativeResult.Ok(new Value(Math.tan(args[0].asNumber()))), Collections.singletonList("num"));
-        define("arcsin", (args) -> NativeResult.Ok(new Value(Math.asin(args[0].asNumber()))), Collections.singletonList("num"));
-        define("arccos", (args) -> NativeResult.Ok(new Value(Math.acos(args[0].asNumber()))), Collections.singletonList("num"));
-        define("arctan", (args) -> NativeResult.Ok(new Value(Math.atan(args[0].asNumber()))), Collections.singletonList("num"));
+                Types.FLOAT, Types.FLOAT, Types.FLOAT);
+        define("sin", (args) -> NativeResult.Ok(new Value(Math.sin(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
+        define("cos", (args) -> NativeResult.Ok(new Value(Math.cos(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
+        define("tan", (args) -> NativeResult.Ok(new Value(Math.tan(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
+        define("arcsin", (args) -> NativeResult.Ok(new Value(Math.asin(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
+        define("arccos", (args) -> NativeResult.Ok(new Value(Math.acos(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
+        define("arctan", (args) -> NativeResult.Ok(new Value(Math.atan(args[0].asNumber()))), Types.FLOAT, Types.FLOAT);
         define("min",
                 (args) -> NativeResult.Ok(new Value(Math.min(args[0].asNumber(), args[1].asNumber()))),
-                Arrays.asList("num", "num"));
+                Types.FLOAT, Types.FLOAT, Types.FLOAT);
         define("max",
                 (args) -> NativeResult.Ok(new Value(Math.max(args[0].asNumber(), args[1].asNumber()))),
-                Arrays.asList("num", "num"));
+                Types.FLOAT, Types.FLOAT, Types.FLOAT);
         define("log",
                 (args) -> NativeResult.Ok(new Value(Math.log(args[0].asNumber()) / Math.log(args[1].asNumber()))),
-                Arrays.asList("num", "num"));
+                Types.FLOAT, Types.FLOAT, Types.FLOAT);
         define("doubleStr",
                 (args) -> NativeResult.Ok(new Value(String.format("%." + args[1].asNumber().intValue(), args[0].asNumber()))),
-                Arrays.asList("num", "num"));
+                Types.FLOAT, Types.FLOAT, Types.FLOAT);
         define("parseNum",
                 (args) -> {
                     try {
@@ -228,43 +251,54 @@ public class LibraryManager {
                         return NativeResult.Err("Number Format", "Could not parse number");
                     }
                 },
-                Collections.singletonList("String"));
+                Types.FLOAT, Types.STRING);
 
         // Random Functions
-        define("random", (args) -> NativeResult.Ok(new Value(Math.random())), 0);
+        define("random", (args) -> NativeResult.Ok(new Value(Math.random())), Types.FLOAT, 0);
         define("randint", (args) -> {
             double min = args[0].asNumber();
             double max = args[1].asNumber();
             return NativeResult.Ok(new Value(min + Math.round(Math.random() * (max - min + 1))));
-        }, Arrays.asList("num", "num"));
+        }, Types.FLOAT, Types.FLOAT, Types.FLOAT);
         define("choose", args -> {
             List<Value> list = args[0].asList();
             int max = list.size() - 1;
             int index = (int) (Math.random() * max);
             return NativeResult.Ok(list.get(index));
-        }, 1);
+        }, Types.ANY, 1);
 
         // Type Functions
-        define("type", (args) -> NativeResult.Ok(new Value(args[0].type())), 1);
+        define("type", (args) -> NativeResult.Ok(new Value(args[0].type())), Types.STRING, 1);
 
-        define("isList", (args) -> NativeResult.Ok(new Value(args[0].isList)), 1);
-        define("isFunction", (args) -> NativeResult.Ok(new Value(args[0].isClosure)), 1);
-        define("isBoolean", (args) -> NativeResult.Ok(new Value(args[0].isBool)), 1);
-        define("isDict", (args) -> NativeResult.Ok(new Value(args[0].isMap)), 1);
-        define("isNumber", (args) -> NativeResult.Ok(new Value(args[0].isNumber)), 1);
-        define("isString", (args) -> NativeResult.Ok(new Value(args[0].isString)), 1);
+        define("isList", (args) -> NativeResult.Ok(new Value(args[0].isList)), Types.BOOL, 1);
+        define("isFunction", (args) -> NativeResult.Ok(new Value(args[0].isClosure)), Types.BOOL, 1);
+        define("isBoolean", (args) -> NativeResult.Ok(new Value(args[0].isBool)), Types.BOOL, 1);
+        define("isDict", (args) -> NativeResult.Ok(new Value(args[0].isMap)), Types.BOOL, 1);
+        define("isNumber", (args) -> NativeResult.Ok(new Value(args[0].isNumber)), Types.BOOL, 1);
+        define("isString", (args) -> NativeResult.Ok(new Value(args[0].isString)), Types.BOOL, 1);
 
-        define("str", (args) -> NativeResult.Ok(new Value(args[0].asString())), 1);
-        define("list", (args) -> NativeResult.Ok(new Value(args[0].asList())), 1);
-        define("bool", (args) -> NativeResult.Ok(new Value(args[0].asBool())), 1);
-        define("num", (args) -> NativeResult.Ok(new Value(args[0].asNumber())), 1);
-        define("dict", (args) -> NativeResult.Ok(new Value(args[0].asMap())), 1);
+        define("str", (args) -> NativeResult.Ok(new Value(args[0].asString())), Types.STRING, 1);
+        define("list", (args) -> NativeResult.Ok(new Value(args[0].asList())), Types.LIST, 1);
+        define("bool", (args) -> NativeResult.Ok(new Value(args[0].asBool())), Types.BOOL, 1);
+        define("num", (args) -> NativeResult.Ok(new Value(args[0].asNumber())), Types.FLOAT, 1);
+        define("dict", (args) -> NativeResult.Ok(new Value(args[0].asMap())), Types.DICT, 1);
         define("chr", (args) -> NativeResult.Ok(new Value(new String(
                 new byte[] { args[0].asNumber().byteValue() }
-        ))), Collections.singletonList("num"));
+        ))), Types.STRING, Types.INT);
         define("chrs", (args) -> NativeResult.Ok(new Value(new String(
                 args[0].asBytes()
-        ))), Collections.singletonList("bytearray"));
+        ))), Types.STRING, Types.BYTES);
+        define("tuple", (args) -> NativeResult.Ok(new Value(args)),
+                new FuncType(Types.ANY, new Type[0], new GenericType[0], false) {
+                    @Override
+                    public Type call(Type[] arguments, Type[] generics) {
+                        if (generics.length > 0) {
+                            return null;
+                        }
+                        return new TupleType(arguments);
+                    }
+                }
+        );
 
         // Convert number list to byte[]
         define("byter", (args) -> {
@@ -277,30 +311,30 @@ public class LibraryManager {
                 bytes[i] = v.asNumber().byteValue();
             }
             return NativeResult.Ok(new Value(bytes));
-        }, Collections.singletonList("list"));
+        }, Types.LIST, Types.LIST);
 
         define("floating",
                 (args) -> NativeResult.Ok(new Value(Math.round(args[0].asNumber()) != args[0].asNumber())),
-                Collections.singletonList("num"));
+                Types.BOOL, Types.FLOAT);
 
         // Dictionary Functions
         define("set", (args) -> {
             args[0].asMap().put(args[1], args[2]);
             return NativeResult.Ok();
-        }, Arrays.asList("dict", "any", "any"));
+        }, Types.VOID, Types.DICT, Types.ANY, Types.ANY);
         define("overset", (args) -> {
             args[0].asMap().replace(args[1], args[2]);
             return NativeResult.Ok();
-        }, Arrays.asList("dict", "any", "any"));
+        }, Types.VOID, Types.DICT, Types.ANY, Types.ANY);
         define("get", (args) -> {
             if (args[0].asMap().containsKey(args[1]))
                 return NativeResult.Ok(args[0].get(args[1]));
             return NativeResult.Err("Key", "Key not found");
-        }, Arrays.asList("dict", "any"));
+        }, Types.ANY, Types.DICT, Types.ANY);
         define("delete", (args) -> {
             args[0].delete(args[1]);
             return NativeResult.Ok();
-        }, Arrays.asList("dict", "any"));
+        }, Types.VOID, Types.DICT, Types.ANY);
 
         // String Functions
         define("split", (args) -> {
@@ -312,7 +346,7 @@ public class LibraryManager {
                 list.add(new Value(s));
             }
             return NativeResult.Ok(new Value(list));
-        }, Arrays.asList("String", "String"));
+        }, Types.LIST, Types.STRING, Types.STRING);
         define("substr", (args) -> {
             String str = args[0].asString();
             int start = args[1].asNumber().intValue();
@@ -325,7 +359,7 @@ public class LibraryManager {
             if (end > str.length()) end = str.length();
 
             return NativeResult.Ok(new Value(str.substring(start, end)));
-        }, Arrays.asList("String", "num", "num"));
+        }, Types.STRING, Types.STRING, Types.INT, Types.INT);
         define("join", (args) -> {
             Value str = args[0];
             Value list = args[1];
@@ -335,25 +369,25 @@ public class LibraryManager {
                 strings.add(val.asString());
 
             return NativeResult.Ok(new Value(String.join(str.asString(), strings)));
-        }, Arrays.asList("String", "list"));
+        }, Types.STRING, Types.STRING, Types.LIST);
         define("replace", (args) -> {
             String str = args[0].asString();
             String old = args[1].asString();
             String newStr = args[2].asString();
             return NativeResult.Ok(new Value(str.replace(old, newStr)));
-        }, Arrays.asList("String", "String", "String"));
+        }, Types.STRING, Types.STRING, Types.STRING, Types.STRING);
         define("escape",
                 (args) -> NativeResult.Ok(new Value(StringEscapeUtils.unescapeJava(args[0].asString()))),
-                Collections.singletonList("String"));
+                Types.STRING, Types.STRING);
         define("unescape",
-                (args) -> NativeResult.Ok(new Value(StringEscapeUtils.escapeJava(args[0].asString())))
-                , Collections.singletonList("String"));
+                (args) -> NativeResult.Ok(new Value(StringEscapeUtils.escapeJava(args[0].asString()))),
+                Types.STRING, Types.STRING);
         define("strUpper",
                 (args) -> NativeResult.Ok(new Value(args[0].asString().toUpperCase())),
-                Collections.singletonList("String"));
+                Types.STRING, Types.STRING);
         define("strLower",
-                (args) -> NativeResult.Ok(new Value(args[0].asString().toLowerCase()))
-                , Collections.singletonList("String"));
+                (args) -> NativeResult.Ok(new Value(args[0].asString().toLowerCase())),
+                Types.STRING, Types.STRING);
         define("strShift", (args) -> {
             String str = args[0].asString();
             StringBuilder sb = new StringBuilder();
@@ -362,7 +396,7 @@ public class LibraryManager {
                 sb.append(SHIFT.getOrDefault(s, s));
             }
             return NativeResult.Ok(new Value(sb.toString()));
-        }, 1);
+        }, Types.STRING, Types.STRING);
         define("strUnshift", (args) -> {
             String str = args[0].asString();
             StringBuilder sb = new StringBuilder();
@@ -371,25 +405,7 @@ public class LibraryManager {
                 sb.append(UNSHIFT.getOrDefault(s, s));
             }
             return NativeResult.Ok(new Value(sb.toString()));
-        }, 1);
-
-        // Instance Functions
-        define("getattr", (args) -> {
-            if (!args[0].isInstance) {
-                return NativeResult.Err("Type", "Not an instance");
-            }
-            Value val = args[0].asInstance().getField(args[1].asString(), false);
-            if (val == null) {
-                return NativeResult.Err("Scope", "No such field");
-            }
-            return NativeResult.Ok(val);
-        }, 2);
-        define("hasattr", (args) -> {
-            if (!args[0].isInstance) {
-                return NativeResult.Err("Type", "Not an instance");
-            }
-            return NativeResult.Ok(new Value(args[0].asInstance().hasField(args[1].asString())));
-        }, 2);
+        }, Types.STRING, Types.STRING);
 
         // List Functions
         define("append", (args) -> {
@@ -398,14 +414,14 @@ public class LibraryManager {
 
             list.append(value);
             return NativeResult.Ok();
-        }, Arrays.asList("list", "any"));
+        }, Types.VOID, Types.LIST, Types.ANY);
         define("remove", (args) -> {
             Value list = args[0];
             Value value = args[1];
 
             list.remove(value);
             return NativeResult.Ok();
-        }, Arrays.asList("list", "any"));
+        }, Types.VOID, Types.LIST, Types.ANY);
         define("pop", (args) -> {
             Value list = args[0];
             Value index = args[1];
@@ -415,14 +431,14 @@ public class LibraryManager {
             }
 
             return NativeResult.Ok(list.pop(index.asNumber()));
-        }, Arrays.asList("list", "num"));
+        }, Types.ANY, Types.LIST, Types.INT);
         define("extend", (args) -> {
             Value list = args[0];
             Value other = args[1];
 
             list.add(other);
             return NativeResult.Ok();
-        }, Arrays.asList("list", "list"));
+        }, Types.VOID, Types.LIST, Types.LIST);
         define("insert", (args) -> {
             Value list = args[0];
             Value index = args[2];
@@ -434,7 +450,7 @@ public class LibraryManager {
 
             list.insert(index.asNumber(), value);
             return NativeResult.Ok();
-        }, Arrays.asList("list", "any", "num"));
+        }, Types.VOID, Types.LIST, Types.ANY, Types.INT);
         define("setIndex", (args) -> {
             Value list = args[0];
             Value index = args[2];
@@ -446,7 +462,7 @@ public class LibraryManager {
 
             list.set(index.asNumber(), value);
             return NativeResult.Ok();
-        }, Arrays.asList("list", "any", "num"));
+        }, Types.VOID, Types.LIST, Types.ANY, Types.INT);
         define("sublist", (args) -> {
             Value list = args[0];
             Value start = args[1];
@@ -458,41 +474,41 @@ public class LibraryManager {
 
             return NativeResult.Ok(new Value(list.asList().subList(start.asNumber().intValue(),
                     end.asNumber().intValue())));
-        }, Arrays.asList("list", "num", "num"));
+        }, Types.LIST, Types.LIST, Types.INT, Types.INT);
 
         // Collection Functions
         define("size", args -> {
             Value list = args[0];
             return NativeResult.Ok(new Value(list.asList().size()));
-        }, 1);
+        }, Types.INT, 1);
         define("contains", args -> {
             Value list = args[0];
             Value val = args[1];
             return NativeResult.Ok(new Value(list.asList().contains(val)));
-        }, 2);
+        }, Types.BOOL, 2);
         define("indexOf", args -> {
             Value list = args[0];
             Value val = args[1];
             return NativeResult.Ok(new Value(list.asList().indexOf(val)));
-        }, 2);
+        }, Types.INT, 2);
 
         // Results
-        define("ok", args -> NativeResult.Ok(new Value(args[0].asBool())), Collections.singletonList("catcher"));
+        define("ok", args -> NativeResult.Ok(new Value(args[0].asBool())), Types.BOOL, Types.RESULT);
         define("resolve", args -> {
             if (!args[0].asBool())
                 return NativeResult.Err("Unresolved", "Unresolved error in catcher");
             return NativeResult.Ok(args[0].asRes().getValue());
-        }, Collections.singletonList("catcher"));
+        }, Types.ANY, Types.RESULT);
         define("catch", args -> {
             if (!args[0].asBool())
                 return NativeResult.Ok(new Value(args[0].asList()));
             return NativeResult.Ok();
-        }, Collections.singletonList("catcher"));
+        }, Types.ANY, Types.RESULT);
         define("fail", args -> {
             if (args[0].asBool())
                 return NativeResult.Ok();
             return NativeResult.Err("Released", args[0].toString());
-        }, Collections.singletonList("catcher"));
+        }, Types.VOID, Types.RESULT);
     }
 
     private void time() {

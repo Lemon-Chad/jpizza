@@ -1,6 +1,7 @@
 package lemon.jpizza.compiler.libraries;
 
-import lemon.jpizza.Pair;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JNative;
 import lemon.jpizza.compiler.values.functions.NativeResult;
@@ -11,11 +12,7 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class HTTPx extends JPExtension {
@@ -53,10 +50,11 @@ public class HTTPx extends JPExtension {
         try {
             status = conn.getResponseCode();
 
-            BufferedReader br = null;
+            BufferedReader br;
             if (100 <= conn.getResponseCode() && conn.getResponseCode() <= 399) {
                 br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            } else {
+            }
+            else {
                 br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
             }
 
@@ -103,7 +101,8 @@ public class HTTPx extends JPExtension {
             try {
                 if (args.length == 3) {
                     conn = getConn(url, headerMap, method, args[2].asString());
-                } else {
+                }
+                else {
                     conn = getConn(url, headerMap, method);
                 }
             } catch (IOException e) {
@@ -117,13 +116,13 @@ public class HTTPx extends JPExtension {
     private void request(String method, boolean body) {
         String name = method.toLowerCase() + "Request";
         JNative.Method m = request(method);
-        List<String> argTypes = new ArrayList<>();
-        argTypes.add("String");
-        argTypes.add("dict");
+        Type[] argTypes = new Type[body ? 3 : 2];
+        argTypes[0] = Types.STRING;
+        argTypes[1] = Types.DICT;
         if (body) {
-            argTypes.add("String");
+            argTypes[2] = Types.STRING;
         }
-        func(name, m, argTypes);
+        func(name, m, Types.DICT, argTypes);
     }
 
     @Override

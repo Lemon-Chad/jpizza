@@ -1,5 +1,6 @@
 package lemon.jpizza.compiler.libraries;
 
+import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
@@ -10,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static lemon.jpizza.Constants.readString;
@@ -45,7 +45,7 @@ public class IOFile extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not load file (" + e.getMessage() + ")");
             }
-        }, Collections.singletonList("String"));
+        }, Types.STRING, Types.STRING);
         func("writeFile", (args) -> {
             String path = dir(args[0]);
             String data = args[1].asString();
@@ -59,19 +59,19 @@ public class IOFile extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not write file (" + e.getMessage() + ")");
             }
-        }, Arrays.asList("String", "any"));
+        }, Types.BOOL, Types.STRING, Types.ANY);
 
         // File Creation
         func("fileExists", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.exists());
-        }, Collections.singletonList("String"));
+        }, Types.BOOL, Types.STRING);
         func("makeDirs", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.mkdirs());
-        }, Collections.singletonList("String"));
+        }, Types.BOOL, Types.STRING);
         func("deleteFile", (args) -> {
             String path = dir(args[0]);
             if (!Files.exists(Paths.get(path))) {
@@ -94,7 +94,7 @@ public class IOFile extends JPExtension {
                     return Err("Internal", "Could not delete file (" + e.getMessage() + ")");
                 }
             }
-        }, Collections.singletonList("String"));
+        }, Types.BOOL, Types.STRING);
 
         // Directories
         func("listDirContents", (args) -> {
@@ -106,15 +106,15 @@ public class IOFile extends JPExtension {
             String[] files = file.list();
             List<String> list = new ArrayList<>(Arrays.asList(files));
             return Ok(list);
-        }, Collections.singletonList("String"));
+        }, Types.LIST, Types.STRING);
         func("isDirectory", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
             return Ok(file.isDirectory());
-        }, Collections.singletonList("String"));
+        }, Types.BOOL, Types.STRING);
 
         // Working Directory
-        func("getCWD", (args) -> Ok(System.getProperty("user.dir")), 0);
+        func("getCWD", (args) -> Ok(System.getProperty("user.dir")), Types.STRING);
         func("setCWD", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
@@ -124,7 +124,7 @@ public class IOFile extends JPExtension {
                 return Err("Imaginary Path", "Path is not a directory");
             System.setProperty("user.dir", path);
             return Ok;
-        }, Collections.singletonList("String"));
+        }, Types.VOID, Types.STRING);
 
         // Serialization
         func("readSerial", (args) -> {
@@ -152,7 +152,7 @@ public class IOFile extends JPExtension {
             }
 
             return Ok(out);
-        }, Collections.singletonList("String"));
+        }, Types.ANY, Types.STRING);
         func("readBytes", (args) -> {
             String path = dir(args[0]);
             File file = new File(path);
@@ -167,7 +167,7 @@ public class IOFile extends JPExtension {
             }
 
             return Ok(bytes);
-        }, Collections.singletonList("String"));
+        }, Types.BYTES, Types.STRING);
         func("writeSerial", (args) -> {
             String path = dir(args[0]);
             Value obj = args[1];
@@ -188,6 +188,6 @@ public class IOFile extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not write file (" + e.getMessage() + ")");
             }
-        }, Arrays.asList("String", "any"));
+        }, Types.BOOL, Types.STRING, Types.ANY);
     }
 }

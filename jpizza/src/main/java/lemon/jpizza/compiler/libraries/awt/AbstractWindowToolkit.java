@@ -5,6 +5,9 @@ import lemon.jpizza.compiler.libraries.awt.displays.Line;
 import lemon.jpizza.compiler.libraries.awt.displays.Polygon;
 import lemon.jpizza.compiler.libraries.awt.displays.Rectangle;
 import lemon.jpizza.compiler.libraries.awt.displays.*;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
+import lemon.jpizza.compiler.types.objects.TupleType;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JNative;
 import lemon.jpizza.compiler.vm.JPExtension;
@@ -28,6 +31,9 @@ public class AbstractWindowToolkit extends JPExtension {
     private static Window window;
     private static Window focused;
     private static int index;
+
+    private static final Type colorType = new TupleType(Types.INT, Types.INT, Types.INT);
+    private static final Type pointType = new TupleType(Types.INT, Types.INT);
 
     public static final HashMap<String, Integer> Keys = new HashMap<String, Integer>(){{
         put("a", VK_A);
@@ -127,11 +133,11 @@ public class AbstractWindowToolkit extends JPExtension {
     }
 
     private static int[] getColor(Value color) {
-        List<Value> values = color.asList();
+        Value[] values = color.asTuple();
 
         int[] c = new int[3];
         for (int i = 0; i < 3; i++) {
-            c[i] = Math.min(255, Math.max(0, values.get(i).asNumber().intValue()));
+            c[i] = Math.min(255, Math.max(0, values[i].asNumber().intValue()));
         }
 
         return c;
@@ -147,8 +153,8 @@ public class AbstractWindowToolkit extends JPExtension {
     }
 
     private static Point getPoint(Value point) {
-        List<Value> p = point.asList();
-        return new Point(p.get(0).asNumber().intValue(), p.get(1).asNumber().intValue());
+        Value[] p = point.asTuple();
+        return new Point(p[0].asNumber().intValue(), p[1].asNumber().intValue());
     }
 
     private static void flush() {
@@ -169,8 +175,8 @@ public class AbstractWindowToolkit extends JPExtension {
             Point[] points = new Point[pts.size()];
             for (int i = 0; i < pts.size(); i++) {
                 Value p = pts.get(i);
-                if (!Objects.equals(p.type(), "(num,num)"))
-                    return Err("Type", "Expected (num,num)");
+                if (!p.type().equals("(int,int)"))
+                    return Err("Type", "Expected (int,int)");
                 points[i] = getPoint(p);
             }
 
@@ -193,8 +199,8 @@ public class AbstractWindowToolkit extends JPExtension {
     @Override
     public void setup() {
         // Constants
-        var("SAVE", 32.0);
-        var("OPEN", 64.0);
+        var("SAVE", 32.0, Types.INT);
+        var("OPEN", 64.0, Types.INT);
 
         // Init
         func("init", args -> {
@@ -203,7 +209,7 @@ public class AbstractWindowToolkit extends JPExtension {
             focused = window;
             index = 0;
             return Ok;
-        }, 0);
+        }, Types.VOID);
 
         // Config
         config();
@@ -229,11 +235,11 @@ public class AbstractWindowToolkit extends JPExtension {
         func("setTitle", ifInit(args -> {
             window.setTitle(args[0].asString());
             return Ok;
-        }), 1);
+        }), Types.VOID, Types.STRING);
         func("setSize", ifInit(args -> {
             window.setSize(args[0].asNumber().intValue(), args[1].asNumber().intValue());
             return Ok;
-        }), Arrays.asList("num", "num"));
+        }), Types.VOID, Types.INT, Types.INT);
         func("setIcon", ifInit(args -> {
             String path = args[0].asString();
 
@@ -244,7 +250,7 @@ public class AbstractWindowToolkit extends JPExtension {
                 return Err("Internal", "Could not load icon (" + e.getMessage() + ")");
             }
             return Ok;
-        }), 1);
+        }), Types.VOID, Types.STRING);
         func("setFont", ifInit(args -> {
             window.setFont(
                     args[0].asString(),
@@ -252,7 +258,7 @@ public class AbstractWindowToolkit extends JPExtension {
                     args[2].asNumber().intValue()
             );
             return Ok;
-        }), Arrays.asList("String", "String", "num"));
+        }), Types.VOID, Types.STRING, Types.STRING, Types.INT);
         // I <3 Tuples
         // They make my life easier
         // I can simply make the type (num,num,num) and it will be parsed
@@ -263,15 +269,15 @@ public class AbstractWindowToolkit extends JPExtension {
             int[] c = getColor(args[0]);
             window.setBackground(new Color(c[0], c[1], c[2]));
             return Ok;
-        }), Collections.singletonList("(num,num,num)"));
+        }), Types.VOID, colorType);
         func("lockSize", ifInit(args -> {
             window.lockSize(args[0].asBool());
             return Ok;
-        }), Collections.singletonList("bool"));
+        }), Types.VOID, Types.BOOL);
         func("setStrokeSize", ifInit(args -> {
             window.setStroke(args[0].asNumber().intValue());
             return Ok;
-        }), Collections.singletonList("num"));
+        }), Types.VOID, Types.INT);
         func("exit", ifInit(args -> {
             window.close();
             windows.remove(window);
@@ -280,30 +286,30 @@ public class AbstractWindowToolkit extends JPExtension {
             else
                 window = windows.get(0);
             return Ok;
-        }), 0);
+        }), Types.VOID);
     }
 
     private void rendering() {
         func("start", ifInit(args -> {
             window.open();
             return Ok;
-        }), 0);
+        }), Types.VOID);
         func("clear", ifInit(args -> {
             flush();
             return Ok;
-        }), 0);
+        }), Types.VOID);
         func("refresh", ifInit(args -> {
             refresh();
             return Ok;
-        }), 0);
+        }), Types.VOID);
         func("refreshLoop", ifInit(args -> {
             window.refresh(args[0].asNumber().intValue());
             return Ok;
-        }), Collections.singletonList("num"));
+        }), Types.INT);
         func("refreshUnloop", ifInit(args -> {
             window.stopLoop();
             return Ok;
-        }) , 0);
+        }) , Types.VOID);
         func("screenshot", ifInit(args -> {
             String filename = args[0].asString();
 
@@ -317,12 +323,12 @@ public class AbstractWindowToolkit extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not save screenshot (" + e.getMessage() + ")");
             }
-        }), 1);
-        func("fps", ifInit(args -> Ok(window.fps())), 0);
+        }), Types.BOOL, Types.STRING);
+        func("fps", ifInit(args -> Ok(window.fps())), Types.FLOAT);
         func("gpuCompute", args -> {
             System.setProperty("sun.java2d.opengl", args[0].asBool() ? "true" : "false");
             return Ok;
-        }, Collections.singletonList("bool"));
+        }, Types.VOID, Types.BOOL);
 
         // QRendering is an alternative render method
         // It puts all the elements in a queue and renders them once the
@@ -332,21 +338,21 @@ public class AbstractWindowToolkit extends JPExtension {
         func("toggleQRender", args -> {
             window.q();
             return Ok;
-        }, 0);
+        }, Types.VOID);
         // Alternative name for the same function
         func("qrender", args -> {
             window.q();
             return Ok;
-        }, 0);
+        }, Types.VOID);
         func("qUpdate", ifInit(args -> {
             window.update();
             return Ok;
-        }), 0);
+        }), Types.VOID);
     }
 
     private void drawing() {
-        func("drawPoly", poly(true), Arrays.asList("list", "(num,num,num)"));
-        func("tracePoly", poly(false), Arrays.asList("list", "(num,num,num)"));
+        func("drawPoly", poly(true), Types.VOID, Types.LIST, colorType);
+        func("tracePoly", poly(false), Types.VOID, Types.LIST, colorType);
         func("drawOval", ifInit(args -> {
             int x = args[0].asNumber().intValue();
             int y = args[1].asNumber().intValue();
@@ -362,7 +368,7 @@ public class AbstractWindowToolkit extends JPExtension {
                     new Color(c[0], c[1], c[2])
             ));
             return Ok;
-        }), Arrays.asList("num", "num", "num", "num", "(num,num,num)"));
+        }), Types.VOID, Types.INT, Types.INT, Types.INT, Types.INT, colorType);
         func("drawCircle", ifInit(args -> {
             int r = args[0].asNumber().intValue();
             int x = args[1].asNumber().intValue();
@@ -377,7 +383,7 @@ public class AbstractWindowToolkit extends JPExtension {
                     new Color(c[0], c[1], c[2])
             ));
             return Ok;
-        }), Arrays.asList("num", "num", "num", "(num,num,num)"));
+        }), Types.VOID, Types.INT, Types.INT, Types.INT, colorType);
         func("drawRect", ifInit(args -> {
             int x = args[0].asNumber().intValue();
             int y = args[1].asNumber().intValue();
@@ -393,7 +399,7 @@ public class AbstractWindowToolkit extends JPExtension {
                     new Color(c[0], c[1], c[2])
             ));
             return Ok;
-        }), Arrays.asList("num", "num", "num", "num", "(num,num,num)"));
+        }), Types.VOID, Types.INT, Types.INT, Types.INT, Types.INT, colorType);
         func("drawSquare", ifInit(args -> {
             int r = args[0].asNumber().intValue();
             int x = args[1].asNumber().intValue();
@@ -408,7 +414,7 @@ public class AbstractWindowToolkit extends JPExtension {
                     new Color(c[0], c[1], c[2])
             ));
             return Ok;
-        }), Arrays.asList("num", "num", "num", "(num,num,num)"));
+        }), Types.VOID, Types.INT, Types.INT, Types.INT, colorType);
         func("drawText", ifInit(args -> {
             String text = args[0].asString();
             int x = args[1].asNumber().intValue();
@@ -423,7 +429,7 @@ public class AbstractWindowToolkit extends JPExtension {
                     window.getFont()
             ));
             return Ok;
-        }), Arrays.asList("String", "num", "num", "(num,num,num)"));
+        }), Types.VOID, Types.STRING, Types.INT, Types.INT, colorType);
         func("drawImage", ifInit(args -> {
             String path = args[0].asString();
             int x = args[1].asNumber().intValue();
@@ -435,7 +441,7 @@ public class AbstractWindowToolkit extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not load image (" + e.getMessage() + ")");
             }
-        }), Arrays.asList("String", "num", "num"));
+        }), Types.VOID, Types.STRING, Types.INT, Types.INT);
         func("sizedImage", ifInit(args -> {
             String path = args[0].asString();
             int x = args[1].asNumber().intValue();
@@ -449,14 +455,14 @@ public class AbstractWindowToolkit extends JPExtension {
             } catch (IOException e) {
                 return Err("Internal", "Could not load image (" + e.getMessage() + ")");
             }
-        }), Arrays.asList("String", "num", "num", "num", "num"));
+        }), Types.VOID, Types.STRING, Types.INT, Types.INT, Types.INT, Types.INT);
         func("setPixel", ifInit(args -> {
             int x = args[0].asNumber().intValue();
             int y = args[1].asNumber().intValue();
             int[] c = getColor(args[2]);
             setPixel(new Point(x, y), new Color(c[0], c[1], c[2]));
             return Ok;
-        }), Arrays.asList("num", "num", "(num,num,num)"));
+        }), Types.VOID, Types.INT, Types.INT, colorType);
         func("drawLine", ifInit(args -> {
             Point start = getPoint(args[0]);
             Point end = getPoint(args[1]);
@@ -464,16 +470,16 @@ public class AbstractWindowToolkit extends JPExtension {
 
             draw(new Line(start, end, new Color(c[0], c[1], c[2]), window.getStrokeSize()));
             return Ok;
-        }), Arrays.asList("(num,num)", "(num,num)", "(num,num,num)"));
+        }), Types.VOID, pointType, pointType, colorType);
     }
 
     private void windowControl() {
-        func("windowCount", args -> Ok(windows.size()), 0);
-        func("windowIndex", args -> Ok(index), 0);
+        func("windowCount", args -> Ok(windows.size()), Types.INT);
+        func("windowIndex", args -> Ok(index), Types.INT);
         func("createWindow", args -> {
             windows.add(new Window().isMain(false));
             return Ok(windows.size() - 1);
-        }, 0);
+        }, Types.INT);
         func("setWindow", args -> {
             index = args[0].asNumber().intValue();
             if (index >= windows.size() || index < 0) {
@@ -481,16 +487,16 @@ public class AbstractWindowToolkit extends JPExtension {
             }
             window = windows.get(index);
             return Ok;
-        }, Collections.singletonList("num"));
+        }, Types.VOID, Types.INT);
         func("focusWindow", ifInit(args -> {
             window.isMain(true);
             if (focused != null)
                 focused.isMain(false);
             focused = window;
             return Ok;
-        }), 0);
-        func("width", args -> Ok(window.getWidth()) , 0);
-        func("height", args -> Ok(window.getHeight()) , 0);
+        }), Types.VOID);
+        func("width", args -> Ok(window.getWidth()) , Types.INT);
+        func("height", args -> Ok(window.getHeight()) , Types.INT);
     }
 
     private void input() {
@@ -501,12 +507,12 @@ public class AbstractWindowToolkit extends JPExtension {
                 return Err("Out of Bounds", "Mouse key out of bounds");
             }
             return Ok(window.getMouseDown(key));
-        }), Collections.singletonList("num"));
+        }), Types.BOOL, Types.INT);
         func("mousePos", ifInit(args -> {
             Point pos = window.getMousePos();
-            return Ok(Arrays.asList(pos.x, pos.y));
-        }), 0);
-        func("mouseIn", ifInit(args -> Ok(window.mouseIn())), 0);
+            return Ok(new Value(new Value(pos.x), new Value(pos.y)));
+        }), pointType);
+        func("mouseIn", ifInit(args -> Ok(window.mouseIn())), Types.BOOL);
 
         // Keyboard
         func("keyDown", ifInit(args -> {
@@ -515,16 +521,16 @@ public class AbstractWindowToolkit extends JPExtension {
                 return Err("Argument", "Key not found");
             }
             return Ok(window.getKeyDown(Keys.get(key)));
-        }), Collections.singletonList("String"));
+        }), Types.BOOL, Types.STRING);
         func("keyTyped", ifInit(args -> {
             String key = args[0].asString();
             if (!Keys.containsKey(key)) {
                 return Err("Argument", "Key not found");
             }
             return Ok(window.getKeyTyped(Keys.get(key)));
-        }), Collections.singletonList("String"));
+        }), Types.BOOL, Types.STRING);
         // Returns all typed keys in a string
-        func("keyString", ifInit(args -> Ok(window.keyString())), 0);
+        func("keyString", ifInit(args -> Ok(window.keyString())), Types.STRING);
 
     }
 
@@ -545,7 +551,7 @@ public class AbstractWindowToolkit extends JPExtension {
             } catch (UnsupportedAudioFileException | LineUnavailableException | IOException e) {
                 return Err("Internal", "Could not load audio (" + e.getMessage() + ")");
             }
-        }), Collections.singletonList("String"));
+        }), Types.VOID, Types.STRING);
         // File
         func("chooseFile", args -> {
             String path = args[0].asString();
@@ -581,7 +587,7 @@ public class AbstractWindowToolkit extends JPExtension {
             else {
                 return Ok;
             }
-        }, Arrays.asList("String", "any", "num"));
+        }, Types.VOID, Types.STRING, Types.ANY, Types.INT);
     }
 
 }

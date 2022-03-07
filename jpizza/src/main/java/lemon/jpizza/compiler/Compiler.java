@@ -3,10 +3,15 @@ package lemon.jpizza.compiler;
 import lemon.jpizza.*;
 import lemon.jpizza.cases.Case;
 import lemon.jpizza.compiler.headers.HeadCode;
+import lemon.jpizza.compiler.types.GenericType;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
+import lemon.jpizza.compiler.types.objects.*;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JFunc;
+import lemon.jpizza.compiler.vm.LibraryManager;
 import lemon.jpizza.compiler.vm.VM;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.generators.Parser;
@@ -43,10 +48,12 @@ public class Compiler {
     }
     static class Local {
         final LocalToken name;
+        final Type type;
         int depth;
 
-        Local(LocalToken name, int depth) {
+        Local(LocalToken name, Type type, int depth) {
             this.name = name;
+            this.type = type;
             this.depth = depth;
         }
 
@@ -58,16 +65,19 @@ public class Compiler {
 
         String globalName;
         int index;
+        final Type type;
 
-        public Upvalue(int index, boolean isLocal) {
+        public Upvalue(int index, boolean isLocal, Type type) {
             this.index = index;
             this.isLocal = isLocal;
             this.isGlobal = false;
+            this.type = type;
         }
 
-        public Upvalue(String globalName) {
+        public Upvalue(String globalName, Type type) {
             this.isGlobal = true;
             this.globalName = globalName;
+            this.type = type;
         }
     }
 
@@ -82,41 +92,60 @@ public class Compiler {
 
     final JFunc function;
     final FunctionType type;
+    final FuncType funcType;
 
     int continueTo;
     final Stack<List<Integer>> breaks;
 
-    final List<String> globals;
+    final Map<String, Type> globals;
 
     String packageName;
     String target;
 
     final Upvalue[] upvalues;
 
+    boolean catchErrors = false;
+
     Map<String, Node> macros;
+    Map<String, Type> macroTypes;
+
+    Type enclosingType;
+    boolean staticContext;
+    
+    TypeLookup typeHandler;
 
     public Chunk chunk() {
         return this.function.chunk;
     }
     
-    public Compiler(FunctionType type, String source) {
-        this(null, type, source);
+    public Compiler(FunctionType type, String source, FuncType funcType) {
+        this(null, type, source, funcType);
+        LibraryManager.Setup(null);
+        globals.putAll(Shell.globals);
     }
 
-    public Compiler(Compiler enclosing, FunctionType type, String source) {
+    public Compiler(Compiler enclosing, FunctionType type, String source, FuncType funcType) {
         this.function = new JFunc(source);
         this.type = type;
+        this.funcType = funcType;
+
+        if (enclosing != null) {
+            this.enclosingType = enclosing.enclosingType;
+        }
+        else {
+            this.enclosingType = Types.VOID;
+        }
 
         this.locals = new Local[VM.MAX_STACK_SIZE];
         this.generics = new Local[VM.MAX_STACK_SIZE];
-        this.globals = new ArrayList<>();
+        this.globals = new HashMap<>();
 
         this.upvalues = new Upvalue[256];
 
         this.localCount = 0;
         this.scopeDepth = 0;
 
-        locals[localCount++] = new Local(new LocalToken(type == FunctionType.Method ? "this" : "", 0, 0), 0);
+        locals[localCount++] = new Local(new LocalToken(type == FunctionType.Method ? "this" : "", 0, 0), this.enclosingType, 0);
 
         this.enclosing = enclosing;
 
@@ -124,6 +153,9 @@ public class Compiler {
         this.breaks = new Stack<>();
 
         this.macros = new HashMap<>();
+        this.macroTypes = new HashMap<>();
+        
+        this.typeHandler = new TypeLookup(this);
     }
 
     public void beginScope() {
@@ -134,6 +166,11 @@ public class Compiler {
         destack(locals, start, end);
         destack(generics, start, end);
         scopeDepth--;
+    }
+
+    void error(String type, String message, Position start, Position end) {
+        Error error = new Error(start, end, type + " Error", message);
+        Shell.logger.fail(error.asString());
     }
 
     int destack(Local[] locals) {
@@ -172,15 +209,24 @@ public class Compiler {
         return -1;
     }
 
+    Type resolveType(String name, Local[] locals) {
+        for (int i = 0; i < localCount; i++) {
+            Local local = locals[localCount - 1 - i];
+            if (local == null) continue;
+            if (local.name.name.equals(name)) return locals[localCount - 1 - i].type;
+        }
+        return null;
+    }
+
     int resolveLocal(String name) {
         return resolve(name, locals);
     }
 
-    int resolveGeneric(String name) {
-        return resolve(name, generics);
+    Type resolveLocalType(String name) {
+        return resolveType(name, locals);
     }
 
-    int addUpvalue(int index, boolean isLocal) {
+    int addUpvalue(int index, boolean isLocal, Type type) {
         int upvalueCount = function.upvalueCount;
 
         for (int i = 0; i < upvalueCount; i++) {
@@ -190,8 +236,24 @@ public class Compiler {
             }
         }
 
-        upvalues[upvalueCount] = new Upvalue(index, isLocal);
+        upvalues[upvalueCount] = new Upvalue(index, isLocal, type);
         return function.upvalueCount++;
+    }
+
+    Type resolveUpvalueType(String name) {
+        if (enclosing == null) return null;
+
+        Type local = enclosing.resolveLocalType(name);
+        if (local != null) {
+            return local;
+        }
+
+        Type upvalue = enclosing.resolveUpvalueType(name);
+        if (upvalue != null) {
+            return upvalue;
+        }
+
+        return hasGlobal(name) ? getGlobal(name) : null;
     }
 
     int addUpvalue(String name) {
@@ -204,12 +266,16 @@ public class Compiler {
             }
         }
 
-        upvalues[upvalueCount] = new Upvalue(name);
+        upvalues[upvalueCount] = new Upvalue(name, getGlobal(name));
         return function.upvalueCount++;
     }
 
     boolean hasGlobal(String name) {
-        return globals.contains(name) || enclosing != null && enclosing.hasGlobal(name);
+        return globals.containsKey(name) || enclosing != null && enclosing.hasGlobal(name);
+    }
+
+    Type getGlobal(String name) {
+        return globals.getOrDefault(name, enclosing != null ? enclosing.getGlobal(name) : null);
     }
 
     int resolveUpvalue(String name) {
@@ -217,12 +283,12 @@ public class Compiler {
 
         int local = enclosing.resolveLocal(name);
         if (local != -1) {
-            return addUpvalue(local, true);
+            return addUpvalue(local, true, enclosing.resolveLocalType(name));
         }
 
         int upvalue = enclosing.resolveUpvalue(name);
         if (upvalue != -1) {
-            return addUpvalue(upvalue, false);
+            return addUpvalue(upvalue, false, enclosing.resolveUpvalueType(name));
         }
 
         return hasGlobal(name) ? addUpvalue(name) : -1;
@@ -267,6 +333,10 @@ public class Compiler {
         chunk().code.set(offset, jump);
     }
 
+    Type accessEnclosed(String name) {
+        return staticContext ? enclosingType.access(name) : enclosingType.accessInternal(name);
+    }
+
     public JFunc compileBlock(List<Node> statements) {
         for (Node statement : statements) {
             compile(statement);
@@ -285,8 +355,13 @@ public class Compiler {
         return function;
     }
 
-    void compile(Node statement) {
+    Type compile(Node statement) {
+        System.out.println(statement.jptype);
         switch (statement.jptype) {
+            case Cast:
+                compile(((CastNode) statement).expr);
+                break;
+
             case BinOp:
                 compile((BinOpNode) statement);
                 break;
@@ -368,28 +443,25 @@ public class Compiler {
             case Enum:
                 compile((EnumNode) statement);
                 break;
-
-
             case ClassDef:
-                compile((ClassDefNode) statement);
-                break;
+                return compile((ClassDefNode) statement);
             case Claccess: {
                 ClaccessNode node = (ClaccessNode) statement;
-                compile(node.class_tok);
-                int constant = chunk().addConstant(new Value(node.attr_name_tok.value.toString()));
+                String attr = node.attr_name_tok.value.toString();
+                int constant = chunk().addConstant(new Value(attr));
                 emit(OpCode.Access, constant, node.pos_start, node.pos_end);
                 break;
             }
             case AttrAssign: {
                 AttrAssignNode node = (AttrAssignNode) statement;
-                compile(node.value_node);
                 int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
                 emit(OpCode.SetAttr, constant, node.pos_start, node.pos_end);
                 break;
             }
             case AttrAccess: {
                 AttrAccessNode node = (AttrAccessNode) statement;
-                int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
+                String attr = node.var_name_tok.value.toString();
+                int constant = chunk().addConstant(new Value(attr));
                 emit(OpCode.GetAttr, constant, node.pos_start, node.pos_end);
                 break;
             }
@@ -442,7 +514,7 @@ public class Compiler {
             case Break:
                 compileNull(statement.pos_start, statement.pos_end);
                 if (breaks.isEmpty())
-                    Shell.logger.fail(Error.InvalidSyntax(statement.pos_start, statement.pos_end, "Break statement outside of loop"));
+                    error("Invalid Syntax", "Break statement outside of loop", statement.pos_start, statement.pos_end);
                 breaks.peek().add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
                 break;
             case Continue:
@@ -460,6 +532,7 @@ public class Compiler {
             default:
                 throw new RuntimeException("Unknown statement type: " + statement.jptype);
         }
+        return typeHandler.resolve(statement);
     }
 
     void compile(ExtendNode node) {
@@ -467,8 +540,15 @@ public class Compiler {
     }
 
     void compile(DecoratorNode node) {
-        compile(node.decorated);
-        compile(node.decorator);
+        Type decorated = compile(node.decorated);
+        Type decorator = compile(node.decorator);
+        if (!(decorator instanceof FuncType) || !(decorated instanceof FuncType)) {
+            error("Decorator", "Decorator and decorated must be a function", node.pos_start, node.pos_end);
+        }
+        Type result = decorator.call(new Type[]{ decorated }, new Type[0]);
+        if (!decorated.equals(result)) {
+            error("Decorator", "Decorator must return the decorated function", node.pos_start, node.pos_end);
+        }
         emit(new int[]{
                 OpCode.Call,
                 1, 0,
@@ -506,23 +586,47 @@ public class Compiler {
     }
 
     void compile(DestructNode node) {
-        compile(node.target);
+        Type destructed = compile(node.target);
         emit(OpCode.Destruct, node.subs.size(), node.pos_start, node.pos_end);
         for (Token sub : node.subs) {
             String name = sub.value.toString();
-            globals.add(name);
+            Type type = destructed.access(name);
+            if (type == null) {
+                error("Attribute", "Cannot access " + name + " in " + destructed, node.pos_start, node.pos_end);
+            }
+            globals.put(name, type);
             emit(chunk().addConstant(new Value(name)), sub.pos_start, sub.pos_end);
         }
     }
 
     void compile(UseNode node) {
         int code;
-        switch (node.useToken.value.toString()) {
-            case "memoize": code = HeadCode.Memoize; break;
-            case "func": code = HeadCode.SetMainFunction; break;
-            case "object": code = HeadCode.SetMainClass; break;
-            case "export": code = HeadCode.Export; break;
+        int argc;
+        String name;
+
+        switch (name = node.useToken.value.toString()) {
+            case "memoize":
+                argc = 0;
+                code = HeadCode.Memoize;
+            break;
+
+            case "func":
+                argc = 1;
+                code = HeadCode.SetMainFunction;
+            break;
+
+            case "object":
+                argc = 1;
+                code = HeadCode.SetMainClass;
+            break;
+
+            case "export":
+                argc = -1;
+                code = HeadCode.Export;
+            break;
+
             case "package":
+                argc = -1;
                 StringBuilder sb = new StringBuilder();
                 for (Token token : node.args) {
                     sb.append(token.asString()).append(".");
@@ -530,20 +634,29 @@ public class Compiler {
                 packageName = sb.substring(0, sb.length() - 1);
                 chunk().packageName = packageName;
                 code = HeadCode.Package;
-                break;
+            break;
+
             case "export_to":
-                if (node.args.size() != 1) {
-                    Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Argument Count", "export_to() takes exactly one argument").asString());
-                }
-                else {
+                argc = 1;
+                if (node.args.size() == 1) {
                     target = node.args.get(0).asString();
                     chunk().target = target;
                 }
                 code = HeadCode.ExportTo;
-                break;
+            break;
+
             default:
                 code = -1;
-                break;
+                argc = -1;
+            break;
+        }
+
+        if (code == -1) {
+            error("Header Type", "Header does not exist", node.useToken.pos_start, node.useToken.pos_end);
+        }
+
+        if (node.args.size() != argc && argc != -1) {
+            error("Argument Count", name + "() takes exactly " + argc + " arguments", node.pos_start, node.pos_end);
         }
 
         emit(OpCode.Header, node.pos_start, node.pos_end);
@@ -559,6 +672,10 @@ public class Compiler {
                 node.var_name_tok.value.toString(),
                 node.value_node
         );
+        macroTypes.put(
+                node.var_name_tok.value.toString(),
+                typeHandler.resolve(node.value_node)
+        );
         compileNull(node.pos_start, node.pos_end);
     }
 
@@ -568,7 +685,10 @@ public class Compiler {
     }
 
     void compile(DerefNode node) {
-        compile(node.ref);
+        Type type = compile(node.ref);
+        if (!(type instanceof ReferenceType)) {
+            error("Type", "Cannot dereference " + type, node.pos_start, node.pos_end);
+        }
         emit(OpCode.Deref, node.pos_start, node.pos_end);
     }
 
@@ -584,40 +704,78 @@ public class Compiler {
 
     void compile(EnumNode node) {
         Map<String, JEnumChild> children = new HashMap<>();
+        EnumChildType[] types = new EnumChildType[node.children.size()];
 
         int argc = node.children.size();
         for (int i = 0; i < argc; i++) {
             Parser.EnumChild child = node.children.get(i);
 
-            List<Integer> genericSlots = new ArrayList<>();
-            for (List<String> rawType : child.types())
-                if (rawType.size() == 1 && child.generics().contains(rawType.get(0))) {
-                    genericSlots.add(child.generics().indexOf(rawType.get(0)));
-                }
-                else {
-                    genericSlots.add(-1);
-                }
-
             String name = child.token().value.toString();
             children.put(name, new JEnumChild(
                     i,
-                    child.params(),
-                    child.types(),
-                    child.generics(),
-                    genericSlots
+                    child.params()
             ));
 
+            String[] properties = child.params().toArray(new String[0]);
+            Type[] propertyTypes = new Type[child.types().size()];
+            for (int j = 0; j < propertyTypes.length; j++) {
+                Type type = typeLookup(child.types().get(j), child.token().pos_start, child.token().pos_end);
+                if (type == null) {
+                    error("Type", "Type does not exist", node.pos_start, node.pos_end);
+                }
+                propertyTypes[j] = type;
+            }
+            GenericType[] generics = new GenericType[child.generics().size()];
+            for (int j = 0; j < generics.length; j++) {
+                generics[j] = new GenericType(child.generics().get(j));
+            }
+
+            EnumChildType type = new EnumChildType(name, propertyTypes, generics, properties);
+            types[i] = type;
+
             if (node.pub)
-                globals.add(name);
+                globals.put(name, type);
         }
 
         String name = node.tok.value.toString();
-        globals.add(name);
+        EnumType type = new EnumType(name, types);
+        globals.put(name, type);
         int constant = chunk().addConstant(new Value(new JEnum(
                 name,
                 children
         )));
         emit(new int[]{ OpCode.Enum, constant, node.pub ? 1 : 0 }, node.pos_start, node.pos_end);
+    }
+
+    private Type typeLookup(Token token) {
+        return typeLookup((List<String>) token.value, token.pos_start, token.pos_end);
+    }
+
+    private Type typeLookup(List<String> strings, Position start, Position end) {
+        return typeHandler.resolve(strings, start, end);
+    }
+
+
+    Type variableType(String toString, Position start, Position end) {
+        // TODO: THIS TOO
+        int index;
+        if (hasGlobal(toString)) {
+            return getGlobal(toString);
+        }
+        else if ((index = resolveLocal(toString)) != -1) {
+            return locals[index].type;
+        }
+        else if ((index = resolveUpvalue(toString)) != -1) {
+            return upvalues[index].type;
+        }
+        else if (macroTypes.containsKey(toString)) {
+            return macroTypes.get(toString);
+        }
+        else if (accessEnclosed(toString) != null) {
+            return accessEnclosed(toString);
+        }
+        error("Scope", "Variable " + toString + " does not exist", start, end);
+        return null;
     }
 
     static boolean equalPackages(String a, String b) {
@@ -643,7 +801,7 @@ public class Compiler {
         return func;
     }
 
-    void compile(ImportNode node) {
+    JFunc getImport(ImportNode node) {
         String fn = node.file_name_tok.asString();
         String chrDir = System.getProperty("user.dir");
 
@@ -655,7 +813,7 @@ public class Compiler {
         //noinspection ResultOfMethodCallIgnored
         new File(Shell.root + "/modules").mkdirs();
 
-        JFunc imp = null;
+        JFunc imp;
         try {
             if (Constants.STANDLIBS.containsKey(fn)) {
                 Pair<JFunc, Error> res = Shell.compile(fn, Constants.STANDLIBS.get(fn));
@@ -701,22 +859,40 @@ public class Compiler {
                 imp = canImport(res.a);
                 System.setProperty("user.dir", chrDir);
             }
+            else if (Shell.libraries.containsKey(fn)) {
+                imp = null;
+            }
+            else {
+                throw new IOException("File not found");
+            }
         } catch (IOException e) {
             imp = null;
-            Shell.logger.fail(new Error(node.pos_start, node.pos_end, "Import", "Couldn't import file (" + e.getMessage() + ")").asString());
+            error("Import", "Couldn't import file (" + e.getMessage() + ")", node.pos_start, node.pos_end);
         }
+
+        return imp;
+    }
+
+    void compile(ImportNode node) {
+        String fn = node.file_name_tok.asString();
+
+        JFunc imp = getImport(node);
+        Type type = null;
 
         if (imp != null) {
             int addr = chunk().addConstant(new Value(imp));
             emit(OpCode.Constant, addr, node.pos_start, node.pos_end);
+            type = new NamespaceType(imp.chunk.globals);
         }
         else {
             compileNull(node.pos_start, node.pos_end);
         }
 
+        assert type != null;
+
         int constant = chunk().addConstant(new Value(fn));
         emit(OpCode.Import, constant, node.pos_start, node.pos_end);
-        globals.add(node.as_tok != null ? node.as_tok.value.toString() : fn);
+        globals.put(node.as_tok != null ? node.as_tok.value.toString() : fn, type);
 
         if (node.as_tok != null)
             constant = chunk().addConstant(new Value(node.as_tok.value.toString()));
@@ -747,14 +923,18 @@ public class Compiler {
     void compile(CallNode node) {
         int argc = node.argNodes.size();
         int kwargc = node.kwargs.size();
-        for (Node arg : node.argNodes) {
-            compile(arg);
+        Type[] argTypes = new Type[argc];
+        for (int i = 0; i < argc; i++) {
+            argTypes[i] = compile(node.argNodes.get(i));
         }
         List<String> kwargNames = new ArrayList<>(node.kwargs.keySet());
         for (int i = kwargc - 1; i >= 0; i--) {
             compile(node.kwargs.get(kwargNames.get(i)));
         }
-        compile(node.nodeToCall);
+        Type function = compile(node.nodeToCall);
+        if (!(function instanceof FuncType) && !(function instanceof ClassType) && !(function instanceof EnumChildType)) {
+            error("Type", "Can't call non-function", node.pos_start, node.pos_end);
+        }
         emit(new int[]{
                 OpCode.Call,
                 argc, kwargc,
@@ -763,20 +943,33 @@ public class Compiler {
         for (int i = 0; i < kwargc; i++) {
             emit(chunk().addConstant(new Value(kwargNames.get(i))), node.pos_start, node.pos_end);
         }
-        for (Token generic : node.generics) {
-            compileType((List<String>) generic.value, generic.pos_start, generic.pos_end);
+        Type[] generics = new Type[node.generics.size()];
+        for (int i = 0; i < generics.length; i++) {
+            Token generic = node.generics.get(i);
+            Type type = typeLookup(generic);
+            generics[i] = type;
+        }
+        Type res = function.call(argTypes, generics);
+        if (res == null) {
+            error("Type", "Can't call function with given arguments", node.pos_start, node.pos_end);
         }
     }
 
     void compile(FuncDefNode node) {
+        FuncType type = (FuncType) typeHandler.resolve(node);
+
         int global = -1;
         if (node.var_name_tok != null) {
-            global = parseVariable(node.var_name_tok, node.pos_start, node.pos_end);
+            global = parseVariable(node.var_name_tok, type, node.pos_start, node.pos_end);
             markInitialized();
+            if (scopeDepth == 0)
+                globals.put(node.var_name_tok.value.toString(), type);
         }
-        function(FunctionType.Function, node);
+
+        function(FunctionType.Function, type, node);
+
         if (node.var_name_tok != null) {
-            defineVariable(global, Collections.singletonList("function"), false, node.pos_start, node.pos_end);
+            defineVariable(global, type, false, node.pos_start, node.pos_end);
         }
     }
 
@@ -865,26 +1058,17 @@ public class Compiler {
         locals[localCount - 1].depth = scopeDepth;
     }
 
-    void function(FunctionType type, FuncDefNode node) {
-        function(type, node, c -> {}, c -> {});
+    void function(FunctionType type, FuncType funcType, FuncDefNode node) {
+        function(type, funcType, node, c -> {}, c -> {});
     }
 
-    void function(FunctionType type, FuncDefNode node, CompilerWrapped pre, CompilerWrapped post) {
-        Compiler compiler = new Compiler(this, type, chunk().source);
-
+    void function(FunctionType type, FuncType funcType, FuncDefNode node,CompilerWrapped pre, CompilerWrapped post) {
+        Compiler compiler = new Compiler(this, type, chunk().source, funcType).catchErrors(node.catcher);
         compiler.beginScope();
 
-        List<String> genericNames = new ArrayList<>();
-        for (int i = 0; i < node.generic_toks.size(); i++) {
-            compiler.function.totarity++;
-            compiler.function.genericArity++;
-
-            Token generic = node.generic_toks.get(i);
-            compiler.addGeneric(generic.value.toString(), generic.pos_start, generic.pos_end);
-
-            genericNames.add(generic.value.toString());
+        for (GenericType generic : funcType.generics) {
+            compiler.typeHandler.types.put(generic.name, generic);
         }
-        List<String> retype = compiler.compileType(node.returnType, node.pos_start, node.pos_end, false);
 
         for (int i = 0; i < node.arg_name_toks.size(); i++) {
             compiler.function.arity++;
@@ -892,31 +1076,23 @@ public class Compiler {
 
             Token param = node.arg_name_toks.get(i);
             Token paramType = node.arg_type_toks.get(i);
-            List<String> rawType = (List<String>) paramType.value;
 
-            compiler.parseVariable(param, param.pos_start, param.pos_end);
-            compiler.makeVar(compiler.localCount - 1, rawType, false, param.pos_start, param.pos_end);
-
-            if (rawType.size() == 1 && genericNames.contains(rawType.get(0))) {
-                compiler.function.genericSlots.add(genericNames.indexOf(rawType.get(0)));
-            }
-            else {
-                compiler.function.genericSlots.add(-1);
-            }
+            compiler.parseVariable(param, compiler.typeLookup(paramType), param.pos_start, param.pos_end);
+            compiler.makeVar(compiler.localCount - 1, false, param.pos_start, param.pos_end);
         }
 
         if (node.argname != null) {
             Token argNameToken = new Token(TokenType.Identifier, node.argname, node.pos_start, node.pos_end);
             compiler.function.totarity++;
-            compiler.parseVariable(argNameToken, argNameToken.pos_start, argNameToken.pos_end);
-            compiler.makeVar(compiler.localCount - 1, Collections.singletonList("list"), false, argNameToken.pos_start, argNameToken.pos_end);
+            compiler.parseVariable(argNameToken, Types.LIST, argNameToken.pos_start, argNameToken.pos_end);
+            compiler.makeVar(compiler.localCount - 1, false, argNameToken.pos_start, argNameToken.pos_end);
         }
 
         if (node.kwargname != null) {
             Token kwargNameToken = new Token(TokenType.Identifier, node.kwargname, node.pos_start, node.pos_end);
             compiler.function.totarity++;
-            compiler.parseVariable(kwargNameToken, kwargNameToken.pos_start, kwargNameToken.pos_end);
-            compiler.makeVar(compiler.localCount - 1, Collections.singletonList("dict"), false, kwargNameToken.pos_start, kwargNameToken.pos_end);
+            compiler.parseVariable(kwargNameToken, Types.DICT, kwargNameToken.pos_start, kwargNameToken.pos_end);
+            compiler.makeVar(compiler.localCount - 1, false, kwargNameToken.pos_start, kwargNameToken.pos_end);
         }
 
         pre.compile(compiler);
@@ -929,12 +1105,11 @@ public class Compiler {
 
         function.name = node.var_name_tok != null ? node.var_name_tok.value.toString() : "<anonymous>";
         function.async = node.async;
-        function.returnType = retype;
-
-        function.args = node.argname;
-        function.kwargs = node.kwargname;
 
         function.catcher = node.catcher;
+
+        function.varargs = node.argname != null;
+        function.kwargs = node.kwargname != null;
 
         for (Node defaultValue : node.defaults) {
             if (defaultValue != null)
@@ -954,6 +1129,10 @@ public class Compiler {
             }
         }
     }
+
+    private Compiler catchErrors(boolean catcher) {
+        catchErrors = catcher;
+        return this;    }
 
     void compileNull(@NotNull Position start, @NotNull Position end) {
         emit(OpCode.Null, start, end);
@@ -978,6 +1157,7 @@ public class Compiler {
         if (node.op_tok == TokenType.Ampersand) {
             compile(node.left_node);
             int jump = emitJump(OpCode.JumpIfFalse, node.left_node.pos_start, node.left_node.pos_end);
+            //noinspection DuplicatedCode
             emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
             compile(node.right_node);
             patchJump(jump);
@@ -986,6 +1166,7 @@ public class Compiler {
         else if (node.op_tok == TokenType.Pipe) {
             compile(node.left_node);
             int jump = emitJump(OpCode.JumpIfTrue, node.left_node.pos_start, node.left_node.pos_end);
+            //noinspection DuplicatedCode
             emit(OpCode.Pop, node.left_node.pos_start, node.left_node.pos_end);
             compile(node.right_node);
             patchJump(jump);
@@ -998,12 +1179,9 @@ public class Compiler {
             return;
         }
         else if (node.op_tok == TokenType.Colon) {
-            emit(OpCode.NullErr, 1, node.pos_start, node.pos_end);
             compile(node.left_node);
-            emit(OpCode.IncrNullErr, node.pos_start, node.pos_end);
             compile(node.right_node);
             emit(OpCode.Chain, node.pos_start, node.pos_end);
-            emit(OpCode.NullErr, 0, node.pos_start, node.pos_end);
             return;
         }
 
@@ -1080,7 +1258,6 @@ public class Compiler {
     }
 
     void compile(UnaryOpNode node) {
-        compile(node.node);
         switch (node.op_tok) {
             case Plus:
                 break;
@@ -1119,20 +1296,28 @@ public class Compiler {
 
         int arg = resolveLocal(name);
 
+        Type type;
         if (arg != -1) {
             emit(OpCode.GetLocal, arg, start, end);
         }
         else if ((arg = resolveUpvalue(name)) != -1) {
             emit(OpCode.GetUpvalue, arg, start, end);
         }
-        else if (inPattern && !hasGlobal(name)) {
+        else if (hasGlobal(name)) {
             arg = chunk().addConstant(new Value(name));
-            addLocal(name, start, end);
+            emit(OpCode.GetGlobal, arg, start, end);
+        }
+        else if (accessEnclosed(name) != null) {
+            arg = chunk().addConstant(new Value(name));
+            emit(OpCode.GetAttr, arg, start, end);
+        }
+        else if (inPattern && (type = accessEnclosed(name)) != null) {
+            arg = chunk().addConstant(new Value(name));
+            addLocal(name, type, start, end);
             emit(OpCode.PatternVars, arg, start, end);
         }
         else {
-            arg = chunk().addConstant(new Value(name));
-            emit(OpCode.GetGlobal, arg, start, end);
+            error("Scope", "Undefined variable '" + name + "'", start, end);
         }
     }
 
@@ -1140,6 +1325,7 @@ public class Compiler {
         String name = node.varTok.value.toString();
         if (macros.containsKey(name)) {
             macros.remove(name);
+            macroTypes.remove(name);
             return;
         }
 
@@ -1165,7 +1351,7 @@ public class Compiler {
     void compile(VarAssignNode node) {
         if (node.defining)
             compileDecl(node.var_name_tok,
-                    node.type, node.locked, node.value_node,
+                    typeLookup(node.type, node.pos_start, node.pos_end), node.locked, node.value_node,
                     node.min != null ? node.min : Integer.MIN_VALUE,
                     node.max != null ? node.max : Integer.MAX_VALUE,
                     node.pos_start, node.pos_end);
@@ -1174,19 +1360,18 @@ public class Compiler {
     }
 
     void compile(LetNode node) {
-        compileDecl(node.var_name_tok, Collections.singletonList("<inferred>"), false, node.value_node, Integer.MIN_VALUE, Integer.MAX_VALUE, node.pos_start, node.pos_end);
+        compileDecl(node.var_name_tok, null, false, node.value_node, Integer.MIN_VALUE, Integer.MAX_VALUE, node.pos_start, node.pos_end);
     }
 
-    void defineVariable(int global, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
+    void defineVariable(int global, Type type, boolean constant, @NotNull Position start, @NotNull Position end) {
         defineVariable(global, type, constant, Integer.MIN_VALUE, Integer.MAX_VALUE, start, end);
     }
 
-    void defineVariable(int global, List<String> type, boolean constant, int min, int max, @NotNull Position start, @NotNull Position end) {
+    void defineVariable(int global, Type type, boolean constant, int min, int max, @NotNull Position start, @NotNull Position end) {
         boolean usesRange = min != Integer.MIN_VALUE || max != Integer.MAX_VALUE;
         if (scopeDepth > 0) {
             markInitialized();
             emit(OpCode.DefineLocal, start, end);
-            compileType(type, start, end);
             emit(constant ? 1 : 0, start, end);
             emit(usesRange ? 1 : 0, start, end);
             if (usesRange) {
@@ -1195,9 +1380,8 @@ public class Compiler {
             return;
         }
 
-        globals.add(chunk().constants.values.get(global).asString());
+        globals.put(chunk().constants.values.get(global).asString(), type);
         emit(OpCode.DefineGlobal, global, start, end);
-        compileType(type, start, end);
         emit(constant ? 1 : 0, start, end);
         emit(usesRange ? 1 : 0, start, end);
         if (usesRange) {
@@ -1205,45 +1389,45 @@ public class Compiler {
         }
     }
 
-    void makeVar(int slot, List<String> type, boolean constant, @NotNull Position start, @NotNull Position end) {
+    void makeVar(int slot, boolean constant, @NotNull Position start, @NotNull Position end) {
         emit(OpCode.MakeVar, slot, start, end);
-        compileType(type, start, end);
         emit(constant ? 1 : 0, start, end);
     }
 
-    void addLocal(String name, @NotNull Position start, @NotNull Position end) {
-        Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), scopeDepth);
+    void addLocal(String name, Type type, @NotNull Position start, @NotNull Position end) {
+        Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), type, scopeDepth);
 
         locals[localCount++] = local;
     }
 
     void addGeneric(String name, @NotNull Position start, @NotNull Position end) {
-        Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), scopeDepth);
+        Local local = new Local(new LocalToken(name, start.idx, end.idx - start.idx), new GenericType(name), scopeDepth);
 
         generics[localCount++] = local;
         locals[localCount - 1] = local;
     }
 
-    void declareVariable(Token varNameTok, @NotNull Position start, @NotNull Position end) {
+    void declareVariable(Token varNameTok, Type type, @NotNull Position start, @NotNull Position end) {
         if (scopeDepth == 0)
             return;
 
         String name = varNameTok.value.toString();
-        addLocal(name, start, end);
+        addLocal(name, type, start, end);
     }
 
-    int parseVariable(Token varNameTok, @NotNull Position start, @NotNull Position end) {
-        declareVariable(varNameTok, start, end);
+    int parseVariable(Token varNameTok, Type type, @NotNull Position start, @NotNull Position end) {
+        declareVariable(varNameTok, type, start, end);
         if (scopeDepth > 0)
             return 0;
 
         return chunk().addConstant(new Value(varNameTok.value.toString()));
     }
 
-    void compileDecl(Token varNameTok, List<String> type, boolean locked, Node value,
+    void compileDecl(Token varNameTok, Type type, boolean locked, Node value,
                      int min, int max, @NotNull Position start, @NotNull Position end) {
-        compile(value);
-        int global = parseVariable(varNameTok, start, end);
+        Type t = compile(value);
+        if (type == null) type = t;
+        int global = parseVariable(varNameTok, type, start, end);
         defineVariable(global, type, locked, min, max, start, end);
     }
 
@@ -1251,7 +1435,12 @@ public class Compiler {
         String name = varNameTok.value.toString();
         int arg = resolveLocal(name);
 
-        compile(value);
+        Type expected = variableType(name, start, end);
+        Type actual = compile(value);
+
+        if (!expected.equals(actual)) {
+            error("Type", "Expected " + expected + " but got " + actual, start, end);
+        }
 
         if (arg != -1) {
             emit(OpCode.SetLocal, arg, start, end);
@@ -1270,7 +1459,8 @@ public class Compiler {
     }
 
     void wrapScope(CompilerWrapped method, String scopeName, Position start, Position end) {
-        Compiler scope = new Compiler(this, FunctionType.Scope, chunk().source);
+        // ()<> -> Any
+        Compiler scope = new Compiler(this, FunctionType.Scope, chunk().source, new FuncType(Types.ANY, new Type[0], new GenericType[0], false));
 
         scope.beginScope();
         method.compile(scope);
@@ -1279,7 +1469,6 @@ public class Compiler {
 
         JFunc func = scope.endCompiler();
         func.name = scopeName;
-        func.returnType = Collections.singletonList("any");
 
         emit(new int[]{ OpCode.Closure, chunk().addConstant(new Value(func)), 0 }, start, end);
         for (int i = 0; i < func.upvalueCount; i++) {
@@ -1383,44 +1572,43 @@ public class Compiler {
         patchJump(pastJump);
     }
 
-    String compileType(String type) {
-        int g = resolveGeneric(type);
-        if (g != -1) {
-            return "@" + g;
-        }
-        else {
-            return type;
-        }
-    }
-
-    void compileType(List<String> type, @NotNull Position start, @NotNull Position end) {
-        compileType(type, start, end, true);
-    }
-
-    List<String> compileType(List<String> type, @NotNull Position start, @NotNull Position end, boolean emit) {
-        List<String> compiled = new ArrayList<>();
-        for (String t : type) {
-            compiled.add(compileType(t));
-        }
-        Value compiledval = Value.fromType(compiled);
-        int constant = chunk().addConstant(compiledval);
-        if (emit)
-            emit(constant, start, end);
-        return compiled;
-    }
-
-    void compile(ClassDefNode node) {
+    Type compile(ClassDefNode node) {
         String name = node.class_name_tok.value.toString();
+
+        Position constructorStart = node.make_node.pos_start;
+        Position constructorEnd = node.make_node.pos_end;
+        MethDefNode constructor = new MethDefNode(
+                new Token(TokenType.Identifier, "<make>", constructorStart, constructorEnd),
+                node.arg_name_toks,
+                node.arg_type_toks,
+                node.make_node,
+                false,
+                false,
+                false,
+                Collections.singletonList("void"),
+                node.defaults,
+                node.defaultCount,
+                node.generic_toks,
+                false,
+                false,
+                node.argname,
+                node.kwargname
+        );
+
         int nameConstant = chunk().addConstant(new Value(name));
-        declareVariable(node.class_name_tok, node.class_name_tok.pos_start, node.class_name_tok.pos_end);
+        Type type = typeHandler.resolve(node);
+        declareVariable(node.class_name_tok, type, node.class_name_tok.pos_start, node.class_name_tok.pos_end);
 
         for (int i = node.attributes.size() - 1; i >= 0; i--) {
-            Node def = node.attributes.get(i).nValue;
+            AttrDeclareNode attr = node.attributes.get(i);
+            Node def = attr.nValue;
             if (def != null)
                 compile(def);
             else
-                compileNull(node.attributes.get(i).pos_start, node.attributes.get(i).pos_end);
+                compileNull(attr.pos_start, attr.pos_end);
         }
+
+        enclosingType = type;
 
         for (int i = 0; i < node.generic_toks.size(); i++)
             compileNull(node.pos_start, node.pos_end);
@@ -1448,33 +1636,21 @@ public class Compiler {
         for (Token tok : node.generic_toks)
             emit(chunk().addConstant(new Value(tok.value.toString())), node.pos_start, node.pos_end);
 
-        defineVariable(nameConstant, Collections.singletonList("recipe"), true, node.pos_start, node.pos_end);
+        defineVariable(nameConstant, type, true, node.pos_start, node.pos_end);
 
-        for (MethDefNode method : node.methods)
+        for (MethDefNode method : node.methods) {
+            staticContext = method.stat;
             compile(method);
+        }
 
-        Position constructorStart = node.make_node.pos_start;
-        Position constructorEnd = node.make_node.pos_end;
-        compile(new MethDefNode(
-                new Token(TokenType.Identifier, "<make>", constructorStart, constructorEnd),
-                node.arg_name_toks,
-                node.arg_type_toks,
-                node.make_node,
-                false,
-                false,
-                false,
-                Collections.singletonList("void"),
-                node.defaults,
-                node.defaultCount,
-                node.generic_toks,
-                false,
-                false,
-                node.argname,
-                node.kwargname
-        ), true, node.generic_toks);
+        compile(constructor, true, node.generic_toks);
+
+        enclosingType = Types.VOID;
 
         emit(OpCode.Pop, node.pos_start, node.pos_end);
         compileNull(node.pos_start, node.pos_end);
+
+        return type;
     }
 
     void compile(MethDefNode node) {
@@ -1487,7 +1663,10 @@ public class Compiler {
 
         FunctionType type = isConstructor ? FunctionType.Constructor : FunctionType.Method;
 
-        function(type, node.asFuncDef(),
+        FuncDefNode func = node.asFuncDef();
+        FuncType funcType = (FuncType) typeHandler.resolve(func);
+
+        function(type, funcType, func,
                 (compiler) -> {
                     if (isConstructor) for (Token tok : genericToks) {
                         compiler.compile(new AttrAssignNode(
@@ -1516,7 +1695,6 @@ public class Compiler {
                 node.isprivate ? 1 : 0,
                 node.isstatic ? 1 : 0,
         }, node.pos_start, node.pos_end);
-        compileType(node.type, node.pos_start, node.pos_end);
     }
 
     // CollectLoop adds the previous value to the loop stack in the VM
@@ -1554,7 +1732,7 @@ public class Compiler {
         beginScope();
 
         String name = node.var_name_tok.value.toString();
-        copyVar(node.var_name_tok, "num", node.start_value_node);
+        copyVar(node.var_name_tok, Types.FLOAT, node.start_value_node);
 
         int firstSkip = emitJump(OpCode.Jump, node.start_value_node.pos_start, node.start_value_node.pos_end);
 
@@ -1590,9 +1768,9 @@ public class Compiler {
                 "@" + name,
                 node.var_name_tok.pos_start,
                 node.var_name_tok.pos_end
-        ), "list", node.iterable_node);
+        ), Types.LIST, node.iterable_node);
         compileDecl(node.var_name_tok,
-                Collections.singletonList("any"),
+                Types.ANY,
                 false,
                 new NullNode(new Token(
                         TokenType.Identifier,
@@ -1630,11 +1808,11 @@ public class Compiler {
         }
     }
 
-    void copyVar(Token varNameTok, String type, Node startValueNode) {
-        int global = parseVariable(varNameTok, varNameTok.pos_start, varNameTok.pos_end);
+    void copyVar(Token varNameTok, Type type, Node startValueNode) {
+        int global = parseVariable(varNameTok, type, varNameTok.pos_start, varNameTok.pos_end);
         compile(startValueNode);
         emit(OpCode.Copy, startValueNode.pos_start, startValueNode.pos_end);
-        defineVariable(global, Collections.singletonList(type), false, varNameTok.pos_start, startValueNode.pos_end);
+        defineVariable(global, type, false, varNameTok.pos_start, startValueNode.pos_end);
         emit(OpCode.Pop, startValueNode.pos_start, startValueNode.pos_end);
     }
 

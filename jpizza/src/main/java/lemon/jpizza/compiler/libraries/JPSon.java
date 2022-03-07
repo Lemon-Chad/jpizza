@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lemon.jpizza.Pair;
 import lemon.jpizza.Token;
 import lemon.jpizza.TokenType;
+import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
@@ -119,8 +120,8 @@ public class JPSon extends JPExtension {
             } catch (IOException e) {
                 return Err("Malformed JSON", e.getMessage());
             }
-        }, Collections.singletonList("String"));
-        func("dumps", args -> Ok(dump(args[0])), 1);
+        }, Types.DICT, Types.STRING);
+        func("dumps", args -> Ok(dump(args[0])), Types.VOID, 1);
     }
 
 }

@@ -6,6 +6,7 @@ import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.*;
 import lemon.jpizza.compiler.headers.HeadCode;
 import lemon.jpizza.compiler.headers.Memo;
+import lemon.jpizza.compiler.types.Type;
 import lemon.jpizza.compiler.values.Pattern;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.Var;
@@ -27,7 +28,7 @@ import static lemon.jpizza.Constants.repeat;
 public class VM {
     public static final int MAX_STACK_SIZE = 256;
     public static final int FRAMES_MAX = 256;
-    public static final String VERSION = "2.1.0";
+    public static final String VERSION = "2.2.0";
 
     private static class Traceback {
         String filename;
@@ -71,8 +72,6 @@ public class VM {
     public boolean sim = false;
 
     public NativeResult res;
-
-    JStack<Pair<Integer, Integer>> nehStack = new JStack<>(FRAMES_MAX);
 
     public VM(JFunc function) {
         this(function, new HashMap<>());
@@ -123,7 +122,6 @@ public class VM {
 
     void defineNative(String name, JNative.Method method, int argc) {
         globals.put(name, new Var(
-                "function",
                 new Value(new JNative(name, method, argc)),
                 true
         ));
@@ -143,19 +141,18 @@ public class VM {
         libraries.get(lib).addField(name, val);
     }
 
-    void defineNative(String name, JNative.Method method, List<String> types) {
+    void defineNative(String name, JNative.Method method, Type[] types) {
         globals.put(name, new Var(
-                "function",
-                new Value(new JNative(name, method, types.size(), types)),
+                new Value(new JNative(name, method, types.length, types)),
                 true
         ));
     }
 
-    public void defineNative(String library, String name, JNative.Method method, List<String> types) {
+    public void defineNative(String library, String name, JNative.Method method, Type[] types) {
         if (!libraries.containsKey(library))
             libraries.put(library, new Namespace(library, new HashMap<>()));
         libraries.get(library).addField(name, new Value(
-                new JNative(name, method, types.size(), types)
+                new JNative(name, method, types.length, types)
         ));
     }
 
@@ -193,8 +190,6 @@ public class VM {
     }
 
     protected void runtimeError(String message, String reason, FlatPosition position) {
-        if (nehStack.count > 0)
-            return;
 
         lastError = new Pair<>(message, reason);
         if (sim) {
@@ -303,7 +298,7 @@ public class VM {
         }
 
         BoundMethod bound = new BoundMethod(method.asClosure(), instance.self);
-        if (!callValue(new Value(bound), args, new HashMap<>(), new String[0])) return VMResult.ERROR;
+        if (!callValue(new Value(bound), args, new HashMap<>())) return VMResult.ERROR;
 
         VMResult res = run();
         return res != VMResult.ERROR ? VMResult.OK : VMResult.ERROR;
@@ -404,20 +399,10 @@ public class VM {
         switch (op) {
             case OpCode.DefineGlobal: {
                 String name = readString();
-                String type = readType();
                 Value value = peek(0);
 
                 //noinspection DuplicatedCode
-                String valType = value.type();
-                if (type.equals("<inferred>"))
-                    type = valType;
-
                 boolean constant = readByte() == 1;
-
-                if (!type.equals("any") && !valType.equals(type)) {
-                    runtimeError("Type", "Expected " + type + " but got " + valType);
-                    return VMResult.ERROR;
-                }
 
                 boolean usesRange = readByte() == 1;
                 int min = Integer.MIN_VALUE;
@@ -427,7 +412,7 @@ public class VM {
                     max = readByte();
                 }
 
-                globals.put(name, new Var(type, value, constant, min, max));
+                globals.put(name, new Var(value, constant, min, max));
                 return VMResult.OK;
             }
             case OpCode.GetGlobal: {
@@ -520,11 +505,11 @@ public class VM {
         if (frame.bound != null) {
             if (frame.bound.isInstance) {
                 Instance instance = frame.bound.asInstance();
-                return boundNeutral(suppress, instance.setField(name, value, true));
+                return boundNeutral(suppress, instance.setField(name, value));
             }
             else if (frame.bound.isClass) {
                 JClass clazz = frame.bound.asClass();
-                return boundNeutral(suppress, clazz.setField(name, value, true));
+                return boundNeutral(suppress, clazz.setField(name, value));
             }
         }
         if (!suppress)
@@ -622,7 +607,6 @@ public class VM {
             }
             else {
                 push(new Value(new Var(
-                        "any",
                         val,
                         false
                 )));
@@ -654,12 +638,6 @@ public class VM {
                 return VMResult.ERROR;
             }
         }
-        String type = val.type();
-        if (!"any".equals(var.type) && !type.equals(var.type)) {
-            runtimeError("Type",
-                    String.format("Got type %s, expected type %s", type, var.type));
-            return VMResult.ERROR;
-        }
         var.val(val);
         return VMResult.OK;
     }
@@ -685,14 +663,8 @@ public class VM {
                 return set(var.asVar(), val);
             }
             case OpCode.DefineLocal: {
-                String type = readType();
                 Value val = pop();
-
                 //noinspection DuplicatedCode
-                String valType = val.type();
-                if (type.equals("<inferred>"))
-                    type = valType;
-
                 boolean constant = readByte() == 1;
 
                 boolean usesRange = readByte() == 1;
@@ -703,12 +675,7 @@ public class VM {
                     max = readByte();
                 }
 
-                if (!type.equals("any") && !valType.equals(type)) {
-                    runtimeError("Type", "Expected type " + type + ", got " + valType);
-                    return VMResult.ERROR;
-                }
-
-                Var var = new Var(type, val, constant, min, max);
+                Var var = new Var(val, constant, min, max);
                 push(new Value(var));
                 push(val);
 
@@ -717,48 +684,6 @@ public class VM {
 
             default: return VMResult.OK;
         }
-    }
-
-    String readType() {
-        return readType(readConstant().asType());
-    }
-
-    String readType(List<String> rawType) {
-        GenericGetter getter = null;
-        if (frame.bound != null && frame.bound.isInstance) {
-            Instance instance = frame.bound.asInstance();
-            getter = instance::getGeneric;
-        }
-        return readType(rawType, getter);
-    }
-
-    interface GenericGetter {
-        String get(String key);
-    }
-
-    String readType(List<String> rawtype, GenericGetter getter) {
-        StringBuilder sb = new StringBuilder();
-
-        for (String raw : rawtype) {
-            // @SLOT = Generic type slot
-            if (raw.startsWith("@")) {
-                int slot = Integer.parseInt(raw.substring(1));
-                sb.append(get(slot).asVar().val.asString());
-                continue;
-            }
-            else if (getter != null) {
-                String gen = getter.get(raw);
-                if (gen != null) {
-                    sb.append(gen);
-                    continue;
-                }
-            }
-            sb.append(raw);
-        }
-
-        // ['MyCool', '(', '@1', ')', 'Type'] -> MyCool(GenericAtSlot1)Type
-
-        return sb.toString();
     }
 
     VMResult loopOps(int op) {
@@ -892,23 +817,14 @@ public class VM {
             return access(val, val.asNamespace(), name);
         }
         else if (val.isEnumParent) {
-            return access(val, val.asEnum(), name);
+            return access(val.asEnum(), name);
         }
-        else {
-            runtimeError("Type", "Type " + val.type() + " does not have members");
-            return VMResult.ERROR;
-        }
+        return VMResult.ERROR;
     }
 
-    VMResult access(Value val, JEnum jEnum, String name) {
-        if (jEnum.has(name)) {
-            push(jEnum.get(name));
-            return VMResult.OK;
-        }
-        else {
-            runtimeError("Enum", "Enum " + val.type() + " does not have member " + name);
-            return VMResult.ERROR;
-        }
+    VMResult access(JEnum jEnum, String name) {
+        push(jEnum.get(name));
+        return VMResult.OK;
     }
 
     VMResult access(Value val, Namespace namespace, String name) {
@@ -952,11 +868,6 @@ public class VM {
                 else if (collection.isMap) {
                     push(collection.get(index));
                 }
-                else {
-                    runtimeError("Type", "Type " + collection.type() + " does not have members");
-                    return VMResult.ERROR;
-                }
-
                 return VMResult.OK;
             }
 
@@ -1054,7 +965,6 @@ public class VM {
     VMResult call() {
         int argc = readByte();
         int kwargc = readByte();
-        int genc = readByte();
 
         Value callee = pop();
 
@@ -1068,12 +978,6 @@ public class VM {
             args[i] = pop();
 
         push(callee);
-
-        String[] generics = new String[genc];
-        for (int i = 0; i < genc; i++) {
-            generics[i] = readType();
-            push(new Value(new Var("String", new Value(generics[i]), true)));
-        }
 
         for (Value arg : args) {
             if (arg.isSpread) {
@@ -1092,36 +996,36 @@ public class VM {
         // Stack:
         // [CALLEE] [GENERICS] [ARGUMENTS] [KWARGS]
 
-        if (!callValue(callee, argList.toArray(new Value[0]), kwargs, generics)) {
+        if (!callValue(callee, argList.toArray(new Value[0]), kwargs)) {
             return VMResult.ERROR;
         }
         frame = frames.peek();
         return VMResult.OK;
     }
 
-    public boolean callValue(Value callee, Value[] args, Map<String, Value> kwargs, String[] generics) {
+    public boolean callValue(Value callee, Value[] args, Map<String, Value> kwargs) {
         if (callee.isNativeFunc) {
             return call(callee.asNative(), args);
         }
         else if (callee.isClosure) {
-            return call(callee.asClosure(), args, kwargs, generics);
+            return call(callee.asClosure(), args, kwargs);
         }
         else if (callee.isClass) {
-            return call(callee.asClass(), args, kwargs, generics);
+            return call(callee.asClass(), args, kwargs);
         }
         else if (callee.isBoundMethod) {
             BoundMethod bound = callee.asBoundMethod();
-            stack.set(stack.count - args.length - generics.length - 1, new Value(new Var("any", bound.receiver, true)));
-            return call(bound.closure, bound.receiver, args, kwargs, generics);
+            stack.set(stack.count - args.length - 1, new Value(new Var(bound.receiver, true)));
+            return call(bound.closure, bound.receiver, args, kwargs);
         }
         else if (callee.isEnumChild) {
-            return call(callee.asEnumChild(), generics, args.length);
+            return call(callee.asEnumChild(), args.length);
         }
         runtimeError("Type", "Can only call functions and classes");
         return false;
     }
 
-    boolean call(JEnumChild child, String[] generics, int argCount) {
+    boolean call(JEnumChild child, int argCount) {
         int argc = child.arity;
 
         if (argCount != argc) {
@@ -1133,107 +1037,38 @@ public class VM {
         for (int i = argCount - 1; i >= 0; i--)
             args[i] = pop();
 
-        if (generics.length != child.genericArity) {
-            if ((generics = inferGenerics(
-                generics,
-                child.genericArity,
-                argCount,
-                child.genericSlots,
-                args
-            )) == null) return false;
-        }
-    
-
-        List<String>[] gTypes = new ArrayList[argc];
-        for (int i = 0; i < argc; i++) {
-            List<String> pretype = child.propTypes.get(i);
-            List<String> newType = new ArrayList<>();
-            for (String t : pretype) {
-                int idx = child.generics.indexOf(t);
-                if (idx != -1) {
-                    newType.add(generics[idx]);
-                }
-                else {
-                    newType.add(t);
-                }
-            }
-            gTypes[i] = newType;
-        }
-
-        String[] types = new String[argc];
-        for (int i = 0; i < argc; i++)
-            types[i] = readType(gTypes[i]);
-        
-        for (int i = 0; i < argc; i++) {
-            String type = args[i].type();
-            if (!types[i].equals("any") && !type.equals(types[i])) {
-                runtimeError("Type", "Expected " + types[i] + " but got " + type);
-                return false;
-            }
-        }
-
         pop();
-        push(child.create(args, types, generics, this));
+        push(child.create(args, this));
         return true;
     }
 
-    boolean call(JClass clazz, Value[] args, Map<String, Value> kwargs, String[] generics) {
+    boolean call(JClass clazz, Value[] args, Map<String, Value> kwargs) {
         Instance instance = new Instance(clazz, this);
 
         Value value = new Value(instance);
         instance.self = value;
 
         JClosure closure = clazz.constructor.asClosure();
-        if ((generics = pushInference(closure, args, generics)) == null) return false;
-
-        for (int i = 0; i < closure.function.genericArity; i++) {
-            instance.putGeneric(clazz.generics.get(i), generics[i]);
-        }
-
-        for (Map.Entry<String, ClassAttr> var : instance.fields.entrySet())
-            var.getValue().type = readType(var.getValue().rawType, instance::getGeneric);
 
         BoundMethod bound = new BoundMethod(closure, value);
-        return callValue(new Value(bound), args, kwargs, generics);
+        return callValue(new Value(bound), args, kwargs);
     }
 
-    boolean call(JClosure closure, Value[] args, Map<String, Value> kwargs, String[] generics) {
-        return call(closure, frame.bound, args, kwargs, generics);
+    boolean call(JClosure closure, Value[] args, Map<String, Value> kwargs) {
+        return call(closure, frame.bound, args, kwargs);
     }
 
-    public String[] inferGenerics(String[] generics, int genericArity, int arity, List<Integer> genericSlots, Value[] args) {
-        if (generics.length == 0) {
-            // Try to infer generics
-            String[] inferred = new String[genericArity];
-            int totalInferred = 0;
-            for (int i = 0; i < arity; i++) {
-                int slot = genericSlots.get(i);
-                if (slot != -1 && inferred[slot] == null) {
-                    inferred[slot] = args[i].type();
-                    totalInferred++;
-                }
-            }
-            if (totalInferred == genericArity) {
-                return inferred;
-            }
-        }
-        runtimeError("Generic Count", "Expected " + genericArity + " but got " + generics.length);
-        return null;
-    }
-
-    public boolean call(JClosure closure, Value binding, Value[] args, Map<String, Value> kwargs, String[] generics) {
+    public boolean call(JClosure closure, Value binding, Value[] args, Map<String, Value> kwargs) {
         if (frame.memoize > 0) {
             Value val = memo.get(closure.function.name, args);
             if (val != null) {
-                for (int i = 0; i <= args.length + generics.length + kwargs.size(); i++)
+                for (int i = 0; i <= args.length + kwargs.size(); i++)
                     pop();
                 push(val);
                 return true;
             }
             memo.stackCache(closure.function.name, args);
         }
-
-        if (pushInference(closure, args, generics) == null) return false;
 
         List<Value> extraArgs = new ArrayList<>();
         if (args.length < closure.function.arity) {
@@ -1245,7 +1080,7 @@ public class VM {
                 push(closure.function.defaults.get(i));
         }
         else if (args.length > closure.function.arity) {
-            if (closure.function.args != null) {
+            if (closure.function.varargs) {
                 List<Value> argsList = new ArrayList<>();
                 for (int i = closure.function.arity; i < args.length; i++)
                     argsList.add(pop());
@@ -1260,7 +1095,7 @@ public class VM {
         }
 
         Map<Value, Value> keywordArgs = new HashMap<>();
-        if (closure.function.kwargs != null) {
+        if (closure.function.kwargs) {
             for (Map.Entry<String, Value> entry : kwargs.entrySet()) {
                 String name = entry.getKey();
                 keywordArgs.put(new Value(name), entry.getValue());
@@ -1283,52 +1118,11 @@ public class VM {
         return true;
     }
 
-    String[] pushInference(JClosure closure, Value[] args, String[] generics) {
-        if (generics.length != closure.function.genericArity) {
-            if ((generics = inferGenerics(
-                generics,
-                closure.function.genericArity,
-                closure.function.arity,
-                closure.function.genericSlots,
-                args
-            )) == null) return null;
-
-            // Move arguments out of the way
-            for (int i = 0; i < args.length; i++)
-                pop();
-
-            // Insert inferred arguments
-            for (String type : generics) {
-                push(new Value(new Var("String", new Value(type), true)));
-            }
-
-            // Re-add arguments
-            for (Value arg : args)
-                push(arg);
-        }
-        return generics;
-    }
-
     void addFrame(JClosure closure, int slots, Value binding) {
         CallFrame newFrame = new CallFrame(closure, 0, slots, null, binding);
 
         // Inherited flags
         newFrame.memoize = frame.memoize > 0 ? 2 : 0;
-
-        // General flags
-        newFrame.catchError = closure.function.catcher;
-
-        frames.push(newFrame);
-
-        frame = newFrame;
-        frame.returnType = readType(closure.function.returnType);
-    }
-
-    void addFrame(JClosure closure, int slots, Value binding, String returnType, int ip) {
-        CallFrame newFrame = new CallFrame(closure, ip, slots, returnType, binding);
-
-        // Inherited flags
-        newFrame.memoize = frame.memoize;
 
         // General flags
         newFrame.catchError = closure.function.catcher;
@@ -1495,13 +1289,6 @@ public class VM {
                         break;
                     }
 
-                    String type = result.type();
-                    if (!frame.returnType.equals("any") && !type.equals(frame.returnType)) {
-                        runtimeError("Type", "Expected " + frame.returnType + " but got " + type);
-                        res = VMResult.ERROR;
-                        break;
-                    }
-
                     boolean isConstructor = frame.closure.function.name.equals("<make>");
                     Value bound = frame.bound;
 
@@ -1574,7 +1361,6 @@ public class VM {
                         }
                         Value lib = new Value(libraries.get(name));
                         globals.put(varName, new Var(
-                                "namespace",
                                 lib,
                                 true
                         ));
@@ -1595,7 +1381,6 @@ public class VM {
 
                     Value space = new Value(runner.asNamespace(name));
                     globals.put(varName, new Var(
-                            "namespace",
                             space,
                             true
                     ));
@@ -1653,7 +1438,6 @@ public class VM {
                 case OpCode.Enum: {
                     Value enumerator = readConstant();
                     globals.put(enumerator.asEnum().name(), new Var(
-                            "Enum",
                             enumerator,
                             true
                     ));
@@ -1664,7 +1448,6 @@ public class VM {
                         JEnum enumObj = enumerator.asEnum();
                         for (Map.Entry<String, JEnumChild> name : enumObj.children().entrySet()) {
                                 globals.put(name.getKey(), new Var(
-                                        enumObj.name(),
                                         new Value(name.getValue()),
                                         true
                                 ));
@@ -1826,19 +1609,6 @@ public class VM {
                     res = bitOps(instruction);
                     break;
 
-                case OpCode.NullErr: {
-                    boolean bit = readByte() == 1;
-                    if (bit) {
-                        Pair<Integer, Integer> pair = new Pair<>(frames.count, stack.count);
-                        nehStack.push(pair);
-                    }
-                    else {
-                        nehStack.pop();
-                    }
-                    res = VMResult.OK;
-                    break;
-                }
-
                 case OpCode.Chain: {
                     Value b = pop();
                     Value a = pop();
@@ -1851,11 +1621,6 @@ public class VM {
                     res = VMResult.OK;
                     break;
                 }
-
-                case OpCode.IncrNullErr:
-                    nehStack.peek().b++;
-                    res = VMResult.OK;
-                    break;
 
                 case OpCode.MakeArray: {
                     int count = readByte();
@@ -1891,10 +1656,7 @@ public class VM {
                         String attrname = readString();
                         boolean isprivate = readByte() == 1;
                         boolean isstatic = readByte() == 1;
-
-                        List<String> rawType = readConstant().asType();
-                        String type = readType(rawType);
-                        attributes.put(attrname, new ClassAttr(pop(), type, rawType, isstatic, isprivate));
+                        attributes.put(attrname, new ClassAttr(pop(), isstatic, isprivate));
                     }
 
                     List<String> genericNames = new ArrayList<>();
@@ -1915,18 +1677,11 @@ public class VM {
 
                 case OpCode.MakeVar: {
                     int slot = readByte();
-                    String type = readType();
                     boolean constant = readByte() == 1;
 
                     Value at = get(slot);
-                    String atType = at.type();
-                    if (!type.equals("any") && !atType.equals(type)) {
-                        runtimeError("Type", "Expected type " + type + " but got " + atType);
-                        res = VMResult.ERROR;
-                        break;
-                    }
 
-                    stack.set(frame.slots + slot, new Value(new Var(type, at, constant)));
+                    stack.set(frame.slots + slot, new Value(new Var(at, constant)));
                     res = VMResult.OK;
                     break;
                 }
@@ -1977,17 +1732,6 @@ public class VM {
                     if (exitLevel == frames.count) {
                         return VMResult.OK;
                     }
-                    continue;
-                }
-                if (nehStack.count > 0) {
-                    Pair<Integer, Integer> neh = nehStack.peek();
-                    while (frames.count > neh.a) {
-                        tracebacks.pop();
-                        frames.pop();
-                    }
-                    frame = frames.peek();
-                    stack.setTop(neh.b);
-                    push(new Value());
                     continue;
                 }
                 if (safe) {
@@ -2089,7 +1833,7 @@ public class VM {
 
             push(val);
 
-            boolean res = call(closure, new Value[]{ val }, new HashMap<>(), new String[0]);
+            boolean res = call(closure, new Value[]{ val }, new HashMap<>());
             if (!res) {
                 return;
             }
@@ -2111,7 +1855,7 @@ public class VM {
             push(new Value(closure));
             push(val);
 
-            boolean res = call(closure, new Value(clazz), new Value[]{ val }, new HashMap<>(), new String[0]);
+            boolean res = call(closure, new Value(clazz), new Value[]{ val }, new HashMap<>());
             if (!res) {
                 return;
             }

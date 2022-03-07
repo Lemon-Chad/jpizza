@@ -40,7 +40,7 @@ public class Namespace {
     }
 
     public void addField(String name, Value val) {
-        values.put(name, new Var("any", val, false));
+        values.put(name, new Var(val, false));
         publics.add(name);
     }
 

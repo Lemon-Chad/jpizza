@@ -1,5 +1,6 @@
 package lemon.jpizza.compiler.libraries;
 
+import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
 
@@ -8,8 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class GUIs extends JPExtension {
 
@@ -41,7 +40,7 @@ public class GUIs extends JPExtension {
             }
 
             return Ok;
-        }, Collections.singletonList("String"));
+        }, Types.VOID, Types.STRING);
 
     }
 

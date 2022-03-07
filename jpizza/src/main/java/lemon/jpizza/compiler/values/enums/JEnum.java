@@ -25,10 +25,6 @@ public class JEnum {
         return name;
     }
 
-    public boolean has(String name) {
-        return children.containsKey(name);
-    }
-
     public Value get(String name) {
         return children.get(name).asValue();
     }
@@ -47,7 +43,7 @@ public class JEnum {
                 list.add(i);
             }
         }
-        return list.stream().mapToInt(i -> i).toArray();
+        return list.stream().mapToInt(Integer::intValue).toArray();
     }
 
     public Map<String, JEnumChild> children() {

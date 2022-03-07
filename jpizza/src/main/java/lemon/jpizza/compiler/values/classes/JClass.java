@@ -1,5 +1,7 @@
 package lemon.jpizza.compiler.values.classes;
 
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.objects.ClassType;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.values.functions.NativeResult;
@@ -20,6 +22,7 @@ public class JClass {
     public List<String> generics;
 
     public Value constructor;
+    public Type type;
 
     public JClass(String name, Map<String, ClassAttr> attributes,
                   List<String> generics, JClass superClass) {
@@ -65,8 +68,8 @@ public class JClass {
         return null;
     }
 
-    public NativeResult setField(String name, Value value, boolean internal) {
-        return Instance.setField(name, value, attributes, true, internal);
+    public NativeResult setField(String name, Value value) {
+        return Instance.setField(name, value, attributes);
     }
 
     public boolean hasField(String name) {

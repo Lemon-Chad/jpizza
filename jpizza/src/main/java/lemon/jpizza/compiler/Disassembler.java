@@ -37,8 +37,6 @@ public class Disassembler {
                 return offset + 2 + args;
             }
 
-            case OpCode.IncrNullErr: return simpleInstruction("OP_INCR_NULL_ERR", offset);
-
             case OpCode.Header: {
                 int constant = chunk.code.get(offset + 1);
                 int args = chunk.code.get(offset + 2);
@@ -204,8 +202,6 @@ public class Disassembler {
 
                 return offset + 4;
             }
-
-            case OpCode.NullErr: return byteInstruction("OP_NULL_ERR", chunk, offset);
 
             case OpCode.Chain: return simpleInstruction("OP_CHAIN", offset);
 

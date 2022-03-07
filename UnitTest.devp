@@ -1,14 +1,14 @@
 
-<<
+/*
 Multiline Comment test
 Does it work?
 Yes!
-<<
+*/
 
-<> Single line comment test
-<> Very cool!
+// Single line comment test
+// Very cool!
 
-bake tapeSize => 45;
+bake tapeSize: int => 45;
 fn tape<statement#String> = String {
     return " " * round((tapeSize - size(statement)) / 2) + statement + "\n" + "-" * tapeSize;
 }
@@ -28,7 +28,7 @@ println(`3 % 5 = ${3 % 5}`);
 println(`3 ^ 5 = ${3 ^ 5}`);
 println(`"A" + "B" is ${"A" + "B"}`);
 println(`[1, 2] + [3, 4] is ${[1, 2] + [3, 4]}`);
-println(`null : invalid : 5 = ${null : invalid : 5}`);
+println(`null : 5 = ${null : 5}`);
 
 printTape("UNARY OPERATIONS");
 var x => 5;
@@ -65,7 +65,7 @@ free x;
 
 printTape("VARIABLES");
 
-fn varFail[] {
+fn varFail[] yields catcher {
     var x => 3;
     bake y => "Hello";
     x => 4;
@@ -80,15 +80,6 @@ fn multipleAssignment {
 
 multipleAssignment();
 
-fn freeVariables[] {
-    var x => 2;
-    println(x);
-    free x;
-    println(x);
-}
-
-println(catch(freeVariables()));
-
 fn callbacks {
     var x => 4;
     cal y -> x ^ 2;
@@ -101,25 +92,7 @@ fn callbacks {
 
 callbacks();
 
-fn staticTyping[] {
-    var x#num => 4;
-
-    x => 8;
-    x => "Hello!";
-}
-
-println(catch(staticTyping()));
-
-fn letStatements[] {
-    let x => 4;
-
-    x => 8;
-    x => "Hello!";
-}
-
-println(catch(letStatements()));
-
-fn range[] {
+fn range[] yields catcher {
     var sbyte[-127 | 127] => 56;
     var usbyte[255] => 12;
 
@@ -137,40 +110,40 @@ free x;
 
 printTape("LISTS");
 
-var lst => [1, 2];
+var lst: list => [1, 2];
 
 println( lst[0] );
-<> Prints the first element of the lst, which is 1 in this case.
+// Prints the first element of the lst, which is 1 in this case.
 
 lst += [3, 4];
-<> Extends the lst with the elements 3 and 4.
+// Extends the lst with the elements 3 and 4.
 println( lst );
-<> Prints [1, 2, 3, 4]
+// Prints [1, 2, 3, 4]
 
 lst /= 3;
-<> Removes 3 from the lst.
+// Removes 3 from the lst.
 append(lst, 6);
-<> Adds 6 to the lst.
+// Adds 6 to the lst.
 println(lst);
 
 free lst;
 
 printTape("DICTIONARIES");
 
-var coolDict => ({
+var coolDict: dict => ({
     "abc": 123,
     "Hello": "world."
 });
 
 set(coolDict, "Hello", "world!");
-<> Sets the value of the key "Hello" from "world." to "world!".
+// Sets the value of the key "Hello" from "world." to "world!".
 
 delete(coolDict, "abc");
-<> Removes the key value pair "abc": 123 from the dictionary.
+// Removes the key value pair "abc": 123 from the dictionary.
 
 println(coolDict);
 println("Hello" + " " + coolDict["Hello"]);
-<> Prints "Hello world!".
+// Prints "Hello world!".
 
 free coolDict;
 
@@ -199,7 +172,7 @@ switch (input) {
     case 9:
         println("Odd number!");
         break;
-    <> Fall through makes it so that all the cases up until case 9 execute this code.
+    // Fall through makes it so that all the cases up until case 9 execute this code.
 
     case 2: pass;
     case 4: pass;
@@ -210,7 +183,7 @@ switch (input) {
 
     default:
         println("Unhandled number...");
-    <> This will execute if the number is not in any of the above cases.
+    // This will execute if the number is not in any of the above cases.
 };
 
 let matched => match (input) {
@@ -232,7 +205,7 @@ var lp => loop => if (index > 5) break;
                     else index++;
 println(lp);
 
-var r;
+var r: float;
 loop {
   if ((r => random()) > 0.5)
     break;
@@ -244,7 +217,7 @@ println(lp);
 
 for (i -> 3:5 >> 0.5) {
     println(i);
-    <> Prints i for each iteration.
+    // Prints i for each iteration.
 }
 
 var lp => for (n <- [1, 2, 3]) => n + 2;
@@ -252,10 +225,10 @@ println(lp);
 
 for (i <- ["Hello", "world!"]) {
     println(i);
-    <> Prints i for each iteration.
+    // Prints i for each iteration.
 }
 
-var a => 1;
+var a: float => 1;
 var lp => while (a < 10) => a => -(a + abs(a) / a);
 println(lp);
 
@@ -279,17 +252,17 @@ printTape("FUNCTIONS");
 fn addOne<x> -> x + 1;
 println(addOne(5));
 
-fn add<x#num, y#num = 1> = num {
+fn add<x#float, y#float = 1> = float {
     return x + y;
 }
 println(add(3, 4));
 println(add(5));
 
-fn myGeneric<x #T>(T) -> println(`${x} has a generic type of ${T}`);
-myGeneric(2)<num>;
+fn myGeneric<x #T>(T) -> println(`${x} has a generic type of ${type(x)}`);
+myGeneric(2)<float>;
 
 fn iterativePrint<..messages> {
-  <> Iterates through each argument and prints it
+  // Iterates through each argument and prints it
   for (i <- messages) {
     print(i);
   } println("");
@@ -297,20 +270,20 @@ fn iterativePrint<..messages> {
 iterativePrint("a", "b", "c");
 
 fn printNamed<\ dict> {
-  <> Iterates through every pair and prints it
+  // Iterates through every pair and prints it
   for (key <- list(dict)) {
     println(`${key}: ${dict[key]}`);
   }
 }
 printNamed(\ a: "b", c: 4, hello: "world");
 
-<<
+/*
 import time;
 
 fn async printTen<msg> {
   for (i -> 0:10) {
     println(msg);
-    time::halt(500); <> Pauses for 500ms.
+    time::halt(500); // Pauses for 500ms.
   }
 }
 
@@ -319,10 +292,10 @@ printTen("This is also asynchronous!");
 time::halt(5000);
 println("ok!");
 
-<<
+*/
 
 
-fn myCoolDecorator<func> {
+fn myCoolDecorator<func<any>: any> yields any<any> {
     fn inner<x> {
         println(x);
         var r => func(x);
@@ -335,8 +308,8 @@ fn myCoolDecorator<func> {
 /myCoolDecorator/
 fn myCoolFunc<x> -> x + 1;
 
-fn offsetDecorator<x> {
-    fn middle<func> {
+fn offsetDecorator<x> yields (any<any>)<any<any>> {
+    fn middle<func<any>: any> yields any<any> {
         fn inner<y> {
             return func(y) + x;
         }
@@ -348,7 +321,7 @@ fn offsetDecorator<x> {
 /offsetDecorator(5)/
 fn myCoolerFunc<x> -> x + 1;
 
-<> Applies the given decorator
+// Applies the given decorator
 
 myCoolFunc(5);
 println(myCoolerFunc(5));
@@ -368,13 +341,13 @@ if (favorite == PizzaToppings::pineapple) {
 
 enum Message {
     Quit,
-    Move { x: num, y: num },
+    Move { x: float, y: float },
     Write { text: any },
-    ChangeColor { r: num, g: num, b: num },
+    ChangeColor { r: float, g: float, b: float },
 };
 
-var write => Message::Write("mytext");
-println(write::text); <> Prints "mytext"
+let write => Message::Write("mytext");
+println(write::text); // Prints "mytext"
 
 printTape("STRUCTURES");
 
@@ -384,33 +357,33 @@ struct Vector3 {
   z
 };
 
-<> Creates a new struct Vector3 with the attributes
-<> x, y, and z.
+// Creates a new struct Vector3 with the attributes
+// x, y, and z.
 
 struct Message {
   username,
   contents
 };
 
-var msg => Message("John Doe", "Hello world!");
-<> Creates a new message instance.
+let msg => Message("John Doe", "Hello world!");
+// Creates a new message instance.
 
 println(msg::contents);
-<> Gets the contents of the message and
-<> prints them out.
+// Gets the contents of the message and
+// prints them out.
 
 printTape("OBJECTS");
 
 recipe Pizza {
       topping, breading;
-      <> Declares the attributes topping and breading.
+      // Declares the attributes topping and breading.
 
       ingredients<t, b> {
         attr topping => t;
         attr breading => b;
 
-        <> Creates a constructor that takes in t and b,
-        <> then assigns toppings to t and breading to b.
+        // Creates a constructor that takes in t and b,
+        // then assigns toppings to t and breading to b.
       }
 
     md details {
@@ -420,7 +393,7 @@ recipe Pizza {
 
 }
 
-var piz => Pizza("sausage", "pretzel");
+let piz => Pizza("sausage", "pretzel");
 piz::details();
 
 obj MyCoolMethods {
@@ -437,11 +410,8 @@ obj MyCoolMethods {
   }
 }
 
-var instance => MyCoolMethods();
+var instance: MyCoolMethods => MyCoolMethods();
 instance::publicMethod();
-println(catch(fn[]{
-    instance::privateMethod();
-}()));
 MyCoolMethods::staticMethod();
 
 recipe Parent {
@@ -457,15 +427,15 @@ recipe Parent {
 recipe Child -> Parent {
   ingredients<x> {
     attr inheritedAttribute => x + 2;
-    <> Overrides the default constructor and replaces it with this one, which adds 2 to x before assigning it to v.
+    // Overrides the default constructor and replaces it with this one, which adds 2 to x before assigning it to v.
   }
 }
 
 println(Parent(5)::inheritedFunction(2));
-<> Prints 7.
+// Prints 7.
 
 println(Child(5)::inheritedFunction(2));
-<> Prints 9, since 2 is added to x in the overridden constructor.
+// Prints 9, since 2 is added to x in the overridden constructor.
 
 printTape("HEADERS");
 
@@ -478,11 +448,11 @@ println(fib(76));
 
 printTape("FINAL TEST: MATRICES TYPE");
 
-const SPACING => 3;
+const SPACING: int => 3;
 class Matrix {
-    rows: num => -1;
+    rows: float => -1;
     vector: list => [];
-    cols: num => -1;
+    cols: float => -1;
 
     ingredients<..args> {
         vector => args;
@@ -495,22 +465,22 @@ class Matrix {
         let colPad => for (_ -> 0:cols) => 0;
         for (row <- vector) {
             for (i -> 0:cols) {
-                setIndex(colPad, max(size(str(row[i])), colPad[i]), i);
+                setIndex(colPad, |int| max(size(str(row[i])), |float| colPad[i]), |int| i);
             }
         }
 
         let totalPad => 0;
-        for (item <- colPad) { totalPad += item; }
+        for (item <- colPad) { totalPad += |int| item; }
 
-        let st => "/ " + " " * totalPad + " " * --cols * SPACING + " \\\n";
+        var st: String => "/ " + " " * totalPad + " " * (|int| --cols) * SPACING + " \\\n";
         for (r -> 0:rows) {
             let row => vector[r];
             st += "| ";
             for (i -> 0:cols) {
                 let col => row[i];
-                st += " " * (colPad[i] - size(str(col))) + str(col) + " " * SPACING;
-            } st => substr(st, 0, size(st) - SPACING) + " |\n";
-        } st += "\\ " + " " * totalPad + " " * --cols * SPACING + " /";
+                st += " " * (|int| colPad[i] - size(str(col))) + str(col) + " " * SPACING;
+            } st => substr(|String| st, |int| 0, |int| size(st) - SPACING) + " |\n";
+        } st += "\\ " + " " * totalPad + " " * (|int| --cols) * SPACING + " /";
         return st;
     }
 
@@ -519,7 +489,7 @@ class Matrix {
         Matrix(..s)
     }
 
-    mthd bin add<other> {
+    mthd bin add<other: Matrix> {
         assert type(other) == "Matrix";
 
         assert cols == other::cols;
@@ -553,7 +523,7 @@ class Matrix {
     }
 
     mthd bin mul<other> {
-        if (type(other) == "num") {
+        if (type(other) == "float") {
             let s => for ( row <- vector ) => for ( yoinkers <- row ) => yoinkers * other;
             return Matrix(..s);
         }

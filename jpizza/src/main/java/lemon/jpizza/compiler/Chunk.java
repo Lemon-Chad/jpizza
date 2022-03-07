@@ -1,12 +1,11 @@
 package lemon.jpizza.compiler;
 
 import lemon.jpizza.Constants;
+import lemon.jpizza.compiler.types.Type;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.ValueArray;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Chunk {
     List<Integer> code;
@@ -16,12 +15,18 @@ public class Chunk {
     ValueArray constants;
     public List<FlatPosition> positions;
     final String source;
+    public Map<String, Type> globals;
 
     public Chunk(String source) {
         this.code = new ArrayList<>();
         this.constants = new ValueArray();
         this.positions = new ArrayList<>(Collections.singletonList(new FlatPosition(0, 0, 0)));
         this.source = source;
+        this.globals = new HashMap<>();
+    }
+
+    public void addGlobal(String name, Type type) {
+        globals.put(name, type);
     }
 
     public void write(int b, int index, int len) {
@@ -97,10 +102,15 @@ public class Chunk {
         }
         for (int i : constants().dump())
             list.add(i);
+        list.add(globals.size());
+        for (Map.Entry<String, Type> entry : globals.entrySet()) {
+            Value.addAllString(list, entry.getKey());
+            list.addAll(entry.getValue().dumpList());
+        }
         list.add(codeArray.length);
         for (int i : codeArray)
             list.add(i);
-        return list.stream().mapToInt(i -> i).toArray();
+        return list.stream().mapToInt(Integer::intValue).toArray();
     }
 
 }

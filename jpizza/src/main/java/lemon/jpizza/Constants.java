@@ -2,9 +2,11 @@ package lemon.jpizza;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -462,6 +464,13 @@ public class Constants {
     }
 
     public static String readString(Path path) throws IOException {
-        return Files.lines(path).collect(Collectors.joining("\n"));
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        }
+        return sb.toString();
     }
 }

@@ -66,7 +66,6 @@ public class OpCode {
     public static final int SetRef = 0x3F;
     public static final int ToBytes = 0x40;
     public static final int FromBytes = 0x41;
-    public static final int NullErr = 0x42;
     public static final int Chain = 0x43;
     public static final int DropLocal = 0x44;
     public static final int DropGlobal = 0x45;
@@ -74,6 +73,5 @@ public class OpCode {
     public static final int Header = 0x47;
     public static final int Destruct = 0x48;
     public static final int PatternVars = 0x49;
-    public static final int IncrNullErr = 0x4A;
     public static final int Extend = 0x4B;
 }

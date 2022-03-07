@@ -16,22 +16,14 @@ public class JEnumChild {
 
     // For Enum Props
     public final List<String> props;
-    public final List<List<String>> propTypes;
-    public final List<String> generics;
-    public final List<Integer> genericSlots;
     
     public final int arity;
-    public final int genericArity;
 
-    public JEnumChild(int value, List<String> props, List<List<String>> propTypes, List<String> generics, List<Integer> genericSlots) {
+    public JEnumChild(int value, List<String> props) {
         this.value = value;
         this.props = props;
-        this.propTypes = propTypes;
-        this.generics = generics;
-        this.genericSlots = genericSlots;
 
         this.arity = props.size();
-        this.genericArity = generics.size();
 
         this.asValue = new Value(this);
     }
@@ -56,29 +48,21 @@ public class JEnumChild {
         return parent;
     }
 
-    public Value create(Value[] args, String[] types, String[] resolvedGenerics, VM vm) {
+    public Value create(Value[] args, VM vm) {
         Map<String, ClassAttr> fields = new HashMap<>();
         for (int i = 0; i < props.size(); i++) {
             fields.put(
                     props.get(i),
-                    new ClassAttr(args[i], types[i])
+                    new ClassAttr(args[i])
             );
         }
 
         fields.put("$child", new ClassAttr(new Value(value)));
         fields.put("$parent", new ClassAttr(new Value(parent)));
 
-        StringBuilder type = new StringBuilder(parent.name());
-        if (generics.size() > 0) {
-            type.append("(");
-            for (int i = 0; i < generics.size(); i++) {
-                type.append("(").append(resolvedGenerics[i]).append(")");
-            }
-            type.append(")");
-        }
         // Normal: EnumChild
         // Generic: EnumChild((Type1)(Type2)(etc))
-        return new Value(new Instance(type.toString(), fields, vm));
+        return new Value(new Instance(parent.name(), fields, vm));
     }
 
     public Value asValue() {
@@ -86,24 +70,11 @@ public class JEnumChild {
     }
 
     public int[] dump() {
-        List<Integer> dump = new ArrayList<>(Arrays.asList(ChunkCode.EnumChild, value, genericSlots.size()));
-        dump.addAll(genericSlots);
+        List<Integer> dump = new ArrayList<>(Arrays.asList(ChunkCode.EnumChild, value));
         dump.add(props.size());
         for (String prop : props) {
             Value.addAllString(dump, prop);
         }
-        dump.add(propTypes.size());
-        for (List<String> propType : propTypes) {
-            dump.add(ChunkCode.Type);
-            dump.add(propType.size());
-            for (String propTypePart : propType) {
-                Value.addAllString(dump, propTypePart);
-            }
-        }
-        dump.add(generics.size());
-        for (String generic : generics) {
-            Value.addAllString(dump, generic);
-        }
-        return dump.stream().mapToInt(i -> i).toArray();
+        return dump.stream().mapToInt(Integer::intValue).toArray();
     }
 }

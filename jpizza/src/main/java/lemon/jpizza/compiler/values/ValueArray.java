@@ -51,6 +51,6 @@ public class ValueArray {
                 list.add(i);
             }
         }
-        return list.stream().mapToInt(i -> i).toArray();
+        return list.stream().mapToInt(Integer::intValue).toArray();
     }
 }

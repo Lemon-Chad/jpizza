@@ -3,6 +3,10 @@ package lemon.jpizza;
 import lemon.jpizza.compiler.ChunkBuilder;
 import lemon.jpizza.compiler.Compiler;
 import lemon.jpizza.compiler.FunctionType;
+import lemon.jpizza.compiler.types.GenericType;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
+import lemon.jpizza.compiler.types.objects.FuncType;
 import lemon.jpizza.compiler.values.Var;
 import lemon.jpizza.compiler.values.functions.JFunc;
 import lemon.jpizza.compiler.vm.VM;
@@ -15,19 +19,23 @@ import lemon.jpizza.nodes.Node;
 import lemon.jpizza.nodes.expressions.BodyNode;
 import lemon.jpizza.results.ParseResult;
 
-import java.io.*;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static lemon.jpizza.Constants.readString;
 
 public class Shell {
 
     public static final Logger logger = new Logger();
     public static String root;
     public static VM vm;
-    public static final Map<String, Var> globals = new HashMap<>();
+    public static final Map<String, Type> globals = new HashMap<>();
+    public static final Map<String, Type> libraries = new HashMap<>();
+    public static final HashMap<String, Var> shellMap = new HashMap<>();
     public static final String fileEncoding = System.getProperty("file.encoding");
 
     static class Flags {
@@ -56,86 +64,142 @@ public class Shell {
     }
 
     @SuppressWarnings("DuplicatedCode")
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         root = System.getenv("JPIZZA_DATA_DIR") == null ? System.getProperty("user.home") + "/.jpizza" : System.getenv("JPIZZA_DATA_DIR");
 
         int flags = Flags.SHELL;
         String to = null;
         String target = null;
-        String refactor_to = null;
+        String run = null;
+        String refactor = null;
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("--")) {
                 switch (args[i].substring(2)) {
-                    case "compile" -> {
+                    case "compile":
                         if (i + 1 < args.length) {
                             target = args[i + 1];
                             i++;
-                        } else {
+                        }
+                        else {
                             Shell.logger.fail("-c requires an argument");
                         }
                         flags |= Flags.COMPILE;
-                    }
-                    case "refactor" -> {
+                    break;
+
+                    case "refactor":
                         if (i + 1 < args.length) {
-                            refactor_to = args[i + 1];
+                            refactor = args[i + 1];
                             i++;
-                        } else {
+                        }
+                        else {
                             Shell.logger.fail("-R requires an argument");
                         }
                         flags |= Flags.COMPILE;
-                    }
-                    case "help" -> flags |= Flags.HELP;
-                    case "version" -> flags |= Flags.VERSION;
-                    case "docs" -> flags |= Flags.DOCS;
-                    case "output" -> {
+                    break;
+
+                    case "run":
+                        if (i + 1 < args.length) {
+                            run = args[i + 1];
+                            i++;
+                        }
+                        else {
+                            Shell.logger.fail("-r requires an argument");
+                        }
+                        flags |= Flags.RUN;
+                    break;
+
+                    case "help":
+                        flags |= Flags.HELP;
+                    break;
+
+                    case "version":
+                        flags |= Flags.VERSION;
+                    break;
+
+                    case "docs":
+                        flags |= Flags.DOCS;
+                    break;
+
+                    case "output":
                         if (i + 1 < args.length) {
                             to = args[i + 1];
                             i++;
-                        } else {
+                        }
+                        else {
                             Shell.logger.fail("-o requires an argument");
                         }
                         flags |= Flags.OUTPUT;
-                    }
-                    default -> Shell.logger.fail("Unknown argument: " + args[i]);
+                    break;
+
+                    default:
+                        Shell.logger.fail("Unknown argument: " + args[i]);
+                    break;
                 }
-            } else if (args[i].startsWith("-")) {
+            }
+            else if (args[i].startsWith("-")) {
                 String shortArg = args[i];
                 for (int c = 1; c < shortArg.length(); c++) {
                     switch (String.valueOf(shortArg.charAt(c))) {
-                        case "c" -> {
+                        case "c":
                             if (i + 1 < args.length) {
                                 target = args[i + 1];
                                 i++;
-                            } else {
+                            }
+                            else {
                                 Shell.logger.fail("-c requires an argument");
                             }
                             flags |= Flags.COMPILE;
-                        }
-                        case "R" -> {
+                        break;
+
+                        case "R":
                             if (i + 1 < args.length) {
-                                refactor_to = args[i + 1];
+                                refactor = args[i + 1];
                                 i++;
-                            } else {
+                            }
+                            else {
                                 Shell.logger.fail("-R requires an argument");
                             }
                             flags |= Flags.COMPILE;
-                        }
-                        case "h" -> flags |= Flags.HELP;
-                        case "v" -> flags |= Flags.VERSION;
-                        case "o" -> {
+                        break;
+
+                        case "r":
+                            if (i + 1 < args.length) {
+                                run = args[i + 1];
+                                i++;
+                            }
+                            else {
+                                Shell.logger.fail("-r requires an argument");
+                            }
+                            flags |= Flags.RUN;
+                        break;
+
+                        case "h":
+                            flags |= Flags.HELP;
+                        break;
+
+                        case "v":
+                            flags |= Flags.VERSION;
+                        break;
+
+                        case "o":
                             if (i + 1 < args.length) {
                                 to = args[i + 1];
                                 i++;
-                            } else {
+                            }
+                            else {
                                 Shell.logger.fail("-o requires an argument");
                             }
                             flags |= Flags.OUTPUT;
-                        }
-                        default -> Shell.logger.fail("Unknown argument: " + shortArg.charAt(c));
+                        break;
+
+                        default:
+                            Shell.logger.fail("Unknown argument: " + shortArg.charAt(c));
+                        break;
                     }
                 }
-            } else {
+            }
+            else {
                 if (args.length > 1) Shell.logger.fail("Invalid argument: " + args[i]);
                 else {
                     target = args[i];
@@ -147,7 +211,14 @@ public class Shell {
         if (flags == Flags.SHELL) repl();
 
         if (hasFlag(flags, Flags.REFACTOR)) {
-            Shell.logger.enableTips();
+            if (Files.exists(Paths.get(refactor))) {
+                String[] data = extractData(refactor, true);
+                System.setProperty("user.dir", data[1]);
+                getAst(args[0], args[2]);
+            }
+            else {
+                Shell.logger.fail("File does not exist.");
+            }
         }
 
         if (hasFlag(flags, Flags.HELP)) {
@@ -168,33 +239,42 @@ public class Shell {
             Shell.logger.outln("Documentation can be found at https://jpizza.readthedocs.io/en/latest/");
         }
         if (hasFlag(flags, Flags.COMPILE)) {
-            if (Files.exists(Path.of(target))) {
-                String scrpt = Files.readString(Path.of(target));
-                String dir = Path.of(target).toString();
-                String[] dsfn = getFNDirs(dir);
-                String fn = dsfn[0];
-                String newDir = dsfn[1];
-                System.setProperty("user.dir", newDir);
-                to = to == null ? newDir + "\\" + fn.substring(0, fn.length() - 5) + ".jbox" : to;
-                Error e = compile(fn, scrpt, to);
+            if (Files.exists(Paths.get(target))) {
+                String[] data = extractData(target, true);
+                System.setProperty("user.dir", data[1]);
+                to = to == null ? data[1] + "\\" + data[0].substring(0, data[0].lastIndexOf(".")) + ".jbox" : to;
+                Error e = compile(data[0], data[2], to);
                 if (e != null)
                     Shell.logger.fail(e.asString());
             }
         }
         if (hasFlag(flags, Flags.RUN)) {
-            if (Files.exists(Path.of(args[0]))) {
-                String dir = Path.of(args[0]).toString();
-                String[] dsfn = getFNDirs(dir);
-                String fn = dsfn[0];
-                String newDir = dsfn[1];
-                System.setProperty("user.dir", newDir);
-                runCompiled(fn, args[0], args);
-            } else {
+            if (Files.exists(Paths.get(run))) {
+                String[] data = extractData(run, false);
+                System.setProperty("user.dir", data[1]);
+                runCompiled(data[0], data[1], args);
+            }
+            else {
                 Shell.logger.fail("File does not exist.");
             }
         }
     }
 
+    public static String[] extractData(String path, boolean read) {
+        String scrpt = null;
+        try {
+            if (read)
+                scrpt = readString(Paths.get(path));
+        } catch (IOException e) {
+            Shell.logger.fail("File is in invalid format.");
+            return null;
+        }
+        String dir = Paths.get(path).toString();
+        String[] dsfn = getFNDirs(dir);
+        String fn = dsfn[0];
+        String newDir = dsfn[1];
+        return new String[]{ fn, newDir, scrpt };
+    }
 
     public static void repl() {
         Scanner in = new Scanner(System.in);
@@ -214,7 +294,10 @@ public class Shell {
                 Shell.logger.fail(a.b.asString());
             }
             else {
-                runCompiled("<shell>", a.a, new String[]{"<shell>"}, globals);
+                runCompiled("<shell>", a.a, new String[]{"<shell>"}, shellMap);
+                for (String s : shellMap.keySet()) {
+                    globals.put(s, a.a.chunk.globals.get(s));
+                }
             }
         }
         in.close();
@@ -245,7 +328,9 @@ public class Shell {
         if (ast.b != null) return new Pair<>(null, ast.b);
         List<Node> outNode = ast.a;
 
-        Compiler compiler = new Compiler(FunctionType.Script, text);
+        // ()<> -> void
+        Compiler compiler = new Compiler(FunctionType.Script, text, new FuncType(Types.VOID, new Type[0], new GenericType[0], false));
+        compiler.chunk().globals = globals;
 
         if (scope)
             compiler.beginScope();
@@ -317,9 +402,8 @@ public class Shell {
             VMResult res = vm.run();
             if (res == VMResult.ERROR) return;
             vm.finish(args);
-
         } catch (IOException e) {
-            Shell.logger.fail("File is not readable!");
+            Shell.logger.fail("File is not readable.");
         }
     }
 

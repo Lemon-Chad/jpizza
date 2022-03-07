@@ -1,5 +1,10 @@
 package lemon.jpizza.compiler;
 
+import lemon.jpizza.compiler.types.GenericType;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.TypeCodes;
+import lemon.jpizza.compiler.types.Types;
+import lemon.jpizza.compiler.types.objects.*;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.ValueArray;
 import lemon.jpizza.compiler.values.enums.JEnum;
@@ -13,8 +18,11 @@ import java.util.*;
 public class ChunkBuilder {
     int i = 0;
     int[] code;
+    final TypeReader reader;
+
     private ChunkBuilder(byte[] code) {
         this.code = new int[code.length / 4];
+        this.reader = new TypeReader();
         for (int i = 0; i < this.code.length; i++) {
             int v = 0;
             v |= (code[i * 4    ] & 0xFF) << 24;
@@ -22,6 +30,123 @@ public class ChunkBuilder {
             v |= (code[i * 4 + 2] & 0xFF) <<  8;
             v |= (code[i * 4 + 3] & 0xFF);
             this.code[i] = v;
+        }
+    }
+
+    private class TypeReader {
+
+        private Map<String, Type> readAttributes() throws IOException {
+            int size = code[i++];
+            Map<String, Type> attributes = new HashMap<>();
+            for (int j = 0; j < size; j++) {
+                String name = readString();
+                Type type = readType();
+                attributes.put(name, type);
+            }
+            return attributes;
+        }
+
+        private Type readClass() throws IOException {
+            if (code[i++] != TypeCodes.CLASS)
+                throw new IOException("Invalid type code");
+            String name = readString();
+            ClassType parent = null;
+            if (code[i++] == 1) {
+                parent = (ClassType) readType();
+            }
+            FuncType constructor = (FuncType) readType();
+
+            Map<String, Type> fields = new HashMap<>();
+            Set<String> privates = new HashSet<>();
+            int size = code[i++];
+            for (int j = 0; j < size; j++) {
+                String fieldName = readString();
+                Type type = readType();
+                fields.put(fieldName, type);
+                if (code[i++] == 1) {
+                    privates.add(fieldName);
+                }
+            }
+            Map<String, Type> staticFields = readAttributes();
+            Map<String, Type> operators = readAttributes();
+            return new ClassType(name, parent, constructor, fields, privates, staticFields, operators, constructor.generics);
+        }
+
+        public Type readEnumChild() throws IOException {
+            if (code[i++] != TypeCodes.ENUMCHILD)
+                throw new IOException("Invalid type code");
+
+            String name = readString();
+            int proptypeCount = code[i++];
+            Type[] proptype = new Type[proptypeCount];
+            GenericType[] generics = readArgs(proptypeCount, proptype);
+            int propCount = code[i++];
+            String[] props = new String[propCount];
+            for (int j = 0; j < propCount; j++) {
+                props[j] = readString();
+            }
+            return new EnumChildType(name, proptype, generics, props);
+        }
+
+        public Type readEnum() throws IOException {
+            if (code[i++] != TypeCodes.ENUM)
+                throw new IOException("Invalid type code");
+            String name = readString();
+            int childCount = code[i++];
+            EnumChildType[] children = new EnumChildType[childCount];
+            for (int j = 0; j < childCount; j++) {
+                children[j] = (EnumChildType) readType();
+            }
+            return new EnumType(name, children);
+        }
+
+        public Type readFunc() throws IOException {
+            if (code[i++] != TypeCodes.FUNC)
+                throw new IOException("Invalid type code");
+            Type returnType = readType();
+            int argCount = code[i++];
+            Type[] args = new Type[argCount];
+            GenericType[] generics = readArgs(argCount, args);
+            boolean isVararg = code[i++] == 1;
+            int defaultCount = code[i++];
+            return new FuncType(returnType, args, generics, isVararg, defaultCount);
+        }
+
+        GenericType[] readArgs(int argCount, Type[] args) throws IOException {
+            for (int j = 0; j < argCount; j++) {
+                args[j] = readType();
+            }
+            int genericCount = code[i++];
+            GenericType[] generics = new GenericType[genericCount];
+            for (int j = 0; j < genericCount; j++) {
+                generics[j] = (GenericType) readType();
+            }
+            return generics;
+        }
+
+        public Type readInstance() throws IOException {
+            if (code[i++] != TypeCodes.INSTANCE)
+                throw new IOException("Invalid type code");
+            ClassType type = (ClassType) readType();
+            int genericCount = code[i++];
+            Type[] generics = new Type[genericCount];
+            for (int j = 0; j < genericCount; j++) {
+                generics[j] = readType();
+            }
+            return new InstanceType(type, generics);
+        }
+
+        public Type readNamespace() throws IOException {
+            if (code[i++] != TypeCodes.NAMESPACE)
+                throw new IOException("Invalid type code");
+            return new NamespaceType(readAttributes());
+        }
+
+        public Type readReference() throws IOException {
+            if (code[i] != TypeCodes.REFERENCE)
+                throw new IOException("Invalid type code");
+            i++;
+            return new ReferenceType(readType());
         }
     }
 
@@ -37,16 +162,55 @@ public class ChunkBuilder {
         return new String(bytes);
     }
 
-    private List<String> readType() throws IOException {
+    private Type readType() throws IOException {
         if (code[i] != ChunkCode.Type)
             throw new IOException("not type");
         i++;
-        int len = code[i++];
-        List<String> type = new ArrayList<>();
-        for (int j = 0; j < len; j++) {
-            type.add(readString());
+        int typeType = code[i++];
+        switch (typeType) {
+            // Objects
+            case TypeCodes.CLASS:
+                return reader.readClass();
+            case TypeCodes.ENUMCHILD:
+                return reader.readEnumChild();
+            case TypeCodes.ENUM:
+                return reader.readEnum();
+            case TypeCodes.FUNC:
+                return reader.readFunc();
+            case TypeCodes.INSTANCE:
+                return reader.readInstance();
+            case TypeCodes.NAMESPACE:
+                return reader.readNamespace();
+            case TypeCodes.REFERENCE:
+                return reader.readReference();
+
+            // Primitives
+            case TypeCodes.BOOL:
+                return Types.BOOL;
+            case TypeCodes.BYTES:
+                return Types.BYTES;
+            case TypeCodes.DICT:
+                return Types.DICT;
+            case TypeCodes.FLOAT:
+                return Types.FLOAT;
+            case TypeCodes.INT:
+                return Types.INT;
+            case TypeCodes.LIST:
+                return Types.LIST;
+            case TypeCodes.RESULT:
+                return Types.RESULT;
+            case TypeCodes.STRING:
+                return Types.STRING;
+            case TypeCodes.VOID:
+                return Types.VOID;
+            case TypeCodes.ANY:
+                return Types.ANY;
+
+            // Generic
+            case TypeCodes.GENERIC:
+                return new GenericType(readString());
         }
-        return type;
+        throw new IOException("unknown type");
     }
 
     private boolean readBoolean() throws IOException {
@@ -88,27 +252,12 @@ public class ChunkBuilder {
             throw new IOException("not enum child");
         i++;
         int val = code[i++];
-        int genericSlotsLen = code[i++];
-        List<Integer> genericSlots = new ArrayList<>();
-        for (int j = 0; j < genericSlotsLen; j++) {
-            genericSlots.add(code[i++]);
-        }
         int propsSize = code[i++];
         List<String> props = new ArrayList<>();
         for (int j = 0; j < propsSize; j++) {
             props.add(readString());
         }
-        int propTypesSize = code[i++];
-        List<List<String>> propTypes = new ArrayList<>();
-        for (int j = 0; j < propTypesSize; j++) {
-            propTypes.add(readType());
-        }
-        int genericsSize = code[i++];
-        List<String> generics = new ArrayList<>();
-        for (int j = 0; j < genericsSize; j++) {
-            generics.add(readString());
-        }
-        return new JEnumChild(val, props, propTypes, generics, genericSlots);
+        return new JEnumChild(val, props);
     }
 
     private JFunc readFunc() throws IOException {
@@ -116,59 +265,29 @@ public class ChunkBuilder {
             throw new IOException("not func");
         i++;
         int arity = code[i++];
-        int genericArity = code[i++];
         int totalArity = code[i++];
 
         String name = null;
         if (code[i] == 0) i++;
         else name = readString();
 
-        List<String> returnType = null;
-        if (code[i] == 0) i++;
-        else returnType = readType();
-
-        int genericSlotsLen = code[i++];
-        List<Integer> genericSlots = new ArrayList<>();
-        for (int j = 0; j < genericSlotsLen; j++) {
-            genericSlots.add(code[i++]);
-        }
-
         int upvalueCount = code[i++];
 
         boolean async = code[i++] != 0;
         boolean catcher = code[i++] != 0;
-
-        String args;
-        if (code[i] == 0) {
-            i++;
-            args = null;
-        }
-        else {
-            args = readString();
-        }
-
-        String kwargs;
-        if (code[i] == 0) {
-            i++;
-            kwargs = null;
-        }
-        else {
-            kwargs = readString();
-        }
+        boolean varargs = code[i++] != 0;
+        boolean kwargs = code[i++] != 0;
 
         Chunk chunk = readChunk();
 
         JFunc func = new JFunc(chunk.source);
         func.name = name;
         func.arity = arity;
-        func.genericArity = genericArity;
         func.totarity = totalArity;
-        func.returnType = returnType;
-        func.genericSlots = genericSlots;
         func.upvalueCount = upvalueCount;
         func.async = async;
         func.catcher = catcher;
-        func.args = args;
+        func.varargs = varargs;
         func.kwargs = kwargs;
         func.chunk = chunk;
         return func;
@@ -179,7 +298,6 @@ public class ChunkBuilder {
             case ChunkCode.Boolean: return new Value(readBoolean());
             case ChunkCode.Number: return new Value(readDouble());
             case ChunkCode.String: return new Value(readString());
-            case ChunkCode.Type: return Value.fromType(readType());
             case ChunkCode.Enum: return new Value(readEnum());
             case ChunkCode.Func: return new Value(readFunc());
             default: return null;
@@ -225,6 +343,8 @@ public class ChunkBuilder {
         }
         ValueArray values = new ValueArray(constants);
 
+        Map<String, Type> globals = reader.readAttributes();
+
         int bytecodeCount = code[i++];
         int[] bytecodes = new int[bytecodeCount];
         for (int j = 0; j < bytecodeCount; j++) {
@@ -242,6 +362,7 @@ public class ChunkBuilder {
         }
         chunk.code = code;
         chunk.constants = values;
+        chunk.globals = globals;
         return chunk;
     }
 

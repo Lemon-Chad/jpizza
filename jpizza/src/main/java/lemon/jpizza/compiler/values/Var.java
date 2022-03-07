@@ -1,22 +1,19 @@
 package lemon.jpizza.compiler.values;
 
 public class Var {
-    public final String type;
     public Value val;
     public final boolean constant;
     public final int min;
     public final int max;
 
-    public Var(String type, Value val, boolean constant) {
-        this.type = type;
+    public Var(Value val, boolean constant) {
         this.val = val;
         this.constant = constant;
         min = Integer.MIN_VALUE;
         max = Integer.MAX_VALUE;
     }
 
-    public Var(String type, Value val, boolean constant, int min, int max) {
-        this.type = type;
+    public Var(Value val, boolean constant, int min, int max) {
         this.val = val;
         this.constant = constant;
         this.min = min;
@@ -28,10 +25,10 @@ public class Var {
     }
 
     public String toString() {
-        return val + ":" + type;
+        return val.toString();
     }
 
     public String toSafeString() {
-        return val.toSafeString() + ":" + type;
+        return val.toSafeString();
     }
 }

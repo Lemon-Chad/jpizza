@@ -1,6 +1,10 @@
 package lemon.jpizza.compiler.libraries.pretzel;
 
 import com.sun.net.httpserver.HttpServer;
+import lemon.jpizza.compiler.types.GenericType;
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
+import lemon.jpizza.compiler.types.objects.FuncType;
 import lemon.jpizza.compiler.values.functions.JClosure;
 import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.VM;
@@ -34,7 +38,7 @@ public class Pretzel extends JPExtension {
             }
 
             return Ok;
-        }, Arrays.asList("String", "num"));
+        }, Types.VOID, Types.STRING, Types.INT);
         func("route", args -> {
             if (server == null) {
                 return Err("Init", "Server not initialized");
@@ -46,7 +50,7 @@ public class Pretzel extends JPExtension {
             server.createContext(path, new Handle(path, handler));
 
             return Ok;
-        }, Arrays.asList("String", "function"));
+        }, Types.VOID, Types.STRING, new FuncType(Types.DICT, new Type[]{ Types.DICT }, new GenericType[0], false));
         func("start", args -> {
             if (server == null) {
                 return Err("Init", "Server not initialized");
@@ -55,6 +59,6 @@ public class Pretzel extends JPExtension {
             server.start();
 
             return Ok;
-        }, 0);
+        }, Types.VOID);
     }
 }

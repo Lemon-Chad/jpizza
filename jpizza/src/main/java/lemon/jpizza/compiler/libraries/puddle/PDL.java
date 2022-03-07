@@ -1,5 +1,7 @@
 package lemon.jpizza.compiler.libraries.puddle;
 
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.NativeResult;
 import lemon.jpizza.compiler.vm.JPExtension;
@@ -26,14 +28,14 @@ public class PDL extends JPExtension {
         NativeResult call(Value[] args) throws IOException;
     }
 
-    private void iofunc(String name, IOMethod method, List<String> argTypes) {
+    private void iofunc(String name, IOMethod method, Type returnType, Type... argTypes) {
         func(name, args -> {
             try {
                 return method.call(args);
             } catch (IOException e) {
                 return Err("Connection", e.getMessage());
             }
-        }, argTypes);
+        }, returnType, argTypes);
     }
 
     interface ClientMethod {
@@ -69,7 +71,7 @@ public class PDL extends JPExtension {
             Socket sock = new Socket(host, port);
             int id = ClientPDL.Create(sock);
             return Ok(id);
-        }, Arrays.asList("String", "num"));
+        }, Types.INT, Types.STRING, Types.INT);
         iofunc("write", args -> {
             int id = args[0].asNumber().intValue();
             byte[] data = args[1].asBytes();
@@ -79,22 +81,22 @@ public class PDL extends JPExtension {
                 client.write(data, offset, length);
                 return Ok;
             });
-        }, Arrays.asList("num", "bytearray", "num", "num"));
+        }, Types.VOID, Types.INT, Types.BYTES, Types.INT, Types.INT);
         iofunc("read", args -> {
             int id = args[0].asNumber().intValue();
             int offset = args[1].asNumber().intValue();
             int length = args[2].asNumber().intValue();
             return asClient(id, client -> Ok(client.read(offset, length)));
-        }, Arrays.asList("num", "num", "num"));
+        }, Types.BYTES, Types.INT, Types.INT, Types.INT);
 
         // Server
         iofunc("host", args -> {
             int port = args[0].asNumber().intValue();
             return Ok(ServerPDL.Create(port));
-        }, Collections.singletonList("num"));
+        }, Types.INT, Types.INT);
         iofunc("accept", args -> {
             int id = args[0].asNumber().intValue();
             return asServer(id, server -> Ok(server.accept()));
-        }, Collections.singletonList("num"));
+        }, Types.INT, Types.INT);
     }
 }

@@ -445,7 +445,7 @@ public class Parser {
 
     public ParseResult<Token> buildTypeTok() {
         List<String> type = new ArrayList<>();
-        Stack<String> parens = new Stack<>();
+        Stack<Token> parens = new Stack<>();
         ParseResult<Token> res = new ParseResult<>();
         Position start = currentToken.pos_start;
         Position end = start;
@@ -464,59 +464,75 @@ public class Parser {
                 ));
             switch (currentToken.type) {
                 case LeftAngle:
-                    parens.push("<");
+                case LeftBrace:
+                case LeftBracket:
+                case LeftParen:
+                    parens.push(currentToken);
                     break;
                 case RightAngle:
                     if (parens.isEmpty())
                         break ParseType;
-                    if (!parens.peek().equals("<"))
+                    if (!parens.peek().type.equals(TokenType.LeftAngle))
                         return res.failure(Error.InvalidSyntax(
                                 currentToken.pos_start, currentToken.pos_end,
-                                "Unmatched parenthesis"
+                                "Unmatched '>'"
                         ));
                     parens.pop();
                     break;
-                case LeftParen:
-                    parens.push("(");
+                case AngleAngle:
+                    if (parens.isEmpty())
+                        break ParseType;
+                    if (!parens.peek().type.equals(TokenType.LeftAngle))
+                        return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start, currentToken.pos_end,
+                                "Unmatched '>'"
+                        ));
+                    parens.pop();
+                    if (!parens.peek().type.equals(TokenType.LeftAngle))
+                        return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start, currentToken.pos_end,
+                                "Unmatched '>'"
+                        ));
+                    parens.pop();
                     break;
                 case RightParen:
                     if (parens.isEmpty())
                         break ParseType;
-                    if (!parens.peek().equals("("))
+                    if (!parens.peek().type.equals(TokenType.LeftParen))
                         return res.failure(Error.InvalidSyntax(
                                 currentToken.pos_start, currentToken.pos_end,
-                                "Unmatched parenthesis"
+                                "Unmatched ')'"
                         ));
                     parens.pop();
-                    break;
-                case LeftBracket:
-                    parens.push("[");
                     break;
                 case RightBracket:
                     if (parens.isEmpty())
                         break ParseType;
-                    if (!parens.peek().equals("["))
+                    if (!parens.peek().type.equals(TokenType.LeftBracket))
                         return res.failure(Error.InvalidSyntax(
                                 currentToken.pos_start, currentToken.pos_end,
-                                "Unmatched parenthesis"
+                                "Unmatched ']'"
                         ));
                     parens.pop();
-                    break;
-                case LeftBrace:
-                    parens.push("{");
                     break;
                 case RightBrace:
                     if (parens.isEmpty())
                         break ParseType;
-                    if (!parens.peek().equals("{"))
+                    if (!parens.peek().type.equals(TokenType.LeftBrace))
                         return res.failure(Error.InvalidSyntax(
                                 currentToken.pos_start, currentToken.pos_end,
-                                "Unmatched parenthesis"
+                                "Unmatched '}'"
                         ));
                     parens.pop();
                     break;
             }
-            type.add(currentToken.asString());
+            if (currentToken.type.equals(TokenType.AngleAngle)) {
+                type.add(">");
+                type.add(">");
+            }
+            else {
+                type.add(currentToken.asString());
+            }
             end = currentToken.pos_end;
             res.registerAdvancement(); advance();
         }
@@ -758,6 +774,21 @@ public class Parser {
             reverse();
         }
         statement = wasStatement;
+        // |Type cast| expr
+        if (currentToken.type == TokenType.Pipe) {
+            res.registerAdvancement(); advance();
+            Token cast = res.register(buildTypeTok());
+            if (res.error != null) return res;
+            if (currentToken.type != TokenType.Pipe)
+                return res.failure(Error.ExpectedCharError(
+                        currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                        "Expected '|'"
+                ));
+            res.registerAdvancement(); advance();
+            Node expr = res.register(this.expr());
+            if (res.error != null) return res;
+            return res.success(new CastNode(expr, cast));
+        }
         Node node = res.register(binOp(this::getExpr, Collections.singletonList(TokenType.Dot), this::call));
 
         if (res.error != null)
@@ -1885,7 +1916,29 @@ public class Parser {
                     res.registerAdvancement();
                     advance();
 
-                    if (currentToken.type.equals(TokenType.Hash) || currentToken.type.equals(TokenType.Colon)) {
+                    // Syntactic sugar for function annotations
+                    // argument<int, int>: int
+                    // argument: int<int, int>
+                    if (currentToken.type.equals(TokenType.LeftAngle)) {
+                        Token typetok = res.register(buildTypeTok());
+                        if (res.error != null)
+                            return res;
+                        List<String> type = (List<String>) typetok.value;
+                        // Expect :
+                        if (currentToken.type != TokenType.Colon) return res.failure(Error.InvalidSyntax(
+                                currentToken.pos_start.copy(), currentToken.pos_end.copy(),
+                                "Expected ':' after type annotation"
+                        ));
+                        res.registerAdvancement();
+                        advance();
+                        Token calledTypeTok = res.register(buildTypeTok());
+                        if (res.error != null)
+                            return res;
+                        List<String> calledType = (List<String>) calledTypeTok.value;
+                        calledType.addAll(type);
+                        argTypeToks.add(calledTypeTok);
+                    }
+                    else if (currentToken.type.equals(TokenType.Hash) || currentToken.type.equals(TokenType.Colon)) {
                         res.registerAdvancement();
                         advance();
 

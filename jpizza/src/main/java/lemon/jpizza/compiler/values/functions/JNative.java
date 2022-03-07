@@ -1,9 +1,8 @@
 package lemon.jpizza.compiler.values.functions;
 
+import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.values.Value;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class JNative {
 
@@ -14,9 +13,9 @@ public class JNative {
     final String name;
     final Method method;
     final int argc;
-    final List<String> types;
+    final Type[] types;
 
-    public JNative(String name, Method method, int argc, List<String> types) {
+    public JNative(String name, Method method, int argc, Type[] types) {
         this.name = name;
         this.method = method;
         this.argc = argc;
@@ -24,21 +23,14 @@ public class JNative {
     }
 
     public JNative(String name, Method method, int argc) {
-        this(name, method, argc, new ArrayList<>());
+        this(name, method, argc, new Type[argc]);
         for (int i = 0; i < argc; i++)
-            types.add("any");
+            types[i] = Types.ANY;
     }
 
     public NativeResult call(Value[] args) {
-        if (args.length != argc)
+        if (args.length != argc && argc != -1)
             return NativeResult.Err("Argument Count", "Expected " + argc + " arguments, got " + args.length);
-
-        for (int i = 0; i < argc; i++) {
-            String t = args[i].type();
-            if (!types.get(i).equals("any") && !t.equals(types.get(i)))
-                return NativeResult.Err("Type", "Expected " + types.get(i) + " for argument " + i + ", got " + t);
-        }
-
         return method.call(args);
     }
 

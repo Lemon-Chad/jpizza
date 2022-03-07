@@ -17,6 +17,7 @@ import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Value {
     protected double number;
@@ -30,7 +31,6 @@ public class Value {
     protected JClosure closure;
     protected JClass jClass;
     protected Instance instance;
-    protected List<String> type;
     protected BoundMethod boundMethod;
     protected Namespace namespace;
     protected JEnum enumParent;
@@ -41,6 +41,7 @@ public class Value {
     protected Result res;
     protected String patternBinding;
     protected Pattern pattern;
+    protected Value[] tuple;
 
     public boolean isNull = false;
     public boolean isNumber = false;
@@ -54,7 +55,6 @@ public class Value {
     public boolean isClosure = false;
     public boolean isClass = false;
     public boolean isInstance = false;
-    public boolean isType = false;
     public boolean isBoundMethod = false;
     public boolean isNamespace = false;
     public boolean isEnumParent = false;
@@ -65,9 +65,15 @@ public class Value {
     public boolean isRes = false;
     public boolean isPatternBinding = false;
     public boolean isPattern = false;
+    public boolean isTuple = false;
 
     public Value() {
         this.isNull = true;
+    }
+
+    public Value(Value... values) {
+        this.tuple = values;
+        this.isTuple = true;
     }
 
     public Value(Pattern pattern) {
@@ -131,14 +137,6 @@ public class Value {
     public Value(JClass jClass) {
         this.jClass = jClass;
         this.isClass = true;
-    }
-
-    public static Value fromType(List<String> type) {
-        Value value = new Value();
-        value.type = type;
-        value.isType = true;
-        value.isNull = false;
-        return value;
     }
 
     public Value(Instance instance) {
@@ -324,9 +322,6 @@ public class Value {
         else if (isClass) {
             return jClass.toString();
         }
-        else if (isType) {
-            return String.join("", type);
-        }
         else if (isInstance) {
             return instance.toString();
         }
@@ -410,9 +405,34 @@ public class Value {
         return this == o;
     }
 
+    public Value[] asTuple() {
+        if (isTuple) {
+            return tuple;
+        }
+        else if (isList) {
+            Value[] tuple = new Value[list.size()];
+            for (int i = 0; i < tuple.length; i++) {
+                tuple[i] = list.get(i);
+            }
+            return tuple;
+        }
+        else if (isMap) {
+            Value[] tuple = new Value[map.size()];
+            int i = 0;
+            for (Map.Entry<Value, Value> entry : map.entrySet()) {
+                tuple[i++] = new Value(entry.getKey(), entry.getValue());
+            }
+            return tuple;
+        }
+        return null;
+    }
+
     public List<Value> asList() {
         if (isList) {
             return list;
+        }
+        else if (isTuple) {
+            return Arrays.asList(tuple);
         }
         else if (isMap) {
             return new ArrayList<>(map.keySet());
@@ -535,51 +555,51 @@ public class Value {
         return null;
     }
 
-    public String type() {
-        if (isNumber) {
-            return "num";
-        }
-        else if (isString) {
-            return "String";
-        }
-        else if (isBool) {
-            return "bool";
-        }
-        else if (isList) {
-            return "list";
-        }
-        else if (isMap) {
-            return "dict";
-        }
-        else if (isFunc || isNativeFunc || isClosure) {
-            return "function";
-        }
-        else if (isClass) {
-            return "recipe";
-        }
-        else if (isInstance) {
-            return instance.type();
-        }
-        else if (isNamespace) {
-            return "namespace";
-        }
-        else if (isEnumParent) {
-            return "Enum";
-        }
-        else if (isEnumChild) {
-            return enumChild.type();
-        }
-        else if (isRef) {
-            return "[" + ref.type() + "]";
-        }
-        else if (isBytes) {
-            return "bytearray";
-        }
-        else if (isRes) {
-            return "catcher";
-        }
-        return "void";
-    }
+//    public String type() {
+//        if (isNumber) {
+//            return number == (long) number ? "int" : "float";
+//        }
+//        else if (isString) {
+//            return "String";
+//        }
+//        else if (isBool) {
+//            return "bool";
+//        }
+//        else if (isList) {
+//            return "list";
+//        }
+//        else if (isMap) {
+//            return "dict";
+//        }
+//        else if (isFunc || isNativeFunc || isClosure) {
+//            return "function";
+//        }
+//        else if (isClass) {
+//            return "recipe";
+//        }
+//        else if (isInstance) {
+//            return instance.type();
+//        }
+//        else if (isNamespace) {
+//            return "namespace";
+//        }
+//        else if (isEnumParent) {
+//            return "Enum";
+//        }
+//        else if (isEnumChild) {
+//            return enumChild.type();
+//        }
+//        else if (isRef) {
+//            return "[" + ref.type() + "]";
+//        }
+//        else if (isBytes) {
+//            return "bytearray";
+//        }
+//        else if (isRes) {
+//            return "catcher";
+//        }
+//        return "void";
+//    }
 
     // Mutative Addition
     public VMResult add(Value other) {
@@ -644,16 +664,6 @@ public class Value {
             return ref.asNamespace();
         }
         return namespace;
-    }
-
-    public List<String> asType() {
-        if (isRef) {
-            List<String> type = ref.asType();
-            type.add(0, "[");
-            type.add("]");
-            return type;
-        }
-        return type;
     }
 
     public String toSafeString() {
@@ -903,15 +913,6 @@ public class Value {
         else if (isFunc) {
             return func.dump();
         }
-        else if (isType) {
-            List<Integer> result = new ArrayList<>();
-            result.add(ChunkCode.Type);
-            result.add(type.size());
-            for (String type : this.type) {
-                addAllString(result, type);
-            }
-            return result.stream().mapToInt(i -> i).toArray();
-        }
         return null;
     }
 
@@ -923,5 +924,60 @@ public class Value {
             }
         }
         return new Value();
+    }
+
+    public String type() {
+        if (isBool) {
+            return "bool";
+        }
+        else if (isNumber) {
+            return "number";
+        }
+        else if (isString) {
+            return "String";
+        }
+        else if (isList) {
+            return "list";
+        }
+        else if (isMap) {
+            return "dict";
+        }
+        else if (isClass) {
+            return "recipe";
+        }
+        else if (isInstance) {
+            return instance.type();
+        }
+        else if (isEnumParent) {
+            return "Enum";
+        }
+        else if (isEnumChild) {
+            return enumChild.type();
+        }
+        else if (isSpread) {
+            return "spread";
+        }
+        else if (isRef) {
+            return "[" + ref.type() + "]";
+        }
+        else if (isBytes) {
+            return "bytearray";
+        }
+        else if (isFunc || isClosure || isNativeFunc) {
+            return "function";
+        }
+        else if (isPattern) {
+            return "pattern";
+        }
+        else if (isPatternBinding) {
+            return "patternBinding";
+        }
+        else if (isNamespace) {
+            return "namespace";
+        }
+        else if (isTuple) {
+            return "(" + Arrays.stream(tuple).map(Value::type).collect(Collectors.joining(", ")) + ")";
+        }
+        return "void";
     }
 }
