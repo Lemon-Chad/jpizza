@@ -12,8 +12,8 @@ A fast to type and easy to ship language for developers on the go!
 - Loop arrow syntax to generate complex lists.
 - Callback variables that update the value when called.
 - The ability to strictly limit numeric variable ranges.
-- Query statements that function as an alternative to ternary chains.
-- Match statement that functions as a switch statement that returns a value.
+- Query expression that function as an alternative to ternary chains.
+- Match expression that functions as a switch statement that returns a value.
 - Built-in optimization features like memoization.
 - Main functions/classes.
 - Built-in benchmarking functions.
