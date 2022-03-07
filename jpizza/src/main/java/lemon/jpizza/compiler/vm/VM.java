@@ -314,6 +314,8 @@ public class VM {
 
         switch (op) {
             case OpCode.Add:
+                System.out.println(a.isVar);
+                System.out.println(b.isVar);
                 if (a.isString)
                     push(new Value(a.asString() + b.asString()));
                 else if (a.isList) {
@@ -589,6 +591,7 @@ public class VM {
 
         for (Map.Entry<String, Value> entry : asPattern.cases.entrySet()) {
             Value val = instance.getField(entry.getKey(), false);
+            System.out.println(entry.getKey() + ": comparing " + val + " to " + entry.getValue());
             if (val == null) {
                 push(new Value(false));
                 return VMResult.OK;
@@ -606,10 +609,7 @@ public class VM {
                 return VMResult.ERROR;
             }
             else {
-                push(new Value(new Var(
-                        val,
-                        false
-                )));
+                push(new Value(new Var(val, true)));
             }
         }
         push(new Value(true));
@@ -1566,7 +1566,8 @@ public class VM {
                     }
                     func.defaults = new ArrayList<>(Arrays.asList(defaults));
 
-                    push(new Value(closure));
+                    Value closed = new Value(closure);
+                    push(closed);
 
                     for (int i = 0; i < closure.upvalueCount; i++) {
                         int isLocal = readByte();
@@ -1580,7 +1581,13 @@ public class VM {
                                 closure.upvalues[i] = captureUpvalue(frame.slots + index);
                                 break;
                             case 2:
-                                closure.upvalues[i] = globals.get(frame.closure.function.chunk.constants().valuesArray[index].asString());
+                                String name = frame.closure.function.chunk.constants().valuesArray[index].asString();
+                                if (Objects.equals(name, func.name)) {
+                                    closure.upvalues[i] = new Var(closed, true);
+                                }
+                                else {
+                                    closure.upvalues[i] = globals.get(name);
+                                }
                                 break;
                         }
                     }

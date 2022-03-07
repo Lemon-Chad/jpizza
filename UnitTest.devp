@@ -523,12 +523,13 @@ class Matrix {
     }
 
     mthd bin mul<o: any> yields Matrix {
-        if (type(o) == "float") {
+        if (type(o) == "float" | type(o) == "int") {
             let s => for ( row <- vector ) => for ( yoinkers <- row ) => |float| (yoinkers * o);
             return Matrix(..s);
         }
 
         var other: Matrix => |Matrix| o;
+        println(type(other));
         assert type(other) == "Matrix";
         assert cols == other::rows;
 

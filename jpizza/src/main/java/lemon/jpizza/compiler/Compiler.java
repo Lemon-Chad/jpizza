@@ -84,6 +84,7 @@ public class Compiler {
     final Compiler enclosing;
 
     boolean inPattern = false;
+    Type patternType = Types.VOID;
 
     final Local[] locals;
     final Local[] generics;
@@ -145,7 +146,7 @@ public class Compiler {
         this.localCount = 0;
         this.scopeDepth = 0;
 
-        locals[localCount++] = new Local(new LocalToken(type == FunctionType.Method ? "this" : "", 0, 0), this.enclosingType, 0);
+        locals[localCount++] = new Local(new LocalToken(type == FunctionType.Method || type == FunctionType.Constructor ? "this" : "", 0, 0), this.enclosingType, 0);
 
         this.enclosing = enclosing;
 
@@ -201,6 +202,10 @@ public class Compiler {
     }
 
     int resolve(String name, Local[] locals) {
+        for (int i = 0; i < localCount; i++) {
+            Local local = locals[localCount - 1 - i];
+            System.out.println(local.name.name + " " + name);
+        }
         for (int i = 0; i < localCount; i++) {
             Local local = locals[localCount - 1 - i];
             if (local == null) continue;
@@ -446,6 +451,7 @@ public class Compiler {
                 return compile((ClassDefNode) statement);
             case Claccess: {
                 ClaccessNode node = (ClaccessNode) statement;
+                compile(node.class_tok);
                 String attr = node.attr_name_tok.value.toString();
                 int constant = chunk().addConstant(new Value(attr));
                 emit(OpCode.Access, constant, node.pos_start, node.pos_end);
@@ -453,6 +459,7 @@ public class Compiler {
             }
             case AttrAssign: {
                 AttrAssignNode node = (AttrAssignNode) statement;
+                compile(node.value_node);
                 int constant = chunk().addConstant(new Value(node.var_name_tok.value.toString()));
                 emit(OpCode.SetAttr, constant, node.pos_start, node.pos_end);
                 break;
@@ -550,8 +557,7 @@ public class Compiler {
         }
         emit(new int[]{
                 OpCode.Call,
-                1, 0,
-                0
+                1, 0
         }, node.pos_start, node.pos_end);
         String name = node.name.value.toString();
         int arg = resolveLocal(name);
@@ -569,13 +575,22 @@ public class Compiler {
     }
 
     void compile(PatternNode node) {
-        compile(node.accessNode);
+        Type target = compile(node.accessNode);
+        if (!(target instanceof ClassType) && !(target instanceof EnumChildType)) {
+            error("Pattern", "Pattern must be a class or enum", node.pos_start, node.pos_end);
+        }
         inPattern = true;
         Token[] keySet = node.patterns.keySet().toArray(new Token[0]);
         for (Token token : keySet) {
+            String name = token.value.toString();
+            patternType = target.accessInternal(name);
+            if (patternType == null) {
+                error("Pattern", "Attribute does not exist", node.pos_start, node.pos_end);
+            }
             compile(node.patterns.get(token));
         }
         inPattern = false;
+        patternType = Types.VOID;
         emit(OpCode.Pattern, keySet.length, node.pos_start, node.pos_end);
         for (int i = keySet.length - 1; i >= 0; i--) {
             Token token = keySet[i];
@@ -936,8 +951,7 @@ public class Compiler {
         }
         emit(new int[]{
                 OpCode.Call,
-                argc, kwargc,
-                node.generics.size()
+                argc, kwargc
         }, node.pos_start, node.pos_end);
         for (int i = 0; i < kwargc; i++) {
             emit(chunk().addConstant(new Value(kwargNames.get(i))), node.pos_start, node.pos_end);
@@ -1257,6 +1271,7 @@ public class Compiler {
     }
 
     void compile(UnaryOpNode node) {
+        compile(node.node);
         switch (node.op_tok) {
             case Plus:
                 break;
@@ -1295,7 +1310,6 @@ public class Compiler {
 
         int arg = resolveLocal(name);
 
-        Type type;
         if (arg != -1) {
             emit(OpCode.GetLocal, arg, start, end);
         }
@@ -1310,9 +1324,9 @@ public class Compiler {
             arg = chunk().addConstant(new Value(name));
             emit(OpCode.GetAttr, arg, start, end);
         }
-        else if (inPattern && (type = accessEnclosed(name)) != null) {
+        else if (inPattern) {
             arg = chunk().addConstant(new Value(name));
-            addLocal(name, type, start, end);
+            addLocal(name, patternType, start, end);
             emit(OpCode.PatternVars, arg, start, end);
         }
         else {
@@ -1480,7 +1494,7 @@ public class Compiler {
                 emit(chunk().addConstant(new Value(upvalue.globalName)), start, end);
             }
         }
-        emit(new int[]{ OpCode.Call, 0, 0, 0 }, start, end);
+        emit(new int[]{ OpCode.Call, 0, 0 }, start, end);
     }
 
     void compile(ScopeNode node) {

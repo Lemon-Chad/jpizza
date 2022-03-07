@@ -31,6 +31,7 @@ public class Instance {
 
         fields = new HashMap<>();
         copyAttributes(clazz.attributes, fields);
+        methods.putAll(binMethods);
     }
 
     public Instance(String name, Map<String, ClassAttr> attrs, VM vm) {

@@ -931,7 +931,7 @@ public class Value {
             return "bool";
         }
         else if (isNumber) {
-            return "number";
+            return (number == (long) number) ? "int" : "float";
         }
         else if (isString) {
             return "String";
