@@ -42,15 +42,27 @@ public class TypeLookup {
     }
 
     public Type getType(String name) {
+        System.out.println(types);
+        System.out.println(name);
         if (types.containsKey(name)) {
             return types.get(name);
         }
-        else if (compiler.enclosing != null) {
+        if (compiler.enclosingType instanceof ClassType) {
+            ClassType type = (ClassType) compiler.enclosingType;
+            if (type.genericMap.containsKey(name)) {
+                return type.genericMap.get(name);
+            }
+        }
+        if (compiler.enclosingType instanceof EnumChildType) {
+            EnumChildType type = (EnumChildType) compiler.enclosingType;
+            if (type.propertyGenericMap.containsKey(name)) {
+                return type.propertyGenericMap.get(name);
+            }
+        }
+        if (compiler.enclosing != null) {
             return compiler.enclosing.typeHandler.getType(name);
         }
-        else {
-            return null;
-        }
+        return null;
     }
 
     private class TypeParser {
@@ -104,6 +116,15 @@ public class TypeLookup {
             if (header.equals("(")) {
                 // Grouping
                 type = subType();
+                if (currentToken != null && currentToken.equals(",")) {
+                    List<Type> tuple = new ArrayList<>();
+                    tuple.add(type);
+                    while (currentToken != null && currentToken.equals(",")) {
+                        consume(",");
+                        tuple.add(subType());
+                    }
+                    type = new TupleType(tuple.toArray(new Type[0]));
+                }
                 consume(")");
             }
             if (header.equals("[")) {
@@ -356,10 +377,15 @@ public class TypeLookup {
     private Type resolve(FuncDefNode node) {
         // Insert generic types into type map
         GenericType[] generics = new GenericType[node.generic_toks.size()];
+        Set<String> removeLater = new HashSet<>();
         for (int i = 0; i < node.generic_toks.size(); i++) {
             String generic = node.generic_toks.get(i).value.toString();
             generics[i] = new GenericType(generic);
-            types.put(generic, generics[i]);
+
+            if (!types.containsKey(generic)) {
+                removeLater.add(generic);
+                types.put(generic, generics[i]);
+            }
         }
 
         Type returnType = resolve(node.returnType, node.pos_start, node.pos_end);
@@ -369,10 +395,9 @@ public class TypeLookup {
             argTypes[i] = resolve(argTypeTok);
         }
 
-        // Remove generic types from type map
-        for (GenericType generic : generics) {
-            types.remove(generic.name);
-        }
+        // Remove newly introduced generic types from type map
+        for (String generic : removeLater)
+            types.remove(generic);
 
         return new FuncType(returnType, argTypes, generics, node.argname != null, node.defaultCount);
     }
@@ -402,6 +427,8 @@ public class TypeLookup {
             result = resolve(node.nodeToReturn);
         }
         if (!compiler.funcType.returnType.equals(result)) {
+            System.out.println(compiler.funcType.returnType);
+            System.out.println(result);
             compiler.error("Return", "Return type must be the same as the function's return type", node.pos_start, node.pos_end);
         }
         return Types.VOID;
@@ -460,8 +487,14 @@ public class TypeLookup {
         );
 
         GenericType[] generics = new GenericType[constructorNode.generic_toks.size()];
+        Set<String> removeLater = new HashSet<>();
         for (int i = 0; i < constructorNode.generic_toks.size(); i++) {
             generics[i] = new GenericType(constructorNode.generic_toks.get(i).value.toString());
+
+            if (!types.containsKey(generics[i].name)) {
+                removeLater.add(generics[i].name);
+                types.put(generics[i].name, generics[i]);
+            }
         }
 
         ClassType type = new ClassType(name, parent, null, new HashMap<>(), new HashSet<>(), new HashMap<>(), new HashMap<>(), generics);
@@ -508,6 +541,9 @@ public class TypeLookup {
         type.operators.putAll(operators);
         type.privates.addAll(privates);
         type.constructor = constructor;
+
+        for (String generic : removeLater)
+            types.remove(generic);
 
         return type;
     }

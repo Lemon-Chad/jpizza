@@ -7,6 +7,7 @@ import lemon.jpizza.compiler.types.Types;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ReferenceType extends Type {
     public Type ref;
@@ -56,5 +57,10 @@ public class ReferenceType extends Type {
         list.add(TypeCodes.REFERENCE);
         list.addAll(ref.dumpList());
         return list.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        return new ReferenceType(ref.applyGenerics(generics));
     }
 }

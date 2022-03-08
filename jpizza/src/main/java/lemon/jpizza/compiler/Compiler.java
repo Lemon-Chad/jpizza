@@ -445,8 +445,7 @@ public class Compiler {
                 break;
 
             case Enum:
-                compile((EnumNode) statement);
-                break;
+                return compile((EnumNode) statement);
             case ClassDef:
                 return compile((ClassDefNode) statement);
             case Claccess: {
@@ -716,7 +715,7 @@ public class Compiler {
         emit(OpCode.Spread, node.pos_start, node.pos_end);
     }
 
-    void compile(EnumNode node) {
+    Type compile(EnumNode node) {
         Map<String, JEnumChild> children = new HashMap<>();
         EnumChildType[] types = new EnumChildType[node.children.size()];
 
@@ -730,22 +729,33 @@ public class Compiler {
                     child.params()
             ));
 
+            GenericType[] generics = new GenericType[child.generics().size()];
+            Set<String> removeLater = new HashSet<>();
+            for (int j = 0; j < generics.length; j++) {
+                generics[j] = new GenericType(child.generics().get(j));
+                if (!typeHandler.types.containsKey(generics[j].name)) {
+                    removeLater.add(generics[j].name);
+                    typeHandler.types.put(generics[j].name, generics[j]);
+                }
+            }
+
             String[] properties = child.params().toArray(new String[0]);
             Type[] propertyTypes = new Type[child.types().size()];
             for (int j = 0; j < propertyTypes.length; j++) {
+                System.out.println("Testing " + child.types().get(j));
                 Type type = typeLookup(child.types().get(j), child.token().pos_start, child.token().pos_end);
                 if (type == null) {
                     error("Type", "Type does not exist", node.pos_start, node.pos_end);
                 }
                 propertyTypes[j] = type;
             }
-            GenericType[] generics = new GenericType[child.generics().size()];
-            for (int j = 0; j < generics.length; j++) {
-                generics[j] = new GenericType(child.generics().get(j));
-            }
 
             EnumChildType type = new EnumChildType(name, propertyTypes, generics, properties);
             types[i] = type;
+
+            for (String generic : removeLater) {
+                typeHandler.types.remove(generic);
+            }
 
             if (node.pub)
                 globals.put(name, type);
@@ -759,6 +769,7 @@ public class Compiler {
                 children
         )));
         emit(new int[]{ OpCode.Enum, constant, node.pub ? 1 : 0 }, node.pos_start, node.pos_end);
+        return type;
     }
 
     private Type typeLookup(Token token) {
@@ -946,7 +957,7 @@ public class Compiler {
             compile(node.kwargs.get(kwargNames.get(i)));
         }
         Type function = compile(node.nodeToCall);
-        if (!(function instanceof FuncType) && !(function instanceof ClassType) && !(function instanceof EnumChildType)) {
+        if (!function.callable()) {
             error("Type", "Can't call non-function", node.pos_start, node.pos_end);
         }
         emit(new int[]{
@@ -1622,6 +1633,7 @@ public class Compiler {
         }
 
         enclosingType = type;
+        System.out.println(enclosingType);
 
         for (int i = 0; i < node.generic_toks.size(); i++)
             compileNull(node.pos_start, node.pos_end);
@@ -1656,9 +1668,10 @@ public class Compiler {
             compile(method);
         }
 
-        compile(constructor, true, node.generic_toks);
+        compile(constructor, true);
 
         enclosingType = Types.VOID;
+        System.out.println(enclosingType);
 
         emit(OpCode.Pop, node.pos_start, node.pos_end);
         compileNull(node.pos_start, node.pos_end);
@@ -1667,10 +1680,10 @@ public class Compiler {
     }
 
     void compile(MethDefNode node) {
-        compile(node, false, null);
+        compile(node, false);
     }
 
-    void compile(MethDefNode node, boolean isConstructor, List<Token> genericToks) {
+    void compile(MethDefNode node, boolean isConstructor) {
         String name = node.var_name_tok.value.toString();
         int nameConstant = chunk().addConstant(new Value(name));
 
@@ -1679,18 +1692,7 @@ public class Compiler {
         FuncDefNode func = node.asFuncDef();
         FuncType funcType = (FuncType) typeHandler.resolve(func);
 
-        function(type, funcType, func,
-                (compiler) -> {
-                    if (isConstructor) for (Token tok : genericToks) {
-                        compiler.compile(new AttrAssignNode(
-                            tok,
-                            new VarAccessNode(tok)
-                        ));
-                        compiler.emit(OpCode.Pop, tok.pos_start, tok.pos_end);
-                    }
-                },
-                (compiler) -> {}
-        );
+        function(type, funcType, func);
 
         emit(new int[]{
                 OpCode.Method,

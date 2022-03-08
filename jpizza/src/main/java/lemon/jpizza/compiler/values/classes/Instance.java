@@ -72,22 +72,7 @@ public class Instance {
     }
 
     public String type() {
-        String name = clazz.name;
-        if (generics.size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(name);
-            sb.append("(");
-            boolean first = true;
-            for (Map.Entry<String, String> entry : generics.entrySet()) {
-                if (!first)
-                    sb.append(", ");
-                sb.append(entry.getValue());
-                first = false;
-            }
-            sb.append(")");
-            name = sb.toString();
-        }
-        return name;
+        return clazz.name;
     }
 
     @Override

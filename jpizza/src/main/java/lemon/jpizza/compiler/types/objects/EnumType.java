@@ -53,4 +53,14 @@ public class EnumType extends Type {
         }
         return list.stream().mapToInt(Integer::intValue).toArray();
     }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        EnumChildType[] newChildren = new EnumChildType[children.size()];
+        int i = 0;
+        for (EnumChildType child : children.values()) {
+            newChildren[i++] = (EnumChildType) child.applyGenerics(generics);
+        }
+        return new EnumType(name, newChildren);
+    }
 }

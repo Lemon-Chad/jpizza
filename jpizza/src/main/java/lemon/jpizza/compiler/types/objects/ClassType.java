@@ -18,19 +18,31 @@ public class ClassType extends Type {
     public final Map<String, Type> fields;
     public final Map<String, Type> staticFields;
     public final Map<String, Type> operators;
+
     public final GenericType[] generics;
+    public final Map<String, GenericType> genericMap;
 
     public ClassType(String name, ClassType parent, FuncType constructor, Map<String, Type> fields, Set<String> privates, Map<String, Type> staticFields, Map<String, Type> operators, GenericType[] generics) {
         super("recipe");
         this.identifier = name;
+
         this.parent = parent;
+
         this.constructor = constructor;
+
         this.privates = privates;
         this.fields = fields;
         this.fields.putAll(operators);
+
         this.staticFields = staticFields;
+
         this.operators = operators;
+
         this.generics = generics;
+        this.genericMap = new HashMap<>();
+        for (int i = 0; i < generics.length; i++) {
+            this.genericMap.put(generics[i].name, generics[i]);
+        }
 
         if (parent != null) {
             for (Map.Entry<String, Type> entry : parent.fields.entrySet()) {
@@ -46,6 +58,36 @@ public class ClassType extends Type {
                 operators.putIfAbsent(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    @Override
+    public boolean callable() {
+        return true;
+    }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        ClassType parent = null;
+        if (this.parent != null) {
+            parent = (ClassType) this.parent.applyGenerics(generics);
+        }
+        FuncType constructor = null;
+        if (this.constructor != null) {
+            constructor = (FuncType) this.constructor.applyGenerics(generics);
+        }
+        Map<String, Type> fields = new HashMap<>(this.fields.size());
+        for (Map.Entry<String, Type> entry : this.fields.entrySet()) {
+            fields.put(entry.getKey(), entry.getValue().applyGenerics(generics));
+        }
+        Map<String, Type> staticFields = new HashMap<>(this.staticFields.size());
+        for (Map.Entry<String, Type> entry : this.staticFields.entrySet()) {
+            staticFields.put(entry.getKey(), entry.getValue().applyGenerics(generics));
+        }
+        Map<String, Type> operators = new HashMap<>(this.operators.size());
+        for (Map.Entry<String, Type> entry : this.operators.entrySet()) {
+            operators.put(entry.getKey(), entry.getValue().applyGenerics(generics));
+        }
+        return new ClassType(this.identifier, parent, constructor, fields, this.privates, staticFields, operators, this.generics);
     }
 
     @Override

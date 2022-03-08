@@ -6,6 +6,7 @@ import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.types.primitives.IntType;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TupleType extends Type {
@@ -14,6 +15,15 @@ public class TupleType extends Type {
         // (T1, T2, ..., Tn)
         super("(" + Arrays.stream(types).map(Type::toString).collect(Collectors.joining(", ")) + ")");
         this.types = types;
+    }
+
+    @Override
+    public Type applyGenerics(final Map<Type, Type> generics) {
+        Type[] newTypes = new Type[types.length];
+        for (int i = 0; i < types.length; i++) {
+            newTypes[i] = types[i].applyGenerics(generics);
+        }
+        return new TupleType(newTypes);
     }
 
     @Override
@@ -27,6 +37,14 @@ public class TupleType extends Type {
     @Override
     protected Type operation(TokenType operation) {
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TupleType)) return false;
+        TupleType tupleType = (TupleType) o;
+        return Arrays.equals(types, tupleType.types);
     }
 
     @Override

@@ -5,6 +5,7 @@ import lemon.jpizza.compiler.ChunkCode;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class Type {
@@ -12,6 +13,10 @@ public abstract class Type {
 
     public Type(final String name) {
         this.name = name;
+    }
+
+    public boolean callable() {
+        return false;
     }
 
     // Binary operations
@@ -61,6 +66,8 @@ public abstract class Type {
     }
 
     public abstract int[] dump();
+
+    public abstract Type applyGenerics(final Map<Type, Type> generics);
 
     public List<Integer> dumpList() {
         return Arrays.stream(compile()).boxed().collect(Collectors.toList());

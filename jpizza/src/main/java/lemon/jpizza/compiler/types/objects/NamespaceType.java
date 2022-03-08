@@ -6,6 +6,7 @@ import lemon.jpizza.compiler.types.TypeCodes;
 import lemon.jpizza.compiler.values.Value;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,15 @@ public class NamespaceType extends Type {
     public NamespaceType(Map<String, Type> attributes) {
         super("namespace");
         this.attributes = attributes;
+    }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        Map<String, Type> newAttributes = new HashMap<>();
+        for (Map.Entry<String, Type> entry : attributes.entrySet()) {
+            newAttributes.put(entry.getKey(), entry.getValue().applyGenerics(generics));
+        }
+        return new NamespaceType(newAttributes);
     }
 
     @Override

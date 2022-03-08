@@ -5,18 +5,21 @@ import lemon.jpizza.compiler.types.Type;
 import lemon.jpizza.compiler.types.TypeCodes;
 import lemon.jpizza.compiler.types.Types;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class InstanceType extends Type {
     private final ClassType parent;
     private final Type[] generics;
+    private final Map<Type, Type> genericMap;
 
     public InstanceType(ClassType parent, Type[] generics) {
         super(parent.identifier);
         this.parent = parent;
         this.generics = generics;
+        this.genericMap = new HashMap<>();
+        for (int i = 0; i < generics.length; i++) {
+            genericMap.put(parent.generics[i], generics[i]);
+        }
     }
 
     @Override
@@ -79,7 +82,7 @@ public class InstanceType extends Type {
 
     @Override
     public Type isCompatible(TokenType operation, Type other) {
-        Type overload = operation(operation, other);
+        Type overload = wrapGenerics(operation(operation, other));
         if (overload != null) {
             return overload.call(new Type[]{ other }, new Type[0]);
         }
@@ -102,14 +105,18 @@ public class InstanceType extends Type {
         return null;
     }
 
+    public Type wrapGenerics(Type type) {
+        return type.applyGenerics(genericMap);
+    }
+
     @Override
     public Type access(String name) {
-        return parent.get(name, false);
+        return wrapGenerics(parent.get(name, false));
     }
 
     @Override
     public Type accessInternal(String name) {
-        return parent.get(name, false);
+        return wrapGenerics(parent.get(name, true));
     }
 
     @Override
@@ -147,5 +154,14 @@ public class InstanceType extends Type {
             list.addAll(generic.dumpList());
         }
         return list.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        Type[] newGenerics = new Type[this.generics.length];
+        for (int i = 0; i < this.generics.length; i++) {
+            newGenerics[i] = this.generics[i].applyGenerics(generics);
+        }
+        return new InstanceType((ClassType) parent.applyGenerics(generics), newGenerics);
     }
 }

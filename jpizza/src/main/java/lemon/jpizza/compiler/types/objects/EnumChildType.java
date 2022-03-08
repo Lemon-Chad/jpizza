@@ -11,24 +11,39 @@ import java.util.*;
 public class EnumChildType extends Type {
     public final Type[] propertyArguments;
     public final GenericType[] propertyGenerics;
+    public final Map<String, GenericType> propertyGenericMap;
     public final String[] properties;
     public final ClassType asClass;
-
-    public EnumChildType(String name) {
-        this(name, new Type[0], new GenericType[0], new String[0]);
-    }
 
     public EnumChildType(String name, Type[] propertyArguments, GenericType[] propertyGenerics, String[] properties) {
         super(name);
         this.propertyArguments = propertyArguments;
         this.propertyGenerics = propertyGenerics;
+        this.propertyGenericMap = new HashMap<>();
         this.properties = properties;
 
         Map<String, Type> map = new HashMap<>();
         for (int i = 0; i < properties.length; i++) {
             map.put(properties[i], propertyArguments[i]);
         }
-        this.asClass = new ClassType(name, null, null, map, new HashSet<>(), new HashMap<>(), new HashMap<>(), new GenericType[0]);
+        for (int i = 0; i < propertyGenerics.length; i++) {
+            map.put(propertyGenerics[i].name, propertyGenerics[i]);
+        }
+        this.asClass = new ClassType(name, null, null, map, new HashSet<>(), new HashMap<>(), new HashMap<>(), propertyGenerics);
+    }
+
+    @Override
+    public boolean callable() {
+        return true;
+    }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        Type[] arguments = new Type[propertyArguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            arguments[i] = propertyArguments[i].applyGenerics(generics);
+        }
+        return new EnumChildType(name, arguments, propertyGenerics, properties);
     }
 
     @Override
@@ -43,11 +58,16 @@ public class EnumChildType extends Type {
 
     @Override
     public Type call(Type[] arguments, Type[] generics) {
+        Map<Type, Type> map = new HashMap<>();
+        for (int i = 0; i < generics.length; i++) {
+            map.put(propertyGenerics[i], generics[i]);
+        }
+
         if (arguments.length != propertyArguments.length) {
             return null;
         }
         for (int i = 0; i < arguments.length; i++) {
-            if (!propertyArguments[i].equals(arguments[i])) {
+            if (!propertyArguments[i].applyGenerics(map).equals(arguments[i])) {
                 return null;
             }
         }

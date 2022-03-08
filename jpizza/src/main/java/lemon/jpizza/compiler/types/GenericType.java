@@ -3,6 +3,8 @@ package lemon.jpizza.compiler.types;
 import lemon.jpizza.TokenType;
 import lemon.jpizza.compiler.values.Value;
 
+import java.util.Map;
+
 public class GenericType extends Type {
     public GenericType(String name) {
         super(name);
@@ -40,5 +42,10 @@ public class GenericType extends Type {
         result[0] = TypeCodes.GENERIC;
         System.arraycopy(name, 0, result, 1, name.length);
         return result;
+    }
+
+    @Override
+    public Type applyGenerics(final Map<Type, Type> generics) {
+        return generics.getOrDefault(this, this);
     }
 }

@@ -31,6 +31,21 @@ public class FuncType extends Type {
     }
 
     @Override
+    public boolean callable() {
+        return true;
+    }
+
+    @Override
+    public Type applyGenerics(Map<Type, Type> generics) {
+        Type returnType = this.returnType.applyGenerics(generics);
+        Type[] parameterTypes = new Type[this.parameterTypes.length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+            parameterTypes[i] = this.parameterTypes[i].applyGenerics(generics);
+        }
+        return new FuncType(returnType, parameterTypes, this.generics, this.varargs, this.defaultCount);
+    }
+
+    @Override
     protected Type operation(TokenType operation, Type other) {
         return null;
     }
@@ -42,10 +57,14 @@ public class FuncType extends Type {
 
     @Override
     public Type call(Type[] arguments, Type[] generics) {
+        return call(arguments, generics, new HashMap<>());
+    }
+
+    public Type call(Type[] arguments, Type[] generics, Map<Type, Type> inherited) {
         if (generics.length != this.generics.length) {
             return null;
         }
-        Map<Type, Type> map = new HashMap<>();
+        Map<Type, Type> map = new HashMap<>(inherited);
         for (int i = 0; i < generics.length; i++) {
             map.put(this.generics[i], generics[i]);
         }
@@ -54,12 +73,15 @@ public class FuncType extends Type {
             return null;
         }
         for (int i = 0; i < Math.min(parameterTypes.length, arguments.length); i++) {
-            if (!map.getOrDefault(parameterTypes[i], parameterTypes[i]).equals(arguments[i])) {
+            Type expected = parameterTypes[i].applyGenerics(map);
+            System.out.println(expected);
+            System.out.println(arguments[i]);
+            if (!expected.equals(arguments[i])) {
                 return null;
             }
         }
 
-        return map.getOrDefault(returnType, returnType);
+        return returnType.applyGenerics(map);
     }
 
     @Override
