@@ -512,6 +512,6 @@ public class LibraryManager {
     }
 
     private void time() {
-        new Time(vm).setup();
+        new Time(vm).Start();
     }
 }
