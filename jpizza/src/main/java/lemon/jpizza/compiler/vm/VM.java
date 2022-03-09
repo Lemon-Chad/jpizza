@@ -4,6 +4,7 @@ import lemon.jpizza.Constants;
 import lemon.jpizza.Pair;
 import lemon.jpizza.Shell;
 import lemon.jpizza.compiler.*;
+import lemon.jpizza.compiler.Compiler;
 import lemon.jpizza.compiler.headers.HeadCode;
 import lemon.jpizza.compiler.headers.Memo;
 import lemon.jpizza.compiler.types.Type;
@@ -1389,47 +1390,7 @@ public class VM {
 
                 case OpCode.Extend: {
                     String fn = readString();
-
-                    String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
-                    String modPath = Shell.root + "/extensions/" + fn;
-                    String modFilePath = modPath + "/" + fn + ".jar";
-
-                    //noinspection ResultOfMethodCallIgnored
-                    new File(Shell.root + "/extensions").mkdirs();
-
-                    try {
-                        URL[] urls;
-                        if (Files.exists(Paths.get(modFilePath))) {
-                            urls = new URL[]{new URL("file://" + modFilePath)};
-                        }
-                        else if (Files.exists(Paths.get(file_name))) {
-                            urls = new URL[]{new URL("file://" + file_name)};
-                        }
-                        else {
-                            runtimeError("Imaginary File", "File '" + fn + "' not found");
-                            res = VMResult.ERROR;
-                            break;
-                        }
-                        ClassLoader cl = new URLClassLoader(urls);
-                        Class<?> loadedClass = cl.loadClass("jpext." + fn);
-                        Constructor<?> constructor = loadedClass.getConstructor(VM.class);
-                        Object loadedObject = constructor.newInstance(this);
-                        if (loadedObject instanceof JPExtension) {
-                            JPExtension extension = (JPExtension) loadedObject;
-                            extension.setup();
-                        }
-                        else {
-                            runtimeError("Imaginary File", "File '" + fn + "' is not a valid extension");
-                            res = VMResult.ERROR;
-                            break;
-                        }
-                    } catch (Exception e) {
-                        runtimeError("Internal", "Failed to load extension (" + e.getMessage() + ")");
-                        res = VMResult.ERROR;
-                        break;
-                    }
-
-                    res = VMResult.OK;
+                    res = Compiler.bootExtend(fn, this::runtimeError, this) ? VMResult.OK : VMResult.ERROR;
                     break;
                 }
 

@@ -5,6 +5,7 @@ import lemon.jpizza.compiler.types.GenericType;
 import lemon.jpizza.compiler.types.Type;
 import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.types.objects.FuncType;
+import lemon.jpizza.compiler.types.objects.NamespaceType;
 import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.functions.JNative;
 import lemon.jpizza.compiler.values.functions.NativeResult;
@@ -77,6 +78,11 @@ public abstract class JPExtension {
 
     protected void var(String name, Object val, Type type) {
         var(name, Value.fromObject(val), type);
+    }
+
+    public void Start() {
+        setup();
+        Shell.libraries.put(name(), new NamespaceType(fields));
     }
 
     abstract public void setup();

@@ -11,8 +11,10 @@ import lemon.jpizza.compiler.values.Value;
 import lemon.jpizza.compiler.values.enums.JEnum;
 import lemon.jpizza.compiler.values.enums.JEnumChild;
 import lemon.jpizza.compiler.values.functions.JFunc;
+import lemon.jpizza.compiler.vm.JPExtension;
 import lemon.jpizza.compiler.vm.LibraryManager;
 import lemon.jpizza.compiler.vm.VM;
+import lemon.jpizza.compiler.vm.VMResult;
 import lemon.jpizza.errors.Error;
 import lemon.jpizza.generators.Parser;
 import lemon.jpizza.nodes.Node;
@@ -27,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -535,7 +540,9 @@ public class Compiler {
     }
 
     void compile(ExtendNode node) {
-        emit(OpCode.Extend, chunk().addConstant(new Value(node.file_name_tok.value.toString())), node.pos_start, node.pos_end);
+        String name = node.file_name_tok.value.toString();
+        bootExtend(name, (reason, message) -> error(reason, message, node.pos_start, node.pos_end), null);
+        emit(OpCode.Extend, chunk().addConstant(new Value()), node.pos_start, node.pos_end);
     }
 
     void compile(DecoratorNode node) {
@@ -1846,6 +1853,49 @@ public class Compiler {
             compile(entry.getValue());
         }
         emit(OpCode.MakeMap, size, node.pos_start, node.pos_end);
+    }
+
+    public interface ExtendFailure {
+        void failure(String reason, String message);
+    }
+
+    public static boolean bootExtend(String fn, ExtendFailure function, VM vm) {
+        String file_name = System.getProperty("user.dir") + "/" + fn + ".jar";
+        String modPath = Shell.root + "/extensions/" + fn;
+        String modFilePath = modPath + "/" + fn + ".jar";
+
+        //noinspection ResultOfMethodCallIgnored
+        new File(Shell.root + "/extensions").mkdirs();
+
+        try {
+            URL[] urls;
+            if (Files.exists(Paths.get(modFilePath))) {
+                urls = new URL[]{new URL("file://" + modFilePath)};
+            }
+            else if (Files.exists(Paths.get(file_name))) {
+                urls = new URL[]{new URL("file://" + file_name)};
+            }
+            else {
+                function.failure("Imaginary File", "File '" + fn + "' not found");
+                return false;
+            }
+            ClassLoader cl = new URLClassLoader(urls);
+            Class<?> loadedClass = cl.loadClass("jpext." + fn);
+            Constructor<?> constructor = loadedClass.getConstructor(VM.class);
+            Object loadedObject = constructor.newInstance(vm);
+            if (loadedObject instanceof JPExtension) {
+                JPExtension extension = (JPExtension) loadedObject;
+                extension.Start();
+            }
+            else {
+                function.failure("Imaginary File", "File '" + fn + "' is not a valid extension");
+                return false;
+            }
+        } catch (Exception e) {
+            function.failure("Internal", "Failed to load extension (" + e.getMessage() + ")");
+            return false;
+        }
+        return true;
     }
 
 }

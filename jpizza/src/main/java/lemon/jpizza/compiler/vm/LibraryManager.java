@@ -110,37 +110,37 @@ public class LibraryManager {
     }
 
     private void pretzel() {
-        new Pretzel(vm).setup();
+        new Pretzel(vm).Start();
     }
 
     private void puddle() {
-        new PDL(vm).setup();
+        new PDL(vm).Start();
     }
 
     private void httpx() {
-        new HTTPx(vm).setup();
+        new HTTPx(vm).Start();
     }
 
     private void awt() {
-        new AbstractWindowToolkit(vm).setup();
+        new AbstractWindowToolkit(vm).Start();
     }
 
-    private void json() { new JPSon(vm).setup(); }
+    private void json() { new JPSon(vm).Start(); }
 
     private void sys() {
-        new JSystem(vm).setup();
+        new JSystem(vm).Start();
     }
 
     private void guis() {
-        new GUIs(vm).setup();
+        new GUIs(vm).Start();
     }
 
     private void io() {
-        new IOFile(vm).setup();
+        new IOFile(vm).Start();
     }
 
     private void gens() {
-        new Generators(vm).setup();
+        new Generators(vm).Start();
     }
 
     private void builtin() {
