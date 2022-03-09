@@ -42,8 +42,6 @@ public class TypeLookup {
     }
 
     public Type getType(String name) {
-        System.out.println(types);
-        System.out.println(name);
         if (types.containsKey(name)) {
             return types.get(name);
         }
@@ -427,8 +425,6 @@ public class TypeLookup {
             result = resolve(node.nodeToReturn);
         }
         if (!compiler.funcType.returnType.equals(result)) {
-            System.out.println(compiler.funcType.returnType);
-            System.out.println(result);
             compiler.error("Return", "Return type must be the same as the function's return type", node.pos_start, node.pos_end);
         }
         return Types.VOID;

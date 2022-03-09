@@ -244,7 +244,6 @@ public class Shell {
                 String[] data = extractData(target, true);
                 System.setProperty("user.dir", data[1]);
                 to = to == null ? data[1] + data[0].substring(0, data[0].lastIndexOf(".")) + ".jbox" : to;
-                System.out.println(to);
                 Error e = compile(data[0], data[2], to);
                 if (e != null)
                     Shell.logger.fail(e.asString());
@@ -339,7 +338,6 @@ public class Shell {
         JFunc func = compiler.compileBlock(outNode);
         if (scope)
             compiler.endScope(ast.a.get(0).pos_start, ast.a.get(ast.a.size() - 1).pos_end);
-        System.out.println("Pain!");
 
         return new Pair<>(func, null);
     }
@@ -350,13 +348,13 @@ public class Shell {
         JFunc func = res.a;
 
         try {
+            //noinspection ResultOfMethodCallIgnored
             new File(outpath).createNewFile();
             FileOutputStream fout;
             fout = new FileOutputStream(outpath);
             fout.write(func.dumpBytes());
             fout.close();
         } catch (IOException e) {
-            System.out.println(e);
             e.printStackTrace();
             return new Error(
                     null, null,

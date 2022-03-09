@@ -74,8 +74,6 @@ public class FuncType extends Type {
         }
         for (int i = 0; i < Math.min(parameterTypes.length, arguments.length); i++) {
             Type expected = parameterTypes[i].applyGenerics(map);
-            System.out.println(expected);
-            System.out.println(arguments[i]);
             if (!expected.equals(arguments[i])) {
                 return null;
             }

@@ -314,8 +314,7 @@ public class VM {
 
         switch (op) {
             case OpCode.Add:
-                System.out.println(a.isVar);
-                System.out.println(b.isVar);
+
                 if (a.isString)
                     push(new Value(a.asString() + b.asString()));
                 else if (a.isList) {
@@ -591,7 +590,6 @@ public class VM {
 
         for (Map.Entry<String, Value> entry : asPattern.cases.entrySet()) {
             Value val = instance.getField(entry.getKey(), false);
-            System.out.println(entry.getKey() + ": comparing " + val + " to " + entry.getValue());
             if (val == null) {
                 push(new Value(false));
                 return VMResult.OK;

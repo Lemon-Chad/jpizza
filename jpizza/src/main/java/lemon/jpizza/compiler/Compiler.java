@@ -95,7 +95,7 @@ public class Compiler {
     final FunctionType type;
     final FuncType funcType;
 
-    int continueTo;
+    final Stack<Integer> continueTo;
     final Stack<List<Integer>> breaks;
 
     final Map<String, Type> globals;
@@ -150,7 +150,7 @@ public class Compiler {
 
         this.enclosing = enclosing;
 
-        this.continueTo = 0;
+        this.continueTo = new Stack<>();
         this.breaks = new Stack<>();
 
         this.macros = new HashMap<>();
@@ -202,10 +202,6 @@ public class Compiler {
     }
 
     int resolve(String name, Local[] locals) {
-        for (int i = 0; i < localCount; i++) {
-            Local local = locals[localCount - 1 - i];
-            System.out.println(local.name.name + " " + name);
-        }
         for (int i = 0; i < localCount; i++) {
             Local local = locals[localCount - 1 - i];
             if (local == null) continue;
@@ -517,14 +513,12 @@ public class Compiler {
                 compile((IterNode) statement);
                 break;
             case Break:
-                compileNull(statement.pos_start, statement.pos_end);
                 if (breaks.isEmpty())
                     error("Invalid Syntax", "Break statement outside of loop", statement.pos_start, statement.pos_end);
                 breaks.peek().add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
                 break;
             case Continue:
-                compileNull(statement.pos_start, statement.pos_end);
-                emitLoop(continueTo, statement.pos_start, statement.pos_end);
+                emitLoop(continueTo.peek(), statement.pos_start, statement.pos_end);
                 break;
 
             case Ref:
@@ -742,7 +736,6 @@ public class Compiler {
             String[] properties = child.params().toArray(new String[0]);
             Type[] propertyTypes = new Type[child.types().size()];
             for (int j = 0; j < propertyTypes.length; j++) {
-                System.out.println("Testing " + child.types().get(j));
                 Type type = typeLookup(child.types().get(j), child.token().pos_start, child.token().pos_end);
                 if (type == null) {
                     error("Type", "Type does not exist", node.pos_start, node.pos_end);
@@ -1571,7 +1564,7 @@ public class Compiler {
 
     void loopBody(Node body, boolean returnsNull, int loopStart) {
         breaks.add(new ArrayList<>());
-        continueTo = loopStart;
+        continueTo.push(loopStart);
 
         beginScope();
         compile(body);
@@ -1589,7 +1582,7 @@ public class Compiler {
         emitLoop(loopStart, body.pos_start, body.pos_end);
         int pastJump = emitJump(OpCode.Jump, body.pos_start, body.pos_end);
 
-        continueTo = 0;
+        continueTo.pop();
         patchBreaks();
         for (int i = 0; i < popCount; i++)
             emit(OpCode.Pop, body.pos_start, body.pos_end);
@@ -1633,7 +1626,6 @@ public class Compiler {
         }
 
         enclosingType = type;
-        System.out.println(enclosingType);
 
         for (int i = 0; i < node.generic_toks.size(); i++)
             compileNull(node.pos_start, node.pos_end);
@@ -1671,7 +1663,6 @@ public class Compiler {
         compile(constructor, true);
 
         enclosingType = Types.VOID;
-        System.out.println(enclosingType);
 
         emit(OpCode.Pop, node.pos_start, node.pos_end);
         compileNull(node.pos_start, node.pos_end);
