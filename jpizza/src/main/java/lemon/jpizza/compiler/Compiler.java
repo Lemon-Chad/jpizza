@@ -520,6 +520,7 @@ public class Compiler {
             case Break:
                 if (breaks.isEmpty())
                     error("Invalid Syntax", "Break statement outside of loop", statement.pos_start, statement.pos_end);
+                compileNull(statement.pos_start, statement.pos_end);
                 breaks.peek().add(emitJump(OpCode.Jump, statement.pos_start, statement.pos_end));
                 break;
             case Continue:
