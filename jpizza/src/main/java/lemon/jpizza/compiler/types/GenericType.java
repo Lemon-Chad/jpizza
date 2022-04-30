@@ -45,6 +45,21 @@ public class GenericType extends Type {
     }
 
     @Override
+    public boolean equals(Object o) {
+        return o instanceof GenericType && ((GenericType) o).name.equals(this.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.name;
+    }
+
+    @Override
     public Type applyGenerics(final Map<Type, Type> generics) {
         return generics.getOrDefault(this, this);
     }

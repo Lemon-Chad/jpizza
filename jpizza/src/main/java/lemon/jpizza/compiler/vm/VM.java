@@ -845,7 +845,7 @@ public class VM {
                 Value index = pop();
                 Value collection = pop();
 
-                if (collection.isList || collection.isString) {
+                if (collection.isList || collection.isString || collection.isTuple) {
                     List<Value> list = collection.asList();
                     int idx = index.asNumber().intValue();
                     if (idx >= list.size()) {
@@ -1717,17 +1717,26 @@ public class VM {
         Namespace v = pop().asNamespace();
         push(new Value());
         int args = readByte();
-        String[] names = new String[args];
-        for (int i = 0; i < args; i++)
-            names[i] = readString();
+        boolean glob = args == -1;
         Map<String, Var> values = v.values();
-        for (String name : names) {
-            if (values.containsKey(name)) {
-                globals.put(name, values.get(name));
+        if (glob) {
+            for (String k : values.keySet()) {
+                globals.put(k, values.get(k));
             }
-            else {
-                runtimeError("Scope", "Undefined field: " + name);
-                return VMResult.ERROR;
+        }
+        else {
+            String[] names = new String[args];
+            for (int i = 0; i < args; i++)
+                names[i] = readString();
+
+            for (String name : names) {
+                if (values.containsKey(name)) {
+                    globals.put(name, values.get(name));
+                }
+                else {
+                    runtimeError("Scope", "Undefined field: " + name);
+                    return VMResult.ERROR;
+                }
             }
         }
         return VMResult.OK;

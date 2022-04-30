@@ -38,6 +38,11 @@ public class EnumType extends Type {
     }
 
     @Override
+    public List<String> accessors() {
+        return new ArrayList<>(children.keySet());
+    }
+
+    @Override
     public Type accessInternal(String name) {
         return null;
     }

@@ -39,6 +39,18 @@ public class TypeLookup {
         types.put("any", Types.ANY);
         types.put("bytearray", Types.BYTES);
         types.put("catcher", Types.RESULT);
+        types.put("vec", new PrimitiveGenericType("vec", 1) {
+            @Override
+            public Type applyGenerics(Type... generics) {
+                return new VecType(generics[0]);
+            }
+        });
+        types.put("map", new PrimitiveGenericType("map", 2) {
+            @Override
+            public Type applyGenerics(Type... generics) {
+                return new MapType(generics[0], generics[1]);
+            }
+        });
     }
 
     public Type getType(String name) {
@@ -131,8 +143,31 @@ public class TypeLookup {
                 consume("]");
                 return new ReferenceType(refType);
             }
+            if (header.equals("?")) {
+                // Maybe
+                Type refType = subType();
+                return new MaybeType(refType);
+            }
             if (type == null) {
                 fail(String.format("Unknown type '%s'", header));
+            }
+            if (type instanceof PrimitiveGenericType) {
+                PrimitiveGenericType genericType = (PrimitiveGenericType) type;
+                // Generic
+                if (!"(".equals(currentToken)) {
+                    fail("Expected '(' but got '" + currentToken + "'");
+                }
+                List<Type> generics = new ArrayList<>();
+                do {
+                    advance();
+                    generics.add(subType());
+                } while (",".equals(currentToken));
+                consume(")");
+
+                if (generics.size() != genericType.genericCount) {
+                    fail(String.format("Expected %d generic types but got %d", genericType.genericCount, generics.size()));
+                }
+                return genericType.applyGenerics(generics.toArray(new Type[0]));
             }
             if (type instanceof ClassType) {
                 ClassType classType = (ClassType) type;
@@ -248,7 +283,7 @@ public class TypeLookup {
 
             case Number: {
                 NumberNode node = (NumberNode) statement;
-                return (long) node.val == node.val ? Types.INT : Types.FLOAT;
+                return node.floating ? Types.FLOAT : Types.INT;
             }
             case String:
                 return Types.STRING;
@@ -332,6 +367,15 @@ public class TypeLookup {
     private Type resolve(BinOpNode statement) {
         Type left = resolve(statement.left_node);
         Type right = resolve(statement.right_node);
+        if (left instanceof TupleType && statement.right_node instanceof NumberNode && right == Types.INT) {
+            TupleType tuple = (TupleType) left;
+            int index = (int) statement.right_node.asNumber();
+            Type type = tuple.getType(index);
+            if (type == null) {
+                compiler.error("Type", String.format("Tuple index '%d' out of bounds", index), statement.pos_start, statement.pos_end);
+            }
+            return type;
+        }
         Type result = left.isCompatible(statement.op_tok, right);
         if (result == null) {
             compiler.error("Type", String.format("Cannot apply '%s' to '%s' and '%s'", statement.op_tok, left, right), statement.pos_start, statement.pos_end);

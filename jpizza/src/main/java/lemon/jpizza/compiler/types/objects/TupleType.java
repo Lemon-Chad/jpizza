@@ -2,6 +2,7 @@ package lemon.jpizza.compiler.types.objects;
 
 import lemon.jpizza.TokenType;
 import lemon.jpizza.compiler.types.Type;
+import lemon.jpizza.compiler.types.TypeCodes;
 import lemon.jpizza.compiler.types.Types;
 import lemon.jpizza.compiler.types.primitives.IntType;
 
@@ -64,6 +65,27 @@ public class TupleType extends Type {
 
     @Override
     public int[] dump() {
-        return new int[0];
+        int listSize = 2;
+        int[][] subTypes = new int[types.length][];
+        for (int i = 0; i < types.length; i++) {
+            subTypes[i] = types[i].dump();
+            listSize += subTypes[i].length;
+        }
+        int[] result = new int[listSize];
+        result[0] = TypeCodes.TUPLE;
+        result[1] = types.length;
+        int offset = 2;
+        for (int i = 0; i < types.length; i++) {
+            System.arraycopy(subTypes[i], 0, result, offset, subTypes[i].length);
+            offset += subTypes[i].length;
+        }
+        return result;
+    }
+
+    public final Type getType(int index) {
+        if (index < 0 || index >= types.length) {
+            return null;
+        }
+        return types[index];
     }
 }

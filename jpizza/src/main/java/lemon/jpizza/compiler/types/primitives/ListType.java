@@ -17,7 +17,7 @@ public class ListType extends PrimitiveType {
     @Override
     protected Type operation(TokenType operation, Type other) {
         if (operation == TokenType.Dot || operation == TokenType.LeftBracket) {
-            return Types.FLOAT.equals(other) ? Types.ANY : null;
+            return Types.INT.equals(other) ? Types.ANY : null;
         }
         else if (operation == TokenType.Plus) {
             return other == Types.LIST ? Types.LIST : null;

@@ -601,8 +601,20 @@ public class Compiler {
 
     void compile(DestructNode node) {
         Type destructed = compile(node.target);
-        emit(OpCode.Destruct, node.subs.size(), node.pos_start, node.pos_end);
-        for (Token sub : node.subs) {
+        emit(OpCode.Destruct, node.glob ? -1 : node.subs.size(), node.pos_start, node.pos_end);
+        if (node.glob) {
+            List<String> names = destructed.accessors();
+            if (names == null) {
+                error("Destruct", "Destructing a non-destructable type", node.pos_start, node.pos_end);
+            }
+            for (String name : names) {
+                Type type = destructed.access(name);
+                if (type == null) {
+                    error("Attribute", "Cannot access " + name + " in " + destructed, node.pos_start, node.pos_end);
+                }
+                globals.put(name, type);
+            }
+        } else for (Token sub : node.subs) {
             String name = sub.value.toString();
             Type type = destructed.access(name);
             if (type == null) {
@@ -910,10 +922,15 @@ public class Compiler {
             type = new NamespaceType(imp.chunk.globals);
         }
         else {
+            if (Shell.libraries.containsKey(fn)) {
+                type = Shell.libraries.get(fn);
+            }
             compileNull(node.pos_start, node.pos_end);
         }
 
-        assert type != null;
+        if (type == null) {
+            error("Import", "Couldn't import file", node.pos_start, node.pos_end);
+        }
 
         int constant = chunk().addConstant(new Value(fn));
         emit(OpCode.Import, constant, node.pos_start, node.pos_end);
@@ -1451,6 +1468,9 @@ public class Compiler {
                      int min, int max, @NotNull Position start, @NotNull Position end) {
         Type t = compile(value);
         if (type == null) type = t;
+        if (!t.equals(type)) {
+            error("Type", "Type mismatch in declaration", start, end);
+        }
         int global = parseVariable(varNameTok, type, start, end);
         defineVariable(global, type, locked, min, max, start, end);
     }

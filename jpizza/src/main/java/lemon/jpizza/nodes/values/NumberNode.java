@@ -7,10 +7,12 @@ import org.jetbrains.annotations.NotNull;
 public class NumberNode extends ValueNode {
     public final double val;
     public final boolean hex;
+    public final boolean floating;
 
     public NumberNode(Token tok) {
         super(tok);
         val = (double) tok.value;
+        floating = tok.type == TokenType.Float;
         hex = false;
         jptype = JPType.Number;
     }
@@ -18,6 +20,7 @@ public class NumberNode extends ValueNode {
     public NumberNode(Token tok, boolean hex) {
         super(tok);
         val = (double) tok.value;
+        floating = tok.type == TokenType.Float;
         this.hex = hex;
         jptype = JPType.Number;
     }
@@ -26,6 +29,7 @@ public class NumberNode extends ValueNode {
         super(new Token(TokenType.Identifier, "null", pos_start, pos_end));
         val = v;
         hex = true;
+        floating = false;
         jptype = JPType.Number;
     }
 
@@ -33,6 +37,7 @@ public class NumberNode extends ValueNode {
         super(new Token(TokenType.Identifier, "null", pos_start, pos_end));
         val = v;
         hex = true;
+        floating = true;
         jptype = JPType.Number;
     }
 

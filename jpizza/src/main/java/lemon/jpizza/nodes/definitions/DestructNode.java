@@ -32,6 +32,7 @@ public class DestructNode extends Node {
     @Override
     public Node optimize() {
         Node target = this.target.optimize();
+        if (glob) return new DestructNode(target);
         return new DestructNode(target, subs);
     }
 

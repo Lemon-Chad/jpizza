@@ -116,6 +116,11 @@ public class ClassType extends Type {
     }
 
     @Override
+    public List<String> accessors() {
+        return new ArrayList<>(staticFields.keySet());
+    }
+
+    @Override
     public Type accessInternal(String name) {
         return get(name, true);
     }

@@ -1,26 +1,6 @@
 package lemon.jpizza.compiler.types;
 
 public class TypeCodes {
-    /*
-    * BOOL
-    * BYTES
-    * DICT
-    * FLOAT
-    * INT
-    * LIST
-    * RESULT
-    * STRING
-    * ANY
-    * GENERIC
-    * VOID
-    * CLASS
-    * ENUMCHILD
-    * ENUM
-    * FUNC
-    * INSTANCE
-    * NAMESPACE
-    * REFERENCE
-    */
     public static final int BOOL = 0;
     public static final int BYTES = 1;
     public static final int DICT = 2;
@@ -39,4 +19,8 @@ public class TypeCodes {
     public static final int INSTANCE = 15;
     public static final int NAMESPACE = 16;
     public static final int REFERENCE = 17;
+    public static final int MAYBE = 18;
+    public static final int MAP = 19;
+    public static final int VEC = 20;
+    public static final int TUPLE = 21;
 }

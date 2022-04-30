@@ -107,6 +107,7 @@ public class LibraryManager {
         puddle();
         guis();
         pretzel();
+        collections();
     }
 
     private void pretzel() {
@@ -125,7 +126,9 @@ public class LibraryManager {
         new AbstractWindowToolkit(vm).Start();
     }
 
-    private void json() { new JPSon(vm).Start(); }
+    private void json() {
+        new JPSon(vm).Start();
+    }
 
     private void sys() {
         new JSystem(vm).Start();
@@ -141,6 +144,10 @@ public class LibraryManager {
 
     private void gens() {
         new Generators(vm).Start();
+    }
+
+    private void collections() {
+        new JPCollections(vm).Start();
     }
 
     private void builtin() {
@@ -289,7 +296,7 @@ public class LibraryManager {
                 args[0].asBytes()
         ))), Types.STRING, Types.BYTES);
         define("tuple", (args) -> NativeResult.Ok(new Value(args)),
-                new FuncType(Types.ANY, new Type[0], new GenericType[0], false) {
+                new FuncType(Types.ANY, new Type[0], new GenericType[0], true) {
                     @Override
                     public Type call(Type[] arguments, Type[] generics) {
                         if (generics.length > 0) {

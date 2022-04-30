@@ -23,7 +23,7 @@ public class JNative {
     }
 
     public JNative(String name, Method method, int argc) {
-        this(name, method, argc, new Type[argc]);
+        this(name, method, argc, new Type[argc == -1 ? 0 : argc]);
         for (int i = 0; i < argc; i++)
             types[i] = Types.ANY;
     }

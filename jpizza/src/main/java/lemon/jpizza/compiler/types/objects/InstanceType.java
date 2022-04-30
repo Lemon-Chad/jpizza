@@ -115,6 +115,11 @@ public class InstanceType extends Type {
     }
 
     @Override
+    public List<String> accessors() {
+        return new ArrayList<>(parent.fields.keySet());
+    }
+
+    @Override
     public Type accessInternal(String name) {
         return wrapGenerics(parent.get(name, true));
     }

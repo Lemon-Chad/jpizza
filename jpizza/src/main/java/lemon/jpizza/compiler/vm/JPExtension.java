@@ -62,6 +62,13 @@ public abstract class JPExtension {
             vm.defineNative(lib, name, method, argc);
     }
 
+    protected void define(String name, JNative.Method method, FuncType type) {
+        if (vm == null)
+            fields.put(name, type);
+        else
+            vm.defineNative(lib, name, method, type.varargs ? -1 : type.parameterTypes.length);
+    }
+
     protected void func(String name, JNative.Method method, Type returnType, Type... types) {
         if (vm == null)
             fields.put(name, new FuncType(returnType, types, new GenericType[0], false));

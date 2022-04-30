@@ -4,6 +4,7 @@ import lemon.jpizza.TokenType;
 import lemon.jpizza.compiler.ChunkCode;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,6 +45,9 @@ public abstract class Type {
 
     public abstract Type call(final Type[] arguments, final Type[] generics);
 
+    public List<String> accessors() {
+        return null;
+    }
     public abstract Type access(final String name);
     public abstract Type accessInternal(final String name);
 

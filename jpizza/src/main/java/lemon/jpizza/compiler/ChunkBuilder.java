@@ -220,6 +220,27 @@ public class ChunkBuilder {
             case TypeCodes.GENERIC:
                 i++;
                 return new GenericType(readString());
+
+            case TypeCodes.MAYBE:
+                i++;
+                return new MaybeType(readType());
+
+            case TypeCodes.MAP:
+                i++;
+                return new MapType(readType(), readType());
+
+            case TypeCodes.VEC:
+                i++;
+                return new VecType(readType());
+
+            case TypeCodes.TUPLE:
+                i++;
+                int len = code[i++];
+                Type[] types = new Type[len];
+                for (int j = 0; j < len; j++) {
+                    types[j] = readType();
+                }
+                return new TupleType(types);
         }
         throw new IOException("unknown type");
     }

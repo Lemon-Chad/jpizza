@@ -31,7 +31,8 @@ public class Constants {
             TokenType.LeftBracket,
             TokenType.RightBracket,
             TokenType.RightAngle,
-            TokenType.LeftAngle
+            TokenType.LeftAngle,
+            TokenType.QuestionMark
     );
     public static final String[] KEYWORDS = {
             "yields",
