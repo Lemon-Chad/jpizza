@@ -164,9 +164,11 @@ public class InstanceType extends Type {
     @Override
     public Type applyGenerics(Map<Type, Type> generics) {
         Type[] newGenerics = new Type[this.generics.length];
+        boolean swapped = false;
         for (int i = 0; i < this.generics.length; i++) {
             newGenerics[i] = this.generics[i].applyGenerics(generics);
+            swapped |= !newGenerics[i].equals(this.generics[i]);
         }
-        return new InstanceType((ClassType) parent.applyGenerics(generics), newGenerics);
+        return new InstanceType(swapped ? (ClassType) parent.applyGenerics(generics) : parent, newGenerics);
     }
 }
