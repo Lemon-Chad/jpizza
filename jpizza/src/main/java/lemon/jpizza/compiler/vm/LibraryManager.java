@@ -108,6 +108,8 @@ public class LibraryManager {
         guis();
         pretzel();
         collections();
+
+        new JPrinter(vm).Start();
     }
 
     private void pretzel() {
