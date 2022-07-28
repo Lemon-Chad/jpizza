@@ -6,8 +6,6 @@ import lemon.jpizza.compiler.values.Value;
 
 public class JNative {
 
-    public static Object Method;
-
     public interface Method {
         NativeResult call(Value[] stack);
     }
